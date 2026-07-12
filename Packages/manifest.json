@@ -1,5 +1,7 @@
 {
   "dependencies": {
+    "com.candidumgames.unitymmdtools": "https://github.com/qiqizizzz/Fork_UnityMMDTools.git",
+    "com.ivanmurzak.unity.mcp": "0.83.1",
     "com.unity.collab-proxy": "2.12.4",
     "com.unity.ide.rider": "3.0.36",
     "com.unity.render-pipelines.universal": "14.0.12",
@@ -38,8 +40,7 @@
     "com.unity.modules.video": "1.0.0",
     "com.unity.modules.vr": "1.0.0",
     "com.unity.modules.wind": "1.0.0",
-    "com.unity.modules.xr": "1.0.0",
-    "com.ivanmurzak.unity.mcp": "0.83.1"
+    "com.unity.modules.xr": "1.0.0"
   },
   "scopedRegistries": [
     {
