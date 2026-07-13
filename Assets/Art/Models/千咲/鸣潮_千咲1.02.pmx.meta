@@ -2,7 +2,177 @@ fileFormatVersion: 2
 guid: 72b18d38a40dd794ca5c69950d61e0dd
 ScriptedImporter:
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Cheek
+    second: {fileID: 2100000, guid: 7f2cf00ea1aacff46afe651fcf8cc81d, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: EYE
+    second: {fileID: 2100000, guid: ac0637c76d2d80442bea9170368ecab1, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: EYE2red_blue
+    second: {fileID: 2100000, guid: 47fa81c7864f12f4f99c5a90ebc6a15f, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: EYE_hi
+    second: {fileID: 2100000, guid: dbcd2d3a4693be94687c05754579b6ba, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: MI_Bangs
+    second: {fileID: 2100000, guid: 06e9faf6d5ccdcc4389e545a2569719d, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: MI_Hair
+    second: {fileID: 2100000, guid: a1be3296630ab394d9406af4d3a81f9a, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: emo1
+    second: {fileID: 2100000, guid: 6370520b72af16c4face177cd9726785, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: emo3
+    second: {fileID: 2100000, guid: ba9fb1fa16ab2f5499574a479c8fab79, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: face
+    second: {fileID: 2100000, guid: 45183a9ea220a4f408dcc03da8d2c522, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: gaitou
+    second: {fileID: 2100000, guid: 2eeaef40c86cac14bb537fb9b2289646, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: gaitoutoumei
+    second: {fileID: 2100000, guid: 01b98bf00ffd0e942886afac06119610, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: hongfadai
+    second: {fileID: 2100000, guid: 894c7f781e89b9044a6de1d63b64da43, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: hyaku
+    second: {fileID: 2100000, guid: 14d99487b9f5d6b44ba993a0e7e88240, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: kawa
+    second: {fileID: 2100000, guid: 4d6433371bf51804a8f08d2e41f94dc1, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: kawa_
+    second: {fileID: 2100000, guid: 52effeea36647d2408ff73f09af364cb, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: kawa__
+    second: {fileID: 2100000, guid: 42ae3456458fe004aa70995f995b419f, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: kawa___
+    second: {fileID: 2100000, guid: a8a0f3e4e0aebc7469c5805c53aff94b, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: kuchi
+    second: {fileID: 2100000, guid: 07bee9d50a07c1641a393a1bcfd3fbfe, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: lingjin
+    second: {fileID: 2100000, guid: 42547ecb72f4ebf4fa951bead50f758f, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: lingzi
+    second: {fileID: 2100000, guid: 3b99345b1b5b45e4596a415981b8d567, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: lip_off
+    second: {fileID: 2100000, guid: a63ce784cafa75942aaa3727a20712b7, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: matsuge
+    second: {fileID: 2100000, guid: 7070827d2d232bc49ba7e375c619fecd, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: mayuge
+    second: {fileID: 2100000, guid: 5e3c6e1a4a7c2b5449305c258bf93775, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: mingpai
+    second: {fileID: 2100000, guid: 93074b53f188d0a41918bbcda1b05ddc, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: momo
+    second: {fileID: 2100000, guid: 02a444f7ac1f15e4cb7190b612417f7d, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: nai
+    second: {fileID: 2100000, guid: b26e76f92efa2e342bb9bfc319e7a1aa, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: nose
+    second: {fileID: 2100000, guid: 71a35c015e281dc4f892cd53b5e8e23f, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: shengheng
+    second: {fileID: 2100000, guid: b6458aa531d52944ea2e436ac41df999, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: shiro2
+    second: {fileID: 2100000, guid: e38ee49601f538e41b30500363e996a6, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: tongue
+    second: {fileID: 2100000, guid: c145fa0033efc6e43a9c45e2c7e607fe, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: uchi
+    second: {fileID: 2100000, guid: a480b506ccee98340a0b77b944c39e95, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: wazi
+    second: {fileID: 2100000, guid: 84a82b77db3fedb478c9145f6bd4d2f0, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: white1
+    second: {fileID: 2100000, guid: e857671da2ca46945882b8aa101a7354, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: zhi
+    second: {fileID: 2100000, guid: aff368658dc2d1b429f3a7d8dc24552e, type: 2}
   serializedVersion: 2
   userData: 
   assetBundleName: 
@@ -10,7 +180,7 @@ ScriptedImporter:
   script: {fileID: 11500000, guid: 6c51fa5e63a9c704db6cfa9014345745, type: 3}
   createAvatar: 1
   generateDebugData: 0
-  materialCreationMode: 0
+  materialCreationMode: 1
   vMDAnimations: []
   vMDFrameRate: 30
   vMDBakeIKToFK: 1
