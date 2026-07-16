@@ -27,9 +27,8 @@ namespace Module.Player.HFSM
         private bool m_isExecutingLifecycle;
 
         //当前叶子节点
-        public PlayerStateId CurrentLeafStateId => m_activeStatePath.Count > 0
-            ? m_activeStatePath[m_activeStatePath.Count - 1]
-            : PlayerStateId.None;
+        public PlayerStateId CurrentLeafStateId =>
+            m_activeStatePath.Count > 0 ? m_activeStatePath[^1] : PlayerStateId.None;
 
         public IReadOnlyList<PlayerStateId> ActiveStatePath => m_readOnlyActiveStatePath;
 
@@ -44,17 +43,28 @@ namespace Module.Player.HFSM
         public void RegisterState(BasePlayerState state)
         {
             if (state == null)
-                QLog.Throw(new System.ArgumentNullException(nameof(state)));
+            {
+                QLog.Error("注册状态失败：state 为空");
+                return;
+            }
 
             if(m_isRegistryLocked)
-                QLog.Throw(new System.InvalidOperationException("状态机初始化后不能继续注册状态"));
+            {
+                QLog.Error("注册状态失败：状态机初始化后不能继续注册状态");
+                return;
+            }
             
             if(state.Id == PlayerStateId.None)
-                QLog.Throw(new System.ArgumentException(
-                    "PlayerStateId.None只能作为顶层状态的父节点！", nameof(state)));
+            {
+                QLog.Error("注册状态失败：PlayerStateId.None 只能作为顶层状态的父节点");
+                return;
+            }
             
             if(m_states.ContainsKey(state.Id))
-                QLog.Throw(new System.ArgumentException($"状态ID重复注册：{state.Id}", nameof(state)));
+            {
+                QLog.Error($"注册状态失败：状态 ID 重复注册：{state.Id}");
+                return;
+            }
             
             m_states.Add(state.Id, state);
         }
@@ -63,16 +73,25 @@ namespace Module.Player.HFSM
         public void Init(PlayerStateId initStateId)
         {
             if(m_isRegistryLocked)
-                QLog.Throw(new System.InvalidOperationException("状态机不能重复初始化"));
+            {
+                QLog.Error("初始化失败：状态机不能重复初始化");
+                return;
+            }
             
             if(initStateId == PlayerStateId.None)
-                QLog.Throw(new System.ArgumentException(
-                    "初始状态不能是 PlayerStateId.None", nameof(initStateId)));
+            {
+                QLog.Error("初始化失败：初始状态不能是 PlayerStateId.None");
+                return;
+            }
 
-            validateStateTree();
+            if (!validateStateTree())
+                return;
 
             List<PlayerStateId> initialPath =
                 buildExpandedPath(initStateId);
+
+            if (initialPath.Count == 0)
+                return;
 
             m_isRegistryLocked = true;
             m_isExecutingLifecycle = true;
@@ -93,52 +112,147 @@ namespace Module.Player.HFSM
             }
         }
 
-        #region 检验状态树
-        // 校验状态树的父子关系、环路与默认子状态
-        private void validateStateTree()
+        // 切换到目标状态，复合状态会自动展开到默认叶子状态
+        public void ChangeState(PlayerStateId targetStateId)
         {
-            if (m_states.Count == 0)
-                QLog.Throw(new System.InvalidOperationException("状态机至少需要注册一个状态"));
+            if (!isStateMachineValid(nameof(ChangeState)))
+                return;
 
-            foreach (BasePlayerState state in m_states.Values)
-                validateParent(state);
+            List<PlayerStateId> targetPath = buildExpandedPath(targetStateId);
 
-            foreach (BasePlayerState state in m_states.Values)
-                validateParentChain(state);
+            if (targetPath.Count == 0 || isSameActivePath(targetPath))
+                return;
+            
+            int commonPrefixLength = getCommonPrefixLength(targetPath);
 
-            foreach (BasePlayerState state in m_states.Values)
+            m_isExecutingLifecycle = true;
+
+            try
             {
-                if (state is PlayerCompositeState compositeState)
-                    validateInitialChild(compositeState);
+                exitCurrentPath(commonPrefixLength);
+                enterTargetPath(targetPath, commonPrefixLength);
+            }
+            catch (System.Exception exception)
+            {
+                IsFaulted = true;
+                QLog.Throw(exception);
+            }
+            finally
+            {
+                m_isExecutingLifecycle = false;
             }
         }
 
-        // 校验状态声明的父节点存在且为复合状态
-        private void validateParent(BasePlayerState state)
+        // 按父状态到叶子状态的顺序执行帧更新
+        public void Tick(float deltaTime)
         {
-            if (state.ParentId == PlayerStateId.None)
+            if (!isStateMachineValid(nameof(Tick)))
                 return;
 
-            if (!m_states.TryGetValue(
-                    state.ParentId,
-                    out BasePlayerState parentState))
+            m_isExecutingLifecycle = true;
+
+            try
             {
-                QLog.Throw(new System.InvalidOperationException(
-                    $"状态 {state.Id} 的父状态不存在：{state.ParentId}"));
+                for (int i = 0; i < m_activeStatePath.Count; i++)
+                {
+                    PlayerStateId stateId = m_activeStatePath[i];
+                    m_states[stateId].Tick(deltaTime);
+                }
+            }
+            catch (System.Exception exception)
+            {
+                IsFaulted = true;
+                QLog.Throw(exception);
+            }
+            finally
+            {
+                m_isExecutingLifecycle = false;
+            }
+        }
+
+        // 按父状态到叶子状态的顺序执行物理帧更新
+        public void FixedTick(float fixedDeltaTime)
+        {
+            if (!isStateMachineValid(nameof(FixedTick)))
+                return;
+
+            m_isExecutingLifecycle = true;
+
+            try
+            {
+                for (int i = 0; i < m_activeStatePath.Count; i++)
+                {
+                    PlayerStateId stateId = m_activeStatePath[i];
+                    m_states[stateId].FixedTick(fixedDeltaTime);
+                }
+            }
+            catch (System.Exception exception)
+            {
+                IsFaulted = true;
+                QLog.Throw(exception);
+            }
+            finally
+            {
+                m_isExecutingLifecycle = false;
+            }
+        }
+
+        #region 检验状态树
+        // 校验状态树的父子关系、环路与默认子状态
+        private bool validateStateTree()
+        {
+            if (m_states.Count == 0)
+            {
+                QLog.Error("状态树校验失败：状态机至少需要注册一个状态");
+                return false;
+            }
+
+            foreach (BasePlayerState state in m_states.Values)
+            {
+                if (!validateParent(state))
+                    return false;
+            }
+
+            foreach (BasePlayerState state in m_states.Values)
+            {
+                if (!validateParentChain(state))
+                    return false;
+            }
+
+            foreach (BasePlayerState state in m_states.Values)
+            {
+                if (state is PlayerCompositeState compositeState && !validateInitialChild(compositeState))
+                    return false;
+            }
+
+            return true;
+        }
+
+        // 校验状态声明的父节点存在且为复合状态
+        private bool validateParent(BasePlayerState state)
+        {
+            if (state.ParentId == PlayerStateId.None)
+                return true;
+
+            if (!m_states.TryGetValue(state.ParentId, out BasePlayerState parentState))
+            {
+                QLog.Error($"状态树校验失败：状态 {state.Id} 的父状态不存在：{state.ParentId}");
+                return false;
             }
 
             if (!(parentState is PlayerCompositeState))
             {
-                QLog.Throw(new System.InvalidOperationException(
-                    $"状态 {state.Id} 的父状态不是复合状态：{state.ParentId}"));
+                QLog.Error($"状态树校验失败：状态 {state.Id} 的父状态不是复合状态：{state.ParentId}");
+                return false;
             }
+
+            return true;
         }
 
         // 校验状态的父链不存在环路
-        private void validateParentChain(BasePlayerState state)
+        private bool validateParentChain(BasePlayerState state)
         {
-            HashSet<PlayerStateId> visitedStateIds =
-                new HashSet<PlayerStateId>();
+            HashSet<PlayerStateId> visitedStateIds = new HashSet<PlayerStateId>();
 
             BasePlayerState currentState = state;
 
@@ -146,58 +260,53 @@ namespace Module.Player.HFSM
             {
                 if (!visitedStateIds.Add(currentState.Id))
                 {
-                    QLog.Throw(new System.InvalidOperationException(
-                        $"状态树存在父子环路：{currentState.Id}"));
+                    QLog.Error($"状态树校验失败：状态树存在父子环路：{currentState.Id}");
+                    return false;
                 }
 
-                currentState = m_states[currentState.ParentId];
+                if (!m_states.TryGetValue(currentState.ParentId, out currentState))
+                    return false;
             }
+
+            return true;
         }
 
         // 校验复合状态的默认状态是已注册的直接子状态
-        private void validateInitialChild(
-            PlayerCompositeState compositeState)
+        private bool validateInitialChild(PlayerCompositeState compositeState)
         {
-            PlayerStateId initialChildId =
-                compositeState.GetInitialChildId();
+            PlayerStateId initialChildId = compositeState.GetInitialChildId();
 
             if (initialChildId == PlayerStateId.None)
             {
-                QLog.Throw(new System.InvalidOperationException(
-                    $"复合状态 {compositeState.Id} 未指定默认子状态"));
+                QLog.Error($"状态树校验失败：复合状态 {compositeState.Id} 未指定默认子状态");
+                return false;
             }
 
-            if (!m_states.TryGetValue(
-                    initialChildId,
-                    out BasePlayerState initialChildState))
+            if (!m_states.TryGetValue(initialChildId, out BasePlayerState initialChildState))
             {
-                QLog.Throw(new System.InvalidOperationException(
-                    $"复合状态 {compositeState.Id} 的默认子状态未注册：" +
-                    $"{initialChildId}"));
+                QLog.Error($"状态树校验失败：复合状态 {compositeState.Id} 的默认子状态未注册：{initialChildId}");
+                return false;
             }
 
-            if (initialChildState.ParentId != compositeState.Id)
+            if (initialChildState != null && initialChildState.ParentId != compositeState.Id)
             {
-                QLog.Throw(new System.InvalidOperationException(
-                    $"状态 {initialChildId} 不是复合状态 " +
-                    $"{compositeState.Id} 的直接子状态"));
+                QLog.Error($"状态树校验失败：状态 {initialChildId} 不是复合状态 {compositeState.Id} 的直接子状态");
+                return false;
             }
+
+            return true;
         }
 
         // 构建从顶层状态到目标叶子状态的完整路径
-        private List<PlayerStateId> buildExpandedPath(
-            PlayerStateId targetStateId)
+        private List<PlayerStateId> buildExpandedPath(PlayerStateId targetStateId)
         {
-            if (!m_states.TryGetValue(
-                    targetStateId,
-                    out BasePlayerState targetState))
+            if (!m_states.TryGetValue(targetStateId, out BasePlayerState targetState))
             {
-                QLog.Throw(new System.ArgumentException(
-                    $"目标状态未注册：{targetStateId}", nameof(targetStateId)));
+                QLog.Error($"构建状态路径失败：目标状态未注册：{targetStateId}");
+                return new List<PlayerStateId>();
             }
 
-            List<PlayerStateId> targetPath =
-                new List<PlayerStateId>();
+            List<PlayerStateId> targetPath = new List<PlayerStateId>();
 
             BasePlayerState currentState = targetState;
 
@@ -208,24 +317,22 @@ namespace Module.Player.HFSM
                 if (currentState.ParentId == PlayerStateId.None)
                     break;
 
-                currentState = m_states[currentState.ParentId];
+                if (!m_states.TryGetValue(currentState.ParentId, out currentState))
+                    return new List<PlayerStateId>();
             }
 
             targetPath.Reverse();
 
-            while (m_states[targetPath[targetPath.Count - 1]]
-                   is PlayerCompositeState compositeState)
+            while (m_states.TryGetValue(targetPath[^1], out BasePlayerState leafState) && leafState is PlayerCompositeState compositeState)
             {
-                targetPath.Add(
-                    compositeState.GetInitialChildId());
+                targetPath.Add(compositeState.GetInitialChildId());
             }
 
             return targetPath;
         }
 
         // 按父状态到叶子状态的顺序进入初始路径
-        private void enterInitialPath(
-            IReadOnlyList<PlayerStateId> initialPath)
+        private void enterInitialPath(IReadOnlyList<PlayerStateId> initialPath)
         {
             for (int i = 0; i < initialPath.Count; i++)
             {
@@ -237,5 +344,82 @@ namespace Module.Player.HFSM
         }
         #endregion
 
+        #region 检验状态
+        // 校验状态机是否正常执行
+        private bool isStateMachineValid(string operationName)
+        {
+            if (!IsInited)
+            {
+                QLog.Error($"状态机未初始化，不能执行：{operationName}");
+                return false;
+            }
+
+            if (IsFaulted)
+            {
+                QLog.Error($"状态机处于故障状态，不能执行：{operationName}");
+                return false;
+            }
+
+            if (m_isExecutingLifecycle)
+            {
+                QLog.Error($"状态机正在执行生命周期方法，不能执行：{operationName}");
+                return false;
+            }
+
+            return true;
+        }
+
+        //判断目标路径是否与当前活动路径完全一致,避免切换到重复state
+        private bool isSameActivePath(IReadOnlyList<PlayerStateId> targetPath)
+        {
+            if (m_activeStatePath.Count != targetPath.Count)
+                return false;
+
+            for (int i = 0; i < m_activeStatePath.Count; i++)
+            {
+                if (m_activeStatePath[i] != targetPath[i])
+                    return false;
+            }
+            return true;
+        }
+
+        // 计算当前活动路径与目标路径的公共前缀长度, 用于判断需要退出和进入的状态
+        private int getCommonPrefixLength(IReadOnlyList<PlayerStateId> targetPath)
+        {
+            int maxLength = m_activeStatePath.Count < targetPath.Count ? m_activeStatePath.Count : targetPath.Count;
+
+            for (int i = 0; i < maxLength; i++)
+            {
+                if (m_activeStatePath[i] != targetPath[i])
+                    return i;
+            }
+
+            return maxLength;
+        }
+
+        // 从当前叶子状态向上退出到公共前缀之后
+        private void exitCurrentPath(int commonPrefixLength)
+        {
+            for (int i = m_activeStatePath.Count - 1; i >= commonPrefixLength; i--)
+            {
+                PlayerStateId stateId = m_activeStatePath[i];
+
+                m_states[stateId].Exit();
+                m_activeStatePath.RemoveAt(i);
+            }
+        }
+
+        // 从公共前缀之后进入目标路径到叶子状态
+        private void enterTargetPath(IReadOnlyList<PlayerStateId> targetPath, int commonPrefixLength)
+        {
+            for (int i = commonPrefixLength; i < targetPath.Count; i++)
+            {
+                PlayerStateId stateId = targetPath[i];
+
+                m_activeStatePath.Add(stateId);
+                m_states[stateId].Enter();
+            }
+        }
+        #endregion
     }
 }

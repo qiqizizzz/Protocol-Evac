@@ -8,6 +8,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Reflection;
 using System.Runtime.ExceptionServices;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
@@ -17,13 +18,13 @@ namespace Utils.log
     public static class QLog
     {
         [Conditional("UNITY_EDITOR")]
-        public static void Info(object msg) => Debug.Log(msg);
+        public static void Info(object msg) => Debug.Log(formatMessage(msg));
 
         [Conditional("UNITY_EDITOR")]
-        public static void Warning(object msg) => Debug.LogWarning(msg);
+        public static void Warning(object msg) => Debug.LogWarning(formatMessage(msg));
 
         [Conditional("UNITY_EDITOR")]
-        public static void Error(object msg) => Debug.LogError(msg);
+        public static void Error(object msg) => Debug.LogError(formatMessage(msg));
 
         /// <summary>
         /// 在编辑器中记录异常，并在所有构建中抛出异常
@@ -39,5 +40,38 @@ namespace Utils.log
 #endif
             ExceptionDispatchInfo.Capture(exception).Throw();
         }
+
+        #region 日志类名查询方法
+        // 构建带调用类名前缀的日志内容
+        private static string formatMessage(object msg)
+        {
+            string callerTypeName = getCallerTypeName();
+            string message = msg == null ? "null" : msg.ToString();
+
+            if (string.IsNullOrEmpty(callerTypeName))
+                return message;
+
+            return $"[{callerTypeName}] {message}";
+        }
+
+        // 从调用栈中查找第一个非 QLog 的调用类型
+        private static string getCallerTypeName()
+        {
+            StackTrace stackTrace = new StackTrace(false);
+
+            for (int i = 1; i < stackTrace.FrameCount; i++)
+            {
+                MethodBase method = stackTrace.GetFrame(i)?.GetMethod();
+                Type declaringType = method?.DeclaringType;
+
+                if (declaringType == null || declaringType == typeof(QLog))
+                    continue;
+
+                return declaringType.Name;
+            }
+
+            return string.Empty;
+        }
+        #endregion
     }
 }
