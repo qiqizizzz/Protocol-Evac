@@ -82,9 +82,9 @@ Assets/Scripts/Module/
 │  │  ├─ PlayerInputBuffer.cs
 │  │  ├─ PlayerInputSnapshot.cs
 │  │  └─ PlayerBufferedInputType.cs
-│  ├─ FSM/
+│  ├─ HFSM/
 │  │  ├─ PlayerStateId.cs
-│  │  ├─ PlayerStateBase.cs
+│  │  ├─ BasePlayerState.cs
 │  │  ├─ PlayerStateMachine.cs
 │  │  ├─ PlayerCompositeState.cs
 │  │  └─ States/
@@ -111,7 +111,7 @@ Assets/Scripts/Module/
 │  │  ├─ PlayerTransitionRequest.cs
 │  │  ├─ PlayerTransitionRule.cs
 │  │  └─ PlayerInterruptPriority.cs
-│  └─ Ability/
+│  ├─ Ability/
 │     ├─ PlayerAbilityController.cs
 │     ├─ PlayerAbilitySlot.cs
 │     ├─ PlayerAbilityRequest.cs
@@ -123,6 +123,8 @@ Assets/Scripts/Module/
 │        ├─ DodgeAbility.cs
 │        ├─ SkillAbility.cs
 │        └─ HurtAbility.cs
+│  └─ Config/
+│     └─ PlayerConfigSO.cs
 ├─ Enemy/
 │  ├─ Core/
 │  │  ├─ EnemyBrain.cs
@@ -383,25 +385,69 @@ Player HFSM
 
 - `PlayerCompositeState` 表示 `Grounded`、`Airborne`、`Action`、`Disabled`
 - 叶子状态负责具体行为，例如 `PlayerMoveState`
-- 如果第一版时间紧，可以先只实现一层状态机，但 `PlayerStateId` 要保留层级命名
+- 第一版必须实现真正的 HFSM，采用“单状态树 + 活动路径”模型
+- 生命周期顺序固定为：Enter/Tick/FixedTick 父到子，Exit 子到父
+- 跨分支切换使用 LCA（最近公共祖先）计算退出与进入路径
+- 不在每个复合状态内部嵌套独立状态机，也不退化为只保留层级命名的普通 FSM
 
 状态 Id 示例：
 
 ```csharp
 public enum PlayerStateId
 {
+    None,
+
+    Grounded,
     GroundedIdle,
     GroundedMove,
     GroundedSprint,
+
+    Airborne,
     AirborneJump,
     AirborneFall,
+
+    Action,
     ActionAttack,
     ActionSkill,
     ActionDodge,
+
+    Disabled,
     DisabledHurt,
     DisabledDead
 }
 ```
+
+#### HFSM 运行契约
+
+状态机采用“先注册、后初始化”的两阶段流程：
+
+1. 创建每个 State 实例并注册到 `PlayerStateMachine`
+2. `Initialize` 统一校验状态树并进入初始活动路径
+3. 初始化开始后锁定注册表，运行期间不能继续添加或替换 State
+
+注册表锁定只限制状态树结构，不影响运行期间在已注册状态之间切换。
+
+每个 Player 的每种 State 只创建并注册一个实例，在整个 Player 生命周期内复用。State 的临时运行数据由各自的 `Enter` 重置，不在每次进入状态时重新实例化。
+
+复合状态允许作为切换目标，并自动展开到默认叶子状态：
+
+```text
+Grounded → GroundedIdle
+Airborne → AirborneFall
+Action → ActionAttack
+Disabled → DisabledHurt
+```
+
+当 `Transition Evaluator` 已经确定具体行为时，应直接请求目标叶子状态。例如有移动输入时直接请求 `GroundedMove`，不依赖 `Grounded` 的默认展开。
+
+状态切换语义：
+
+- 请求切换到当前活动叶子状态时不执行任何 Exit/Enter，切换结果视为无变化
+- `Enter`、`Exit`、`Tick`、`FixedTick` 回调执行期间禁止重入切换；如果回调内部直接请求切换，立即抛出错误
+- State 不直接持有状态机并调用切换；切换请求由外部 `PlayerTransitionEvaluator` 生成，状态机只执行已经批准的请求
+- State 生命周期回调自身抛出异常时，状态机不尝试回滚，异常继续向上传递；该状态机实例视为不可继续使用，应由上层终止当前 Player 初始化或运行流程
+
+不执行自动回滚的原因是 State 回调可能已经触发动画、事件或其他外部副作用，单独恢复活动路径无法保证外部世界同步恢复。
 
 ### 6.4 HFSM 各层职责
 
@@ -1027,11 +1073,11 @@ EnemyBehaviorConfigSO
 按项目和模块划分：
 
 ```csharp
-ProtocolEvac.Player
-ProtocolEvac.Player.Input
-ProtocolEvac.Player.FSM
-ProtocolEvac.Player.Transition
-ProtocolEvac.Player.Ability
+Module.Player
+Module.Player.Input
+Module.Player.HFSM
+Module.Player.Transition
+Module.Player.Ability
 ProtocolEvac.Enemy
 ProtocolEvac.Enemy.BT
 ProtocolEvac.Enemy.Utility
@@ -1040,23 +1086,21 @@ ProtocolEvac.AI.BT
 ProtocolEvac.AI.Utility
 ```
 
-如果你后续确定公司名或工作室名，可以改为：
-
-```csharp
-Qiqizizzz.ProtocolEvac.Player
-```
+Player 模块当前统一沿用 `Module.Player.*`，本阶段不调整已有命名空间。Enemy 与通用 AI 模块的命名空间在开始实现前另行确认。
 
 ## 12. 第一阶段落地顺序
 
-### 阶段 1：Context、Input Buffer 与 Player 基础
+### 阶段 1：Player HFSM 与移动基础
 
-1. 创建 `PlayerContext`
-2. 创建 `PlayerController`
-3. 创建 `PlayerMotor`
-4. 创建 `PlayerInputReader`、`PlayerInputBuffer`
-5. 创建 `PlayerStateBase`、`PlayerStateMachine`、`PlayerStateId`
-6. 实现 `GroundedIdle`、`GroundedMove`、`AirborneJump`、`AirborneFall`、`DisabledDead`
-7. 确认输入缓存、移动、跳跃、落地、死亡流程稳定
+1. 创建并验证 `PlayerStateId`、`BasePlayerState`、`PlayerCompositeState`
+2. 创建 `PlayerStateMachine`，完成状态注册、状态树校验、默认子状态展开、活动路径维护与 LCA 切换
+3. 创建 `PlayerContext`
+4. 创建 `PlayerController`
+5. 创建 `PlayerMotor`
+6. 实现 `Grounded`、`GroundedIdle`、`GroundedMove`
+7. 实现 `Airborne`、`AirborneJump`、`AirborneFall`
+8. 安装 New Input System 后创建 `PlayerInputReader`、`PlayerInputBuffer`
+9. 确认输入缓存、移动、跳跃与落地流程稳定
 
 ### 阶段 2：Ability 与 Transition Evaluator
 
@@ -1231,7 +1275,7 @@ Qiqizizzz.ProtocolEvac.Player
 - 每个文件只定义一个类
 - 文件名与类名一致
 - `SerializeField private` 字段使用 PascalCase
-- 纯私有字段使用 `_camelCase`
+- 纯私有字段使用 `m_` + camelCase
 - 所有成员显式声明访问修饰符
 - 必要引用在 `Awake` 中检查，编辑器下主动 `Debug.LogError`
 - Unity 生命周期方法不强制添加注释

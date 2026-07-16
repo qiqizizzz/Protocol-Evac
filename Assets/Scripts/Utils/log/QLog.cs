@@ -6,7 +6,9 @@
  * └──────────────────────────────────┘
  */
 
+using System;
 using System.Diagnostics;
+using System.Runtime.ExceptionServices;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
 
@@ -22,5 +24,20 @@ namespace Utils.log
 
         [Conditional("UNITY_EDITOR")]
         public static void Error(object msg) => Debug.LogError(msg);
+
+        /// <summary>
+        /// 在编辑器中记录异常，并在所有构建中抛出异常
+        /// </summary>
+        /// <param name="exception">需要抛出的异常</param>
+        public static void Throw(Exception exception)
+        {
+            if (exception == null)
+                throw new ArgumentNullException(nameof(exception));
+
+#if UNITY_EDITOR
+            Debug.LogException(exception);
+#endif
+            ExceptionDispatchInfo.Capture(exception).Throw();
+        }
     }
 }

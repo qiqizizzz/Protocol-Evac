@@ -1,9 +1,7 @@
 {
-    "name": "Player",
+    "name": "Utils.log",
     "rootNamespace": "",
-    "references": [
-        "GUID:d9896f2ff55c04848831e2011e3df0c5"
-    ],
+    "references": [],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
