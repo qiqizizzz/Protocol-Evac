@@ -348,6 +348,13 @@ namespace Module.Player.HFSM
         // 校验状态机是否正常执行
         private bool isStateMachineValid(string operationName)
         {
+            if (m_isExecutingLifecycle)
+            {
+                QLog.Throw(new System.InvalidOperationException(
+                    $"状态机正在执行生命周期方法，禁止重入调用：{operationName}"));
+                return false;
+            }
+
             if (!IsInited)
             {
                 QLog.Error($"状态机未初始化，不能执行：{operationName}");
@@ -357,12 +364,6 @@ namespace Module.Player.HFSM
             if (IsFaulted)
             {
                 QLog.Error($"状态机处于故障状态，不能执行：{operationName}");
-                return false;
-            }
-
-            if (m_isExecutingLifecycle)
-            {
-                QLog.Error($"状态机正在执行生命周期方法，不能执行：{operationName}");
                 return false;
             }
 
