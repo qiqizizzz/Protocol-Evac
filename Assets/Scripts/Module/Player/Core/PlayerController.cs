@@ -11,6 +11,7 @@ using Module.Player.Config.Move;
 using Module.Player.Context;
 using Module.Player.HFSM;
 using Module.Player.HFSM.States.Ground;
+using Module.Player.Input;
 using UnityEngine;
 using Utils.log;
 
@@ -22,10 +23,13 @@ namespace Module.Player.Core
         [Tooltip("玩家移动配置")]
         [SerializeField] private PlayerMoveConfigSO MoveConfig;
         
+        // ==================== 状态机相关 ====================
         private Transform m_transform;
         private PlayerMotor m_motor;
         private PlayerStateMachine m_stateMachine;
         private CharacterController m_characterController;
+
+        private PlayerInputReader m_inputReader;
         
         private PlayerContext m_context;
         
@@ -38,6 +42,9 @@ namespace Module.Player.Core
             m_characterController = GetComponent<CharacterController>();
             
             m_context = new PlayerContext(m_transform);
+            m_inputReader = new PlayerInputReader();
+            m_inputReader.Init(m_context);
+            
             m_motor = new PlayerMotor();
             m_motor.Init(m_characterController, m_context, MoveConfig);
 
@@ -46,6 +53,7 @@ namespace Module.Player.Core
 
         private void Update()
         {
+            m_inputReader.Tick();
             m_stateMachine.Tick(Time.deltaTime);
         }
 
@@ -54,6 +62,12 @@ namespace Module.Player.Core
             m_stateMachine.FixedTick(Time.fixedDeltaTime);
             m_motor.FixedTick(Time.fixedDeltaTime);
         }
+
+        private void OnDestroy()
+        {
+            m_inputReader.UnInit();
+        }
+
         #endregion
 
         private void RegisterAllStates()
