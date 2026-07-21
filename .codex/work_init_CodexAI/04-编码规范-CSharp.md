@@ -330,12 +330,18 @@ if (isReady)   // ✅ 正确，括号内多行使用大括号
 
 ### 访问修饰符
 
-- 所有成员**必须**显式声明访问修饰符
+- 普通类、结构体等类型中的成员**必须**显式声明访问修饰符
+- 接口成员默认即为 `public`，不要求重复显式声明访问修饰符
 - 能用 `private` 就不用 `protected`，能用 `protected` 就不用 `public`
 
 ```csharp
 [SerializeField] private float MoveSpeed;  // ✅ 正确
 float MoveSpeed;                            // ❌ 缺少访问修饰符
+
+public interface IDamageable
+{
+    void TakeDamage(float damage);          // ✅ 正确，接口成员无需重复声明 public
+}
 ```
 
 ### 其他风格约定
@@ -488,7 +494,7 @@ private void OnDisable()
 | 协程中 `new WaitForSeconds()`      | 提前缓存为静态只读字段                            |
 | `other.tag == "xxx"` 比较 Tag      | 使用 `other.CompareTag("xxx")`                    |
 | 公共字段暴露给外部                 | 使用 `[SerializeField] private` + 属性            |
-| 缺少访问修饰符                     | 所有成员显式声明                                  |
+| 普通类型成员缺少访问修饰符         | 显式声明访问修饰符；接口成员可省略 `public`       |
 | 缺少文件头注释块                   | 每个 `.cs` 文件顶部必须添加标准文件头             |
 | SerializeField 字段用 `m_` 前缀    | SerializeField 统一使用 PascalCase                |
 | 纯私有字段无前缀                   | 纯私有字段统一使用 `m_` 前缀                      |

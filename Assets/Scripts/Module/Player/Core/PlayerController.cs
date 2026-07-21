@@ -12,6 +12,8 @@ using Module.Player.Context;
 using Module.Player.HFSM;
 using Module.Player.HFSM.States.Ground;
 using Module.Player.Input;
+using Module.Player.Transition;
+using Module.Player.Transition.Rules;
 using UnityEngine;
 using Utils.log;
 
@@ -27,6 +29,7 @@ namespace Module.Player.Core
         private Transform m_transform;
         private PlayerMotor m_motor;
         private PlayerStateMachine m_stateMachine;
+        private StateSelector m_stateSelector;
         private CharacterController m_characterController;
 
         private PlayerInputReader m_inputReader;
@@ -49,11 +52,13 @@ namespace Module.Player.Core
             m_motor.Init(m_characterController, m_context, MoveConfig);
 
             RegisterAllStates();
+            m_stateSelector = new StateSelector(m_stateMachine, MoveRules.Create(m_context));
         }
 
         private void Update()
         {
             m_inputReader.Tick();
+            m_stateSelector.Tick();
             m_stateMachine.Tick(Time.deltaTime);
         }
 
