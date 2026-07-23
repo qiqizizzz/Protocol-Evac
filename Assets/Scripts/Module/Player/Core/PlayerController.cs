@@ -60,10 +60,11 @@ namespace Module.Player.Core
             m_motor = new PlayerMotor();
             m_motor.Init(m_characterController, m_context, MoveConfig);
 
-            m_animatorDriver = new PlayerAnimatorDriver();
-            m_animatorDriver.Init(m_animator, m_context);
-
             RegisterAllStates();
+
+            m_animatorDriver = new PlayerAnimatorDriver();
+            m_animatorDriver.Init(m_animator, m_context, m_stateMachine, MoveConfig);
+
             m_stateSelector = new StateSelector(m_stateMachine, MoveRules.Create(m_context));
             m_isInited = true;
         }
