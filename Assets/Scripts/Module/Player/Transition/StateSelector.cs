@@ -6,10 +6,10 @@
 * └────────────────────────────────────────────────────┘
 */
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using Module.Player.HFSM;
+using Utils.log;
 
 namespace Module.Player.Transition
 {
@@ -23,12 +23,33 @@ namespace Module.Player.Transition
         /// </summary>
         /// <param name="stateMachine">玩家层级状态机</param>
         /// <param name="rules">需要参与裁决的状态转换规则</param>
-        public StateSelector(
-            PlayerStateMachine stateMachine,
-            IEnumerable<StateRule> rules)
+        public StateSelector(PlayerStateMachine stateMachine, IEnumerable<StateRule> rules)
         {
-            m_stateMachine = stateMachine ?? throw new ArgumentNullException(nameof(stateMachine));
-            m_rules = (rules ?? throw new ArgumentNullException(nameof(rules)))
+            m_stateMachine = stateMachine;
+
+            if (m_stateMachine == null)
+                QLog.Error("创建状态选择器失败：stateMachine 为空");
+
+            if (rules == null)
+            {
+                QLog.Error("创建状态选择器失败：rules 为空");
+                m_rules = new List<StateRule>();
+                return;
+            }
+
+            List<StateRule> validRules = new List<StateRule>();
+            foreach (StateRule rule in rules)
+            {
+                if (rule == null)
+                {
+                    QLog.Error("创建状态选择器失败：规则集合中存在空规则");
+                    continue;
+                }
+
+                validRules.Add(rule);
+            }
+
+            m_rules = validRules
                 .OrderByDescending(rule => rule.Level)
                 .ThenByDescending(rule => rule.Order)
                 .ToList();
@@ -37,6 +58,9 @@ namespace Module.Player.Transition
         // 按优先级选择本帧第一条有效规则并提交状态转换
         public void Tick()
         {
+            if (m_stateMachine == null)
+                return;
+
             for (int i = 0; i < m_rules.Count; i++)
             {
                 StateRule rule = m_rules[i];

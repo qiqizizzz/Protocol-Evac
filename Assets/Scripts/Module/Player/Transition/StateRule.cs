@@ -9,6 +9,7 @@
 using System;
 using System.Collections.Generic;
 using Module.Player.HFSM;
+using Utils.log;
 
 namespace Module.Player.Transition
 {
@@ -37,13 +38,16 @@ namespace Module.Player.Transition
             int order = 0)
         {
             if (targetId == PlayerStateId.None)
-                throw new ArgumentException("状态转换规则的目标状态不能是 None", nameof(targetId));
+                QLog.Error("创建状态转换规则失败：目标状态不能是 PlayerStateId.None");
+
+            if (condition == null)
+                QLog.Error("创建状态转换规则失败：condition 为空");
 
             SourceId = sourceId;
             TargetId = targetId;
             Level = level;
             Order = order;
-            m_condition = condition ?? throw new ArgumentNullException(nameof(condition));
+            m_condition = condition;
         }
 
         /// <summary>
@@ -53,8 +57,17 @@ namespace Module.Player.Transition
         /// <returns>规则当前是否可以触发</returns>
         public bool CanApply(IReadOnlyList<PlayerStateId> activeStatePath)
         {
+            if (TargetId == PlayerStateId.None || m_condition == null)
+                return false;
+
             if (SourceId == PlayerStateId.None)
                 return m_condition();
+
+            if (activeStatePath == null)
+            {
+                QLog.Error("规则匹配失败：activeStatePath 为空");
+                return false;
+            }
 
             for (int i = 0; i < activeStatePath.Count; i++)
             {
