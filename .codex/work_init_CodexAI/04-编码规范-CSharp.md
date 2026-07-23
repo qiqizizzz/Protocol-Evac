@@ -219,9 +219,8 @@ private void Awake()
     m_rigidbody = GetComponent<Rigidbody>();
     if (!TryGetComponent<Animator>(out m_animator))
     {
-#if UNITY_EDITOR
-        Debug.LogError($"[{nameof(PlayerController)}] 未找到 Animator：{gameObject.name}");
-#endif
+        QLog.Error($"未找到 Animator：{gameObject.name}");
+        return;
     }
 }
 ```
@@ -356,22 +355,42 @@ public interface IDamageable
 
 ### 日志规范
 
-- 统一使用 `Debug.Log` / `Debug.LogWarning` / `Debug.LogError`
-- 所有日志必须包裹在 `#if UNITY_EDITOR` 中，**不允许**在 Release 构建中输出日志
-- 日志格式统一为 `[类名] 描述`，方便 Console 过滤定位
+- 项目日志统一使用 `QLog.Info` / `QLog.Warning` / `QLog.Error`
+- 使用日志的文件必须引用 `Utils.log`
+- 禁止在业务代码中直接使用 `Debug.Log` / `Debug.LogWarning` / `Debug.LogError`
+- `QLog` 已通过 `[Conditional("UNITY_EDITOR")]` 保证 Release 构建自动移除日志调用，调用处不再额外包裹 `#if UNITY_EDITOR`
+- `QLog` 会自动补充调用类名前缀，消息中不要手写 `[类名]`
 
 ```csharp
-#if UNITY_EDITOR
-Debug.Log($"[{nameof(PlayerController)}] 玩家已死亡");
-Debug.LogWarning($"[{nameof(PlayerController)}] 血量低于阈值：{m_currentHealth}");
-Debug.LogError($"[{nameof(PlayerController)}] 未找到 Animator：{gameObject.name}");
-#endif
+using Utils.log;
+
+QLog.Info("玩家已死亡");
+QLog.Warning($"血量低于阈值：{m_currentHealth}");
+QLog.Error($"未找到 Animator：{gameObject.name}");
+```
+
+### 个人项目错误处理策略
+
+本项目是个人项目。配置错误、非法参数和状态异常优先在 Unity Console 中清晰暴露，不为常规校验主动终止整个运行流程。
+
+- 常规校验失败统一使用 `QLog.Error`，不使用 `throw`、`throw new` 或 `QLog.Throw`
+- 记录错误后必须显式选择安全流程，例如 `return`、返回 `false`、跳过无效项或将对象标记为不可用
+- 不能只记录日志后继续执行必然产生空引用或脏状态的代码
+- Release 构建会移除日志调用，因此正确性不能依赖 `QLog.Error` 本身，日志后的控制流保护必须始终保留
+- 除非用户明确要求或第三方 API 自身抛出异常，项目代码不主动引入异常作为普通分支控制
+
+```csharp
+if (targetId == PlayerStateId.None)
+{
+    QLog.Error("创建状态转换规则失败：目标状态不能是 PlayerStateId.None");
+    return;
+}
 ```
 
 ### 必要引用校验（Awake 中强制检查）
 
 对于**必须存在**的引用（SerializeField 拖拽、Find 查找、资源加载），  
-**不要用判空静默跳过**，要在 `#if UNITY_EDITOR` 中主动报错，让问题立刻暴露：
+**不要用判空静默跳过**，要使用 `QLog.Error` 主动报错，并阻止依赖该引用的初始化继续执行：
 
 ```csharp
 private void Awake()
@@ -380,16 +399,17 @@ private void Awake()
     Btn_Battle = transform.Find("Bg/Btn_Battle")?.GetComponent<Button>();
     Btn_Shop   = transform.Find("Bg/Btn_Shop")?.GetComponent<Button>();
 
-#if UNITY_EDITOR
-    if (Txt_Title  == null) Debug.LogError($"[{nameof(YourClass)}] Txt_Title 未找到，请检查层级路径");
-    if (Btn_Battle == null) Debug.LogError($"[{nameof(YourClass)}] Btn_Battle 未找到，请检查层级路径");
-    if (Btn_Shop   == null) Debug.LogError($"[{nameof(YourClass)}] Btn_Shop 未找到，请检查层级路径");
-#endif
+    if (Txt_Title == null || Btn_Battle == null || Btn_Shop == null)
+    {
+        QLog.Error("必要 UI 引用缺失，请检查 Bg 下的层级路径");
+        return;
+    }
+
+    bindEvents();
 }
 ```
 
-> **关键区别**：`#if UNITY_EDITOR` 内的判空是**主动报错**，不是静默跳过。  
-> Release 构建中该代码块完全不存在，零性能开销。
+> **关键区别**：`QLog.Error` 负责让错误在 Editor 中可见，随后的显式控制流负责保证所有构建都不会继续进入无效逻辑。
 
 ### Gizmos 调试绘制
 
@@ -410,10 +430,10 @@ private void OnDrawGizmosSelected()
 
 ### 核心原则
 
-> **该报错的地方就让它报错，不要用判空掩盖配置缺失问题。**
+> **该记录错误的地方必须使用 `QLog.Error` 明确记录，并通过显式控制流保护后续逻辑。**
 
 判空的目的是**保护运行时逻辑**，而不是**隐藏开发期错误**。  
-错误的判空会让 Bug 静默消失，导致调试时无从下手。
+错误的判空会让 Bug 静默消失，导致调试时无从下手；只写日志却继续执行也会制造后续连锁错误。
 
 ### ❌ 禁止：用判空掩盖「应当存在的引用」
 
@@ -424,11 +444,13 @@ private void OnDrawGizmosSelected()
 if (Txt_Title == null)
     Txt_Title = transform.Find("Bg/Txt_Title")?.GetComponent<TextMeshProUGUI>();
 
-// ✅ 正确：直接赋值，找不到就在编辑器下报错
+// ✅ 正确：直接赋值，找不到时记录错误并安全退出
 Txt_Title = transform.Find("Bg/Txt_Title")?.GetComponent<TextMeshProUGUI>();
-#if UNITY_EDITOR
-if (Txt_Title == null) Debug.LogError($"[{nameof(YourClass)}] Txt_Title 未找到");
-#endif
+if (Txt_Title == null)
+{
+    QLog.Error("Txt_Title 未找到");
+    return;
+}
 ```
 
 #### 2. 事件绑定
@@ -438,7 +460,13 @@ if (Txt_Title == null) Debug.LogError($"[{nameof(YourClass)}] Txt_Title 未找�
 if (Btn_Battle != null)
     Btn_Battle.onClick.AddListener(onBattleClick);
 
-// ✅ 正确：直接绑定，引用为空时立刻抛出异常暴露问题
+// ✅ 正确：明确记录配置错误并阻止绑定继续执行
+if (Btn_Battle == null)
+{
+    QLog.Error("Btn_Battle 未配置");
+    return;
+}
+
 Btn_Battle.onClick.AddListener(onBattleClick);
 ```
 
@@ -449,11 +477,13 @@ Btn_Battle.onClick.AddListener(onBattleClick);
 if (ResKit.LoadGameObj("Prefabs/UI/UI_AllCardPanel") == null)
     return;
 
-// ✅ 正确：加载后校验，失败时明确报错
+// ✅ 正确：加载后校验，失败时明确记录并退出
 var prefab = ResKit.LoadGameObj("Prefabs/UI/UI_AllCardPanel");
-#if UNITY_EDITOR
-if (prefab == null) Debug.LogError("[YourClass] 资源加载失败：Prefabs/UI/UI_AllCardPanel");
-#endif
+if (prefab == null)
+{
+    QLog.Error("资源加载失败：Prefabs/UI/UI_AllCardPanel");
+    return;
+}
 ```
 
 ### ✅ 允许：真正需要判空的场景
@@ -498,5 +528,7 @@ private void OnDisable()
 | 缺少文件头注释块                   | 每个 `.cs` 文件顶部必须添加标准文件头             |
 | SerializeField 字段用 `m_` 前缀    | SerializeField 统一使用 PascalCase                |
 | 纯私有字段无前缀                   | 纯私有字段统一使用 `m_` 前缀                      |
-| 必要引用判空后静默跳过             | `#if UNITY_EDITOR` 内用 `Debug.LogError` 主动报错 |
-| 日志散落在 Release 构建中          | 所有日志包裹在 `#if UNITY_EDITOR` 中              |
+| 必要引用判空后静默跳过             | 使用 `QLog.Error` 记录并显式安全退出               |
+| 使用 `throw` / `QLog.Throw` 做常规校验 | 使用 `QLog.Error` 并返回、跳过或标记无效           |
+| 直接调用 `Debug.Log*`              | 统一调用 `QLog.Info/Warning/Error`                 |
+| 手动包裹 `#if UNITY_EDITOR` 日志    | 由 `QLog` 的 `Conditional` 自动处理                |
