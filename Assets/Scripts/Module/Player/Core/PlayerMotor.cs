@@ -22,11 +22,7 @@ namespace Module.Player.Core
         private PlayerViewConfigSO m_viewConfig;
         
         // 初始化玩家移动执行器
-        public void Init(
-            CharacterController characterController,
-            PlayerContext context,
-            PlayerMoveConfigSO moveConfig,
-            PlayerViewConfigSO viewConfig)
+        public void Init(CharacterController characterController, PlayerContext context, PlayerMoveConfigSO moveConfig, PlayerViewConfigSO viewConfig)
         {
             m_characterController = characterController;
             m_context = context;

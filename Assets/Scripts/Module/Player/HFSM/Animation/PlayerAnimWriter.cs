@@ -26,18 +26,6 @@ namespace Module.Player.HFSM.Animation
         // 初始化玩家动画写入器依赖
         public void Init(Animator animator, PlayerAnimResolver resolver)
         {
-            if (animator == null)
-            {
-                QLog.Error("初始化玩家动画写入器失败：Animator 为空");
-                return;
-            }
-
-            if (resolver == null)
-            {
-                QLog.Error("初始化玩家动画写入器失败：PlayerAnimResolver 为空");
-                return;
-            }
-
             m_animator = animator;
             m_resolver = resolver;
             m_animator.applyRootMotion = false;

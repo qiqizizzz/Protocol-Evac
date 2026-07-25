@@ -19,22 +19,8 @@ namespace Module.Player.HFSM.Animation
         private bool m_isInited;
 
         // 初始化玩家动画参数解析器依赖
-        public void Init(
-            PlayerStateMachine stateMachine,
-            IReadOnlyDictionary<PlayerStateId, PlayerAnimRule.ResolveHandler> handlers)
+        public void Init(PlayerStateMachine stateMachine, IReadOnlyDictionary<PlayerStateId, PlayerAnimRule.ResolveHandler> handlers)
         {
-            if (stateMachine == null)
-            {
-                QLog.Error("初始化玩家动画参数解析器失败：PlayerStateMachine 为空");
-                return;
-            }
-
-            if (handlers == null)
-            {
-                QLog.Error("初始化玩家动画参数解析器失败：动画规则集合为空");
-                return;
-            }
-
             m_stateMachine = stateMachine;
             m_handlers = handlers;
             m_isInited = true;

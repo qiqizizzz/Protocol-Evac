@@ -21,18 +21,8 @@ namespace Module.Player.Core.View
         private Camera m_playerCamera;
 
         // 初始化玩家视角控制器
-        public void Init(
-            PlayerContext context,
-            PlayerViewConfigSO viewConfig,
-            Transform viewRoot,
-            Camera playerCamera)
+        public void Init(PlayerContext context, PlayerViewConfigSO viewConfig, Transform viewRoot, Camera playerCamera)
         {
-            if (context == null || viewConfig == null || viewRoot == null || playerCamera == null)
-            {
-                QLog.Error("玩家视角初始化失败：Context、ViewConfig、ViewRoot 或 PlayerCamera 为空");
-                return;
-            }
-
             m_context = context;
             m_viewConfig = viewConfig;
             m_viewRoot = viewRoot;

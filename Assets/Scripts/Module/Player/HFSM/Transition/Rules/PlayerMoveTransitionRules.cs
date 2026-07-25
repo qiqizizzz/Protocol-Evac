@@ -26,17 +26,11 @@ namespace Module.Player.HFSM.Transition.Rules
         {
             return new PlayerTransitionRule[]
             {
-                new PlayerTransitionRule(
-                    PlayerStateId.GroundedIdle,
-                    PlayerStateId.GroundedMove,
-                    PlayerTransitionPriority.Move,
-                    () => canMove(context)),
+                new PlayerTransitionRule(PlayerStateId.GroundedIdle, PlayerStateId.GroundedMove,
+                    PlayerTransitionPriority.Move, () => canMove(context)),
 
-                new PlayerTransitionRule(
-                    PlayerStateId.GroundedMove,
-                    PlayerStateId.GroundedIdle,
-                    PlayerTransitionPriority.Move,
-                    () => !canMove(context))
+                new PlayerTransitionRule(PlayerStateId.GroundedMove, PlayerStateId.GroundedIdle,
+                    PlayerTransitionPriority.Move, () => !canMove(context))
             };
         }
 

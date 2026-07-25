@@ -30,12 +30,8 @@ namespace Module.Player.HFSM.Transition
         /// <param name="priority">规则优先级</param>
         /// <param name="condition">规则触发条件</param>
         /// <param name="order">同层级规则的优先顺序，数值越大越优先</param>
-        public PlayerTransitionRule(
-            PlayerStateId sourceId,
-            PlayerStateId targetId,
-            PlayerTransitionPriority priority,
-            Func<bool> condition,
-            int order = 0)
+        public PlayerTransitionRule(PlayerStateId sourceId, PlayerStateId targetId, PlayerTransitionPriority priority,
+            Func<bool> condition, int order = 0)
         {
             if (targetId == PlayerStateId.None)
                 QLog.Error("创建状态转换规则失败：目标状态不能是 PlayerStateId.None");
