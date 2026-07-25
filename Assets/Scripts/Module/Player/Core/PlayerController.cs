@@ -20,12 +20,16 @@ using Module.Player.HFSM.Transition.Binders;
 using Module.Player.HFSM.Transition.Rules;
 using Module.Player.Input;
 using UnityEngine;
+using Utils.Find;
 using Utils.log;
 
 namespace Module.Player.Core
 {
     public class PlayerController : MonoBehaviour
     {
+        private const string VIEW_ROOT_PATH = "ViewRoot";
+        private const string PLAYER_CAMERA_PATH = "ViewRoot/PlayerCamera";
+
         public PlayerContext Context => m_context;
         
         [Header("移动配置")]
@@ -42,6 +46,8 @@ namespace Module.Player.Core
         private PlayerViewController m_viewController;
         private PlayerStateMachine m_stateMachine;
         private CharacterController m_characterController;
+        private Transform m_viewRoot;
+        private Camera m_playerCamera;
         //Anim
         private PlayerAnimWriter m_animWriter;
         private PlayerAnimBinder m_animBinder;
@@ -60,10 +66,16 @@ namespace Module.Player.Core
             m_transform = transform;
             m_characterController = GetComponent<CharacterController>();
             m_animator = GetComponentInChildren<Animator>();
+            findViewReferences();
 
-            if (m_characterController == null || m_animator == null || MoveConfig == null || ViewConfig == null)
+            if (m_characterController == null
+                || m_animator == null
+                || MoveConfig == null
+                || ViewConfig == null
+                || m_viewRoot == null
+                || m_playerCamera == null)
             {
-                QLog.Error("玩家初始化失败：必要引用缺失，请检查 CharacterController、Animator、MoveConfig 与 ViewConfig");
+                QLog.Error("玩家初始化失败：必要引用缺失，请检查 CharacterController、Animator、MoveConfig、ViewConfig、ViewRoot 与 PlayerCamera");
                 return;
             }
 
@@ -111,6 +123,13 @@ namespace Module.Player.Core
             m_viewController.SetViewMode(viewMode);
         }
 
+        // 查找玩家视角层级引用
+        private void findViewReferences()
+        {
+            m_viewRoot = this.FindChild(VIEW_ROOT_PATH);
+            m_playerCamera = this.FindChildComponent<Camera>(PLAYER_CAMERA_PATH);
+        }
+
         #region 初始化
         // 初始化玩家核心运行依赖
         private void initCore()
@@ -123,7 +142,7 @@ namespace Module.Player.Core
             m_motor.Init(m_characterController, m_context, MoveConfig, ViewConfig);
 
             m_viewController = new PlayerViewController();
-            m_viewController.Init(m_context, ViewConfig);
+            m_viewController.Init(m_context, ViewConfig, m_viewRoot, m_playerCamera);
         }
 
         // 初始化玩家状态机与状态转换

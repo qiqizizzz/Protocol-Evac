@@ -17,21 +17,30 @@ namespace Module.Player.Core.View
     {
         private PlayerContext m_context;
         private PlayerViewConfigSO m_viewConfig;
+        private Transform m_viewRoot;
+        private Camera m_playerCamera;
 
         // 初始化玩家视角控制器
-        public void Init(PlayerContext context, PlayerViewConfigSO viewConfig)
+        public void Init(
+            PlayerContext context,
+            PlayerViewConfigSO viewConfig,
+            Transform viewRoot,
+            Camera playerCamera)
         {
-            if (context == null || viewConfig == null)
+            if (context == null || viewConfig == null || viewRoot == null || playerCamera == null)
             {
-                QLog.Error("玩家视角初始化失败：Context 或 ViewConfig 为空");
+                QLog.Error("玩家视角初始化失败：Context、ViewConfig、ViewRoot 或 PlayerCamera 为空");
                 return;
             }
 
             m_context = context;
             m_viewConfig = viewConfig;
+            m_viewRoot = viewRoot;
+            m_playerCamera = playerCamera;
             m_context.ViewMode = m_viewConfig.DefaultViewMode;
             m_context.CameraYaw = m_context.Transform.eulerAngles.y;
             m_context.CameraPitch = 0f;
+            refreshCameraTransform();
         }
 
         // 更新玩家视角数据
@@ -45,6 +54,8 @@ namespace Module.Player.Core.View
 
             if (m_context.ViewMode == PlayerViewMode.FirstPerson)
                 rotateBodyByLookYaw();
+
+            refreshCameraTransform();
         }
 
         // 切换玩家视角模式
@@ -55,6 +66,7 @@ namespace Module.Player.Core.View
 
             m_context.ViewMode = viewMode;
             m_context.CameraYaw = m_context.Transform.eulerAngles.y;
+            refreshCameraTransform();
         }
 
         // 根据输入更新视角水平角与俯仰角
@@ -76,6 +88,29 @@ namespace Module.Player.Core.View
         private void rotateBodyByLookYaw()
         {
             m_context.Transform.rotation = Quaternion.Euler(0f, m_context.CameraYaw, 0f);
+        }
+
+        // 根据当前视角模式刷新相机枢轴与相机本地位置
+        private void refreshCameraTransform()
+        {
+            if (m_viewRoot == null || m_playerCamera == null)
+                return;
+
+            Quaternion viewRotation = Quaternion.Euler(m_context.CameraPitch, m_context.CameraYaw, 0f);
+
+            if (m_context.ViewMode == PlayerViewMode.FirstPerson)
+            {
+                m_viewRoot.position = m_context.Transform.position + m_viewConfig.FirstPersonCameraOffset;
+                m_viewRoot.rotation = viewRotation;
+                m_playerCamera.transform.localPosition = Vector3.zero;
+                m_playerCamera.transform.localRotation = Quaternion.identity;
+                return;
+            }
+
+            m_viewRoot.position = m_context.Transform.position + m_viewConfig.ThirdPersonPivotOffset;
+            m_viewRoot.rotation = viewRotation;
+            m_playerCamera.transform.localPosition = new Vector3(0f, 0f, -m_viewConfig.ThirdPersonDistance);
+            m_playerCamera.transform.localRotation = Quaternion.identity;
         }
     }
 }
