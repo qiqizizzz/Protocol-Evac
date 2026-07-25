@@ -23,7 +23,7 @@ namespace Utils.Find
                 return null;
             }
 
-            return owner.transform.FindChild(path);
+            return owner.transform.Find(path);
         }
 
         // 从GameObject所在节点下查找子节点GameObject
@@ -83,7 +83,7 @@ namespace Utils.Find
                 return null;
             }
 
-            return owner.transform.FindChild(path);
+            return owner.transform.Find(path);
         }
 
         // 从组件所在节点下查找子节点GameObject
@@ -130,14 +130,14 @@ namespace Utils.Find
         // 从指定根节点下查找子节点GameObject
         public static GameObject FindChildGo(this Transform root, string path)
         {
-            Transform target = root.FindChild(path);
+            Transform target = root.Find(path);
             return target != null ? target.gameObject : null;
         }
 
         // 从指定根节点下查找子节点组件
         public static T FindChildComponent<T>(this Transform root, string path) where T : Component
         {
-            Transform target = root.FindChild(path);
+            Transform target = root.Find(path);
             return getComponent<T>(target, path);
         }
         #endregion
