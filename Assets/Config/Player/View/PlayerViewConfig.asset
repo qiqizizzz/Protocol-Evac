@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a90aab8fcb4c6c4ab765d71bae5d866, type: 3}
+  m_Name: PlayerViewConfig
+  m_EditorClassIdentifier: 
+  DefaultViewModeValue: 0
+  FirstPersonYawSpeedValue: 180
+  FirstPersonPitchSpeedValue: 180
+  FirstPersonCameraOffsetValue: {x: 0, y: 1.65, z: 0}
+  ThirdPersonYawSpeedValue: 180
+  ThirdPersonPitchSpeedValue: 180
+  ThirdPersonBodyTurnSpeedValue: 720
+  ThirdPersonDistanceValue: 4
+  ThirdPersonPivotOffsetValue: {x: 0, y: 1.5, z: 0}
+  PitchMinValue: -60
+  PitchMaxValue: 75

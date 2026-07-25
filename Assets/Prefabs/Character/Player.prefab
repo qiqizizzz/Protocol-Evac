@@ -47,6 +47,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   MoveConfig: {fileID: 11400000, guid: f6f3c8a1cc0173c439adb7439e75ead8, type: 2}
+  ViewConfig: {fileID: 11400000, guid: 0cd196151569e14499d7801fe9fda3af, type: 2}
 --- !u!143 &653435299708972544
 CharacterController:
   m_ObjectHideFlags: 0
@@ -141,6 +142,11 @@ PrefabInstance:
       propertyPath: m_Controller
       value: 
       objectReference: {fileID: 9100000, guid: a7574bbc84b05674095aea942483cc0f, type: 2}
+    - target: {fileID: 5866666021909216657, guid: 92f4595cc7485c344980272ef2ab1fa7,
+        type: 3}
+      propertyPath: m_ApplyRootMotion
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

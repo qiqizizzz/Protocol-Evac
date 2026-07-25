@@ -7,7 +7,9 @@
  */
 
 using Module.Player.Config.Move;
+using Module.Player.Config.View;
 using Module.Player.Context;
+using Module.Player.Core.View;
 using Module.Player.HFSM;
 using Module.Player.HFSM.Animation;
 using Module.Player.HFSM.Animation.Binders;
@@ -29,11 +31,15 @@ namespace Module.Player.Core
         [Header("移动配置")]
         [Tooltip("玩家移动配置")]
         [SerializeField] private PlayerMoveConfigSO MoveConfig;
+        [Header("视角配置")]
+        [Tooltip("玩家视角配置")]
+        [SerializeField] private PlayerViewConfigSO ViewConfig;
         
         // ==================== 状态机相关 ====================
         private Transform m_transform;
         private Animator m_animator;
         private PlayerMotor m_motor;
+        private PlayerViewController m_viewController;
         private PlayerStateMachine m_stateMachine;
         private CharacterController m_characterController;
         //Anim
@@ -55,9 +61,9 @@ namespace Module.Player.Core
             m_characterController = GetComponent<CharacterController>();
             m_animator = GetComponentInChildren<Animator>();
 
-            if (m_characterController == null || m_animator == null || MoveConfig == null)
+            if (m_characterController == null || m_animator == null || MoveConfig == null || ViewConfig == null)
             {
-                QLog.Error("玩家初始化失败：必要引用缺失，请检查 CharacterController、Animator 与 MoveConfig");
+                QLog.Error("玩家初始化失败：必要引用缺失，请检查 CharacterController、Animator、MoveConfig 与 ViewConfig");
                 return;
             }
 
@@ -74,6 +80,7 @@ namespace Module.Player.Core
                 return;
 
             m_inputReader.Tick();
+            m_viewController.Tick(Time.deltaTime);
             m_transitionSelector.Tick();
             m_stateMachine.Tick(Time.deltaTime);
             m_animWriter.Tick(Time.deltaTime);
@@ -95,6 +102,15 @@ namespace Module.Player.Core
         }
         #endregion
 
+        // 切换玩家视角模式
+        public void SetViewMode(PlayerViewMode viewMode)
+        {
+            if (!isRuntimeReady())
+                return;
+
+            m_viewController.SetViewMode(viewMode);
+        }
+
         #region 初始化
         // 初始化玩家核心运行依赖
         private void initCore()
@@ -104,7 +120,10 @@ namespace Module.Player.Core
             m_inputReader.Init(m_context);
 
             m_motor = new PlayerMotor();
-            m_motor.Init(m_characterController, m_context, MoveConfig);
+            m_motor.Init(m_characterController, m_context, MoveConfig, ViewConfig);
+
+            m_viewController = new PlayerViewController();
+            m_viewController.Init(m_context, ViewConfig);
         }
 
         // 初始化玩家状态机与状态转换
@@ -155,7 +174,8 @@ namespace Module.Player.Core
                 && m_animBinder != null
                 && m_animResolver != null
                 && m_animWriter != null
-                && m_motor != null;
+                && m_motor != null
+                && m_viewController != null;
         }
     }
 }

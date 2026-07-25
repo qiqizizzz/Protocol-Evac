@@ -7,6 +7,7 @@
  */
 
 using UnityEngine;
+using Module.Player.Core.View;
 using Utils.log;
 
 namespace Module.Player.Context
@@ -26,6 +27,12 @@ namespace Module.Player.Context
         // ==================== 输入相关 ====================
         public bool IsSprintPressed { get; set; } //是否按住疾跑输入
         public bool IsInputLocked { get; set; } //是否输入被禁止
+
+        // ==================== 视角相关 ====================
+        public Vector2 LookInput { get; set; } //视角输入
+        public PlayerViewMode ViewMode { get; set; } //当前视角模式
+        public float CameraYaw { get; set; } //相机水平角
+        public float CameraPitch { get; set; } //相机俯仰角
 
         public PlayerContext(Transform transform)
         {
@@ -49,6 +56,10 @@ namespace Module.Player.Context
             IsGrounded = false;
             IsSprintPressed = false;
             IsInputLocked = false;
+            LookInput = Vector2.zero;
+            ViewMode = PlayerViewMode.FirstPerson;
+            CameraYaw = Transform != null ? Transform.eulerAngles.y : 0f;
+            CameraPitch = 0f;
         }
     }
 }

@@ -7,7 +7,9 @@
  */
 
 using Module.Player.Config.Move;
+using Module.Player.Config.View;
 using Module.Player.Context;
+using Module.Player.Core.View;
 using UnityEngine;
 
 namespace Module.Player.Core
@@ -17,12 +19,19 @@ namespace Module.Player.Core
         private CharacterController m_characterController;
         private PlayerContext m_context;
         private PlayerMoveConfigSO m_moveConfig;
+        private PlayerViewConfigSO m_viewConfig;
         
-        public void Init(CharacterController characterController, PlayerContext context, PlayerMoveConfigSO moveConfig)
+        // 初始化玩家移动执行器
+        public void Init(
+            CharacterController characterController,
+            PlayerContext context,
+            PlayerMoveConfigSO moveConfig,
+            PlayerViewConfigSO viewConfig)
         {
             m_characterController = characterController;
             m_context = context;
             m_moveConfig = moveConfig;
+            m_viewConfig = viewConfig;
         }
 
         //固定帧移动
@@ -46,6 +55,9 @@ namespace Module.Player.Core
 
             velocity.x = hVelocity.x;
             velocity.z = hVelocity.z;
+
+            if (m_context.ViewMode == PlayerViewMode.ThirdPerson && !m_context.IsMovementLocked)
+                RotateByDirection(m_context.MoveDir, fixedDeltaTime);
             
             //竖直移动
             if (m_characterController.isGrounded && velocity.y < 0f)
@@ -58,6 +70,21 @@ namespace Module.Player.Core
             //更新状态
             m_context.Velocity = velocity;
             m_context.IsGrounded = m_characterController.isGrounded;
+        }
+
+        // 根据移动方向旋转玩家身体
+        public void RotateByDirection(Vector3 moveDirection, float deltaTime)
+        {
+            moveDirection.y = 0f;
+
+            if (moveDirection.sqrMagnitude <= 0.01f)
+                return;
+
+            Quaternion targetRotation = Quaternion.LookRotation(moveDirection.normalized);
+            m_context.Transform.rotation = Quaternion.RotateTowards(
+                m_context.Transform.rotation,
+                targetRotation,
+                m_viewConfig.ThirdPersonBodyTurnSpeed * deltaTime);
         }
     }
 }
