@@ -1,7 +1,7 @@
 /*
 * ┌────────────────────────────────────────────────────┐
-* │  描    述: 玩家状态选择器，按优先级裁决并提交转换规则
-* │  类    名: StateSelector.cs
+* │  描    述: 玩家状态转换选择器，按优先级裁决并提交转换规则
+* │  类    名: PlayerTransitionSelector.cs
 * │  创    建: By qiqizizzz
 * └────────────────────────────────────────────────────┘
 */
@@ -11,38 +11,38 @@ using System.Linq;
 using Module.Player.HFSM;
 using Utils.log;
 
-namespace Module.Player.Transition
+namespace Module.Player.HFSM.Transition
 {
-    public sealed class StateSelector
+    public sealed class PlayerTransitionSelector
     {
         private readonly PlayerStateMachine m_stateMachine;
-        private readonly List<StateRule> m_rules;
+        private readonly List<PlayerTransitionRule> m_rules;
 
         /// <summary>
-        /// 创建状态选择器并固定规则优先级
+        /// 创建状态转换选择器并固定规则优先级
         /// </summary>
         /// <param name="stateMachine">玩家层级状态机</param>
         /// <param name="rules">需要参与裁决的状态转换规则</param>
-        public StateSelector(PlayerStateMachine stateMachine, IEnumerable<StateRule> rules)
+        public PlayerTransitionSelector(PlayerStateMachine stateMachine, IEnumerable<PlayerTransitionRule> rules)
         {
             m_stateMachine = stateMachine;
 
             if (m_stateMachine == null)
-                QLog.Error("创建状态选择器失败：stateMachine 为空");
+                QLog.Error("创建状态转换选择器失败：stateMachine 为空");
 
             if (rules == null)
             {
-                QLog.Error("创建状态选择器失败：rules 为空");
-                m_rules = new List<StateRule>();
+                QLog.Error("创建状态转换选择器失败：rules 为空");
+                m_rules = new List<PlayerTransitionRule>();
                 return;
             }
 
-            List<StateRule> validRules = new List<StateRule>();
-            foreach (StateRule rule in rules)
+            List<PlayerTransitionRule> validRules = new List<PlayerTransitionRule>();
+            foreach (PlayerTransitionRule rule in rules)
             {
                 if (rule == null)
                 {
-                    QLog.Error("创建状态选择器失败：规则集合中存在空规则");
+                    QLog.Error("创建状态转换选择器失败：规则集合中存在空规则");
                     continue;
                 }
 
@@ -50,7 +50,7 @@ namespace Module.Player.Transition
             }
 
             m_rules = validRules
-                .OrderByDescending(rule => rule.Level)
+                .OrderByDescending(rule => rule.Priority)
                 .ThenByDescending(rule => rule.Order)
                 .ToList();
         }
@@ -63,7 +63,7 @@ namespace Module.Player.Transition
 
             for (int i = 0; i < m_rules.Count; i++)
             {
-                StateRule rule = m_rules[i];
+                PlayerTransitionRule rule = m_rules[i];
 
                 if (!rule.CanApply(m_stateMachine.ActiveStatePath))
                     continue;

@@ -1,14 +1,14 @@
 /*
 * ┌──────────────────────────────────┐
-* │  描    述: 玩家状态转换规则优先级
-* │  类    名: RuleLevel.cs
+* │  描    述: 玩家状态转换优先级
+* │  类    名: PlayerTransitionPriority.cs
 * │  创    建: By qiqizizzz
 * └──────────────────────────────────┘
 */
 
-namespace Module.Player.Transition
+namespace Module.Player.HFSM.Transition
 {
-    public enum RuleLevel
+    public enum PlayerTransitionPriority
     {
         Move = 100,
         Ability = 200,

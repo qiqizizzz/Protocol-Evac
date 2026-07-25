@@ -1,7 +1,7 @@
 /*
 * ┌──────────────────────────────────────────────────┐
 * │  描    述: 玩家状态转换规则，描述来源、目标与触发条件
-* │  类    名: StateRule.cs
+* │  类    名: PlayerTransitionRule.cs
 * │  创    建: By qiqizizzz
 * └──────────────────────────────────────────────────┘
 */
@@ -11,13 +11,13 @@ using System.Collections.Generic;
 using Module.Player.HFSM;
 using Utils.log;
 
-namespace Module.Player.Transition
+namespace Module.Player.HFSM.Transition
 {
-    public sealed class StateRule
+    public sealed class PlayerTransitionRule
     {
         public PlayerStateId SourceId { get; }
         public PlayerStateId TargetId { get; }
-        public RuleLevel Level { get; }
+        public PlayerTransitionPriority Priority { get; }
         public int Order { get; }
 
         private readonly Func<bool> m_condition;
@@ -27,13 +27,13 @@ namespace Module.Player.Transition
         /// </summary>
         /// <param name="sourceId">规则适用的来源状态，None 表示任意状态</param>
         /// <param name="targetId">规则满足时的目标状态</param>
-        /// <param name="level">规则所属优先级层级</param>
+        /// <param name="priority">规则优先级</param>
         /// <param name="condition">规则触发条件</param>
         /// <param name="order">同层级规则的优先顺序，数值越大越优先</param>
-        public StateRule(
+        public PlayerTransitionRule(
             PlayerStateId sourceId,
             PlayerStateId targetId,
-            RuleLevel level,
+            PlayerTransitionPriority priority,
             Func<bool> condition,
             int order = 0)
         {
@@ -45,7 +45,7 @@ namespace Module.Player.Transition
 
             SourceId = sourceId;
             TargetId = targetId;
-            Level = level;
+            Priority = priority;
             Order = order;
             m_condition = condition;
         }

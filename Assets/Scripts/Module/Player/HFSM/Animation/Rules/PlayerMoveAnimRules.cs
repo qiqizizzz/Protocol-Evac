@@ -1,0 +1,67 @@
+/*
+ * ┌──────────────────────────────────┐
+ * │  描    述: 玩家地面移动动画规则集合
+ * │  类    名: PlayerMoveAnimRules.cs
+ * │  创    建: By qiqizizzz
+ * └──────────────────────────────────┘
+ */
+
+using System.Collections.Generic;
+using Module.Player.Config.Move;
+using Module.Player.Context;
+using Module.Player.HFSM;
+using Module.Player.HFSM.Animation;
+using UnityEngine;
+
+namespace Module.Player.HFSM.Animation.Rules
+{
+    public static class PlayerMoveAnimRules
+    {
+        /// <summary>
+        /// 创建地面移动动画规则
+        /// </summary>
+        /// <param name="context">玩家运行时上下文</param>
+        /// <param name="moveConfig">玩家移动配置</param>
+        /// <returns>地面移动动画规则集合</returns>
+        public static IReadOnlyList<PlayerAnimRule> Create(PlayerContext context, PlayerMoveConfigSO moveConfig)
+        {
+            return new PlayerAnimRule[]
+            {
+                new PlayerAnimRule(
+                    PlayerStateId.GroundedIdle,
+                    (ref PlayerAnimParams animParams) => resolveGroundedIdle(context, ref animParams)),
+
+                new PlayerAnimRule(
+                    PlayerStateId.GroundedMove,
+                    (ref PlayerAnimParams animParams) => resolveGroundedMove(context, moveConfig, ref animParams))
+            };
+        }
+
+        #region 解析并绑定动画参数
+        // 解析地面待机动画参数
+        private static void resolveGroundedIdle(PlayerContext context, ref PlayerAnimParams animParams)
+        {
+            animParams.MoveSpeed = getHorizontalSpeed(context);
+        }
+
+        // 解析地面移动动画参数
+        private static void resolveGroundedMove(
+            PlayerContext context,
+            PlayerMoveConfigSO moveConfig,
+            ref PlayerAnimParams animParams)
+        {
+            animParams.IsMoving = true;
+            animParams.IsSprinting = context.TargetMoveSpeed > moveConfig.WalkSpeed;
+            animParams.MoveSpeed = getHorizontalSpeed(context);
+        }
+        #endregion
+
+        // 获取玩家水平速度
+        private static float getHorizontalSpeed(PlayerContext context)
+        {
+            Vector3 velocity = context.Velocity;
+            velocity.y = 0f;
+            return velocity.magnitude;
+        }
+    }
+}
