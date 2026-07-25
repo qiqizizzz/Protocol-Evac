@@ -7,8 +7,8 @@
  */
 
 using Module.Player.Context;
+using Module.Player.Core.View;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 namespace Module.Player.Input
 {
@@ -40,21 +40,12 @@ namespace Module.Player.Input
         {
             m_context.MoveInput = m_inputActions.Player.Move.ReadValue<Vector2>();
             m_context.IsSprintPressed = m_inputActions.Player.Sprint.IsPressed();
-            m_context.LookInput = readLookInput();
-        }
-
-        // 读取当前视角输入
-        private Vector2 readLookInput()
-        {
-            Vector2 lookInput = Vector2.zero;
-
-            if (Mouse.current != null)
-                lookInput += Mouse.current.delta.ReadValue();
-
-            if (Gamepad.current != null)
-                lookInput += Gamepad.current.rightStick.ReadValue();
-
-            return lookInput;
+            m_context.LookInput = m_inputActions.Player.Look.ReadValue<Vector2>();
+            m_context.TargetViewMode = m_inputActions.Player.SwitchToFirstPerson.WasPressedThisFrame()
+                ? PlayerViewMode.FirstPerson
+                : m_inputActions.Player.SwitchToThirdPerson.WasPressedThisFrame()
+                    ? PlayerViewMode.ThirdPerson
+                    : null;
         }
     }
 }

@@ -31,17 +31,12 @@ namespace Module.Player.Context
         // ==================== 视角相关 ====================
         public Vector2 LookInput { get; set; } //视角输入
         public PlayerViewMode ViewMode { get; set; } //当前视角模式
+        public PlayerViewMode? TargetViewMode { get; set; } //请求切换的视角模式
         public float CameraYaw { get; set; } //相机水平角
         public float CameraPitch { get; set; } //相机俯仰角
 
         public PlayerContext(Transform transform)
         {
-            if (transform == null)
-            {
-                QLog.Error("Transform is null");
-                return;
-            }
-            
             Transform = transform;
             ResetRunTimeData();
         }
@@ -58,6 +53,7 @@ namespace Module.Player.Context
             IsInputLocked = false;
             LookInput = Vector2.zero;
             ViewMode = PlayerViewMode.FirstPerson;
+            TargetViewMode = null;
             CameraYaw = Transform != null ? Transform.eulerAngles.y : 0f;
             CameraPitch = 0f;
         }

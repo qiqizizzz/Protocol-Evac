@@ -18,6 +18,7 @@
 |   |
 |   |-- work_init_CodexAI/ ................... 项目权威规范
 |   |   |-- 01-项目宪章与核心原则.md .......... 项目最高原则与红线
+|   |   |-- 02-AI协作与实现边界.md ............. 禁止过度安全化判空规则
 |   |   `-- 04-编码规范-CSharp.md ............. Unity C# 开发权威规范
 |   |
 |   |-- agents/ .............................. Unity MCP 工具说明源
@@ -47,10 +48,11 @@
 阅读顺序：
 
 1. 先读本文件，确认项目级约束与任务入口
-2. 涉及 `.cs` 文件时，完整阅读 `04-编码规范-CSharp.md`
-3. 涉及 Player、HFSM、Ability 或 Enemy AI 时，阅读主设计文档与最新 AI 归档
-4. 操作 Unity Editor 前，先读 `unity-tool-list/SKILL.md`，再读对应工具的 `SKILL.md`
-5. 需要续写交接记录时，读取 `project-archive-record/SKILL.md` 与最近两份 AI 归档
+2. 修改代码前，阅读 `02-AI协作与实现边界.md`，确认不写过度安全化总判空
+3. 涉及 `.cs` 文件时，完整阅读 `04-编码规范-CSharp.md`
+4. 涉及 Player、HFSM、Ability 或 Enemy AI 时，阅读主设计文档与最新 AI 归档
+5. 操作 Unity Editor 前，先读 `unity-tool-list/SKILL.md`，再读对应工具的 `SKILL.md`
+6. 需要续写交接记录时，读取 `project-archive-record/SKILL.md` 与最近两份 AI 归档
 
 新增、移动或删除文档入口时，必须同步更新本地图与 [.codex/功能汇总.md](.codex/功能汇总.md)。Unity MCP 自动生成的工具说明只在地图中保留目录模式，不逐项复制工具清单。
 

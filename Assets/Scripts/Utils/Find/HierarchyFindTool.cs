@@ -13,6 +13,67 @@ namespace Utils.Find
 {
     public static class HierarchyFindTool
     {
+        #region GameObject Extension
+        // 从GameObject所在节点下查找子节点
+        public static Transform FindChild(this GameObject owner, string path)
+        {
+            if (owner == null)
+            {
+                QLog.Error($"查找子节点失败：GameObject 为空，路径 {path}");
+                return null;
+            }
+
+            return owner.transform.FindChild(path);
+        }
+
+        // 从GameObject所在节点下查找子节点GameObject
+        public static GameObject FindChildGo(this GameObject owner, string path)
+        {
+            Transform target = owner.FindChild(path);
+            return target != null ? target.gameObject : null;
+        }
+
+        // 从GameObject所在节点下查找子节点组件
+        public static T FindChildComponent<T>(this GameObject owner, string path) where T : Component
+        {
+            Transform target = owner.FindChild(path);
+            return getComponent<T>(target, path);
+        }
+        #endregion
+
+        #region Component Extension
+        // 获取组件所在节点上的指定组件
+        public static T GetOwnerComponent<T>(this Component owner) where T : Component
+        {
+            if (owner == null)
+            {
+                QLog.Error($"获取组件失败：组件为空，目标类型 {typeof(T).Name}");
+                return null;
+            }
+
+            T component = owner.GetComponent<T>();
+            if (component == null)
+                QLog.Error($"获取组件失败：节点 {owner.name} 上未找到 {typeof(T).Name}");
+
+            return component;
+        }
+
+        // 获取组件所在子层级中的指定组件
+        public static T GetChildComponent<T>(this Component owner) where T : Component
+        {
+            if (owner == null)
+            {
+                QLog.Error($"获取子组件失败：组件为空，目标类型 {typeof(T).Name}");
+                return null;
+            }
+
+            T component = owner.GetComponentInChildren<T>();
+            if (component == null)
+                QLog.Error($"获取子组件失败：节点 {owner.name} 子层级中未找到 {typeof(T).Name}");
+
+            return component;
+        }
+
         // 从组件所在节点下查找子节点
         public static Transform FindChild(this Component owner, string path)
         {
@@ -22,7 +83,7 @@ namespace Utils.Find
                 return null;
             }
 
-            return owner.transform.Find(path);
+            return owner.transform.FindChild(path);
         }
 
         // 从组件所在节点下查找子节点GameObject
@@ -38,7 +99,9 @@ namespace Utils.Find
             Transform target = owner.FindChild(path);
             return getComponent<T>(target, path);
         }
+        #endregion
 
+        #region Transform Extension
         // 从指定根节点下查找子节点
         public static Transform FindChild(this Transform root, string path)
         {
@@ -67,17 +130,19 @@ namespace Utils.Find
         // 从指定根节点下查找子节点GameObject
         public static GameObject FindChildGo(this Transform root, string path)
         {
-            Transform target = root.Find(path);
+            Transform target = root.FindChild(path);
             return target != null ? target.gameObject : null;
         }
 
         // 从指定根节点下查找子节点组件
         public static T FindChildComponent<T>(this Transform root, string path) where T : Component
         {
-            Transform target = root.Find(path);
+            Transform target = root.FindChild(path);
             return getComponent<T>(target, path);
         }
+        #endregion
 
+        #region Private Function
         // 获取目标节点上的组件
         private static T getComponent<T>(Transform target, string path) where T : Component
         {
@@ -90,5 +155,6 @@ namespace Utils.Find
 
             return component;
         }
+        #endregion
     }
 }

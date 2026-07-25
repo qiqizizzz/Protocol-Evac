@@ -49,6 +49,8 @@ namespace Module.Player.Core.View
             if (m_context == null || m_viewConfig == null)
                 return;
 
+            handleViewModeRequest();
+
             Vector2 lookInput = m_context.LookInput;
             updateViewAngles(lookInput, deltaTime);
 
@@ -67,6 +69,16 @@ namespace Module.Player.Core.View
             m_context.ViewMode = viewMode;
             m_context.CameraYaw = m_context.Transform.eulerAngles.y;
             refreshCameraTransform();
+        }
+
+        // 处理玩家视角模式切换请求
+        private void handleViewModeRequest()
+        {
+            if (!m_context.TargetViewMode.HasValue)
+                return;
+
+            SetViewMode(m_context.TargetViewMode.Value);
+            m_context.TargetViewMode = null;
         }
 
         // 根据输入更新视角水平角与俯仰角
@@ -96,20 +108,19 @@ namespace Module.Player.Core.View
             if (m_viewRoot == null || m_playerCamera == null)
                 return;
 
-            Quaternion viewRotation = Quaternion.Euler(m_context.CameraPitch, m_context.CameraYaw, 0f);
+            m_viewRoot.position = m_context.Transform.position;
 
             if (m_context.ViewMode == PlayerViewMode.FirstPerson)
             {
-                m_viewRoot.position = m_context.Transform.position + m_viewConfig.FirstPersonCameraOffset;
-                m_viewRoot.rotation = viewRotation;
-                m_playerCamera.transform.localPosition = Vector3.zero;
-                m_playerCamera.transform.localRotation = Quaternion.identity;
+                m_viewRoot.rotation = Quaternion.Euler(0f, m_context.CameraYaw, 0f);
+                m_playerCamera.transform.localPosition = m_viewConfig.FirstPersonCameraLocalPosition;
+                m_playerCamera.transform.localRotation = Quaternion.Euler(m_context.CameraPitch, 0f, 0f);
                 return;
             }
 
-            m_viewRoot.position = m_context.Transform.position + m_viewConfig.ThirdPersonPivotOffset;
+            Quaternion viewRotation = Quaternion.Euler(m_context.CameraPitch, m_context.CameraYaw, 0f);
             m_viewRoot.rotation = viewRotation;
-            m_playerCamera.transform.localPosition = new Vector3(0f, 0f, -m_viewConfig.ThirdPersonDistance);
+            m_playerCamera.transform.localPosition = m_viewConfig.ThirdPersonCameraLocalPosition;
             m_playerCamera.transform.localRotation = Quaternion.identity;
         }
     }

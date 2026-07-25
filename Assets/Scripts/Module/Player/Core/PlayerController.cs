@@ -27,10 +27,12 @@ namespace Module.Player.Core
 {
     public class PlayerController : MonoBehaviour
     {
+        public PlayerContext Context => m_context;
+
+        #region 路径
         private const string VIEW_ROOT_PATH = "ViewRoot";
         private const string PLAYER_CAMERA_PATH = "ViewRoot/PlayerCamera";
-
-        public PlayerContext Context => m_context;
+        #endregion
         
         [Header("移动配置")]
         [Tooltip("玩家移动配置")]
@@ -63,21 +65,7 @@ namespace Module.Player.Core
         #region 生命周期
         private void Awake()
         {
-            m_transform = transform;
-            m_characterController = GetComponent<CharacterController>();
-            m_animator = GetComponentInChildren<Animator>();
-            findViewReferences();
-
-            if (m_characterController == null
-                || m_animator == null
-                || MoveConfig == null
-                || ViewConfig == null
-                || m_viewRoot == null
-                || m_playerCamera == null)
-            {
-                QLog.Error("玩家初始化失败：必要引用缺失，请检查 CharacterController、Animator、MoveConfig、ViewConfig、ViewRoot 与 PlayerCamera");
-                return;
-            }
+            findReferences();
 
             initCore();
             initHFSM();
@@ -113,23 +101,7 @@ namespace Module.Player.Core
                 m_inputReader.UnInit();
         }
         #endregion
-
-        // 切换玩家视角模式
-        public void SetViewMode(PlayerViewMode viewMode)
-        {
-            if (!isRuntimeReady())
-                return;
-
-            m_viewController.SetViewMode(viewMode);
-        }
-
-        // 查找玩家视角层级引用
-        private void findViewReferences()
-        {
-            m_viewRoot = this.FindChild(VIEW_ROOT_PATH);
-            m_playerCamera = this.FindChildComponent<Camera>(PLAYER_CAMERA_PATH);
-        }
-
+        
         #region 初始化
         // 初始化玩家核心运行依赖
         private void initCore()
@@ -182,6 +154,16 @@ namespace Module.Player.Core
         }
         #endregion
 
+        // 查找玩家运行依赖引用
+        private void findReferences()
+        {
+            m_transform = transform;
+            m_characterController = this.GetOwnerComponent<CharacterController>();
+            m_animator = this.GetChildComponent<Animator>();
+            m_viewRoot = this.FindChild(VIEW_ROOT_PATH);
+            m_playerCamera = this.FindChildComponent<Camera>(PLAYER_CAMERA_PATH);
+        }
+        
         // 检查运行期依赖是否仍然可用，避免 Play Mode 热重载后字段丢失
         private bool isRuntimeReady()
         {
