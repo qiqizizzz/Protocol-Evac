@@ -8,6 +8,7 @@
 
 using Module.Player.Context;
 using Module.Player.Core.View;
+using Module.Player.Input.Buffer;
 using UnityEngine;
 
 namespace Module.Player.Input
@@ -40,13 +41,28 @@ namespace Module.Player.Input
         {
             m_context.MoveInput = m_inputActions.Player.Move.ReadValue<Vector2>();
             m_context.IsSprintPressed = m_inputActions.Player.Sprint.IsPressed();
-            m_context.IsJumpPressed = m_inputActions.Player.Jump.WasPressedThisFrame();
+            recordBufferedInputs();
             m_context.LookInput = m_inputActions.Player.Look.ReadValue<Vector2>();
             m_context.TargetViewMode = m_inputActions.Player.SwitchToFirstPerson.WasPressedThisFrame()
                 ? PlayerViewMode.FirstPerson
                 : m_inputActions.Player.SwitchToThirdPerson.WasPressedThisFrame()
                     ? PlayerViewMode.ThirdPerson
                     : null;
+        }
+
+        // 记录当前帧可缓存的离散输入
+        private void recordBufferedInputs()
+        {
+            recordBufferedInput(PlayerBufferedInputType.Jump, m_inputActions.Player.Jump.WasPressedThisFrame());
+        }
+
+        // 按条件写入离散输入缓存
+        private void recordBufferedInput(PlayerBufferedInputType inputType, bool wasPressedThisFrame)
+        {
+            if (!wasPressedThisFrame)
+                return;
+
+            m_context.InputBuffer.Record(inputType, Time.time);
         }
     }
 }

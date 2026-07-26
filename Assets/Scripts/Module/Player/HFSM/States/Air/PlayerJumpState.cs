@@ -8,6 +8,7 @@
 
 using Module.Player.Config.Air;
 using Module.Player.Context;
+using Module.Player.Input.Buffer;
 using UnityEngine;
 
 namespace Module.Player.HFSM.States.Air
@@ -28,6 +29,8 @@ namespace Module.Player.HFSM.States.Air
 
         public override void Enter()
         {
+            m_context.InputBuffer.Consume(PlayerBufferedInputType.Jump);
+            m_context.RequestAnimReplay(PlayerStateId.AirborneJump);
             Vector3 velocity = m_context.Velocity;
             velocity.y = m_airConfig.JumpForce;
             m_context.Velocity = velocity;

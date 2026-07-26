@@ -8,13 +8,15 @@
 
 using UnityEngine;
 using Module.Player.Core.View;
-using Utils.log;
+using Module.Player.HFSM;
+using Module.Player.Input.Buffer;
 
 namespace Module.Player.Context
 {
     public sealed class PlayerContext
     {
         public Transform Transform { get; }
+        public PlayerInputBuffer InputBuffer { get; }
         
         // ==================== 移动相关 ====================
         public Vector2 MoveInput { get; set; } //移动输入
@@ -24,10 +26,10 @@ namespace Module.Player.Context
         public bool IsMovementLocked { get; set; } //禁止移动
         public bool IsGrounded { get; set; }
         public bool HasGroundedChecked { get; set; } //是否已经刷新过地面状态
+        public float LastGroundedTime { get; set; } //最后一次处于地面的时间
 
         // ==================== 输入相关 ====================
         public bool IsSprintPressed { get; set; } //是否按住疾跑输入
-        public bool IsJumpPressed { get; set; } //是否按下跳跃输入
         public bool IsInputLocked { get; set; } //是否输入被禁止
 
         // ==================== 视角相关 ====================
@@ -36,10 +38,12 @@ namespace Module.Player.Context
         public PlayerViewMode? TargetViewMode { get; set; } //请求切换的视角模式
         public float CameraYaw { get; set; } //相机水平角
         public float CameraPitch { get; set; } //相机俯仰角
+        public PlayerStateId? AnimReplayStateId { get; private set; } //请求从起点重播的动画状态
 
         public PlayerContext(Transform transform)
         {
             Transform = transform;
+            InputBuffer = new PlayerInputBuffer();
             ResetRunTimeData();
         }
         
@@ -52,14 +56,30 @@ namespace Module.Player.Context
             IsMovementLocked = false;
             IsGrounded = false;
             HasGroundedChecked = false;
+            LastGroundedTime = float.NegativeInfinity;
             IsSprintPressed = false;
-            IsJumpPressed = false;
             IsInputLocked = false;
+            InputBuffer.ClearAll();
             LookInput = Vector2.zero;
             ViewMode = PlayerViewMode.FirstPerson;
             TargetViewMode = null;
             CameraYaw = Transform != null ? Transform.eulerAngles.y : 0f;
             CameraPitch = 0f;
+            AnimReplayStateId = null;
+        }
+
+        // 请求动画表现层从起点重播指定状态
+        public void RequestAnimReplay(PlayerStateId stateId)
+        {
+            AnimReplayStateId = stateId;
+        }
+
+        // 消费一次性动画重播请求
+        public PlayerStateId? ConsumeAnimReplayRequest()
+        {
+            PlayerStateId? stateId = AnimReplayStateId;
+            AnimReplayStateId = null;
+            return stateId;
         }
     }
 }

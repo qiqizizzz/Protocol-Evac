@@ -21,8 +21,18 @@ namespace Module.Player.Config.Air
         [Tooltip("玩家空中水平移动速度")]
         [SerializeField, Min(0f)] private float AirMoveSpeedValue = 4f;
 
+        [Header("输入容错")]
+        [Tooltip("跳跃输入缓存时间")]
+        [SerializeField, Min(0f)] private float JumpBufferTimeValue = 0.12f;
+        [Tooltip("离开地面后仍允许跳跃的宽容时间")]
+        [SerializeField, Min(0f)] private float CoyoteTimeValue = 0.1f;
+
         public float JumpForce => JumpForceValue;
 
         public float AirMoveSpeed => AirMoveSpeedValue;
+
+        public float JumpBufferTime => JumpBufferTimeValue;
+
+        public float CoyoteTime => CoyoteTimeValue;
     }
 }

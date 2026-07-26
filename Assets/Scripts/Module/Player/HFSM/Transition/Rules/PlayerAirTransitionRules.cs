@@ -7,9 +7,12 @@
  */
 
 using System.Collections.Generic;
+using Module.Player.Config.Air;
 using Module.Player.Context;
 using Module.Player.HFSM;
 using Module.Player.HFSM.Transition;
+using Module.Player.Input.Buffer;
+using UnityEngine;
 
 namespace Module.Player.HFSM.Transition.Rules
 {
@@ -21,16 +24,20 @@ namespace Module.Player.HFSM.Transition.Rules
         /// 创建空中状态转换规则
         /// </summary>
         /// <param name="context">玩家运行时上下文</param>
+        /// <param name="airConfig">玩家空中配置</param>
         /// <returns>空中状态转换规则集合</returns>
-        public static IReadOnlyList<PlayerTransitionRule> Create(PlayerContext context)
+        public static IReadOnlyList<PlayerTransitionRule> Create(PlayerContext context, PlayerAirConfigSO airConfig)
         {
             return new PlayerTransitionRule[]
             {
                 new PlayerTransitionRule(PlayerStateId.Grounded, PlayerStateId.AirborneJump,
-                    PlayerTransitionPriority.Air, () => canJump(context), 10),
+                    PlayerTransitionPriority.Air, () => canGroundedJump(context, airConfig), 10),
 
                 new PlayerTransitionRule(PlayerStateId.Grounded, PlayerStateId.AirborneFall,
                     PlayerTransitionPriority.Air, () => context.HasGroundedChecked && !context.IsGrounded),
+
+                new PlayerTransitionRule(PlayerStateId.AirborneFall, PlayerStateId.AirborneJump,
+                    PlayerTransitionPriority.Air, () => canCoyoteJump(context, airConfig), 20),
 
                 new PlayerTransitionRule(PlayerStateId.AirborneJump, PlayerStateId.AirborneFall,
                     PlayerTransitionPriority.Air, () => context.Velocity.y <= 0f),
@@ -43,13 +50,31 @@ namespace Module.Player.HFSM.Transition.Rules
             };
         }
 
-        // 判断玩家当前是否可以起跳
-        private static bool canJump(PlayerContext context)
+        // 判断玩家在地面或落地缓存窗口内是否可以起跳
+        private static bool canGroundedJump(PlayerContext context, PlayerAirConfigSO airConfig)
         {
             return
-                context.IsJumpPressed &&
                 context.IsGrounded &&
-                !context.IsInputLocked;
+                hasBufferedJump(context, airConfig);
+        }
+
+        // 判断玩家离开地面后是否仍可通过土狼时间起跳
+        private static bool canCoyoteJump(PlayerContext context, PlayerAirConfigSO airConfig)
+        {
+            float nowTime = Time.time;
+            return
+                !context.IsGrounded &&
+                hasBufferedJump(context, airConfig) &&
+                nowTime - context.LastGroundedTime <= airConfig.CoyoteTime;
+        }
+
+        // 判断玩家是否存在有效跳跃缓存
+        private static bool hasBufferedJump(PlayerContext context, PlayerAirConfigSO airConfig)
+        {
+            float nowTime = Time.time;
+            return
+                !context.IsInputLocked &&
+                context.InputBuffer.Has(PlayerBufferedInputType.Jump, nowTime, airConfig.JumpBufferTime);
         }
 
         // 判断玩家落地后是否应直接进入移动状态

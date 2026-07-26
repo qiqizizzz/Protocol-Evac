@@ -67,6 +67,8 @@ namespace Module.Player.Core
             m_context.Velocity = velocity;
             m_context.IsGrounded = m_characterController.isGrounded;
             m_context.HasGroundedChecked = true;
+            if (m_context.IsGrounded)
+                m_context.LastGroundedTime = Time.time;
         }
 
         // 根据移动方向旋转玩家身体

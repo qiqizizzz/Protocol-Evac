@@ -113,6 +113,9 @@ namespace Module.Player.Core
         {
             m_context = new PlayerContext(m_transform);
             m_context.IsGrounded = m_characterController.isGrounded;
+            if (m_context.IsGrounded)
+                m_context.LastGroundedTime = Time.time;
+
             m_inputReader = new PlayerInputReader();
             m_inputReader.Init(m_context);
 
@@ -130,7 +133,7 @@ namespace Module.Player.Core
 
             m_transitionBinder = new PlayerTransitionBinder();
             m_transitionBinder.Bind(PlayerMoveTransitionRules.Create(m_context));
-            m_transitionBinder.Bind(PlayerAirTransitionRules.Create(m_context));
+            m_transitionBinder.Bind(PlayerAirTransitionRules.Create(m_context, AirConfig));
 
             m_transitionSelector = new PlayerTransitionSelector(m_stateMachine, m_transitionBinder.Rules);
         }
@@ -146,7 +149,7 @@ namespace Module.Player.Core
             m_animResolver.Init(m_stateMachine, m_animBinder.Handlers);
 
             m_animWriter = new PlayerAnimWriter();
-            m_animWriter.Init(m_animator, m_animResolver);
+            m_animWriter.Init(m_animator, m_animResolver, m_context);
         }
 
         // 注册玩家初始地面状态树
