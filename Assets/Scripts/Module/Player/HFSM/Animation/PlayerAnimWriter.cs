@@ -15,8 +15,8 @@ namespace Module.Player.HFSM.Animation
     {
         #region Animator 参数Hash
         private static readonly int S_MoveSpeedHash = Animator.StringToHash("moveSpeed");
-        private static readonly int S_IsMovingHash = Animator.StringToHash("isMoving");
-        private static readonly int S_IsSprintingHash = Animator.StringToHash("isSprinting");
+        private static readonly int S_VerticalSpeedHash = Animator.StringToHash("verticalSpeed");
+        private static readonly int S_IsGroundedHash = Animator.StringToHash("isGrounded");
         #endregion
 
         private Animator m_animator;
@@ -45,9 +45,9 @@ namespace Module.Player.HFSM.Animation
         // 将动画参数写入 Animator
         private void applyParams(PlayerAnimParams animParams)
         {
-            m_animator.SetBool(S_IsMovingHash, animParams.IsMoving);
-            m_animator.SetBool(S_IsSprintingHash, animParams.IsSprinting);
             m_animator.SetFloat(S_MoveSpeedHash, animParams.MoveSpeed);
+            m_animator.SetFloat(S_VerticalSpeedHash, animParams.VerticalSpeed);
+            m_animator.SetBool(S_IsGroundedHash, animParams.IsGrounded);
         }
     }
 }

@@ -40,6 +40,7 @@ namespace Module.Player.Input
         {
             m_context.MoveInput = m_inputActions.Player.Move.ReadValue<Vector2>();
             m_context.IsSprintPressed = m_inputActions.Player.Sprint.IsPressed();
+            m_context.IsJumpPressed = m_inputActions.Player.Jump.WasPressedThisFrame();
             m_context.LookInput = m_inputActions.Player.Look.ReadValue<Vector2>();
             m_context.TargetViewMode = m_inputActions.Player.SwitchToFirstPerson.WasPressedThisFrame()
                 ? PlayerViewMode.FirstPerson

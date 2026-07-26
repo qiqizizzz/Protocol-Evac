@@ -23,9 +23,11 @@ namespace Module.Player.Context
         public Vector3 Velocity { get; set; } //当前速度
         public bool IsMovementLocked { get; set; } //禁止移动
         public bool IsGrounded { get; set; }
+        public bool HasGroundedChecked { get; set; } //是否已经刷新过地面状态
 
         // ==================== 输入相关 ====================
         public bool IsSprintPressed { get; set; } //是否按住疾跑输入
+        public bool IsJumpPressed { get; set; } //是否按下跳跃输入
         public bool IsInputLocked { get; set; } //是否输入被禁止
 
         // ==================== 视角相关 ====================
@@ -49,7 +51,9 @@ namespace Module.Player.Context
             Velocity = Vector3.zero;
             IsMovementLocked = false;
             IsGrounded = false;
+            HasGroundedChecked = false;
             IsSprintPressed = false;
+            IsJumpPressed = false;
             IsInputLocked = false;
             LookInput = Vector2.zero;
             ViewMode = PlayerViewMode.FirstPerson;

@@ -6,6 +6,7 @@
  * └──────────────────────────────────┘
  */
 
+using Module.Player.Config.Air;
 using Module.Player.Config.Move;
 using Module.Player.Config.View;
 using Module.Player.Context;
@@ -14,6 +15,7 @@ using Module.Player.HFSM;
 using Module.Player.HFSM.Animation;
 using Module.Player.HFSM.Animation.Binders;
 using Module.Player.HFSM.Animation.Rules;
+using Module.Player.HFSM.States.Air;
 using Module.Player.HFSM.States.Ground;
 using Module.Player.HFSM.Transition;
 using Module.Player.HFSM.Transition.Binders;
@@ -37,6 +39,9 @@ namespace Module.Player.Core
         [Header("移动配置")]
         [Tooltip("玩家移动配置")]
         [SerializeField] private PlayerMoveConfigSO MoveConfig;
+        [Header("空中配置")]
+        [Tooltip("玩家空中配置")]
+        [SerializeField] private PlayerAirConfigSO AirConfig;
         [Header("视角配置")]
         [Tooltip("玩家视角配置")]
         [SerializeField] private PlayerViewConfigSO ViewConfig;
@@ -107,6 +112,7 @@ namespace Module.Player.Core
         private void initCore()
         {
             m_context = new PlayerContext(m_transform);
+            m_context.IsGrounded = m_characterController.isGrounded;
             m_inputReader = new PlayerInputReader();
             m_inputReader.Init(m_context);
 
@@ -124,6 +130,7 @@ namespace Module.Player.Core
 
             m_transitionBinder = new PlayerTransitionBinder();
             m_transitionBinder.Bind(PlayerMoveTransitionRules.Create(m_context));
+            m_transitionBinder.Bind(PlayerAirTransitionRules.Create(m_context));
 
             m_transitionSelector = new PlayerTransitionSelector(m_stateMachine, m_transitionBinder.Rules);
         }
@@ -132,7 +139,8 @@ namespace Module.Player.Core
         private void initAnim()
         {
             m_animBinder = new PlayerAnimBinder();
-            m_animBinder.Bind(PlayerMoveAnimRules.Create(m_context, MoveConfig));
+            m_animBinder.Bind(PlayerMoveAnimRules.Create(m_context));
+            m_animBinder.Bind(PlayerAirAnimRules.Create(m_context));
 
             m_animResolver = new PlayerAnimResolver();
             m_animResolver.Init(m_stateMachine, m_animBinder.Handlers);
@@ -149,6 +157,9 @@ namespace Module.Player.Core
             m_stateMachine.RegisterState(new PlayerGroundedState());
             m_stateMachine.RegisterState(new PlayerIdleState(m_context));
             m_stateMachine.RegisterState(new PlayerMoveState(m_context, MoveConfig));
+            m_stateMachine.RegisterState(new PlayerAirborneState(m_context, AirConfig));
+            m_stateMachine.RegisterState(new PlayerJumpState(m_context, AirConfig));
+            m_stateMachine.RegisterState(new PlayerFallState());
             
             m_stateMachine.Init(PlayerStateId.Grounded);
         }

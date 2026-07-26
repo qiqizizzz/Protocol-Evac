@@ -10,16 +10,16 @@ namespace Module.Player.HFSM.Animation
 {
     public struct PlayerAnimParams
     {
-        public bool IsMoving;
-        public bool IsSprinting;
         public float MoveSpeed;
+        public float VerticalSpeed;
+        public bool IsGrounded;
 
         // 重置玩家动画参数
         public void Reset()
         {
-            IsMoving = false;
-            IsSprinting = false;
             MoveSpeed = 0f;
+            VerticalSpeed = 0f;
+            IsGrounded = false;
         }
     }
 }

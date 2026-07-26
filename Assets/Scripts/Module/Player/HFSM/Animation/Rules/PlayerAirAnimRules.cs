@@ -1,7 +1,7 @@
 /*
  * ┌──────────────────────────────────┐
- * │  描    述: 玩家地面移动动画规则集合
- * │  类    名: PlayerMoveAnimRules.cs
+ * │  描    述: 玩家空中动画规则集合
+ * │  类    名: PlayerAirAnimRules.cs
  * │  创    建: By qiqizizzz
  * └──────────────────────────────────┘
  */
@@ -14,36 +14,34 @@ using UnityEngine;
 
 namespace Module.Player.HFSM.Animation.Rules
 {
-    public static class PlayerMoveAnimRules
+    public static class PlayerAirAnimRules
     {
         /// <summary>
-        /// 创建地面移动动画规则
+        /// 创建空中动画规则
         /// </summary>
         /// <param name="context">玩家运行时上下文</param>
-        /// <returns>地面移动动画规则集合</returns>
+        /// <returns>空中动画规则集合</returns>
         public static IReadOnlyList<PlayerAnimRule> Create(PlayerContext context)
         {
             return new PlayerAnimRule[]
             {
                 new PlayerAnimRule(
-                    PlayerStateId.GroundedIdle,
-                    (ref PlayerAnimParams animParams) => resolveGrounded(context, ref animParams)),
+                    PlayerStateId.AirborneJump,
+                    (ref PlayerAnimParams animParams) => resolveAirborne(context, ref animParams)),
 
                 new PlayerAnimRule(
-                    PlayerStateId.GroundedMove,
-                    (ref PlayerAnimParams animParams) => resolveGrounded(context, ref animParams))
+                    PlayerStateId.AirborneFall,
+                    (ref PlayerAnimParams animParams) => resolveAirborne(context, ref animParams))
             };
         }
 
-        #region 解析并绑定动画参数
-        // 解析地面动画参数
-        private static void resolveGrounded(PlayerContext context, ref PlayerAnimParams animParams)
+        // 解析空中动画参数
+        private static void resolveAirborne(PlayerContext context, ref PlayerAnimParams animParams)
         {
             animParams.MoveSpeed = getHorizontalSpeed(context);
             animParams.VerticalSpeed = context.Velocity.y;
             animParams.IsGrounded = context.IsGrounded;
         }
-        #endregion
 
         // 获取玩家水平速度
         private static float getHorizontalSpeed(PlayerContext context)

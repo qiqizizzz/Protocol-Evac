@@ -48,6 +48,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   MoveConfig: {fileID: 11400000, guid: f6f3c8a1cc0173c439adb7439e75ead8, type: 2}
+  AirConfig: {fileID: 11400000, guid: 66dae45d9508402cbef54d1a0830bb96, type: 2}
   ViewConfig: {fileID: 11400000, guid: 0cd196151569e14499d7801fe9fda3af, type: 2}
 --- !u!143 &653435299708972544
 CharacterController:
