@@ -68,7 +68,7 @@ namespace Module.Player.HFSM.Animation
             }
 
             if (stateId == PlayerStateId.ActionDodge)
-                m_animator.CrossFadeInFixedTime(S_DodgeStateHash, 0.03f, 0, 0f);
+                m_animator.CrossFadeInFixedTime(S_DodgeStateHash, 0f, 0, 0f);
         }
     }
 }
