@@ -23,6 +23,8 @@ namespace Module.Player.Context
         public Vector3 MoveDir { get; set; }   //移动方向
         public float TargetMoveSpeed { get; set; } //期望移动速度
         public Vector3 Velocity { get; set; } //当前速度
+        public bool HasForcedMoveVelocity { get; private set; } //是否存在强制水平移动速度
+        public Vector3 ForcedMoveVelocity { get; private set; } //强制水平移动速度
         public bool IsMovementLocked { get; set; } //禁止移动
         public bool IsGrounded { get; set; }
         public bool HasGroundedChecked { get; set; } //是否已经刷新过地面状态
@@ -31,6 +33,7 @@ namespace Module.Player.Context
         // ==================== 输入相关 ====================
         public bool IsSprintPressed { get; set; } //是否按住疾跑输入
         public bool IsInputLocked { get; set; } //是否输入被禁止
+        public bool IsActionFinished { get; set; } //当前动作是否已经完成
 
         // ==================== 视角相关 ====================
         public Vector2 LookInput { get; set; } //视角输入
@@ -53,12 +56,15 @@ namespace Module.Player.Context
             MoveDir = Vector3.zero;
             TargetMoveSpeed = 0f;
             Velocity = Vector3.zero;
+            HasForcedMoveVelocity = false;
+            ForcedMoveVelocity = Vector3.zero;
             IsMovementLocked = false;
             IsGrounded = false;
             HasGroundedChecked = false;
             LastGroundedTime = float.NegativeInfinity;
             IsSprintPressed = false;
             IsInputLocked = false;
+            IsActionFinished = false;
             InputBuffer.ClearAll();
             LookInput = Vector2.zero;
             ViewMode = PlayerViewMode.FirstPerson;
@@ -80,6 +86,20 @@ namespace Module.Player.Context
             PlayerStateId? stateId = AnimReplayStateId;
             AnimReplayStateId = null;
             return stateId;
+        }
+
+        // 设置强制水平移动速度
+        public void SetForcedMoveVelocity(Vector3 velocity)
+        {
+            HasForcedMoveVelocity = true;
+            ForcedMoveVelocity = velocity;
+        }
+
+        // 清空强制水平移动速度
+        public void ClearForcedMoveVelocity()
+        {
+            HasForcedMoveVelocity = false;
+            ForcedMoveVelocity = Vector3.zero;
         }
     }
 }

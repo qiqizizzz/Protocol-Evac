@@ -8,7 +8,7 @@
 
 using Module.Player.Config.Air;
 using Module.Player.Context;
-using Module.Player.Core.View;
+using Module.Player.Core;
 using UnityEngine;
 
 namespace Module.Player.HFSM.States.Air
@@ -43,7 +43,7 @@ namespace Module.Player.HFSM.States.Air
                 return;
             }
 
-            m_context.MoveDir = getViewRelativeMoveDirection(m_context.MoveInput);
+            m_context.MoveDir = PlayerMoveDirectionResolver.Resolve(m_context, m_context.MoveInput);
             m_context.TargetMoveSpeed = m_airConfig.AirMoveSpeed;
         }
 
@@ -54,30 +54,6 @@ namespace Module.Player.HFSM.States.Air
                 !m_context.IsInputLocked &&
                 !m_context.IsMovementLocked &&
                 m_context.MoveInput.sqrMagnitude > MOVE_INPUT_THRESHOLD_SQR;
-        }
-
-        // 根据当前视角模式计算空中移动方向
-        private Vector3 getViewRelativeMoveDirection(Vector2 moveInput)
-        {
-            if (m_context.ViewMode == PlayerViewMode.FirstPerson)
-                return buildMoveDirection(m_context.Transform.forward, m_context.Transform.right, moveInput);
-
-            Quaternion cameraYawRotation = Quaternion.Euler(0f, m_context.CameraYaw, 0f);
-            Vector3 cameraForward = cameraYawRotation * Vector3.forward;
-            Vector3 cameraRight = cameraYawRotation * Vector3.right;
-
-            return buildMoveDirection(cameraForward, cameraRight, moveInput);
-        }
-
-        // 使用水平前方向与右方向生成空中移动方向
-        private Vector3 buildMoveDirection(Vector3 forward, Vector3 right, Vector2 moveInput)
-        {
-            forward.y = 0f;
-            right.y = 0f;
-            forward.Normalize();
-            right.Normalize();
-
-            return right * moveInput.x + forward * moveInput.y;
         }
     }
 }

@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0acf166d02ef4ff48954a6b0e48804aa, type: 3}
+  m_Name: PlayerDodgeConfig
+  m_EditorClassIdentifier: 
+  DodgeSpeedValue: 9
+  DodgeDurationValue: 0.32
+  DodgeBufferTimeValue: 0.18

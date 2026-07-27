@@ -6,7 +6,9 @@
  * └──────────────────────────────────┘
  */
 
+using Module.Player.Config.Action;
 using Module.Player.Config.Air;
+using Module.Player.Config.Input;
 using Module.Player.Config.Move;
 using Module.Player.Config.View;
 using Module.Player.Context;
@@ -15,6 +17,7 @@ using Module.Player.HFSM;
 using Module.Player.HFSM.Animation;
 using Module.Player.HFSM.Animation.Binders;
 using Module.Player.HFSM.Animation.Rules;
+using Module.Player.HFSM.States.Action;
 using Module.Player.HFSM.States.Air;
 using Module.Player.HFSM.States.Ground;
 using Module.Player.HFSM.Transition;
@@ -39,9 +42,15 @@ namespace Module.Player.Core
         [Header("移动配置")]
         [Tooltip("玩家移动配置")]
         [SerializeField] private PlayerMoveConfigSO MoveConfig;
+        [Header("输入配置")]
+        [Tooltip("玩家输入解释配置")]
+        [SerializeField] private PlayerInputConfigSO InputConfig;
         [Header("空中配置")]
         [Tooltip("玩家空中配置")]
         [SerializeField] private PlayerAirConfigSO AirConfig;
+        [Header("动作配置")]
+        [Tooltip("玩家闪避配置")]
+        [SerializeField] private PlayerDodgeConfigSO DodgeConfig;
         [Header("视角配置")]
         [Tooltip("玩家视角配置")]
         [SerializeField] private PlayerViewConfigSO ViewConfig;
@@ -71,6 +80,7 @@ namespace Module.Player.Core
         private void Awake()
         {
             findReferences();
+            validateConfigReferences();
 
             initCore();
             initHFSM();
@@ -117,7 +127,7 @@ namespace Module.Player.Core
                 m_context.LastGroundedTime = Time.time;
 
             m_inputReader = new PlayerInputReader();
-            m_inputReader.Init(m_context);
+            m_inputReader.Init(m_context, InputConfig);
 
             m_motor = new PlayerMotor();
             m_motor.Init(m_characterController, m_context, MoveConfig, ViewConfig);
@@ -134,6 +144,7 @@ namespace Module.Player.Core
             m_transitionBinder = new PlayerTransitionBinder();
             m_transitionBinder.Bind(PlayerMoveTransitionRules.Create(m_context));
             m_transitionBinder.Bind(PlayerAirTransitionRules.Create(m_context, AirConfig));
+            m_transitionBinder.Bind(PlayerActionTransitionRules.Create(m_context, DodgeConfig));
 
             m_transitionSelector = new PlayerTransitionSelector(m_stateMachine, m_transitionBinder.Rules);
         }
@@ -144,6 +155,7 @@ namespace Module.Player.Core
             m_animBinder = new PlayerAnimBinder();
             m_animBinder.Bind(PlayerMoveAnimRules.Create(m_context));
             m_animBinder.Bind(PlayerAirAnimRules.Create(m_context));
+            m_animBinder.Bind(PlayerActionAnimRules.Create(m_context));
 
             m_animResolver = new PlayerAnimResolver();
             m_animResolver.Init(m_stateMachine, m_animBinder.Handlers);
@@ -163,6 +175,8 @@ namespace Module.Player.Core
             m_stateMachine.RegisterState(new PlayerAirborneState(m_context, AirConfig));
             m_stateMachine.RegisterState(new PlayerJumpState(m_context, AirConfig));
             m_stateMachine.RegisterState(new PlayerFallState());
+            m_stateMachine.RegisterState(new PlayerActionState());
+            m_stateMachine.RegisterState(new PlayerDodgeState(m_context, DodgeConfig));
             
             m_stateMachine.Init(PlayerStateId.Grounded);
         }
@@ -176,6 +190,25 @@ namespace Module.Player.Core
             m_animator = this.GetChildComponent<Animator>();
             m_viewRoot = this.FindChild(VIEW_ROOT_PATH);
             m_playerCamera = this.FindChildComponent<Camera>(PLAYER_CAMERA_PATH);
+        }
+
+        // 校验玩家配置引用，缺失时使用代码默认值兜底并在控制台提示
+        private void validateConfigReferences()
+        {
+            if (MoveConfig == null)
+                QLog.Warning("MoveConfig 未配置，移动模块可能无法正常运行");
+
+            if (InputConfig == null)
+                QLog.Warning("InputConfig 未配置，Shift 短按/长按将使用代码默认值");
+
+            if (AirConfig == null)
+                QLog.Warning("AirConfig 未配置，空中模块可能无法正常运行");
+
+            if (DodgeConfig == null)
+                QLog.Warning("DodgeConfig 未配置，闪避将使用代码默认值");
+
+            if (ViewConfig == null)
+                QLog.Warning("ViewConfig 未配置，视角模块可能无法正常运行");
         }
         
         // 检查运行期依赖是否仍然可用，避免 Play Mode 热重载后字段丢失

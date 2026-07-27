@@ -20,6 +20,7 @@ namespace Module.Player.HFSM.Animation
         private static readonly int S_VerticalSpeedHash = Animator.StringToHash("verticalSpeed");
         private static readonly int S_IsGroundedHash = Animator.StringToHash("isGrounded");
         private static readonly int S_JumpStateHash = Animator.StringToHash("Base Layer.jump");
+        private static readonly int S_DodgeStateHash = Animator.StringToHash("Base Layer.Action.dodge");
         #endregion
 
         private Animator m_animator;
@@ -60,10 +61,14 @@ namespace Module.Player.HFSM.Animation
         private void applyReplayRequest()
         {
             PlayerStateId? stateId = m_context.ConsumeAnimReplayRequest();
-            if (stateId != PlayerStateId.AirborneJump)
+            if (stateId == PlayerStateId.AirborneJump)
+            {
+                m_animator.CrossFadeInFixedTime(S_JumpStateHash, 0.03f, 0, 0f);
                 return;
+            }
 
-            m_animator.CrossFadeInFixedTime(S_JumpStateHash, 0.03f, 0, 0f);
+            if (stateId == PlayerStateId.ActionDodge)
+                m_animator.CrossFadeInFixedTime(S_DodgeStateHash, 0.03f, 0, 0f);
         }
     }
 }

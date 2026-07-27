@@ -38,22 +38,38 @@ namespace Module.Player.Core
 
             //水平移动
             Vector3 targetHVelocity = Vector3.zero;
-            if (!m_context.IsMovementLocked)
+            if (m_context.HasForcedMoveVelocity)
+            {
+                Vector3 forcedMoveVelocity = m_context.ForcedMoveVelocity;
+                hVelocity = new Vector3(forcedMoveVelocity.x, 0f, forcedMoveVelocity.z);
+            }
+            else if (!m_context.IsMovementLocked)
+            {
                 targetHVelocity = m_context.MoveDir.normalized * m_context.TargetMoveSpeed;
 
-            //sqrMagnitude是计算向量长度平方的方法
-            //如果目标速度比当前速度大则使用加速度，否则使用减速度
-            float speedChangeRate = targetHVelocity.sqrMagnitude > hVelocity.sqrMagnitude
-                ? m_moveConfig.Acceleration
-                : m_moveConfig.Deceleration;
+                //sqrMagnitude是计算向量长度平方的方法
+                //如果目标速度比当前速度大则使用加速度，否则使用减速度
+                float speedChangeRate = targetHVelocity.sqrMagnitude > hVelocity.sqrMagnitude
+                    ? m_moveConfig.Acceleration
+                    : m_moveConfig.Deceleration;
 
-            hVelocity = Vector3.MoveTowards(hVelocity, targetHVelocity, speedChangeRate * fixedDeltaTime);
+                hVelocity = Vector3.MoveTowards(hVelocity, targetHVelocity, speedChangeRate * fixedDeltaTime);
+            }
+            else
+            {
+                hVelocity = Vector3.MoveTowards(hVelocity, targetHVelocity, m_moveConfig.Deceleration * fixedDeltaTime);
+            }
 
             velocity.x = hVelocity.x;
             velocity.z = hVelocity.z;
 
-            if (m_context.ViewMode == PlayerViewMode.ThirdPerson && !m_context.IsMovementLocked)
-                RotateByDirection(m_context.MoveDir, fixedDeltaTime);
+            if (m_context.ViewMode == PlayerViewMode.ThirdPerson)
+            {
+                if (m_context.HasForcedMoveVelocity)
+                    RotateByDirection(m_context.ForcedMoveVelocity, fixedDeltaTime);
+                else if (!m_context.IsMovementLocked)
+                    RotateByDirection(m_context.MoveDir, fixedDeltaTime);
+            }
             
             //竖直移动
             if (m_characterController.isGrounded && velocity.y < 0f)
