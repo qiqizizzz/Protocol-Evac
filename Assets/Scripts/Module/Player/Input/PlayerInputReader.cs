@@ -28,9 +28,6 @@ namespace Module.Player.Input
         {
             m_context = context;
             m_inputConfig = inputConfig;
-            if (m_inputConfig == null)
-                QLog.Error("初始化玩家输入读取器失败：InputConfig 为空");
-
             m_inputActions = new PlayerInputActions();
             m_inputActions.Player.Enable();
         }
