@@ -8,7 +8,7 @@
 
 using UnityEngine;
 
-namespace Utils.Time
+namespace Utils.Timer
 {
     public sealed class DurationTimer
     {

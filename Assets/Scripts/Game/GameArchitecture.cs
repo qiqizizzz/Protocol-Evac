@@ -7,6 +7,7 @@
  */
 
 using Framework.QF;
+using Module.Timer;
 
 namespace Game
 {
@@ -14,7 +15,7 @@ namespace Game
     {
         protected override void Init()
         {
-            
+            RegisterSystem(new TimerSystem());
         }
     }
 }

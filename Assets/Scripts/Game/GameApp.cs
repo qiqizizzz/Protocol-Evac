@@ -6,8 +6,8 @@
  * └──────────────────────────────────┘
  */
 
-using System;
 using Framework.QF;
+using Module.Timer;
 using UnityEngine;
 
 namespace Game
@@ -22,7 +22,7 @@ namespace Game
 
         private void Update()
         {
-            
+            this.GetSystem<TimerSystem>().Tick(Time.deltaTime);
         }
         #endregion
         
