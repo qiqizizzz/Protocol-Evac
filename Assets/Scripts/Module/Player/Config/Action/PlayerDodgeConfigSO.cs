@@ -7,6 +7,7 @@
  */
 
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Module.Player.Config.Action
 {
@@ -20,12 +21,16 @@ namespace Module.Player.Config.Action
         [SerializeField, Min(0f)] private float DodgeDurationValue = 0.32f;
 
         [Header("输入容错")]
+        [Tooltip("闪避动作的输入力度平方阈值")]
+        [SerializeField, Min(0f)] private float DodgeInputThresholdSqrValue = 0.01f;
         [Tooltip("闪避输入缓存时间")]
         [SerializeField, Min(0f)] private float DodgeBufferTimeValue = 0.18f;
 
         public float DodgeSpeed => DodgeSpeedValue;
 
         public float DodgeDuration => DodgeDurationValue;
+
+        public float DodgeInputThresholdSqr => DodgeInputThresholdSqrValue;
 
         public float DodgeBufferTime => DodgeBufferTimeValue;
     }

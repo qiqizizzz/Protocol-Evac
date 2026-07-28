@@ -36,44 +36,32 @@ namespace Module.Player.Core.View
         // 更新玩家视角数据
         public void Tick(float deltaTime)
         {
-            if (m_context == null || m_viewConfig == null)
-                return;
-
-            handleViewModeRequest();
-
-            Vector2 lookInput = m_context.LookInput;
-            updateViewAngles(lookInput, deltaTime);
-
-            if (m_context.ViewMode == PlayerViewMode.FirstPerson)
-                rotateBodyByLookYaw();
-
-            refreshCameraTransform();
-        }
-
-        // 切换玩家视角模式
-        public void SetViewMode(PlayerViewMode viewMode)
-        {
             if (m_context == null)
                 return;
 
-            m_context.ViewMode = viewMode;
-            m_context.CameraYaw = m_context.Transform.eulerAngles.y;
+            switchPlayerView();
+            updateViewAngles(deltaTime);
             refreshCameraTransform();
         }
-
+        
         // 处理玩家视角模式切换请求
-        private void handleViewModeRequest()
+        private void switchPlayerView()
         {
             if (!m_context.TargetViewMode.HasValue)
                 return;
 
-            SetViewMode(m_context.TargetViewMode.Value);
-            m_context.TargetViewMode = null;
+            //切换视角
+            m_context.ViewMode = m_context.TargetViewMode.Value;
+            m_context.CameraYaw = m_context.Transform.eulerAngles.y;
+            refreshCameraTransform();
+            m_context.TargetViewMode = null;//置空
         }
 
         // 根据输入更新视角水平角与俯仰角
-        private void updateViewAngles(Vector2 lookInput, float deltaTime)
+        private void updateViewAngles(float deltaTime)
         {
+            Vector2 lookInput = m_context.LookInput;
+            
             float yawSpeed = m_context.ViewMode == PlayerViewMode.FirstPerson
                 ? m_viewConfig.FirstPersonYawSpeed
                 : m_viewConfig.ThirdPersonYawSpeed;
@@ -84,20 +72,15 @@ namespace Module.Player.Core.View
             m_context.CameraYaw += lookInput.x * yawSpeed * deltaTime;
             m_context.CameraPitch -= lookInput.y * pitchSpeed * deltaTime;
             m_context.CameraPitch = Mathf.Clamp(m_context.CameraPitch, m_viewConfig.PitchMin, m_viewConfig.PitchMax);
+            
+            //第一人称模式下使用视角水平角驱动身体朝向
+            if (m_context.ViewMode == PlayerViewMode.FirstPerson)
+                m_context.Transform.rotation = Quaternion.Euler(0f, m_context.CameraYaw, 0f);
         }
-
-        // 第一人称模式下使用视角水平角驱动身体朝向
-        private void rotateBodyByLookYaw()
-        {
-            m_context.Transform.rotation = Quaternion.Euler(0f, m_context.CameraYaw, 0f);
-        }
-
+        
         // 根据当前视角模式刷新相机枢轴与相机本地位置
         private void refreshCameraTransform()
         {
-            if (m_viewRoot == null || m_playerCamera == null)
-                return;
-
             m_viewRoot.position = m_context.Transform.position;
 
             if (m_context.ViewMode == PlayerViewMode.FirstPerson)

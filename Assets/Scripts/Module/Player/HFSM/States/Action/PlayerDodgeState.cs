@@ -16,10 +16,6 @@ namespace Module.Player.HFSM.States.Action
 {
     public sealed class PlayerDodgeState : BasePlayerState
     {
-        private const float DODGE_INPUT_THRESHOLD_SQR = 0.01f;
-        private const float DEFAULT_DODGE_SPEED = 9f;
-        private const float DEFAULT_DODGE_DURATION = 0.32f;
-
         private readonly PlayerContext m_context;
         private readonly PlayerDodgeConfigSO m_dodgeConfig;
 
@@ -43,7 +39,7 @@ namespace Module.Player.HFSM.States.Action
 
             Vector3 dodgeDirection = resolveDodgeDirection();
             m_context.MoveDir = dodgeDirection;
-            m_context.SetForcedMoveVelocity(dodgeDirection * getDodgeSpeed());
+            m_context.SetForcedMoveVelocity(dodgeDirection * m_dodgeConfig.DodgeSpeed);
             m_context.RequestAnimReplay(PlayerStateId.ActionDodge);
         }
 
@@ -59,20 +55,8 @@ namespace Module.Player.HFSM.States.Action
         {
             m_elapsedTime += deltaTime;
 
-            if (m_elapsedTime >= getDodgeDuration())
+            if (m_elapsedTime >= m_dodgeConfig.DodgeDuration)
                 m_context.IsActionFinished = true;
-        }
-
-        // 获取闪避速度
-        private float getDodgeSpeed()
-        {
-            return m_dodgeConfig != null ? m_dodgeConfig.DodgeSpeed : DEFAULT_DODGE_SPEED;
-        }
-
-        // 获取闪避持续时间
-        private float getDodgeDuration()
-        {
-            return m_dodgeConfig != null ? m_dodgeConfig.DodgeDuration : DEFAULT_DODGE_DURATION;
         }
 
         // 解析本次闪避方向
@@ -80,10 +64,9 @@ namespace Module.Player.HFSM.States.Action
         {
             Vector3 inputDirection = PlayerMoveDirectionResolver.Resolve(m_context, m_context.MoveInput);
 
-            if (inputDirection.sqrMagnitude > DODGE_INPUT_THRESHOLD_SQR)
-                return inputDirection.normalized;
-
-            return PlayerMoveDirectionResolver.ResolveForward(m_context);
+            return inputDirection.sqrMagnitude > m_dodgeConfig.DodgeInputThresholdSqr
+                ? inputDirection.normalized
+                : PlayerMoveDirectionResolver.ResolveForward(m_context);
         }
     }
 }

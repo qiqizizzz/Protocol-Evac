@@ -17,8 +17,6 @@ namespace Module.Player.Input
 {
     public class PlayerInputReader
     {
-        private const float DEFAULT_SPRINT_HOLD_TIME = 0.2f;
-
         private PlayerContext m_context;
         private PlayerInputConfigSO m_inputConfig;
         private PlayerInputActions m_inputActions;
@@ -104,7 +102,7 @@ namespace Module.Player.Input
         // 获取 Shift 长按判定时间
         private float getSprintHoldTime()
         {
-            return m_inputConfig != null ? m_inputConfig.SprintHoldTime : DEFAULT_SPRINT_HOLD_TIME;
+            return m_inputConfig.SprintHoldTime;
         }
 
         // 按条件写入离散输入缓存
