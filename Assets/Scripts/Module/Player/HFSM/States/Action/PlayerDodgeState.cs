@@ -11,6 +11,7 @@ using Module.Player.Context;
 using Module.Player.Core;
 using Module.Player.Input.Buffer;
 using UnityEngine;
+using Utils.Timer;
 
 namespace Module.Player.HFSM.States.Action
 {
@@ -19,7 +20,7 @@ namespace Module.Player.HFSM.States.Action
         private readonly PlayerContext m_context;
         private readonly PlayerDodgeConfigSO m_dodgeConfig;
 
-        private float m_elapsedTime;
+        private DurationTimer m_dodgeTimer;
 
         public override PlayerStateId Id => PlayerStateId.ActionDodge;
         public override PlayerStateId ParentId => PlayerStateId.Action;
@@ -28,11 +29,12 @@ namespace Module.Player.HFSM.States.Action
         {
             m_context = context;
             m_dodgeConfig = dodgeConfig;
+            m_dodgeTimer = new DurationTimer();
         }
 
         public override void Enter()
         {
-            m_elapsedTime = 0f;
+            m_dodgeTimer.Reset();
             m_context.InputBuffer.Consume(PlayerBufferedInputType.Dodge);
             m_context.IsActionFinished = false;
             m_context.IsMovementLocked = true;
@@ -41,11 +43,13 @@ namespace Module.Player.HFSM.States.Action
             m_context.MoveDir = dodgeDirection;
             m_context.SetForcedMoveVelocity(dodgeDirection * m_dodgeConfig.DodgeSpeed);
             m_context.RequestAnimReplay(PlayerStateId.ActionDodge);
+            
+            m_dodgeTimer.Start(m_dodgeConfig.DodgeDuration);
         }
 
         public override void Exit()
         {
-            m_elapsedTime = 0f;
+            m_dodgeTimer.Reset();
             m_context.IsActionFinished = false;
             m_context.IsMovementLocked = false;
             m_context.ClearForcedMoveVelocity();
@@ -53,9 +57,9 @@ namespace Module.Player.HFSM.States.Action
 
         public override void Tick(float deltaTime)
         {
-            m_elapsedTime += deltaTime;
+            m_dodgeTimer.Tick(deltaTime);
 
-            if (m_elapsedTime >= m_dodgeConfig.DodgeDuration)
+            if (m_dodgeTimer.IsFinished)
                 m_context.IsActionFinished = true;
         }
 
