@@ -14,7 +14,7 @@ namespace Module.Player.HFSM.States.Skill
         public override PlayerStateId ParentId => PlayerStateId.None;
         public override PlayerStateId GetInitialChildId()
         {
-            throw new System.NotImplementedException();
+            return PlayerStateId.SkillNormalAttack;
         }
     }
 }

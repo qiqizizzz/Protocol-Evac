@@ -36,7 +36,7 @@ namespace Module.Player.HFSM.States.Action
         {
             m_dodgeTimer.Reset();
             m_context.InputBuffer.Consume(PlayerBufferedInputType.Dodge);
-            m_context.IsActionFinished = false;
+            m_context.IsStateFinished = false;
             m_context.IsMovementLocked = true;
 
             Vector3 dodgeDirection = resolveDodgeDirection();
@@ -50,7 +50,7 @@ namespace Module.Player.HFSM.States.Action
         public override void Exit()
         {
             m_dodgeTimer.Reset();
-            m_context.IsActionFinished = false;
+            m_context.IsStateFinished = false;
             m_context.IsMovementLocked = false;
             m_context.ClearForcedMoveVelocity();
         }
@@ -60,7 +60,7 @@ namespace Module.Player.HFSM.States.Action
             m_dodgeTimer.Tick(deltaTime);
 
             if (m_dodgeTimer.IsFinished)
-                m_context.IsActionFinished = true;
+                m_context.IsStateFinished = true;
         }
 
         // 解析本次闪避方向

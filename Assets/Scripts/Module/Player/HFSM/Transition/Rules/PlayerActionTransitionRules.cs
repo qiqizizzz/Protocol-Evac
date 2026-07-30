@@ -35,13 +35,13 @@ namespace Module.Player.HFSM.Transition.Rules
                     PlayerTransitionPriority.Action, () => canDodge(context, dodgeConfig), 30),
 
                 new PlayerTransitionRule(PlayerStateId.ActionDodge, PlayerStateId.AirborneFall,
-                    PlayerTransitionPriority.Action, () => context.IsActionFinished && !context.IsGrounded, 20),
+                    PlayerTransitionPriority.Action, () => context.IsStateFinished && !context.IsGrounded, 20),
 
                 new PlayerTransitionRule(PlayerStateId.ActionDodge, PlayerStateId.GroundedMove,
-                    PlayerTransitionPriority.Action, () => context.IsActionFinished && context.IsGrounded && canMove(context), 10),
+                    PlayerTransitionPriority.Action, () => context.IsStateFinished && context.IsGrounded && canMove(context), 10),
 
                 new PlayerTransitionRule(PlayerStateId.ActionDodge, PlayerStateId.GroundedIdle,
-                    PlayerTransitionPriority.Action, () => context.IsActionFinished && context.IsGrounded)
+                    PlayerTransitionPriority.Action, () => context.IsStateFinished && context.IsGrounded)
             };
         }
 

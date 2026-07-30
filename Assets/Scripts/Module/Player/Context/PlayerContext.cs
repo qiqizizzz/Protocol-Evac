@@ -33,7 +33,7 @@ namespace Module.Player.Context
         // ==================== 输入相关 ====================
         public bool IsSprintPressed { get; set; } //是否按住疾跑输入
         public bool IsInputLocked { get; set; } //是否输入被禁止
-        public bool IsActionFinished { get; set; } //当前动作是否已经完成
+        public bool IsStateFinished { get; set; } //当前状态是否已经完成
 
         // ==================== 视角相关 ====================
         public Vector2 LookInput { get; set; } //视角输入
@@ -64,7 +64,7 @@ namespace Module.Player.Context
             LastGroundedTime = float.NegativeInfinity;
             IsSprintPressed = false;
             IsInputLocked = false;
-            IsActionFinished = false;
+            IsStateFinished = false;
             InputBuffer.ClearAll();
             LookInput = Vector2.zero;
             ViewMode = PlayerViewMode.FirstPerson;
