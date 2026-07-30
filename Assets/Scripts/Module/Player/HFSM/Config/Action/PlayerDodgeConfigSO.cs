@@ -7,9 +7,8 @@
  */
 
 using UnityEngine;
-using UnityEngine.Serialization;
 
-namespace Module.Player.Config.Action
+namespace Module.Player.HFSM.Config.Action
 {
     [CreateAssetMenu(fileName = "PlayerDodgeConfig", menuName = "配置/玩家/动作/玩家闪避配置")]
     public sealed class PlayerDodgeConfigSO : ScriptableObject

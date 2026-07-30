@@ -6,8 +6,8 @@
  * └──────────────────────────────────────┘
  */
 
-using Module.Player.Config.Air;
 using Module.Player.Context;
+using Module.Player.HFSM.Config.Air;
 using Module.Player.Input.Buffer;
 using UnityEngine;
 

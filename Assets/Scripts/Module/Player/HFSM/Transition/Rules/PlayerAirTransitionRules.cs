@@ -7,9 +7,9 @@
  */
 
 using System.Collections.Generic;
-using Module.Player.Config.Air;
 using Module.Player.Context;
 using Module.Player.HFSM;
+using Module.Player.HFSM.Config.Air;
 using Module.Player.HFSM.Transition;
 using Module.Player.Input.Buffer;
 using UnityEngine;

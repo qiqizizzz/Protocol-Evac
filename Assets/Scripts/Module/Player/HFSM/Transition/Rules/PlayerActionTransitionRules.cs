@@ -7,9 +7,9 @@
  */
 
 using System.Collections.Generic;
-using Module.Player.Config.Action;
 using Module.Player.Context;
 using Module.Player.HFSM;
+using Module.Player.HFSM.Config.Action;
 using Module.Player.HFSM.Transition;
 using Module.Player.Input.Buffer;
 using UnityEngine;
@@ -32,16 +32,16 @@ namespace Module.Player.HFSM.Transition.Rules
             return new PlayerTransitionRule[]
             {
                 new PlayerTransitionRule(PlayerStateId.Grounded, PlayerStateId.ActionDodge,
-                    PlayerTransitionPriority.Ability, () => canDodge(context, dodgeConfig), 30),
+                    PlayerTransitionPriority.Action, () => canDodge(context, dodgeConfig), 30),
 
                 new PlayerTransitionRule(PlayerStateId.ActionDodge, PlayerStateId.AirborneFall,
-                    PlayerTransitionPriority.Ability, () => context.IsActionFinished && !context.IsGrounded, 20),
+                    PlayerTransitionPriority.Action, () => context.IsActionFinished && !context.IsGrounded, 20),
 
                 new PlayerTransitionRule(PlayerStateId.ActionDodge, PlayerStateId.GroundedMove,
-                    PlayerTransitionPriority.Ability, () => context.IsActionFinished && context.IsGrounded && canMove(context), 10),
+                    PlayerTransitionPriority.Action, () => context.IsActionFinished && context.IsGrounded && canMove(context), 10),
 
                 new PlayerTransitionRule(PlayerStateId.ActionDodge, PlayerStateId.GroundedIdle,
-                    PlayerTransitionPriority.Ability, () => context.IsActionFinished && context.IsGrounded)
+                    PlayerTransitionPriority.Action, () => context.IsActionFinished && context.IsGrounded)
             };
         }
 

@@ -12,7 +12,6 @@ namespace Module.Player.HFSM
     {
         None,
 
-        //这里后续可以修改名字,暂时这样
         Grounded,
         GroundedIdle,
         GroundedMove,
@@ -23,9 +22,12 @@ namespace Module.Player.HFSM
         AirborneFall,
 
         Action,
-        ActionAttack,
-        ActionSkill,
         ActionDodge,
+
+        Skill,
+        SkillNormalAttack,
+        SkillSpecial,
+        SkillUltimate,
 
         Disabled,
         DisabledHurt,

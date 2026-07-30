@@ -8,7 +8,7 @@
 
 using UnityEngine;
 
-namespace Module.Player.Config.Air
+namespace Module.Player.HFSM.Config.Air
 {
     [CreateAssetMenu(fileName = "PlayerAirConfig", menuName = "配置/玩家/空中/玩家空中配置")]
     public sealed class PlayerAirConfigSO : ScriptableObject

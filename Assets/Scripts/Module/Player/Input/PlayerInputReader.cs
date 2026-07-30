@@ -6,9 +6,9 @@
  * └──────────────────────────────────┘
  */
 
-using Module.Player.Config.Input;
 using Module.Player.Context;
 using Module.Player.Core.View;
+using Module.Player.HFSM.Config.Input;
 using Module.Player.Input.Buffer;
 using UnityEngine;
 using Utils.log;

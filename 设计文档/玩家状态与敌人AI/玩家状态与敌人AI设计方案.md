@@ -4,7 +4,7 @@
 
 本方案只保留两条核心路线：
 
-- Player：Input Buffer + HFSM + Ability System + Transition Evaluator
+- Player：Input Buffer + HFSM + Skill System + Transition Evaluator
 - Enemy：BT + Utility AI + A*
 - 共享思想：每个角色拥有自己的 Context 上下文结构，用来保存运行时记忆、组件引用、输入、感知结果、目标、冷却与状态标记
 
@@ -18,11 +18,11 @@
 
 - 用 Input Buffer 管理预输入、连招输入和输入容错
 - 用 HFSM 管理玩家宏观状态，例如 Grounded、Airborne、Action、Disabled
-- 用 Ability System 管理普攻、闪避、技能、受击等能力的冷却、阶段、打断和效果窗口
+- 用 Skill System 管理普攻、特殊技能、大招等技能行为的阶段、连段、冷却和效果窗口
 - 用 Transition Evaluator 统一处理状态切换、取消、打断和优先级
-- 用 `PlayerContext` 保存输入、组件、属性、移动意图、Ability 意图、当前状态等共享数据
+- 用 `PlayerContext` 保存输入、组件、属性、移动意图、技能意图、当前状态等共享数据
 - 状态机只负责“玩家现在处于什么行为状态”
-- Ability System 只负责“玩家正在执行什么能力，以及能力生命周期如何推进”
+- Skill System 只负责“玩家正在执行什么技能，以及技能内部时间轴如何推进”
 
 ### 2.2 Enemy 目标
 
@@ -43,23 +43,23 @@ flowchart TD
     Input["玩家输入 / AI 感知"] --> Context["Agent Context"]
     Context --> InputBuffer["Player Input Buffer"]
     Context --> PlayerHFSM["Player HFSM"]
-    Context --> AbilitySystem["Player Ability System"]
+    Context --> SkillSystem["Player Skill System"]
     Context --> TransitionEvaluator["Player Transition Evaluator"]
     Context --> UtilityAI["Enemy Utility AI"]
-    InputBuffer --> AbilitySystem
-    AbilitySystem --> TransitionEvaluator
+    InputBuffer --> SkillSystem
+    SkillSystem --> TransitionEvaluator
     TransitionEvaluator --> PlayerHFSM
     UtilityAI --> BT["Enemy Behavior Tree"]
     BT --> PathAgent["A* Path Agent"]
     PlayerHFSM --> Motor["Movement / Animation / Combat Output"]
-    AbilitySystem --> Motor
+    SkillSystem --> Motor
     PathAgent --> Motor
 ```
 
 核心原则：
 
 - Context 是“当前角色的运行时记忆”
-- 状态机、Ability、行为树、效用决策都通过 Context 协作
+- 状态机、Skill、行为树、效用决策都通过 Context 协作
 - Controller/Brain 负责调度，不负责塞满具体行为逻辑
 - 数据配置优先使用 ScriptableObject
 - 运行时状态优先放在 Context，不散落到各个节点和状态里
@@ -99,9 +99,12 @@ Assets/Scripts/Module/
 │  │     │  └─ PlayerFallState.cs
 │  │     ├─ Action/
 │  │     │  ├─ PlayerActionState.cs
-│  │     │  ├─ PlayerAttackState.cs
-│  │     │  ├─ PlayerSkillState.cs
 │  │     │  └─ PlayerDodgeState.cs
+│  │     ├─ Skill/
+│  │     │  ├─ PlayerSkillState.cs
+│  │     │  ├─ PlayerNormalAttackState.cs
+│  │     │  ├─ PlayerSpecialSkillState.cs
+│  │     │  └─ PlayerUltimateState.cs
 │  │     └─ Disabled/
 │  │        ├─ PlayerDisabledState.cs
 │  │        ├─ PlayerHurtState.cs
@@ -111,18 +114,25 @@ Assets/Scripts/Module/
 │  │  ├─ PlayerTransitionRequest.cs
 │  │  ├─ PlayerTransitionRule.cs
 │  │  └─ PlayerInterruptPriority.cs
-│  ├─ Ability/
-│     ├─ PlayerAbilityController.cs
-│     ├─ PlayerAbilitySlot.cs
-│     ├─ PlayerAbilityRequest.cs
-│     ├─ PlayerAbilityRuntime.cs
-│     ├─ AbilityDefinitionSO.cs
-│     ├─ AbilityPhase.cs
-│     └─ Abilities/
-│        ├─ NormalAttackAbility.cs
-│        ├─ DodgeAbility.cs
-│        ├─ SkillAbility.cs
-│        └─ HurtAbility.cs
+│  ├─ Skill/
+│  │  ├─ Data/
+│  │  │  ├─ PlayerSkillDataSO.cs
+│  │  │  └─ PlayerSkillStepData.cs
+│  │  ├─ Event/
+│  │  │  ├─ PlayerSkillEventDataBase.cs
+│  │  │  ├─ PlayerHitboxEventData.cs
+│  │  │  ├─ PlayerInvincibleEventData.cs
+│  │  │  ├─ PlayerCancelWindowEventData.cs
+│  │  │  ├─ PlayerMotionEventData.cs
+│  │  │  └─ PlayerVfxEventData.cs
+│  │  ├─ Core/
+│  │  │  ├─ PlayerSkillSystem.cs
+│  │  │  ├─ PlayerSkillRunner.cs
+│  │  │  └─ PlayerSkillContext.cs
+│  │  ├─ PlayerSkillId.cs
+│  │  ├─ PlayerSkillType.cs
+│  │  ├─ PlayerSkillEventType.cs
+│  │  └─ PlayerSkillPhase.cs
 │  └─ Config/
 │     └─ PlayerConfigSO.cs
 ├─ Enemy/
@@ -179,8 +189,9 @@ Assets/Scripts/Module/
 - `Module/Enemy/Pathfinding` 只暴露寻路接口和适配器，避免 BT 节点直接依赖具体 A* 插件
 - `Module/Player/Input` 负责输入读取和预输入缓存，不直接切状态
 - `Module/Player/Transition` 负责状态切换、取消、打断和优先级判断
-- `Module/Player/Ability` 负责普攻、闪避、技能、受击等能力生命周期
-- 如果后续玩家 Ability 也要被敌人复用，可以把 `Ability` 抽到 `Module/Combat/Ability`
+- `Module/Player/Skill` 负责普攻、特殊技能、大招等技能行为的阶段、连段、冷却和事件触发
+- 闪避、交互、使用道具等通用动作保留在 `Module/Player/HFSM/States/Action`
+- 如果后续玩家 Skill 也要被敌人复用，可以把 `Skill` 抽到 `Module/Combat/Skill`
 
 ## 5. Context 上下文设计
 
@@ -230,12 +241,12 @@ public sealed class PlayerContext
     public Vector2 MoveInput { get; set; }
     public Vector2 LookInput { get; set; }
     public bool IsSprintPressed { get; set; }
-    public PlayerAbilityRequest AbilityRequest { get; set; }
+    public PlayerSkillId RequestedSkillId { get; set; }
     public PlayerTransitionRequest TransitionRequest { get; set; }
 
     public bool IsGrounded { get; set; }
     public bool IsMovementLocked { get; set; }
-    public bool IsAbilityLocked { get; set; }
+    public bool IsSkillLocked { get; set; }
     public bool IsInputLocked { get; set; }
     public bool IsInvincible { get; set; }
     public bool IsInAction { get; set; }
@@ -250,7 +261,7 @@ public sealed class PlayerContext
 
     public PlayerStateId CurrentStateId { get; set; }
     public PlayerStateId PreviousStateId { get; set; }
-    public PlayerAbilityRuntime ActiveAbility { get; set; }
+    public PlayerSkillId ActiveSkillId { get; set; }
     public PlayerInterruptPriority CurrentInterruptPriority { get; set; }
 }
 ```
@@ -259,7 +270,7 @@ public sealed class PlayerContext
 
 - 输入相关可拆成 `PlayerInputContext`
 - 属性相关可拆成 `PlayerStatsContext`
-- 能力相关可拆成 `PlayerAbilityContext`
+- 技能相关可拆成 `PlayerSkillContext`
 - 状态切换相关可拆成 `PlayerTransitionContext`
 
 前期建议先保持一个 `PlayerContext`，等字段明显膨胀后再拆。
@@ -304,7 +315,7 @@ public sealed class EnemyContext
 - 意图数据由 `EnemyUtilitySelector` 写入
 - 行为结果由 BT 节点和 `IPathAgent` 写入
 
-## 6. Player：Input Buffer + HFSM + Ability + Transition Evaluator
+## 6. Player：Input Buffer + HFSM + Skill + Transition Evaluator
 
 ### 6.1 Player 分层结论
 
@@ -314,7 +325,7 @@ public sealed class EnemyContext
 Player
 ├─ Input Buffer：预输入、连招输入、短时间容错
 ├─ HFSM：移动、空中、动作、禁用等宏观状态
-├─ Ability System：普攻、技能、闪避、受击等能力生命周期
+├─ Skill System：普攻、特殊技能、大招等技能时间轴
 └─ Transition Evaluator：状态切换、取消、打断、优先级规则
 ```
 
@@ -322,7 +333,7 @@ Player
 
 - `Input Buffer` 只记录输入，不直接释放技能，不直接切状态
 - `HFSM` 只回答“玩家当前处于哪类行为状态”
-- `Ability System` 只推进能力生命周期，例如前摇、生效、后摇、冷却
+- `Skill System` 只推进技能内部时间轴，例如前摇、生效、后摇、连段窗口和冷却
 - `Transition Evaluator` 统一决定能不能从当前状态切到目标状态
 - `PlayerContext` 是四层之间共享的运行时上下文
 
@@ -337,10 +348,10 @@ PlayerController.Update
 ├─ PlayerInputBuffer.Tick()
 │  └─ 缓存 Jump / Attack / Skill / Dodge 等输入
 ├─ 更新地面、速度、生命、锁定标记等 Context 数据
-├─ PlayerAbilityController.Tick()
-│  └─ 消耗输入缓存，生成 AbilityRequest 或推进 ActiveAbility
+├─ PlayerSkillSystem.Tick()
+│  └─ 推进当前技能时间轴，刷新技能事件和结束标记
 ├─ PlayerTransitionEvaluator.Tick()
-│  └─ 根据 Context / AbilityRequest / 当前状态生成 TransitionRequest
+│  └─ 根据 Context / Skill / 当前状态生成 TransitionRequest
 ├─ PlayerStateMachine.Tick()
 │  └─ 执行 TransitionRequest，更新当前状态
 └─ PlayerAnimatorDriver.Tick()
@@ -354,10 +365,10 @@ PlayerController.FixedUpdate
 调度原则：
 
 - 输入先进入 Buffer，避免玩家按早一点就丢输入
-- Ability 先于 HFSM Tick，因为能力可能申请进入 `Action` 或 `Disabled`
+- Skill 先于 HFSM Tick，因为当前技能时间轴可能在本帧结束或打开取消窗口
 - Transition Evaluator 统一判断切换合法性，避免每个状态里散落打断规则
 - HFSM 只执行已确认的切换，不自己到处抢决策权
-- Motor 最后执行实际移动，保证状态、能力、锁定都已经写入 Context
+- Motor 最后执行实际移动，保证状态、技能、锁定都已经写入 Context
 
 ### 6.3 HFSM 推荐层级
 
@@ -373,9 +384,11 @@ Player HFSM
 │  ├─ Jump
 │  └─ Fall
 ├─ Action
-│  ├─ Attack
-│  ├─ Skill
 │  └─ Dodge
+├─ Skill
+│  ├─ NormalAttack
+│  ├─ SpecialSkill
+│  └─ Ultimate
 └─ Disabled
    ├─ Hurt
    └─ Dead
@@ -407,9 +420,12 @@ public enum PlayerStateId
     AirborneFall,
 
     Action,
-    ActionAttack,
-    ActionSkill,
     ActionDodge,
+
+    Skill,
+    SkillNormalAttack,
+    SkillSpecial,
+    SkillUltimate,
 
     Disabled,
     DisabledHurt,
@@ -434,7 +450,8 @@ public enum PlayerStateId
 ```text
 Grounded → GroundedIdle
 Airborne → AirborneFall
-Action → ActionAttack
+Action → ActionDodge
+Skill → SkillNormalAttack
 Disabled → DisabledHurt
 ```
 
@@ -453,9 +470,10 @@ Disabled → DisabledHurt
 
 | 状态层 | 职责 | 典型进入条件 | 典型退出条件 |
 | --- | --- | --- | --- |
-| Grounded | 地面移动、待机、疾跑 | 落地、动作结束回地面 | 起跳、下落、攻击、闪避、受击、死亡 |
+| Grounded | 地面移动、待机、疾跑 | 落地、动作或技能结束回地面 | 起跳、下落、闪避、技能、受击、死亡 |
 | Airborne | 起跳、滞空、下落 | Jump 输入、离地 | 落地、受击、死亡 |
-| Action | 攻击、技能、闪避等主动动作 | AbilityRequest 通过校验 | Ability 结束、被高优先级打断 |
+| Action | 闪避、交互、使用道具等通用动作 | 通用动作输入通过校验 | 动作结束、被高优先级打断 |
+| Skill | 普攻、特殊技能、大招等技能行为 | 技能输入通过校验 | 技能时间轴结束、被高优先级打断 |
 | Disabled | 受击、眩晕、死亡等强制状态 | 受到伤害、死亡、硬控 | 受击恢复、复活、死亡不退出 |
 
 叶子状态职责：
@@ -467,11 +485,12 @@ Disabled → DisabledHurt
 | Sprint | 疾跑移动，处理体力消耗或疾跑限制 |
 | Jump | 起跳瞬间，设置向上速度，随后转 Fall |
 | Fall | 下落和落地检测，落地后转 Grounded |
-| Attack | 承载普攻 Ability 的动作表现、转向锁定、连招窗口 |
-| Skill | 承载主动技能 Ability 的释放表现和锁定规则 |
-| Dodge | 承载闪避 Ability 的无敌帧、位移方向、动作锁定 |
-| Hurt | 承载受击 Ability 的硬直、击退、短暂无输入 |
-| Dead | 禁用输入、移动、Ability 与常规切换 |
+| Dodge | 承载闪避位移、动作锁定和动画重播 |
+| NormalAttack | 承载普攻技能的状态壳，技能内部阶段由 Skill System 推进 |
+| SpecialSkill | 承载特殊技能的状态壳，技能内部阶段由 Skill System 推进 |
+| Ultimate | 承载大招的状态壳，技能内部阶段由 Skill System 推进 |
+| Hurt | 承载受击硬直、击退、短暂无输入 |
+| Dead | 禁用输入、移动、技能与常规切换 |
 
 ### 6.5 Input Buffer
 
@@ -486,8 +505,9 @@ Disabled → DisabledHurt
 public enum PlayerBufferedInputType
 {
     Jump,
-    Attack,
-    Skill,
+    NormalAttack,
+    SpecialSkill,
+    Ultimate,
     Dodge,
     Interact
 }
@@ -501,15 +521,14 @@ BufferedInput
 ├─ PressTime
 ├─ ExpireTime
 ├─ Direction
-├─ SkillSlotIndex
 └─ IsConsumed
 ```
 
 基础规则：
 
 - Jump、Dodge 可以有短缓存，例如 0.12 到 0.2 秒
-- Attack 可以支持更长一点的连招缓存，例如 0.2 到 0.35 秒
-- Skill 是否缓存取决于技能类型，瞬发技能可以缓存，瞄准类技能不建议缓存太久
+- NormalAttack 可以支持更长一点的连招缓存，例如 0.2 到 0.35 秒
+- SpecialSkill / Ultimate 是否缓存取决于技能类型，瞬发技能可以缓存，瞄准类技能不建议缓存太久
 - 被 `Disabled` 状态控制时，普通输入可以保留或清空，由受击规则决定
 
 ### 6.6 Transition Evaluator
@@ -517,8 +536,8 @@ BufferedInput
 `Transition Evaluator` 是玩家侧最容易被忽略但很关键的一层，专门处理：
 
 - 当前状态能不能切目标状态
-- 当前 Ability 能不能被取消
-- 新 Ability 能不能打断旧 Ability
+- 当前技能或动作能不能被取消
+- 新技能或动作能不能打断旧技能或动作
 - 受击、死亡这类强制切换是否覆盖一切
 - 输入缓存什么时候被消费
 
@@ -528,8 +547,9 @@ BufferedInput
 Dead
 └─ Hurt / Stun
    └─ Dodge
-      └─ Skill
-         └─ Attack
+      └─ Ultimate
+         └─ SpecialSkill
+            └─ NormalAttack
             └─ Jump
                └─ Move / Sprint / Idle
 ```
@@ -542,8 +562,9 @@ public enum PlayerInterruptPriority
     None = 0,
     Movement = 10,
     Jump = 20,
-    Attack = 30,
-    Skill = 40,
+    NormalAttack = 30,
+    SpecialSkill = 40,
+    Ultimate = 45,
     Dodge = 50,
     Hurt = 80,
     Dead = 100
@@ -555,10 +576,10 @@ public enum PlayerInterruptPriority
 ```text
 PlayerTransitionRequest
 ├─ TargetStateId
-├─ SourceAbility
+├─ SourceSkill
 ├─ Priority
 ├─ CanConsumeBufferedInput
-├─ ShouldCancelCurrentAbility
+├─ ShouldCancelCurrentSkill
 └─ Reason
 ```
 
@@ -566,91 +587,93 @@ PlayerTransitionRequest
 
 - `Dead` 永远可以打断其他状态
 - `Hurt` 可以打断普通移动、攻击和大部分技能，但不能打断死亡
-- `Dodge` 是否能取消攻击，由 Ability 配置决定
-- `Attack` 连段不直接切状态，而是让当前 AttackAbility 消费下一段输入
-- `Skill` 能不能被 Dodge 取消，由 `AbilityDefinitionSO` 的取消窗口决定
+- `Dodge` 是否能取消技能，由 Skill 事件里的取消窗口决定
+- 普攻连段不直接切状态，而是让当前技能时间轴在取消窗口内推进下一段
+- SpecialSkill / Ultimate 能不能被 Dodge 取消，由对应技能事件数据决定
 - `Grounded` 与 `Airborne` 的自然切换由地面检测驱动
 
-### 6.7 Ability System
+### 6.7 Skill System
 
-这里建议用 `Ability` 这个概念，而不是只叫 `Skill`。因为玩家的普攻、闪避、受击也有生命周期、打断规则、锁定规则和动画窗口，它们本质上也是能力。
+Skill System 只承载“技能行为”，例如普攻、特殊技能和大招。闪避、交互、使用道具等通用动作保留在 Action 分支，受击和死亡保留在 Disabled 分支。
 
 ```text
-Ability System
-├─ NormalAttackAbility：普攻、连段、命中帧
-├─ DodgeAbility：闪避、无敌帧、位移
-├─ SkillAbility：主动技能、消耗、冷却、效果
-└─ HurtAbility：受击、硬直、击退、受击保护
+Skill System
+├─ NormalAttack：普攻、连段、命中帧
+├─ SpecialSkill：特殊技能、冷却、效果
+└─ Ultimate：大招、长时间动作、强效果窗口
 ```
 
-Ability 分层：
+Skill 分层：
 
-- 配置层：`AbilityDefinitionSO`
-- 运行时层：`PlayerAbilityRuntime`
-- 调度层：`PlayerAbilityController`
-
-```text
-AbilityDefinitionSO
-├─ AbilityId
-├─ AbilityType
-├─ Cooldown
-├─ Cost
-├─ CastTime
-├─ ActiveTime
-├─ RecoveryTime
-├─ InputBufferTime
-├─ InterruptPriority
-├─ CanBeCancelled
-├─ CancelWindow
-├─ LockMovement
-├─ LockRotation
-├─ InvincibleWindow
-└─ EffectParams
-```
-
-Ability 生命周期：
+- 数据层：`PlayerSkillDataSO`、`PlayerSkillStepData`
+- 事件层：`PlayerSkillEventDataBase` 及其派生事件
+- 核心层：`PlayerSkillSystem`、`PlayerSkillRunner`、`PlayerSkillContext`
 
 ```text
-Ready
-└─ Cast
-   └─ Active
-      └─ Recovery
-         └─ Cooldown
-            └─ Ready
+PlayerSkillDataSO
+├─ SkillId
+├─ SkillType
+├─ CooldownTime
+└─ Steps
+   ├─ 第 1 段
+   ├─ 第 2 段
+   └─ 第 3 段
 ```
 
 建议枚举：
 
 ```csharp
-public enum AbilityPhase
+public enum PlayerSkillType
 {
-    Ready,
+    NormalAttack,
+    SpecialSkill,
+    Ultimate
+}
+
+public enum PlayerSkillPhase
+{
+    None,
     Cast,
     Active,
     Recovery,
-    Cooldown
+    Finished
 }
 ```
 
-### 6.8 HFSM 与 Ability 的边界
+技能事件示例：
+
+```text
+PlayerSkillEventDataBase
+├─ StartTime
+├─ EndTime
+└─ EventType
+
+PlayerHitboxEventData
+PlayerInvincibleEventData
+PlayerCancelWindowEventData
+PlayerMotionEventData
+PlayerVfxEventData
+```
+
+### 6.8 HFSM 与 Skill 的边界
 
 | 问题 | 归属 |
 | --- | --- |
 | 玩家当前是不是在地面 | HFSM / Context |
 | 玩家能不能移动 | HFSM 读取 Context 锁定规则 |
-| 普攻第几段 | Ability Runtime |
-| 普攻是否能接下一段 | Ability Runtime + Input Buffer |
-| 闪避冷却和无敌帧 | DodgeAbility |
+| 普攻第几段 | Skill System |
+| 普攻是否能接下一段 | Skill System + Input Buffer |
+| 闪避位移与动作锁定 | HFSM 的 ActionDodge |
 | 闪避期间的宏观状态 | HFSM 的 ActionDodge |
-| 技能能否释放 | PlayerAbilityController |
-| 技能能否被取消 | Transition Evaluator + AbilityDefinitionSO |
-| 受击硬直和击退 | HurtAbility + DisabledHurt |
+| 技能能否释放 | PlayerSkillSystem + Transition Evaluator |
+| 技能能否被取消 | Transition Evaluator + PlayerCancelWindowEventData |
+| 受击硬直和击退 | DisabledHurt |
 | 死亡 | DisabledDead，最高优先级 |
 
 核心规则：
 
 - HFSM 管“姿态和控制权”
-- Ability 管“能力生命周期和效果窗口”
+- Skill 管“技能内部时间轴和效果窗口”
 - Input Buffer 管“输入时机容错”
 - Transition Evaluator 管“谁能切谁、谁能打断谁”
 - Context 管“共享运行时事实”
@@ -662,7 +685,9 @@ public enum AbilityPhase
 ```text
 Input Buffer
 ├─ Jump
-├─ Attack
+├─ NormalAttack
+├─ SpecialSkill
+├─ Ultimate
 └─ Dodge
 
 HFSM
@@ -670,24 +695,24 @@ HFSM
 ├─ GroundedMove
 ├─ AirborneJump
 ├─ AirborneFall
-├─ ActionAttack
 ├─ ActionDodge
+├─ SkillNormalAttack
 ├─ DisabledHurt
 └─ DisabledDead
 
-Ability
-├─ NormalAttackAbility
-├─ DodgeAbility
-└─ HurtAbility
+Skill
+├─ PlayerSkillDataSO
+├─ PlayerSkillRunner
+└─ NormalAttack 第一段时间轴
 
 Transition Evaluator
 ├─ Dead 强制最高优先级
-├─ Hurt 打断移动和攻击
+├─ Hurt 打断移动和技能
 ├─ Dodge 可取消移动
-└─ Attack 可从 Grounded 进入
+└─ NormalAttack 可从 Grounded 进入
 ```
 
-等这套跑通后，再加入 `Sprint`、更多主动 `SkillAbility`、连招分支和复杂取消窗口。
+等这套跑通后，再加入 `Sprint`、SpecialSkill、Ultimate、更多普攻段数和复杂取消窗口。
 
 ## 7. Enemy：BT + Utility AI + A*
 
@@ -877,11 +902,11 @@ EnemyMotor
 - 创建 `PlayerContext`
 - 缓存组件
 - 初始化 HFSM
-- 初始化 InputBuffer、AbilityController、TransitionEvaluator
-- 每帧更新输入、Ability、状态、动画
+- 初始化 InputBuffer、SkillSystem、TransitionEvaluator
+- 每帧更新输入、Skill、状态、动画
 - 每个物理帧调用 Motor
 
-不要在 `PlayerController` 里写大量移动、Ability、动画细节。
+不要在 `PlayerController` 里写大量移动、Skill、动画细节。
 
 ### 8.2 EnemyBrain
 
@@ -897,12 +922,12 @@ EnemyMotor
 
 ## 9. 与 QF 框架的关系
 
-结论：本方案不建议用 QF 来实现 Player Input Buffer、HFSM、Ability 生命周期、Transition Evaluator、Enemy BT、Utility AI 或 A* 核心逻辑，但可以参考并使用 QF 做外层工程组织。
+结论：本方案不建议用 QF 来实现 Player Input Buffer、HFSM、Skill 时间轴、Transition Evaluator、Enemy BT、Utility AI 或 A* 核心逻辑，但可以参考并使用 QF 做外层工程组织。
 
 原因：
 
 - Player 状态机和 Enemy 行为树属于高频运行逻辑，需要轻量、直接、可调试
-- Ability、BT 节点、Utility 评分项更适合做成纯 C# 类，方便单独测试和复用
+- Skill、BT 节点、Utility 评分项更适合做成纯 C# 类，方便单独测试和复用
 - Context 是每个角色自己的运行时记忆，不适合注册成全局 QF Model
 - QF 的 Architecture、System、Model、Command、Query 更适合处理跨模块协作，不适合塞进每个敌人的每帧决策
 
@@ -914,7 +939,7 @@ EnemyMotor
 - `PlayerModel`：保存可持久化的玩家数据，例如已解锁技能、背包、成长数值
 - `EnemySpawnSystem`：管理敌人生成、回收、波次
 - `CombatEventSystem`：分发伤害、击杀、受击、警报等跨模块事件
-- `AbilityConfigSystem`：加载和查询 Ability 配置
+- `SkillConfigSystem`：加载和查询 Skill 配置
 - `AudioSystem` / `UISystem`：响应战斗事件播放音效或刷新 UI
 - `Command`：表达一次明确的跨系统动作，例如 `ApplyDamageCommand`、`UnlockSkillCommand`
 - `Query`：读取跨模块数据，例如 `GetPlayerLevelQuery`、`GetSkillConfigQuery`
@@ -926,7 +951,7 @@ EnemyMotor
 - `PlayerStateBase`
 - `PlayerStateMachine`
 - `PlayerInputBuffer`
-- `PlayerAbilityRuntime`
+- `PlayerSkillRunner`
 - `PlayerTransitionEvaluator`
 - `EnemyContext`
 - `EnemyUtilityOption`
@@ -934,7 +959,7 @@ EnemyMotor
 - `MoveToTargetNode`
 - `IPathAgent`
 
-这些类可以通过 Context、构造函数或初始化方法拿到必要依赖。需要通知外部系统时，再由 Controller/Brain 统一转发到 QF，而不是让每个状态、Ability、BT 节点直接 `SendCommand`。
+这些类可以通过 Context、构造函数或初始化方法拿到必要依赖。需要通知外部系统时，再由 Controller/Brain 统一转发到 QF，而不是让每个状态、Skill、BT 节点直接 `SendCommand`。
 
 ### 9.3 推荐边界
 
@@ -948,7 +973,7 @@ Unity MonoBehaviour 层
 纯逻辑层
 ├─ PlayerInputBuffer
 ├─ PlayerStateMachine
-├─ PlayerAbilityController
+├─ PlayerSkillSystem
 ├─ PlayerTransitionEvaluator
 ├─ EnemyBehaviorTreeRunner
 ├─ EnemyUtilitySelector
@@ -966,23 +991,23 @@ QF 架构层
 
 | 类型 | 生命周期 | 数据性质 | 示例 |
 | --- | --- | --- | --- |
-| Context | 跟随单个角色实例 | 高频运行时数据 | 当前目标、当前状态、移动方向、Ability 锁定 |
-| QF Model | 跟随架构或游戏流程 | 长期或全局数据 | 玩家等级、已解锁 Ability、关卡进度 |
+| Context | 跟随单个角色实例 | 高频运行时数据 | 当前目标、当前状态、移动方向、技能锁定 |
+| QF Model | 跟随架构或游戏流程 | 长期或全局数据 | 玩家等级、已解锁技能、关卡进度 |
 | QF System | 跟随架构或场景模块 | 跨模块服务 | 敌人生成、音频播放、配置查询 |
 
 原则：
 
 - `PlayerContext` / `EnemyContext` 不注册为 QF Model
 - `PlayerController` / `EnemyBrain` 可以作为 QF 与纯逻辑层之间的适配入口
-- 状态、Ability、BT 节点内部不要直接依赖 QF，避免后期测试和复用困难
+- 状态、Skill、BT 节点内部不要直接依赖 QF，避免后期测试和复用困难
 
 ### 9.5 推荐接入方式
 
-当玩家 Ability 造成伤害时：
+当玩家 Skill 造成伤害时：
 
 ```text
-AbilityRuntime
-└─ 生成伤害请求，写入 Context 或回调给 PlayerAbilityController
+PlayerSkillRunner
+└─ 生成伤害请求，写入 Context 或回调给 PlayerSkillSystem
 
 PlayerController
 └─ 统一发送 ApplyDamageCommand
@@ -1020,25 +1045,17 @@ PlayerConfigSO
 ├─ 重力参数
 ├─ 闪避距离
 ├─ 闪避时间
-└─ 默认 Ability 列表
+└─ 默认技能列表
 ```
 
 ```text
-AbilityDefinitionSO
-├─ AbilityId
-├─ AbilityName
-├─ AbilityType
-├─ Cooldown
-├─ CastTime
-├─ ActiveTime
-├─ RecoveryTime
-├─ StaminaCost
-├─ InputBufferTime
-├─ InterruptPriority
-├─ LockMovement
-├─ LockRotation
-├─ CanBeInterrupted
-└─ EffectParams
+PlayerSkillDataSO
+├─ SkillId
+├─ SkillType
+├─ CooldownTime
+└─ Steps
+   ├─ Duration
+   └─ Events
 ```
 
 ### 10.2 Enemy 配置
@@ -1077,7 +1094,7 @@ Module.Player
 Module.Player.Input
 Module.Player.HFSM
 Module.Player.Transition
-Module.Player.Ability
+Module.Player.Skill
 ProtocolEvac.Enemy
 ProtocolEvac.Enemy.BT
 ProtocolEvac.Enemy.Utility
@@ -1102,15 +1119,16 @@ Player 模块当前统一沿用 `Module.Player.*`，本阶段不调整已有命�
 8. 安装 New Input System 后创建 `PlayerInputReader`、`PlayerInputBuffer`
 9. 确认输入缓存、移动、跳跃与落地流程稳定
 
-### 阶段 2：Ability 与 Transition Evaluator
+### 阶段 2：Skill 与 Transition Evaluator
 
-1. 创建 `AbilityDefinitionSO`
-2. 创建 `PlayerAbilityRequest`
-3. 创建 `PlayerAbilityRuntime`
-4. 创建 `PlayerAbilityController`
-5. 创建 `PlayerTransitionEvaluator`
-6. 实现 `NormalAttackAbility`、`DodgeAbility`、`HurtAbility`
-7. 打通冷却、释放、后摇、取消、打断和锁移动
+1. 创建 `PlayerSkillDataSO`
+2. 创建 `PlayerSkillStepData`
+3. 创建 `PlayerSkillEventDataBase`
+4. 创建 `PlayerSkillSystem`
+5. 创建 `PlayerSkillRunner`
+6. 创建 `PlayerTransitionEvaluator`
+7. 实现 `SkillNormalAttack` 最小纵切
+8. 打通释放、后摇、连段窗口、取消、打断和锁移动
 
 ### 阶段 3：Enemy Context 与感知
 
@@ -1287,7 +1305,7 @@ Player 模块当前统一沿用 `Module.Player.*`，本阶段不调整已有命�
 
 当前方案先不考虑其他大系统，但保留扩展点：
 
-- 玩家 Ability 可扩展为组合技能、蓄力技能、连招技能
+- 玩家 Skill 可扩展为组合技能、蓄力技能、连招技能
 - 敌人 Utility 可增加队友距离、弹药、掩体、噪音来源
 - BT 可按敌人类型使用不同 Factory
 - A* 可替换为插件适配器、自研 Grid A*、Recast 路径等
@@ -1295,6 +1313,6 @@ Player 模块当前统一沿用 `Module.Player.*`，本阶段不调整已有命�
 
 整体原则不变：
 
-- Player 用 Input Buffer 管输入容错，用 HFSM 管动作形态，用 Ability System 管能力生命周期，用 Transition Evaluator 管取消和打断
+- Player 用 Input Buffer 管输入容错，用 HFSM 管动作形态，用 Skill System 管技能时间轴，用 Transition Evaluator 管取消和打断
 - Enemy 用 Utility AI 选意图，用 BT 执行流程，用 A* 找路
 - Context 作为每个角色自己的专属运行时记忆，不做全局状态仓库

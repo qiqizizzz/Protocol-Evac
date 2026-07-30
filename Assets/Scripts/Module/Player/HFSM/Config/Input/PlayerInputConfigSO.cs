@@ -8,7 +8,7 @@
 
 using UnityEngine;
 
-namespace Module.Player.Config.Input
+namespace Module.Player.HFSM.Config.Input
 {
     [CreateAssetMenu(fileName = "PlayerInputConfig", menuName = "配置/玩家/输入/玩家输入配置")]
     public sealed class PlayerInputConfigSO : ScriptableObject

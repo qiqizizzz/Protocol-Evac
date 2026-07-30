@@ -6,9 +6,9 @@
  * └────────────────────────────────────────────┘
  */
 
-using Module.Player.Config.Air;
 using Module.Player.Context;
 using Module.Player.Core;
+using Module.Player.HFSM.Config.Air;
 using UnityEngine;
 
 namespace Module.Player.HFSM.States.Air

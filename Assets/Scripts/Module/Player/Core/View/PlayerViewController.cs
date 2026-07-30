@@ -6,8 +6,8 @@
  * └──────────────────────────────────┘
  */
 
-using Module.Player.Config.View;
 using Module.Player.Context;
+using Module.Player.HFSM.Config.View;
 using UnityEngine;
 using Utils.log;
 

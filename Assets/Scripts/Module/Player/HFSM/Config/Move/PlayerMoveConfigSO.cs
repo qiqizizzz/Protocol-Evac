@@ -8,7 +8,7 @@
 
 using UnityEngine;
 
-namespace Module.Player.Config.Move
+namespace Module.Player.HFSM.Config.Move
 {
     [CreateAssetMenu(fileName = "PlayerMoveConfig",menuName = "配置/玩家/移动/玩家移动配置")]
     public sealed class PlayerMoveConfigSO : ScriptableObject

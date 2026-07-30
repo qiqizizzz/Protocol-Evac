@@ -6,10 +6,10 @@
  * └──────────────────────────────────┘
  */
 
-using Module.Player.Config.Move;
-using Module.Player.Config.View;
 using Module.Player.Context;
 using Module.Player.Core.View;
+using Module.Player.HFSM.Config.Move;
+using Module.Player.HFSM.Config.View;
 using UnityEngine;
 
 namespace Module.Player.Core

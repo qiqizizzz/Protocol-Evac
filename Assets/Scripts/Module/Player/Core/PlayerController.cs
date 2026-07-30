@@ -6,17 +6,17 @@
  * └──────────────────────────────────┘
  */
 
-using Module.Player.Config.Action;
-using Module.Player.Config.Air;
-using Module.Player.Config.Input;
-using Module.Player.Config.Move;
-using Module.Player.Config.View;
 using Module.Player.Context;
 using Module.Player.Core.View;
 using Module.Player.HFSM;
 using Module.Player.HFSM.Animation;
 using Module.Player.HFSM.Animation.Binders;
 using Module.Player.HFSM.Animation.Rules;
+using Module.Player.HFSM.Config.Action;
+using Module.Player.HFSM.Config.Air;
+using Module.Player.HFSM.Config.Input;
+using Module.Player.HFSM.Config.Move;
+using Module.Player.HFSM.Config.View;
 using Module.Player.HFSM.States.Action;
 using Module.Player.HFSM.States.Air;
 using Module.Player.HFSM.States.Ground;
