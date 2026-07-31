@@ -6,10 +6,9 @@
  * └──────────────────────────────────┘
  */
 
-using Module.Player.Core.View;
 using UnityEngine;
 
-namespace Module.Player.HFSM.Config.View
+namespace Module.Player.Core.View.Config
 {
     [CreateAssetMenu(fileName = "PlayerViewConfig", menuName = "配置/玩家/视角/玩家视角配置")]
     public sealed class PlayerViewConfigSO : ScriptableObject

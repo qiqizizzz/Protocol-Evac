@@ -6,12 +6,13 @@
  * └────────────────────────────────────────────┘
  */
 
+using Module.Player.HFSM.Config.Common;
 using UnityEngine;
 
 namespace Module.Player.HFSM.Config.Air
 {
     [CreateAssetMenu(fileName = "PlayerAirConfig", menuName = "配置/玩家/空中/玩家空中配置")]
-    public sealed class PlayerAirConfigSO : ScriptableObject
+    public sealed class PlayerAirConfigSO : PlayerStateCommonConfigSO
     {
         [Header("跳跃")]
         [Tooltip("玩家起跳时写入的竖直速度")]

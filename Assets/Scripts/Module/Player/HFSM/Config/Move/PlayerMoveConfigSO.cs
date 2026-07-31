@@ -6,12 +6,13 @@
  * └────────────────────────────────────────────┘
  */
 
+using Module.Player.HFSM.Config.Common;
 using UnityEngine;
 
 namespace Module.Player.HFSM.Config.Move
 {
     [CreateAssetMenu(fileName = "PlayerMoveConfig",menuName = "配置/玩家/移动/玩家移动配置")]
-    public sealed class PlayerMoveConfigSO : ScriptableObject
+    public sealed class PlayerMoveConfigSO : PlayerStateCommonConfigSO
     {
         [Header("地面移动")]
         [Tooltip("玩家普通移动速度")]

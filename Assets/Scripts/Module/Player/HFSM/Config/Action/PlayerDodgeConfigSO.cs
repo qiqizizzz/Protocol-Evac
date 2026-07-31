@@ -6,18 +6,19 @@
  * └────────────────────────────────────────────┘
  */
 
+using Module.Player.HFSM.Config.Common;
 using UnityEngine;
 
 namespace Module.Player.HFSM.Config.Action
 {
     [CreateAssetMenu(fileName = "PlayerDodgeConfig", menuName = "配置/玩家/动作/玩家闪避配置")]
-    public sealed class PlayerDodgeConfigSO : ScriptableObject
+    public sealed class PlayerDodgeConfigSO : PlayerStateCommonConfigSO
     {
+        private const float DEFAULT_DODGE_DURATION = 0.32f;
+
         [Header("闪避位移")]
         [Tooltip("闪避期间的水平速度")]
         [SerializeField, Min(0f)] private float DodgeSpeedValue = 9f;
-        [Tooltip("闪避持续时间")]
-        [SerializeField, Min(0f)] private float DodgeDurationValue = 0.32f;
 
         [Header("输入容错")]
         [Tooltip("闪避动作的输入力度平方阈值")]
@@ -27,7 +28,7 @@ namespace Module.Player.HFSM.Config.Action
 
         public float DodgeSpeed => DodgeSpeedValue;
 
-        public float DodgeDuration => DodgeDurationValue;
+        public float DodgeDuration => GetStateDuration(0, DEFAULT_DODGE_DURATION);
 
         public float DodgeInputThresholdSqr => DodgeInputThresholdSqrValue;
 

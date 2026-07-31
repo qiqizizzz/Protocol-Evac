@@ -8,8 +8,8 @@
 
 using Module.Player.Context;
 using Module.Player.Core.View;
+using Module.Player.Core.View.Config;
 using Module.Player.HFSM.Config.Move;
-using Module.Player.HFSM.Config.View;
 using UnityEngine;
 
 namespace Module.Player.Core

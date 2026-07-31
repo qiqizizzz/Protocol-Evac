@@ -7,7 +7,7 @@
  */
 
 using Module.Player.Context;
-using Module.Player.HFSM.Config.View;
+using Module.Player.Core.View.Config;
 using UnityEngine;
 using Utils.log;
 
