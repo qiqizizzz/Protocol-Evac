@@ -13,6 +13,13 @@
       },
       "hash": "6509c94f4e42c3ab4160437bb37ab96481a3e2f2"
     },
+    "com.dbrizov.naughtyattributes": {
+      "version": "https://github.com/dbrizov/NaughtyAttributes.git#upm",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "b11d62b28c5fcbe242988f9f8d451deb925cf23b"
+    },
     "com.ivanmurzak.unity.mcp": {
       "version": "0.83.1",
       "depth": 0,

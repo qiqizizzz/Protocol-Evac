@@ -15,6 +15,7 @@ namespace Module.Player.HFSM.Config.Editor
     [CustomEditor(typeof(PlayerStateCommonConfigSO), true)]
     public sealed class PlayerStateCommonConfigSOEditor : UnityEditor.Editor
     {
+        // 绘制配置字段与动画时长同步按钮
         public override void OnInspectorGUI()
         {
             serializedObject.Update();

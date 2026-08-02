@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "com.candidumgames.unitymmdtools": "https://github.com/qiqizizzz/Fork_UnityMMDTools.git",
+    "com.dbrizov.naughtyattributes": "https://github.com/dbrizov/NaughtyAttributes.git#upm",
     "com.ivanmurzak.unity.mcp": "0.83.1",
     "com.unity.collab-proxy": "2.12.4",
     "com.unity.ide.rider": "3.0.36",

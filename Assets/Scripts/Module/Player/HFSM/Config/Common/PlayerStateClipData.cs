@@ -7,6 +7,7 @@
  */
 
 using System;
+using NaughtyAttributes;
 using UnityEngine;
 
 namespace Module.Player.HFSM.Config.Common
@@ -20,13 +21,16 @@ namespace Module.Player.HFSM.Config.Common
         [Tooltip("状态持续时间")]
         [SerializeField, Min(0f)] private float StateDurationValue = 0.5f;
 
-        [Header("连段窗口")]
         [Tooltip("是否启用连段窗口")]
         [SerializeField] private bool UseComboWindowValue;
 
+        [ShowIf(nameof(UseComboWindowValue))]
+        [AllowNesting]
         [Tooltip("连段窗口开始时间（归一化）")]
         [SerializeField, Range(0f, 1f)] private float ComboOpenNormalizedTimeValue = 0.35f;
 
+        [ShowIf(nameof(UseComboWindowValue))]
+        [AllowNesting]
         [Tooltip("连段窗口结束时间（归一化）")]
         [SerializeField, Range(0f, 1f)] private float ComboCloseNormalizedTimeValue = 0.75f;
 
