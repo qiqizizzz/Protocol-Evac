@@ -19,7 +19,7 @@ namespace Module.Player.HFSM.Config.Common
 
         public IReadOnlyList<PlayerStateClipData> StateClips => StateClipValues;
 
-        public int StateClipCount => StateClipValues == null ? 0 : StateClipValues.Length;
+        public int StateClipCount => StateClipValues?.Length ?? 0;
 
         // 获取指定索引的状态动画段落
         public PlayerStateClipData GetStateClip(int index)

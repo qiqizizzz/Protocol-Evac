@@ -147,6 +147,15 @@ namespace Module.Player.Input
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Attack"",
+                    ""type"": ""Button"",
+                    ""id"": ""023c3b42-7ee2-427d-9aec-c76bf804ede4"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -224,6 +233,17 @@ namespace Module.Player.Input
                     ""processors"": """",
                     ""groups"": "";KeyboardMouse"",
                     ""action"": ""Jump"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""7f7bdd9b-16a3-4057-a25b-ebaa0cb11296"",
+                    ""path"": ""<Mouse>/leftButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": "";KeyboardMouse"",
+                    ""action"": ""Attack"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 },
@@ -312,6 +332,7 @@ namespace Module.Player.Input
             m_Player_Look = m_Player.FindAction("Look", throwIfNotFound: true);
             m_Player_SwitchToFirstPerson = m_Player.FindAction("SwitchToFirstPerson", throwIfNotFound: true);
             m_Player_SwitchToThirdPerson = m_Player.FindAction("SwitchToThirdPerson", throwIfNotFound: true);
+            m_Player_Attack = m_Player.FindAction("Attack", throwIfNotFound: true);
         }
 
         ~@PlayerInputActions()
@@ -398,6 +419,7 @@ namespace Module.Player.Input
         private readonly InputAction m_Player_Look;
         private readonly InputAction m_Player_SwitchToFirstPerson;
         private readonly InputAction m_Player_SwitchToThirdPerson;
+        private readonly InputAction m_Player_Attack;
         /// <summary>
         /// Provides access to input actions defined in input action map "Player".
         /// </summary>
@@ -433,6 +455,10 @@ namespace Module.Player.Input
             /// Provides access to the underlying input action "Player/SwitchToThirdPerson".
             /// </summary>
             public InputAction @SwitchToThirdPerson => m_Wrapper.m_Player_SwitchToThirdPerson;
+            /// <summary>
+            /// Provides access to the underlying input action "Player/Attack".
+            /// </summary>
+            public InputAction @Attack => m_Wrapper.m_Player_Attack;
             /// <summary>
             /// Provides access to the underlying input action map instance.
             /// </summary>
@@ -477,6 +503,9 @@ namespace Module.Player.Input
                 @SwitchToThirdPerson.started += instance.OnSwitchToThirdPerson;
                 @SwitchToThirdPerson.performed += instance.OnSwitchToThirdPerson;
                 @SwitchToThirdPerson.canceled += instance.OnSwitchToThirdPerson;
+                @Attack.started += instance.OnAttack;
+                @Attack.performed += instance.OnAttack;
+                @Attack.canceled += instance.OnAttack;
             }
 
             /// <summary>
@@ -506,6 +535,9 @@ namespace Module.Player.Input
                 @SwitchToThirdPerson.started -= instance.OnSwitchToThirdPerson;
                 @SwitchToThirdPerson.performed -= instance.OnSwitchToThirdPerson;
                 @SwitchToThirdPerson.canceled -= instance.OnSwitchToThirdPerson;
+                @Attack.started -= instance.OnAttack;
+                @Attack.performed -= instance.OnAttack;
+                @Attack.canceled -= instance.OnAttack;
             }
 
             /// <summary>
@@ -614,6 +646,13 @@ namespace Module.Player.Input
             /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
             /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
             void OnSwitchToThirdPerson(InputAction.CallbackContext context);
+            /// <summary>
+            /// Method invoked when associated input action "Attack" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+            /// </summary>
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+            void OnAttack(InputAction.CallbackContext context);
         }
     }
 }
