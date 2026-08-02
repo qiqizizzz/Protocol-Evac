@@ -17,13 +17,13 @@ MonoBehaviour:
       type: 3}
     StateDurationValue: 1.2666668
     UseComboWindowValue: 1
-    ComboOpenNormalizedTimeValue: 0.35
+    ComboOpenNormalizedTimeValue: 0.2
     ComboCloseNormalizedTimeValue: 0.75
   - StateClipValue: {fileID: -203655887218126122, guid: ab00617f0cb353d4e95c4cf6c5ba57fa,
       type: 3}
     StateDurationValue: 1.8333334
     UseComboWindowValue: 1
-    ComboOpenNormalizedTimeValue: 0.3
+    ComboOpenNormalizedTimeValue: 0.2
     ComboCloseNormalizedTimeValue: 0.75
   - StateClipValue: {fileID: -203655887218126122, guid: f291699eed259524ebeb67f9fc64c8cd,
       type: 3}
