@@ -89,6 +89,7 @@ namespace Module.Player.HFSM.States.Skill
 
             m_normalAttackTimer.Reset();
             m_normalAttackTimer.Start(m_normalAttackConfig.GetStateDuration(m_currentAttackIndex));
+            m_context.RequestAnimReplay(PlayerStateId.SkillNormalAttack);
             return true;
         }
     }
