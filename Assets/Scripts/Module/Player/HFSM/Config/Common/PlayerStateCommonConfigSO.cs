@@ -31,10 +31,10 @@ namespace Module.Player.HFSM.Config.Common
         }
 
         // 获取指定索引的状态持续时间
-        public float GetStateDuration(int index, float defaultDuration = 0f)
+        public float GetStateDuration(int index)
         {
             PlayerStateClipData clipData = GetStateClip(index);
-            return clipData != null ? clipData.StateDuration : defaultDuration;
+            return clipData.StateDuration;
         }
 
         // 同步全部动画段落的持续时间

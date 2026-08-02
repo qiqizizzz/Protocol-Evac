@@ -34,6 +34,7 @@ namespace Module.Player.Context
         public bool IsSprintPressed { get; set; } //是否按住疾跑输入
         public bool IsInputLocked { get; set; } //是否输入被禁止
         public bool IsStateFinished { get; set; } //当前状态是否已经完成
+        public int NormalAttackIndex { get; set; } //当前普通攻击段数
 
         // ==================== 视角相关 ====================
         public Vector2 LookInput { get; set; } //视角输入
@@ -65,6 +66,7 @@ namespace Module.Player.Context
             IsSprintPressed = false;
             IsInputLocked = false;
             IsStateFinished = false;
+            NormalAttackIndex = 0;
             InputBuffer.ClearAll();
             LookInput = Vector2.zero;
             ViewMode = PlayerViewMode.FirstPerson;

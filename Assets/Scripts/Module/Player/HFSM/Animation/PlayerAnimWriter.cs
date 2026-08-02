@@ -18,9 +18,11 @@ namespace Module.Player.HFSM.Animation
         private static readonly int S_MoveSpeedHash = Animator.StringToHash("moveSpeed");
         private static readonly int S_VerticalSpeedHash = Animator.StringToHash("verticalSpeed");
         private static readonly int S_IsGroundedHash = Animator.StringToHash("isGrounded");
+        private static readonly int S_NormalAttackIndexHash = Animator.StringToHash("normalAttackIndex");
         private static readonly int S_JumpStateHash = Animator.StringToHash("Base Layer.jump");
         private static readonly int S_DodgeStateHash = Animator.StringToHash("Base Layer.Action.dodge");
-        private static readonly int S_SkillNormalAttackStateHash = Animator.StringToHash("Base Layer.(Up) Skill.attack01");
+        private static readonly int S_GroundedCommonStateHash = Animator.StringToHash("Base Layer.Grounded_Common");
+        private static readonly int S_SkillNormalAttackStateHash = Animator.StringToHash("Base Layer.Skill.NormalAttack.attack01");
         #endregion
 
         private Animator m_animator;
@@ -55,6 +57,7 @@ namespace Module.Player.HFSM.Animation
             m_animator.SetFloat(S_MoveSpeedHash, animParams.MoveSpeed);
             m_animator.SetFloat(S_VerticalSpeedHash, animParams.VerticalSpeed);
             m_animator.SetBool(S_IsGroundedHash, animParams.IsGrounded);
+            m_animator.SetInteger(S_NormalAttackIndexHash, animParams.NormalAttackIndex);
         }
 
         // 消费并执行一次性动画重播请求
@@ -70,6 +73,12 @@ namespace Module.Player.HFSM.Animation
             if (stateId == PlayerStateId.ActionDodge)
             {
                 m_animator.CrossFadeInFixedTime(S_DodgeStateHash, 0f, 0, 0f);
+                return;
+            }
+
+            if (stateId == PlayerStateId.GroundedIdle || stateId == PlayerStateId.GroundedMove)
+            {
+                m_animator.CrossFadeInFixedTime(S_GroundedCommonStateHash, 0.05f, 0, 0f);
                 return;
             }
 

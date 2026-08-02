@@ -470,6 +470,12 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 11400000, guid: a560e68d0c7150c45a1ec86765f30bbb,
         type: 2}
+    - target: {fileID: 6162156125074271674, guid: 6c33c04af389af445b3906c3c097b0e6,
+        type: 3}
+      propertyPath: NormalAttackConfig
+      value: 
+      objectReference: {fileID: 11400000, guid: 8f2ef84f717a18e4fa32220d4f11a568,
+        type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

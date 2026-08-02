@@ -215,9 +215,13 @@ namespace Module.Player.Core
 
             if (DodgeConfig == null)
                 QLog.Warning("DodgeConfig 未配置，闪避可能无法正常运行");
+            else if (DodgeConfig.StateClipCount == 0)
+                QLog.Error("DodgeConfig 未配置任何动画段落，闪避无法运行");
 
             if (NormalAttackConfig == null)
                 QLog.Warning("NormalAttackConfig 未配置，普通攻击将无法正常进入");
+            else if (NormalAttackConfig.StateClipCount == 0)
+                QLog.Error("NormalAttackConfig 未配置任何动画段落，普通攻击无法运行");
 
             if (ViewConfig == null)
                 QLog.Warning("ViewConfig 未配置，视角模块可能无法正常运行");

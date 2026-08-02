@@ -14,8 +14,6 @@ namespace Module.Player.HFSM.Config.Skill
     [CreateAssetMenu(fileName = "PlayerNormalAttackConfig", menuName = "配置/玩家/技能/玩家普攻配置")]
     public sealed class PlayerNormalAttackConfigSO : PlayerStateCommonConfigSO
     {
-        private const float DEFAULT_NORMAL_ATTACK_DURATION = 0.6f;
-
         [Header("输入容错")]
         [Tooltip("普攻输入缓存时间")]
         [SerializeField, Min(0f)] private float NormalAttackBufferTimeValue = 0.25f;
@@ -24,7 +22,7 @@ namespace Module.Player.HFSM.Config.Skill
         [Tooltip("普攻期间是否锁定移动")]
         [SerializeField] private bool LockMovementValue = true;
 
-        public float NormalAttackDuration => GetStateDuration(0, DEFAULT_NORMAL_ATTACK_DURATION);
+        public float NormalAttackDuration => GetStateDuration(0);
 
         public float NormalAttackBufferTime => NormalAttackBufferTimeValue;
 

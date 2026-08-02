@@ -37,6 +37,7 @@ namespace Module.Player.HFSM.Animation.Rules
             animParams.MoveSpeed = getHorizontalSpeed(context);
             animParams.VerticalSpeed = context.Velocity.y;
             animParams.IsGrounded = context.IsGrounded;
+            animParams.NormalAttackIndex = context.NormalAttackIndex;
         }
 
         // 获取玩家水平速度

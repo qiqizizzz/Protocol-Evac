@@ -19,7 +19,6 @@ namespace Module.Player.HFSM.Transition.Rules
     public static class PlayerActionTransitionRules
     {
         private const float MOVE_INPUT_THRESHOLD_SQR = 0.01f;
-        private const float DEFAULT_DODGE_BUFFER_TIME = 0.18f;
 
         /// <summary>
         /// 创建动作状态转换规则
@@ -52,13 +51,7 @@ namespace Module.Player.HFSM.Transition.Rules
                 !context.IsInputLocked &&
                 !context.IsMovementLocked &&
                 context.IsGrounded &&
-                context.InputBuffer.Has(PlayerBufferedInputType.Dodge, Time.time, getDodgeBufferTime(dodgeConfig));
-        }
-
-        // 获取闪避输入缓存时间
-        private static float getDodgeBufferTime(PlayerDodgeConfigSO dodgeConfig)
-        {
-            return dodgeConfig != null ? dodgeConfig.DodgeBufferTime : DEFAULT_DODGE_BUFFER_TIME;
+                context.InputBuffer.Has(PlayerBufferedInputType.Dodge, Time.time, dodgeConfig.DodgeBufferTime);
         }
 
         // 判断动作结束后是否应回到地面移动
