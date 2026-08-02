@@ -11,6 +11,7 @@ namespace Module.Player.HFSM.Transition
     public enum PlayerTransitionPriority
     {
         Move = 100,
+        Skill = 150,
         Action = 200,
         Air = 300,
         Status = 400

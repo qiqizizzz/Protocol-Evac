@@ -16,9 +16,11 @@ using Module.Player.HFSM.Animation.Rules;
 using Module.Player.HFSM.Config.Action;
 using Module.Player.HFSM.Config.Air;
 using Module.Player.HFSM.Config.Move;
+using Module.Player.HFSM.Config.Skill;
 using Module.Player.HFSM.States.Action;
 using Module.Player.HFSM.States.Air;
 using Module.Player.HFSM.States.Ground;
+using Module.Player.HFSM.States.Skill;
 using Module.Player.HFSM.Transition;
 using Module.Player.HFSM.Transition.Binders;
 using Module.Player.HFSM.Transition.Rules;
@@ -51,6 +53,9 @@ namespace Module.Player.Core
         [Header("动作配置")]
         [Tooltip("玩家闪避配置")]
         [SerializeField] private PlayerDodgeConfigSO DodgeConfig;
+        [Header("技能配置")]
+        [Tooltip("玩家普通攻击配置")]
+        [SerializeField] private PlayerNormalAttackConfigSO NormalAttackConfig;
         [Header("视角配置")]
         [Tooltip("玩家视角配置")]
         [SerializeField] private PlayerViewConfigSO ViewConfig;
@@ -145,6 +150,7 @@ namespace Module.Player.Core
             m_transitionBinder.Bind(PlayerMoveTransitionRules.Create(m_context));
             m_transitionBinder.Bind(PlayerAirTransitionRules.Create(m_context, AirConfig));
             m_transitionBinder.Bind(PlayerActionTransitionRules.Create(m_context, DodgeConfig));
+            m_transitionBinder.Bind(PlayerSkillTransitionRules.Create(m_context, NormalAttackConfig));
 
             m_transitionSelector = new PlayerTransitionSelector(m_stateMachine, m_transitionBinder.Rules);
         }
@@ -156,6 +162,7 @@ namespace Module.Player.Core
             m_animBinder.Bind(PlayerMoveAnimRules.Create(m_context));
             m_animBinder.Bind(PlayerAirAnimRules.Create(m_context));
             m_animBinder.Bind(PlayerActionAnimRules.Create(m_context));
+            m_animBinder.Bind(PlayerSkillAnimRules.Create(m_context));
 
             m_animResolver = new PlayerAnimResolver();
             m_animResolver.Init(m_stateMachine, m_animBinder.Handlers);
@@ -177,6 +184,8 @@ namespace Module.Player.Core
             m_stateMachine.RegisterState(new PlayerFallState());
             m_stateMachine.RegisterState(new PlayerActionState());
             m_stateMachine.RegisterState(new PlayerDodgeState(m_context, DodgeConfig));
+            m_stateMachine.RegisterState(new PlayerSkillState());
+            m_stateMachine.RegisterState(new PlayerNormalAttackState(m_context, NormalAttackConfig));
             
             m_stateMachine.Init(PlayerStateId.Grounded);
         }
@@ -192,20 +201,23 @@ namespace Module.Player.Core
             m_playerCamera = this.FindChildComponent<Camera>(PLAYER_CAMERA_PATH);
         }
 
-        // 校验玩家配置引用，缺失时使用代码默认值兜底并在控制台提示
+        // 校验玩家配置引用，缺失时在控制台提示
         private void validateConfigReferences()
         {
             if (MoveConfig == null)
                 QLog.Warning("MoveConfig 未配置，移动模块可能无法正常运行");
 
             if (InputConfig == null)
-                QLog.Warning("InputConfig 未配置，Shift 短按/长按将使用代码默认值");
+                QLog.Warning("InputConfig 未配置，Shift 短按/长按将无法正常解释");
 
             if (AirConfig == null)
                 QLog.Warning("AirConfig 未配置，空中模块可能无法正常运行");
 
             if (DodgeConfig == null)
-                QLog.Warning("DodgeConfig 未配置，闪避将使用代码默认值");
+                QLog.Warning("DodgeConfig 未配置，闪避可能无法正常运行");
+
+            if (NormalAttackConfig == null)
+                QLog.Warning("NormalAttackConfig 未配置，普通攻击将无法正常进入");
 
             if (ViewConfig == null)
                 QLog.Warning("ViewConfig 未配置，视角模块可能无法正常运行");

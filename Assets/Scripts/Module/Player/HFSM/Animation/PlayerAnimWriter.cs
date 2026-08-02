@@ -9,7 +9,6 @@
 using Module.Player.Context;
 using Module.Player.HFSM;
 using UnityEngine;
-using Utils.log;
 
 namespace Module.Player.HFSM.Animation
 {
@@ -21,6 +20,7 @@ namespace Module.Player.HFSM.Animation
         private static readonly int S_IsGroundedHash = Animator.StringToHash("isGrounded");
         private static readonly int S_JumpStateHash = Animator.StringToHash("Base Layer.jump");
         private static readonly int S_DodgeStateHash = Animator.StringToHash("Base Layer.Action.dodge");
+        private static readonly int S_SkillNormalAttackStateHash = Animator.StringToHash("Base Layer.(Up) Skill.attack01");
         #endregion
 
         private Animator m_animator;
@@ -68,7 +68,13 @@ namespace Module.Player.HFSM.Animation
             }
 
             if (stateId == PlayerStateId.ActionDodge)
+            {
                 m_animator.CrossFadeInFixedTime(S_DodgeStateHash, 0f, 0, 0f);
+                return;
+            }
+
+            if (stateId == PlayerStateId.SkillNormalAttack)
+                m_animator.CrossFadeInFixedTime(S_SkillNormalAttackStateHash, 0.03f, 0, 0f);
         }
     }
 }
