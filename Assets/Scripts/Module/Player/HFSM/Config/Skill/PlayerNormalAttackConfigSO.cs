@@ -22,10 +22,35 @@ namespace Module.Player.HFSM.Config.Skill
         [Tooltip("普攻期间是否锁定移动")]
         [SerializeField] private bool LockMovementValue = true;
 
+        [Header("退出过渡")]
+        [Tooltip("普攻退出时回到 Idle/Move 的混合时长")]
+        [SerializeField, Min(0f)] private float NormalAttackExitBlendDurationValue = 0.15f;
+
+        [Header("根运动")]
+        [Tooltip("允许使用动画根运动位移的普攻段索引，从 0 开始，attack03 填 2")]
+        [SerializeField] private int[] RootMotionAttackIndexValues = { 2 };
+
         public float NormalAttackDuration => GetStateDuration(0);
 
         public float NormalAttackBufferTime => NormalAttackBufferTimeValue;
 
         public bool LockMovement => LockMovementValue;
+
+        public float NormalAttackExitBlendDuration => NormalAttackExitBlendDurationValue;
+
+        // 判断指定普攻段是否允许使用动画根运动位移
+        public bool ShouldUseRootMotion(int attackIndex)
+        {
+            if (RootMotionAttackIndexValues == null)
+                return false;
+
+            for (int i = 0; i < RootMotionAttackIndexValues.Length; i++)
+            {
+                if (RootMotionAttackIndexValues[i] == attackIndex)
+                    return true;
+            }
+
+            return false;
+        }
     }
 }

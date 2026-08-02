@@ -38,7 +38,7 @@ namespace Module.Player.HFSM.Animation
             m_animator = animator;
             m_resolver = resolver;
             m_context = context;
-            m_animator.applyRootMotion = false;
+            m_animator.applyRootMotion = true;
             m_isInited = true;
         }
 
@@ -80,7 +80,8 @@ namespace Module.Player.HFSM.Animation
 
             if (stateId == PlayerStateId.GroundedIdle || stateId == PlayerStateId.GroundedMove)
             {
-                m_animator.CrossFadeInFixedTime(S_GroundedCommonStateHash, 0.05f, 0, 0f);
+                float blendDuration = m_context.AnimReplayBlendDuration > 0f ? m_context.AnimReplayBlendDuration : 0.05f;
+                m_animator.CrossFadeInFixedTime(S_GroundedCommonStateHash, blendDuration, 0, 0f);
                 return;
             }
 

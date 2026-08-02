@@ -35,6 +35,8 @@ namespace Module.Player.Context
         public bool IsInputLocked { get; set; } //是否输入被禁止
         public bool IsStateFinished { get; set; } //当前状态是否已经完成
         public int NormalAttackIndex { get; set; } //当前普通攻击段数
+        public bool IsRootMotionMoveEnabled { get; private set; } //是否允许使用动画根运动位移
+        public Vector3 RootMotionDeltaPosition { get; private set; } //动画累计的根运动位移
 
         // ==================== 视角相关 ====================
         public Vector2 LookInput { get; set; } //视角输入
@@ -43,6 +45,7 @@ namespace Module.Player.Context
         public float CameraYaw { get; set; } //相机水平角
         public float CameraPitch { get; set; } //相机俯仰角
         public PlayerStateId? AnimReplayStateId { get; private set; } //请求从起点重播的动画状态
+        public float AnimReplayBlendDuration { get; private set; }
 
         public PlayerContext(Transform transform)
         {
@@ -67,6 +70,8 @@ namespace Module.Player.Context
             IsInputLocked = false;
             IsStateFinished = false;
             NormalAttackIndex = 0;
+            IsRootMotionMoveEnabled = false;
+            RootMotionDeltaPosition = Vector3.zero;
             InputBuffer.ClearAll();
             LookInput = Vector2.zero;
             ViewMode = PlayerViewMode.FirstPerson;
@@ -74,12 +79,43 @@ namespace Module.Player.Context
             CameraYaw = Transform != null ? Transform.eulerAngles.y : 0f;
             CameraPitch = 0f;
             AnimReplayStateId = null;
+            AnimReplayBlendDuration = 0f;
         }
 
         // 请求动画表现层从起点重播指定状态
         public void RequestAnimReplay(PlayerStateId stateId)
         {
             AnimReplayStateId = stateId;
+            AnimReplayBlendDuration = 0f;
+        }
+
+        // 请求动画表现层从起点重播指定状态，并携带混合时长
+        public void RequestAnimReplay(PlayerStateId stateId, float blendDuration)
+        {
+            AnimReplayStateId = stateId;
+            AnimReplayBlendDuration = blendDuration;
+        }
+
+        // 设置是否允许使用动画根运动位移
+        public void SetRootMotionMoveEnabled(bool isEnabled)
+        {
+            IsRootMotionMoveEnabled = isEnabled;
+            if (!isEnabled)
+                RootMotionDeltaPosition = Vector3.zero;
+        }
+
+        // 累加动画层输出的根运动位移
+        public void AddRootMotionDeltaPosition(Vector3 deltaPosition)
+        {
+            RootMotionDeltaPosition += deltaPosition;
+        }
+
+        // 取出并清空当前帧累计的根运动位移
+        public Vector3 ConsumeRootMotionDeltaPosition()
+        {
+            Vector3 deltaPosition = RootMotionDeltaPosition;
+            RootMotionDeltaPosition = Vector3.zero;
+            return deltaPosition;
         }
 
         // 消费一次性动画重播请求

@@ -34,6 +34,13 @@ namespace Module.Player.Core
         public void FixedTick(float fixedDeltaTime)
         {
             Vector3 velocity = m_context.Velocity;
+            Vector3 rootMotionDeltaPosition = m_context.ConsumeRootMotionDeltaPosition();
+            if (rootMotionDeltaPosition.sqrMagnitude > 0f)
+            {
+                applyRootMotionMove(rootMotionDeltaPosition, ref velocity, fixedDeltaTime);
+                return;
+            }
+
             Vector3 hVelocity = new Vector3(velocity.x, 0f, velocity.z);
 
             //水平移动
@@ -80,6 +87,26 @@ namespace Module.Player.Core
             m_characterController.Move(velocity * fixedDeltaTime);
 
             //更新状态
+            m_context.Velocity = velocity;
+            m_context.IsGrounded = m_characterController.isGrounded;
+            m_context.HasGroundedChecked = true;
+            if (m_context.IsGrounded)
+                m_context.LastGroundedTime = Time.time;
+        }
+
+        // 使用动画根运动驱动本次固定帧位移
+        private void applyRootMotionMove(Vector3 rootMotionDeltaPosition, ref Vector3 velocity, float fixedDeltaTime)
+        {
+            if (m_characterController.isGrounded && velocity.y < 0f)
+                velocity.y = -2f;
+            else
+                velocity.y += Physics.gravity.y * fixedDeltaTime;
+
+            rootMotionDeltaPosition.y = velocity.y * fixedDeltaTime;
+            m_characterController.Move(rootMotionDeltaPosition);
+
+            velocity.x = 0f;
+            velocity.z = 0f;
             m_context.Velocity = velocity;
             m_context.IsGrounded = m_characterController.isGrounded;
             m_context.HasGroundedChecked = true;

@@ -42,8 +42,9 @@ namespace Module.Player.HFSM.States.Skill
             m_context.InputBuffer.Consume(PlayerBufferedInputType.NormalAttack);
             m_context.IsStateFinished = false;
             m_context.IsMovementLocked = m_normalAttackConfig.LockMovement;
+            refreshRootMotionMoveEnabled();
             m_context.RequestAnimReplay(PlayerStateId.SkillNormalAttack);
-            
+
             m_normalAttackTimer.Start(m_normalAttackConfig.NormalAttackDuration);
         }
 
@@ -53,11 +54,13 @@ namespace Module.Player.HFSM.States.Skill
             m_context.IsStateFinished = false;
             m_context.IsMovementLocked = false;
             m_context.NormalAttackIndex = 0;
+            m_context.SetRootMotionMoveEnabled(false);
 
             if (m_context.IsGrounded)
                 m_context.RequestAnimReplay(m_context.MoveInput.sqrMagnitude > MOVE_INPUT_THRESHOLD_SQR
                     ? PlayerStateId.GroundedMove
-                    : PlayerStateId.GroundedIdle);
+                    : PlayerStateId.GroundedIdle,
+                    m_normalAttackConfig.NormalAttackExitBlendDuration);
         }
 
         public override void Tick(float deltaTime)
@@ -86,11 +89,18 @@ namespace Module.Player.HFSM.States.Skill
             m_context.InputBuffer.Consume(PlayerBufferedInputType.NormalAttack);
             m_currentAttackIndex = nextAttackIndex;
             m_context.NormalAttackIndex = m_currentAttackIndex;
+            refreshRootMotionMoveEnabled();
 
             m_normalAttackTimer.Reset();
             m_normalAttackTimer.Start(m_normalAttackConfig.GetStateDuration(m_currentAttackIndex));
             m_context.RequestAnimReplay(PlayerStateId.SkillNormalAttack);
             return true;
+        }
+
+        // 根据当前普攻段刷新根运动位移开关
+        private void refreshRootMotionMoveEnabled()
+        {
+            m_context.SetRootMotionMoveEnabled(m_normalAttackConfig.ShouldUseRootMotion(m_currentAttackIndex));
         }
     }
 }

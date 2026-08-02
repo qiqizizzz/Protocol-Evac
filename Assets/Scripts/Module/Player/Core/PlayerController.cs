@@ -40,7 +40,7 @@ namespace Module.Player.Core
         private const string VIEW_ROOT_PATH = "ViewRoot";
         private const string PLAYER_CAMERA_PATH = "ViewRoot/PlayerCamera";
         #endregion
-        
+
         [Header("移动配置")]
         [Tooltip("玩家移动配置")]
         [SerializeField] private PlayerMoveConfigSO MoveConfig;
@@ -73,6 +73,7 @@ namespace Module.Player.Core
         private PlayerAnimWriter m_animWriter;
         private PlayerAnimBinder m_animBinder;
         private PlayerAnimResolver m_animResolver;
+        private PlayerRootMotionReceiver m_rootMotionReceiver;
         //Transition
         private PlayerTransitionBinder m_transitionBinder;
         private PlayerTransitionSelector m_transitionSelector;
@@ -169,6 +170,12 @@ namespace Module.Player.Core
 
             m_animWriter = new PlayerAnimWriter();
             m_animWriter.Init(m_animator, m_animResolver, m_context);
+
+            m_rootMotionReceiver = m_animator.GetComponent<PlayerRootMotionReceiver>();
+            if (m_rootMotionReceiver == null)
+                m_rootMotionReceiver = m_animator.gameObject.AddComponent<PlayerRootMotionReceiver>();
+
+            m_rootMotionReceiver.Init(m_animator, m_context);
         }
 
         // 注册玩家初始地面状态树
