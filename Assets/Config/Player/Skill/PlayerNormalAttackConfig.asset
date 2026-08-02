@@ -16,11 +16,22 @@ MonoBehaviour:
   - StateClipValue: {fileID: -203655887218126122, guid: 4ef9dee05d899e74e875ca517e55b350,
       type: 3}
     StateDurationValue: 1.2666668
+    UseComboWindowValue: 0
+    ComboOpenNormalizedTimeValue: 0.35
+    ComboCloseNormalizedTimeValue: 0.75
   - StateClipValue: {fileID: -203655887218126122, guid: ab00617f0cb353d4e95c4cf6c5ba57fa,
       type: 3}
     StateDurationValue: 1.8333334
+    UseComboWindowValue: 0
+    ComboOpenNormalizedTimeValue: 0.35
+    ComboCloseNormalizedTimeValue: 0.75
   - StateClipValue: {fileID: -203655887218126122, guid: f291699eed259524ebeb67f9fc64c8cd,
       type: 3}
     StateDurationValue: 1.8000001
+    UseComboWindowValue: 0
+    ComboOpenNormalizedTimeValue: 0.35
+    ComboCloseNormalizedTimeValue: 0.75
   NormalAttackBufferTimeValue: 0.25
   LockMovementValue: 1
+  NormalAttackExitBlendDurationValue: 0.15
+  RootMotionAttackIndexValues: 02000000

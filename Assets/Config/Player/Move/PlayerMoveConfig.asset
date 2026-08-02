@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2e6ffad073144ea3a78b2f023a930ffd, type: 3}
   m_Name: PlayerMoveConfig
   m_EditorClassIdentifier: 
+  StateClipValues: []
   WalkSpeedValue: 4
   SprintSpeedValue: 6
   AccelerationValue: 20

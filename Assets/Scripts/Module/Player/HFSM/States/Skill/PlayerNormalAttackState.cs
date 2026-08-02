@@ -23,6 +23,7 @@ namespace Module.Player.HFSM.States.Skill
 
         private readonly DurationTimer m_normalAttackTimer;
         private int m_currentAttackIndex;
+        private bool m_hasComboBufferedInput;
         
         public override PlayerStateId Id => PlayerStateId.SkillNormalAttack;
         public override PlayerStateId ParentId => PlayerStateId.Skill;
@@ -39,6 +40,7 @@ namespace Module.Player.HFSM.States.Skill
             m_currentAttackIndex = 0;
             m_context.NormalAttackIndex = m_currentAttackIndex;
             m_normalAttackTimer.Reset();
+            m_hasComboBufferedInput = false;
             m_context.InputBuffer.Consume(PlayerBufferedInputType.NormalAttack);
             m_context.IsStateFinished = false;
             m_context.IsMovementLocked = m_normalAttackConfig.LockMovement;
@@ -51,6 +53,7 @@ namespace Module.Player.HFSM.States.Skill
         public override void Exit()
         {
             m_normalAttackTimer.Reset();
+            m_hasComboBufferedInput = false;
             m_context.IsStateFinished = false;
             m_context.IsMovementLocked = false;
             m_context.NormalAttackIndex = 0;
@@ -65,8 +68,9 @@ namespace Module.Player.HFSM.States.Skill
 
         public override void Tick(float deltaTime)
         {
+            float previousNormalizedTime = m_normalAttackTimer.NormalizedTime;
             m_normalAttackTimer.Tick(deltaTime);
-
+            refreshComboBufferedInput(previousNormalizedTime, m_normalAttackTimer.NormalizedTime);
             if (!m_normalAttackTimer.IsFinished)
                 return;
 
@@ -83,10 +87,11 @@ namespace Module.Player.HFSM.States.Skill
             if (nextAttackIndex >= m_normalAttackConfig.StateClipCount)
                 return false;
 
-            if (!m_context.InputBuffer.Has(PlayerBufferedInputType.NormalAttack, Time.time, m_normalAttackConfig.NormalAttackBufferTime))
+            if (!canAdvanceCombo())
                 return false;
 
             m_context.InputBuffer.Consume(PlayerBufferedInputType.NormalAttack);
+            m_hasComboBufferedInput = false;
             m_currentAttackIndex = nextAttackIndex;
             m_context.NormalAttackIndex = m_currentAttackIndex;
             refreshRootMotionMoveEnabled();
@@ -101,6 +106,34 @@ namespace Module.Player.HFSM.States.Skill
         private void refreshRootMotionMoveEnabled()
         {
             m_context.SetRootMotionMoveEnabled(m_normalAttackConfig.ShouldUseRootMotion(m_currentAttackIndex));
+        }
+
+        // 根据当前时间段刷新连段输入缓存
+        private void refreshComboBufferedInput(float previousNormalizedTime, float currentNormalizedTime)
+        {
+            if (!m_normalAttackConfig.TryGetComboWindow(m_currentAttackIndex, out float comboOpenNormalizedTime, out float comboCloseNormalizedTime))
+                return;
+
+            if (!isNormalizedTimeInWindow(previousNormalizedTime, currentNormalizedTime, comboOpenNormalizedTime, comboCloseNormalizedTime))
+                return;
+
+            if (m_context.InputBuffer.Has(PlayerBufferedInputType.NormalAttack, Time.time, m_normalAttackConfig.NormalAttackBufferTime))
+                m_hasComboBufferedInput = true;
+        }
+
+        // 判断当前归一化时间段是否覆盖连段窗口
+        private bool isNormalizedTimeInWindow(float previousNormalizedTime, float currentNormalizedTime, float comboOpenNormalizedTime, float comboCloseNormalizedTime)
+        {
+            return currentNormalizedTime >= comboOpenNormalizedTime && previousNormalizedTime <= comboCloseNormalizedTime;
+        }
+
+        // 判断当前普攻是否允许推进下一段
+        private bool canAdvanceCombo()
+        {
+            if (m_normalAttackConfig.TryGetComboWindow(m_currentAttackIndex, out _, out _))
+                return m_hasComboBufferedInput;
+
+            return m_context.InputBuffer.Has(PlayerBufferedInputType.NormalAttack, Time.time, m_normalAttackConfig.NormalAttackBufferTime);
         }
     }
 }

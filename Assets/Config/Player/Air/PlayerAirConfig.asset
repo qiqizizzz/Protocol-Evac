@@ -12,6 +12,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 20cb3136533146f797d4e64040951190, type: 3}
   m_Name: PlayerAirConfig
   m_EditorClassIdentifier: 
+  StateClipValues:
+  - StateClipValue: {fileID: -203655887218126122, guid: d3cbe91f7ea022046af374a8902b82f5,
+      type: 3}
+    StateDurationValue: 2.3333335
+    UseComboWindowValue: 0
+    ComboOpenNormalizedTimeValue: 0.35
+    ComboCloseNormalizedTimeValue: 0.75
   JumpForceValue: 6
   AirMoveSpeedValue: 4
   JumpBufferTimeValue: 0.12

@@ -52,5 +52,18 @@ namespace Module.Player.HFSM.Config.Skill
 
             return false;
         }
+
+        // 尝试读取指定普攻段的连段窗口
+        public bool TryGetComboWindow(int attackIndex, out float comboOpenNormalizedTime, out float comboCloseNormalizedTime)
+        {
+            comboOpenNormalizedTime = 0f;
+            comboCloseNormalizedTime = 0f;
+
+            PlayerStateClipData clipData = GetStateClip(attackIndex);
+            if (clipData == null)
+                return false;
+
+            return clipData.TryGetComboWindow(out comboOpenNormalizedTime, out comboCloseNormalizedTime);
+        }
     }
 }

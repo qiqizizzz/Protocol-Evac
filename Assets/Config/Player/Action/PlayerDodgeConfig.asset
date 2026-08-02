@@ -12,6 +12,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0acf166d02ef4ff48954a6b0e48804aa, type: 3}
   m_Name: PlayerDodgeConfig
   m_EditorClassIdentifier: 
+  StateClipValues:
+  - StateClipValue: {fileID: -203655887218126122, guid: e9e3da541109c2a41bd6441df7f6e605,
+      type: 3}
+    StateDurationValue: 1.6333334
+    UseComboWindowValue: 0
+    ComboOpenNormalizedTimeValue: 0.35
+    ComboCloseNormalizedTimeValue: 0.75
   DodgeSpeedValue: 9
-  DodgeDurationValue: 0.32
+  DodgeInputThresholdSqrValue: 0.01
   DodgeBufferTimeValue: 0.18
