@@ -11,8 +11,7 @@ using Module.Player.Core.View;
 using Module.Player.Core.View.Config;
 using Module.Player.HFSM;
 using Module.Player.HFSM.Animation;
-using Module.Player.HFSM.Animation.Binders;
-using Module.Player.HFSM.Animation.Rules;
+using Module.Player.HFSM.Animation.Controllers;
 using Module.Player.HFSM.Config.Action;
 using Module.Player.HFSM.Config.Air;
 using Module.Player.HFSM.Config.Move;
@@ -22,8 +21,7 @@ using Module.Player.HFSM.States.Air;
 using Module.Player.HFSM.States.Ground;
 using Module.Player.HFSM.States.Skill;
 using Module.Player.HFSM.Transition;
-using Module.Player.HFSM.Transition.Binders;
-using Module.Player.HFSM.Transition.Rules;
+using Module.Player.HFSM.Transition.Controllers;
 using Module.Player.Input;
 using Module.Player.Input.Config;
 using UnityEngine;
@@ -71,11 +69,11 @@ namespace Module.Player.Core
         private Camera m_playerCamera;
         //Anim
         private PlayerAnimWriter m_animWriter;
-        private PlayerAnimBinder m_animBinder;
+        private PlayerAnimController m_animController;
         private PlayerAnimResolver m_animResolver;
         private PlayerRootMotionReceiver m_rootMotionReceiver;
         //Transition
-        private PlayerTransitionBinder m_transitionBinder;
+        private PlayerTransitionController m_transitionController;
         private PlayerTransitionSelector m_transitionSelector;
         //Input
         private PlayerInputReader m_inputReader;
@@ -147,26 +145,20 @@ namespace Module.Player.Core
         {
             RegisterAllStates();
 
-            m_transitionBinder = new PlayerTransitionBinder();
-            m_transitionBinder.Bind(PlayerMoveTransitionRules.Create(m_context));
-            m_transitionBinder.Bind(PlayerAirTransitionRules.Create(m_context, AirConfig));
-            m_transitionBinder.Bind(PlayerActionTransitionRules.Create(m_context, DodgeConfig));
-            m_transitionBinder.Bind(PlayerSkillTransitionRules.Create(m_context, NormalAttackConfig));
+            m_transitionController = new PlayerTransitionController();
+            m_transitionController.Init(m_context, AirConfig, DodgeConfig, NormalAttackConfig);
 
-            m_transitionSelector = new PlayerTransitionSelector(m_stateMachine, m_transitionBinder.Rules);
+            m_transitionSelector = new PlayerTransitionSelector(m_stateMachine, m_transitionController.Rules);
         }
 
         // 初始化玩家动画表现层
         private void initAnim()
         {
-            m_animBinder = new PlayerAnimBinder();
-            m_animBinder.Bind(PlayerMoveAnimRules.Create(m_context));
-            m_animBinder.Bind(PlayerAirAnimRules.Create(m_context));
-            m_animBinder.Bind(PlayerActionAnimRules.Create(m_context));
-            m_animBinder.Bind(PlayerSkillAnimRules.Create(m_context));
+            m_animController = new PlayerAnimController();
+            m_animController.Init(m_context);
 
             m_animResolver = new PlayerAnimResolver();
-            m_animResolver.Init(m_stateMachine, m_animBinder.Handlers);
+            m_animResolver.Init(m_stateMachine, m_animController.Handlers);
 
             m_animWriter = new PlayerAnimWriter();
             m_animWriter.Init(m_animator, m_animResolver, m_context);
@@ -239,10 +231,10 @@ namespace Module.Player.Core
         {
             return m_isInited
                 && m_inputReader != null
-                && m_transitionBinder != null
+                && m_transitionController != null
                 && m_transitionSelector != null
                 && m_stateMachine != null
-                && m_animBinder != null
+                && m_animController != null
                 && m_animResolver != null
                 && m_animWriter != null
                 && m_motor != null

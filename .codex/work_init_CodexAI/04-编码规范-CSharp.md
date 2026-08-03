@@ -83,9 +83,60 @@ public class PlayerController : MonoBehaviour
 | ---------------- | ------------------------ | --------------------------------- |
 | 普通类           | PascalCase               | `PlayerController`, `GameManager` |
 | 接口             | `I` + PascalCase         | `IDamageable`, `IInteractable`    |
-| 抽象类           | PascalCase + `Base` 后缀 | `CharacterBase`, `WeaponBase`     |
+| 抽象类           | `Base` + PascalCase 前缀 | `BaseCharacter`, `BasePlayerState` |
 | ScriptableObject | PascalCase + `SO` 后缀   | `ItemDataSO`, `GameConfigSO`      |
 | 枚举             | PascalCase               | `DamageType`, `GameState`         |
+
+抽象类的 `Base` 固定放在类型语义之前，例如 `BasePlayerState`。ScriptableObject 只要求以 `SO` 结尾；作为配置资产时优先使用 `ConfigSO`，例如 `PlayerStateConfigSO`，不因为抽象或继承关系额外强制改成 `BaseSO`。既有命名不在此规则落地时批量重命名；新建类型和后续触及的同族类型必须遵守。
+
+### 架构职责后缀
+
+项目类型名统一采用：
+
+```text
+{主体}{能力}{职责后缀}
+```
+
+例如：
+
+```text
+Player + Input + Reader = PlayerInputReader
+Player + Move + State = PlayerMoveState
+Combat + Hitbox = CombatHitbox
+```
+
+`主体` 是 Player、Enemy、Combat、Game 等领域；`能力` 优先使用完整英文单词，不在类型名中随意新增未经确认的缩写。项目已经确认并成族使用的缩写可以沿用，例如 `Anim` 可用于 Animator / Animation 相关类型，但同一族命名必须保持一致，不要在同一职责里混用 `Anim` 与 `Animation`。
+
+只有下表中的职责后缀可以用于新增架构类型。选择后缀前，先按真实职责归类；不要因为“看起来能工作”而引入新的同义后缀。
+
+| 后缀 | 唯一职责 | 示例 |
+| --- | --- | --- |
+| `Controller` | 组合、初始化、调度一个完整模块或子模块 | `PlayerController`、`PlayerViewController`、`PlayerAnimController` |
+| `System` | QF 管理的全局或跨场景服务 | `TimerSystem` |
+| `Machine` | 长生命周期的状态执行引擎 | `PlayerStateMachine` |
+| `State` | HFSM 中的一个状态节点 | `PlayerMoveState` |
+| `Context` | 单个角色跨子系统共享的运行时事实 | `PlayerContext` |
+| `Reader` | 读取外部输入并写入当前事实 | `PlayerInputReader` |
+| `Interpreter` | 将一种输入解释为语义行为 | `PlayerSprintInterpreter` |
+| `Buffer` | 保存可延迟消费的时序数据 | `PlayerInputBuffer` |
+| `Resolver` | 根据输入计算结果，不直接操作外部对象 | `PlayerMoveDirectionResolver` |
+| `Writer` | 向 Animator、UI 等外部目标写入结果 | `PlayerAnimationWriter` |
+| `Motor` | 角色最终物理移动或旋转执行 | `PlayerMotor` |
+| `Receiver` | Unity 或外部系统的回调接收点 | `PlayerRootMotionReceiver` |
+| `Selector` | 从多个候选项中选择一个结果 | `PlayerTransitionSelector` |
+| `Rule` | 一条声明式条件或映射 | `PlayerTransitionRule` |
+| `Rules` | 静态的同类规则定义集合 | `PlayerMoveTransitionRules` |
+| `Data` | 以数据承载为主的运行时或配置值对象 | `DamageData`、`GameTimerData` |
+| `ConfigSO` | Inspector 中编辑的设计数据资产 | `PlayerMoveConfigSO` |
+
+补充约束：
+
+- `Data` 可用于以数据承载为主的类型；是否包含轻量运行时状态由模块语义决定，不因存在计时字段或回调字段自动判定为错名
+- `Rules` 只用于静态规则定义集合；单条规则使用 `Rule`；需要装配同族规则时优先放到对应子模块 `Controller` 中，新增代码不再使用含义宽泛的 `Binder`
+- `Type` 表示语义分类，`Id` 表示稳定标识，`Mode` 表示互斥运行模式，`Priority` 表示排序等级，不能互相替代
+- `App` 只用于游戏应用入口，`Architecture` 只用于 QF 架构入口，`Dummy` 只用于测试对象
+- 领域实体或 Unity 组件本身不强加职责后缀，例如 `CombatHitbox`，不要新增 `CombatHitboxRunner`、`CombatHitboxManager` 或 `CombatHitboxExecutor`
+- 新增类型禁止使用 `Manager`、`Handler`、`Helper`、`Processor`、`Runner`、`Executor`、`Runtime`、`Profile` 等泛后缀；确有新职责无法归类时，先确认命名规则再创建
 
 ### 方法与属性
 
