@@ -116,23 +116,20 @@ Assets/Scripts/Module/
 │  │  └─ PlayerInterruptPriority.cs
 │  ├─ Skill/
 │  │  ├─ Data/
-│  │  │  ├─ PlayerSkillDataSO.cs
-│  │  │  └─ PlayerSkillStepData.cs
-│  │  ├─ Event/
-│  │  │  ├─ PlayerSkillEventDataBase.cs
-│  │  │  ├─ PlayerHitboxEventData.cs
-│  │  │  ├─ PlayerInvincibleEventData.cs
-│  │  │  ├─ PlayerCancelWindowEventData.cs
-│  │  │  ├─ PlayerMotionEventData.cs
-│  │  │  └─ PlayerVfxEventData.cs
+│  │  │  ├─ PlayerSkillConfigSO.cs
+│  │  │  ├─ PlayerSkillStepData.cs
+│  │  │  └─ PlayerNormalAttackConfigSO.cs
 │  │  ├─ Core/
-│  │  │  ├─ PlayerSkillSystem.cs
-│  │  │  ├─ PlayerSkillRunner.cs
+│  │  │  ├─ PlayerSkillController.cs
 │  │  │  └─ PlayerSkillContext.cs
-│  │  ├─ PlayerSkillId.cs
-│  │  ├─ PlayerSkillType.cs
-│  │  ├─ PlayerSkillEventType.cs
-│  │  └─ PlayerSkillPhase.cs
+│  │  ├─ Event/
+│  │  ├─ Editor/
+│  │  │  ├─ PlayerSkillConfigSOEditor.cs
+│  │  │  ├─ PlayerSkillEditorWindow.cs
+│  │  │  ├─ PlayerSkillStepListView.cs
+│  │  │  ├─ PlayerSkillTimelineView.cs
+│  │  │  └─ PlayerSkillInspectorView.cs
+│  │  └─ PlayerSkillType.cs
 │  └─ Config/
 │     └─ PlayerConfigSO.cs
 ├─ Enemy/
@@ -348,7 +345,7 @@ PlayerController.Update
 ├─ PlayerInputBuffer.Tick()
 │  └─ 缓存 Jump / Attack / Skill / Dodge 等输入
 ├─ 更新地面、速度、生命、锁定标记等 Context 数据
-├─ PlayerSkillSystem.Tick()
+├─ PlayerSkillController.Tick()
 │  └─ 推进当前技能时间轴，刷新技能事件和结束标记
 ├─ PlayerTransitionEvaluator.Tick()
 │  └─ 根据 Context / Skill / 当前状态生成 TransitionRequest
@@ -587,9 +584,9 @@ PlayerTransitionRequest
 
 - `Dead` 永远可以打断其他状态
 - `Hurt` 可以打断普通移动、攻击和大部分技能，但不能打断死亡
-- `Dodge` 是否能取消技能，由 Skill 事件里的取消窗口决定
+- `Dodge` 是否能取消技能，由 Skill 数据里的取消窗口决定
 - 普攻连段不直接切状态，而是让当前技能时间轴在取消窗口内推进下一段
-- SpecialSkill / Ultimate 能不能被 Dodge 取消，由对应技能事件数据决定
+- SpecialSkill / Ultimate 能不能被 Dodge 取消，由对应技能配置决定
 - `Grounded` 与 `Airborne` 的自然切换由地面检测驱动
 
 ### 6.7 Skill System
@@ -605,19 +602,22 @@ Skill System
 
 Skill 分层：
 
-- 数据层：`PlayerSkillDataSO`、`PlayerSkillStepData`
-- 事件层：`PlayerSkillEventDataBase` 及其派生事件
-- 核心层：`PlayerSkillSystem`、`PlayerSkillRunner`、`PlayerSkillContext`
+- 数据层：`PlayerSkillConfigSO`、`PlayerSkillStepData`、具体技能配置子类
+- 事件层：`Event/` 只保存以后真实出现的技能事件协议，第一版保持为空
+- 核心层：`PlayerSkillController`、`PlayerSkillContext`
+- 编辑器层：UI Toolkit 技能编辑器，只编辑 Skill Config
 
 ```text
-PlayerSkillDataSO
-├─ SkillId
-├─ SkillType
-├─ CooldownTime
+PlayerSkillConfigSO
 └─ Steps
    ├─ 第 1 段
    ├─ 第 2 段
    └─ 第 3 段
+
+PlayerNormalAttackConfigSO : PlayerSkillConfigSO
+├─ NormalAttackBufferTime
+├─ LockMovement
+└─ NormalAttackExitBlendDuration
 ```
 
 建议枚举：
@@ -629,31 +629,31 @@ public enum PlayerSkillType
     SpecialSkill,
     Ultimate
 }
-
-public enum PlayerSkillPhase
-{
-    None,
-    Cast,
-    Active,
-    Recovery,
-    Finished
-}
 ```
 
-技能事件示例：
+单段技能数据：
 
 ```text
-PlayerSkillEventDataBase
-├─ StartTime
-├─ EndTime
-└─ EventType
-
-PlayerHitboxEventData
-PlayerInvincibleEventData
-PlayerCancelWindowEventData
-PlayerMotionEventData
-PlayerVfxEventData
+PlayerSkillStepData
+├─ AnimationClip
+├─ Duration
+├─ UseRootMotion
+├─ StepAdvanceWindow
+├─ HitWindow
+└─ Damage
 ```
+
+第一版数据边界：
+
+```text
+StepAdvanceWindow
+└─ 决定何时允许推进下一段，普攻将其解释为连段窗口
+
+HitWindow
+└─ 决定何时打开与关闭 CombatHitbox
+```
+
+第一版不使用 `[SerializeReference]`、事件基类或事件派生 Data。只有真实出现一段内多个同类窗口、任意数量事件或复杂分支时，才重新评估事件列表。
 
 ### 6.8 HFSM 与 Skill 的边界
 
@@ -665,8 +665,8 @@ PlayerVfxEventData
 | 普攻是否能接下一段 | Skill System + Input Buffer |
 | 闪避位移与动作锁定 | HFSM 的 ActionDodge |
 | 闪避期间的宏观状态 | HFSM 的 ActionDodge |
-| 技能能否释放 | PlayerSkillSystem + Transition Evaluator |
-| 技能能否被取消 | Transition Evaluator + PlayerCancelWindowEventData |
+| 技能能否释放 | PlayerSkillController + Transition Evaluator |
+| 技能能否被取消 | Transition Evaluator + Skill 配置中的取消窗口 |
 | 受击硬直和击退 | DisabledHurt |
 | 死亡 | DisabledDead，最高优先级 |
 
@@ -701,8 +701,8 @@ HFSM
 └─ DisabledDead
 
 Skill
-├─ PlayerSkillDataSO
-├─ PlayerSkillRunner
+├─ PlayerSkillConfigSO
+├─ PlayerSkillController
 └─ NormalAttack 第一段时间轴
 
 Transition Evaluator
@@ -951,7 +951,7 @@ EnemyMotor
 - `PlayerStateBase`
 - `PlayerStateMachine`
 - `PlayerInputBuffer`
-- `PlayerSkillRunner`
+- `PlayerSkillController`
 - `PlayerTransitionEvaluator`
 - `EnemyContext`
 - `EnemyUtilityOption`
@@ -973,7 +973,7 @@ Unity MonoBehaviour 层
 纯逻辑层
 ├─ PlayerInputBuffer
 ├─ PlayerStateMachine
-├─ PlayerSkillSystem
+├─ PlayerSkillController
 ├─ PlayerTransitionEvaluator
 ├─ EnemyBehaviorTreeRunner
 ├─ EnemyUtilitySelector
@@ -1006,15 +1006,18 @@ QF 架构层
 当玩家 Skill 造成伤害时：
 
 ```text
-PlayerSkillRunner
-└─ 生成伤害请求，写入 Context 或回调给 PlayerSkillSystem
+PlayerSkillController
+└─ 根据 Hitbox 事件打开或关闭 CombatHitbox
+
+CombatHitbox
+├─ 检测、过滤并对同一窗口内的目标去重
+└─ 创建 DamageData，调用 IDamageable.TakeDamage
 
 PlayerController
-└─ 统一发送 ApplyDamageCommand
-
-CombatSystem
-└─ 计算伤害、派发受击事件、通知 UI/音效
+└─ 只负责初始化与调度 PlayerSkillController，不逐事件执行技能逻辑
 ```
+
+当前最小伤害闭环不引入全局 `CombatSystem` 或 QF Command。等伤害结算、击杀统计、UI 和音效确实需要跨模块分发时，再由 PlayerController 或后续 Combat 外层模块接入 QF。
 
 当敌人死亡时：
 
@@ -1049,13 +1052,14 @@ PlayerConfigSO
 ```
 
 ```text
-PlayerSkillDataSO
-├─ SkillId
-├─ SkillType
-├─ CooldownTime
+PlayerSkillConfigSO
 └─ Steps
+   ├─ AnimationClip
    ├─ Duration
-   └─ Events
+   ├─ UseRootMotion
+   ├─ StepAdvanceWindow
+   ├─ HitWindow
+   └─ Damage
 ```
 
 ### 10.2 Enemy 配置
@@ -1121,14 +1125,14 @@ Player 模块当前统一沿用 `Module.Player.*`，本阶段不调整已有命�
 
 ### 阶段 2：Skill 与 Transition Evaluator
 
-1. 创建 `PlayerSkillDataSO`
+1. 创建 `PlayerSkillConfigSO`
 2. 创建 `PlayerSkillStepData`
-3. 创建 `PlayerSkillEventDataBase`
-4. 创建 `PlayerSkillSystem`
-5. 创建 `PlayerSkillRunner`
+3. 让 `PlayerNormalAttackConfigSO` 继承通用技能配置
+4. 将现有三段普攻迁移到唯一的 `StepValues`
+5. 创建 `PlayerSkillController`
 6. 创建 `PlayerTransitionEvaluator`
-7. 实现 `SkillNormalAttack` 最小纵切
-8. 打通释放、后摇、连段窗口、取消、打断和锁移动
+7. 打通释放、后摇、连段窗口、Hitbox、取消、打断和锁移动
+8. 数据结构与运行时闭环稳定后，再创建 UI Toolkit 技能编辑器
 
 ### 阶段 3：Enemy Context 与感知
 

@@ -15,7 +15,6 @@ using Module.Player.HFSM.Animation.Controllers;
 using Module.Player.HFSM.Config.Action;
 using Module.Player.HFSM.Config.Air;
 using Module.Player.HFSM.Config.Move;
-using Module.Player.HFSM.Config.Skill;
 using Module.Player.HFSM.States.Action;
 using Module.Player.HFSM.States.Air;
 using Module.Player.HFSM.States.Ground;
@@ -24,6 +23,7 @@ using Module.Player.HFSM.Transition;
 using Module.Player.HFSM.Transition.Controllers;
 using Module.Player.Input;
 using Module.Player.Input.Config;
+using Module.Player.Skill.Data;
 using UnityEngine;
 using Utils.Find;
 using Utils.log;
@@ -219,7 +219,7 @@ namespace Module.Player.Core
 
             if (NormalAttackConfig == null)
                 QLog.Warning("NormalAttackConfig 未配置，普通攻击将无法正常进入");
-            else if (NormalAttackConfig.StateClipCount == 0)
+            else if (NormalAttackConfig.StepCount == 0)
                 QLog.Error("NormalAttackConfig 未配置任何动画段落，普通攻击无法运行");
 
             if (ViewConfig == null)

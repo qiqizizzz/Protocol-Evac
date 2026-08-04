@@ -10,9 +10,9 @@ using System.Collections.Generic;
 using Module.Player.Context;
 using Module.Player.HFSM.Config.Action;
 using Module.Player.HFSM.Config.Air;
-using Module.Player.HFSM.Config.Skill;
 using Module.Player.HFSM.Transition;
 using Module.Player.HFSM.Transition.Rules;
+using Module.Player.Skill.Data;
 using Utils.log;
 
 namespace Module.Player.HFSM.Transition.Controllers

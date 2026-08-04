@@ -7,8 +7,8 @@
  */
 
 using Module.Player.Context;
-using Module.Player.HFSM.Config.Skill;
 using Module.Player.Input.Buffer;
+using Module.Player.Skill.Data;
 using Utils.Timer;
 using UnityEngine;
 
@@ -84,7 +84,7 @@ namespace Module.Player.HFSM.States.Skill
         private bool tryAdvanceCombo()
         {
             int nextAttackIndex = m_currentAttackIndex + 1;
-            if (nextAttackIndex >= m_normalAttackConfig.StateClipCount)
+            if (nextAttackIndex >= m_normalAttackConfig.StepCount)
                 return false;
 
             if (!canAdvanceCombo())
@@ -97,7 +97,7 @@ namespace Module.Player.HFSM.States.Skill
             refreshRootMotionMoveEnabled();
 
             m_normalAttackTimer.Reset();
-            m_normalAttackTimer.Start(m_normalAttackConfig.GetStateDuration(m_currentAttackIndex));
+            m_normalAttackTimer.Start(m_normalAttackConfig.GetStepDuration(m_currentAttackIndex));
             m_context.RequestAnimReplay(PlayerStateId.SkillNormalAttack);
             return true;
         }
@@ -105,7 +105,8 @@ namespace Module.Player.HFSM.States.Skill
         // 根据当前普攻段刷新根运动位移开关
         private void refreshRootMotionMoveEnabled()
         {
-            m_context.SetRootMotionMoveEnabled(m_normalAttackConfig.ShouldUseRootMotion(m_currentAttackIndex));
+            PlayerSkillStepData stepData = m_normalAttackConfig.GetStep(m_currentAttackIndex);
+            m_context.SetRootMotionMoveEnabled(stepData.UseRootMotion);
         }
 
         // 根据当前时间段刷新连段输入缓存

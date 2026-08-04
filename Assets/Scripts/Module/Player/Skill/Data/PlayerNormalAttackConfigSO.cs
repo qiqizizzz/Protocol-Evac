@@ -1,18 +1,17 @@
 /*
  * ┌────────────────────────────────────────────┐
- * │  描    述: 玩家普攻配置，保存普攻纵切的基础时长与输入缓存参数
+ * │  描    述: 玩家普攻配置，保存普攻输入与状态控制参数
  * │  类    名: PlayerNormalAttackConfigSO.cs
  * │  创    建: By qiqizizzz
  * └────────────────────────────────────────────┘
  */
 
-using Module.Player.HFSM.Config.Common;
 using UnityEngine;
 
-namespace Module.Player.HFSM.Config.Skill
+namespace Module.Player.Skill.Data
 {
     [CreateAssetMenu(fileName = "PlayerNormalAttackConfig", menuName = "配置/玩家/技能/玩家普攻配置")]
-    public sealed class PlayerNormalAttackConfigSO : PlayerStateCommonConfigSO
+    public sealed class PlayerNormalAttackConfigSO : PlayerSkillConfigSO
     {
         [Header("输入容错")]
         [Tooltip("普攻输入缓存时间")]
@@ -26,11 +25,7 @@ namespace Module.Player.HFSM.Config.Skill
         [Tooltip("普攻退出时回到 Idle/Move 的混合时长")]
         [SerializeField, Min(0f)] private float NormalAttackExitBlendDurationValue = 0.15f;
 
-        [Header("根运动")]
-        [Tooltip("允许使用动画根运动位移的普攻段索引，从 0 开始，attack03 填 2")]
-        [SerializeField] private int[] RootMotionAttackIndexValues = { 2 };
-
-        public float NormalAttackDuration => GetStateDuration(0);
+        public float NormalAttackDuration => GetStepDuration(0);
 
         public float NormalAttackBufferTime => NormalAttackBufferTimeValue;
 
@@ -38,32 +33,18 @@ namespace Module.Player.HFSM.Config.Skill
 
         public float NormalAttackExitBlendDuration => NormalAttackExitBlendDurationValue;
 
-        // 判断指定普攻段是否允许使用动画根运动位移
-        public bool ShouldUseRootMotion(int attackIndex)
-        {
-            if (RootMotionAttackIndexValues == null)
-                return false;
-
-            for (int i = 0; i < RootMotionAttackIndexValues.Length; i++)
-            {
-                if (RootMotionAttackIndexValues[i] == attackIndex)
-                    return true;
-            }
-
-            return false;
-        }
-
         // 尝试读取指定普攻段的连段窗口
         public bool TryGetComboWindow(int attackIndex, out float comboOpenNormalizedTime, out float comboCloseNormalizedTime)
         {
             comboOpenNormalizedTime = 0f;
             comboCloseNormalizedTime = 0f;
 
-            PlayerStateClipData clipData = GetStateClip(attackIndex);
-            if (clipData == null)
+            PlayerSkillStepData stepData = GetStep(attackIndex);
+            if (stepData == null)
                 return false;
 
-            return clipData.TryGetComboWindow(out comboOpenNormalizedTime, out comboCloseNormalizedTime);
+            return stepData.TryGetStepAdvanceWindow(out comboOpenNormalizedTime, out comboCloseNormalizedTime);
         }
     }
 }
+

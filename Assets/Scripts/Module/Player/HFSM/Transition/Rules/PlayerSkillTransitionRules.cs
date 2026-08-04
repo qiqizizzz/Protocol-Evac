@@ -9,9 +9,9 @@
 using System.Collections.Generic;
 using Module.Player.Context;
 using Module.Player.HFSM;
-using Module.Player.HFSM.Config.Skill;
 using Module.Player.HFSM.Transition;
 using Module.Player.Input.Buffer;
+using Module.Player.Skill.Data;
 using UnityEngine;
 
 namespace Module.Player.HFSM.Transition.Rules

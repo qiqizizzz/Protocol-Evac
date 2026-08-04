@@ -12,26 +12,40 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3e0df1ecc7fe4bc79183bd3e385e2664, type: 3}
   m_Name: PlayerNormalAttackConfig
   m_EditorClassIdentifier: 
-  StateClipValues:
-  - StateClipValue: {fileID: -203655887218126122, guid: 4ef9dee05d899e74e875ca517e55b350,
+  StepValues:
+  - AnimationClipValue: {fileID: -203655887218126122, guid: 4ef9dee05d899e74e875ca517e55b350,
       type: 3}
-    StateDurationValue: 1.2666668
-    UseComboWindowValue: 1
-    ComboOpenNormalizedTimeValue: 0.2
-    ComboCloseNormalizedTimeValue: 0.75
-  - StateClipValue: {fileID: -203655887218126122, guid: ab00617f0cb353d4e95c4cf6c5ba57fa,
+    DurationValue: 1.2666668
+    UseRootMotionValue: 0
+    UseStepAdvanceWindowValue: 1
+    StepAdvanceOpenNormalizedTimeValue: 0.2
+    StepAdvanceCloseNormalizedTimeValue: 0.75
+    UseHitWindowValue: 0
+    HitOpenNormalizedTimeValue: 0
+    HitCloseNormalizedTimeValue: 0
+    DamageValue: 0
+  - AnimationClipValue: {fileID: -203655887218126122, guid: ab00617f0cb353d4e95c4cf6c5ba57fa,
       type: 3}
-    StateDurationValue: 1.8333334
-    UseComboWindowValue: 1
-    ComboOpenNormalizedTimeValue: 0.2
-    ComboCloseNormalizedTimeValue: 0.75
-  - StateClipValue: {fileID: -203655887218126122, guid: f291699eed259524ebeb67f9fc64c8cd,
+    DurationValue: 1.8333334
+    UseRootMotionValue: 0
+    UseStepAdvanceWindowValue: 1
+    StepAdvanceOpenNormalizedTimeValue: 0.2
+    StepAdvanceCloseNormalizedTimeValue: 0.75
+    UseHitWindowValue: 0
+    HitOpenNormalizedTimeValue: 0
+    HitCloseNormalizedTimeValue: 0
+    DamageValue: 0
+  - AnimationClipValue: {fileID: -203655887218126122, guid: f291699eed259524ebeb67f9fc64c8cd,
       type: 3}
-    StateDurationValue: 1.8000001
-    UseComboWindowValue: 0
-    ComboOpenNormalizedTimeValue: 0.35
-    ComboCloseNormalizedTimeValue: 0.75
+    DurationValue: 1.8000001
+    UseRootMotionValue: 1
+    UseStepAdvanceWindowValue: 0
+    StepAdvanceOpenNormalizedTimeValue: 0.35
+    StepAdvanceCloseNormalizedTimeValue: 0.75
+    UseHitWindowValue: 0
+    HitOpenNormalizedTimeValue: 0
+    HitCloseNormalizedTimeValue: 0
+    DamageValue: 0
   NormalAttackBufferTimeValue: 0.25
   LockMovementValue: 1
   NormalAttackExitBlendDurationValue: 0.15
-  RootMotionAttackIndexValues: 02000000

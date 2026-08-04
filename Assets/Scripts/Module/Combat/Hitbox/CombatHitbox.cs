@@ -1,0 +1,152 @@
+/*
+ * ┌─────────────────────────────────────────────────────────────┐
+ * │  描    述: 通用战斗命中盒，负责范围检测、目标去重与伤害提交
+ * │  类    名: CombatHitbox.cs
+ * │  创    建: By qiqizizzz
+ * └─────────────────────────────────────────────────────────────┘
+ */
+
+using System.Collections.Generic;
+using Module.Combat.Damage;
+using UnityEngine;
+using Utils.log;
+
+namespace Module.Combat.Hitbox
+{
+    public sealed class CombatHitbox : MonoBehaviour
+    {
+        private const int OVERLAP_RESULT_CAPACITY = 32;//重叠盒子
+
+        [Tooltip("命中盒相对于当前Transform的半尺寸")] 
+        [SerializeField] private Vector3 HalfExtents = new Vector3(0.5f, 0.5f, 0.5f);
+
+        [Tooltip("允许命中的目标Layer")] 
+        [SerializeField] private LayerMask TargetLayers;
+        
+        private readonly Collider[] m_overlapResults = new Collider[OVERLAP_RESULT_CAPACITY];
+        private readonly HashSet<IDamageable> m_hitTargets = new HashSet<IDamageable>();
+
+        private GameObject m_source;
+        private float m_damage;
+        private bool m_isOpen;
+        private bool m_hasWarnedCapacity;//是否已经警告过容量
+
+        /// <summary>
+        /// 开启命中窗口
+        /// </summary>
+        /// <param name="damage">本次命中伤害值</param>
+        /// <param name="source">伤害来源对象</param>
+        public void Open(float damage, GameObject source)
+        {
+            if (damage <= 0f)
+            {
+                QLog.Error($"开启 CombatHitbox 失败，伤害值必须大于 0：{damage}");
+                return;
+            }
+
+            if (source == null)
+            {
+                QLog.Error("开启 CombatHitbox 失败，伤害来源为空");
+                return;
+            }
+
+            m_damage = damage;
+            m_source = source;
+            m_hitTargets.Clear();
+            m_hasWarnedCapacity = false;
+            m_isOpen = true;
+        }
+
+        //关闭命中窗口
+        public void Close()
+        {
+            m_isOpen = false;
+            m_damage = 0f;
+            m_source = null;
+            m_hitTargets.Clear();
+            m_hasWarnedCapacity = false;
+        }
+        
+        #region 生命周期
+        private void Awake()
+        {
+            if (HalfExtents.x <= 0f || HalfExtents.y <= 0f || HalfExtents.z <= 0f)
+            {
+                QLog.Error("CombatHitBox的Half Extents必须全部大于0");
+                enabled = false;
+                return;
+            }
+
+            if (TargetLayers.value == 0)
+            {
+                QLog.Error("CombatHitBox未配置TargetLayers");
+                enabled = false;
+            }
+        }
+
+        private void FixedUpdate()
+        {
+            if (!m_isOpen) return;
+            
+            detectTargets();
+        }
+
+        private void OnDisable()
+        {
+            Close();
+        }
+        #endregion
+
+        //检测当前命中盒范围内
+        private void detectTargets()
+        {
+            int hitCount = Physics.OverlapBoxNonAlloc(transform.position, HalfExtents, m_overlapResults,
+                transform.rotation, TargetLayers.value, QueryTriggerInteraction.Ignore);
+
+            if (hitCount == OVERLAP_RESULT_CAPACITY && !m_hasWarnedCapacity)
+            {
+                QLog.Warning($"CombatHitBox检测结果达到容量上限: {OVERLAP_RESULT_CAPACITY}");
+                m_hasWarnedCapacity = true;
+            }
+
+            for (int i = 0; i < hitCount; i++)
+            {
+                tryApplyDamage(m_overlapResults[i]);
+            }
+        }
+
+        //尝试造成伤害
+        private void tryApplyDamage(Collider hitCollider)
+        {
+            //剔除无效目标与自身
+            if(!hitCollider) return;
+            if (hitCollider.transform.IsChildOf(m_source.transform)) return;
+
+            IDamageable damageable = hitCollider.GetComponentInParent<IDamageable>();
+
+            //判断是否是有效可受伤目标或重复目标
+            if (damageable == null || !m_hitTargets.Add(damageable)) return;
+
+            Vector3 hitPoint = hitCollider.ClosestPoint(transform.position);
+            Vector3 hitDirection = (hitCollider.bounds.center - m_source.transform.position).normalized;
+
+            DamageData damageData = new DamageData(m_damage, m_source, hitPoint, hitDirection);
+            
+            damageable.TakeDamage(damageData);
+        }
+
+        private void OnDrawGizmosSelected()
+        {
+            Matrix4x4 previousMatrix = Gizmos.matrix;
+
+            Gizmos.color = Color.red;
+            Gizmos.matrix = Matrix4x4.TRS(
+                transform.position,
+                transform.rotation,
+                Vector3.one);
+
+            Gizmos.DrawWireCube(Vector3.zero, HalfExtents * 2f);
+            Gizmos.matrix = previousMatrix;
+        }
+    }
+}
