@@ -7,19 +7,23 @@
  */
 
 using System.Collections.Generic;
+using TriInspector;
 using UnityEngine;
 
 namespace Module.Player.Skill.Data
 {
     public class PlayerSkillConfigSO : ScriptableObject
     {
-        [Header("技能段落")]
+        [LabelText("技能段落")]
+        [ListDrawerSettings(Draggable = true, ShowElementLabels = true)]
         [Tooltip("技能段落列表")]
         [SerializeField] private PlayerSkillStepData[] StepValues;
 
         public IReadOnlyList<PlayerSkillStepData> Steps => StepValues;
 
         public int StepCount => StepValues?.Length ?? 0;
+
+        private bool HasNoSteps => StepCount == 0;
 
         // 获取指定索引的技能段落
         public PlayerSkillStepData GetStep(int index)
@@ -38,6 +42,9 @@ namespace Module.Player.Skill.Data
         }
 
         // 同步全部技能段落的动画持续时间
+        [InfoBox("未配置技能段落，无法同步动画时长", TriMessageType.Info, visibleIf: nameof(HasNoSteps))]
+        [DisableIf(nameof(HasNoSteps))]
+        [Button("同步全部动画时长")]
         public bool SyncAllStepDurations()
         {
             if (StepValues == null || StepValues.Length == 0)
@@ -57,4 +64,3 @@ namespace Module.Player.Skill.Data
         }
     }
 }
-

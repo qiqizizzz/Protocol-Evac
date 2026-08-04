@@ -7,51 +7,69 @@
  */
 
 using System;
-using NaughtyAttributes;
+using TriInspector;
 using UnityEngine;
 
 namespace Module.Player.Skill.Data
 {
     [Serializable]
+    [DeclareFoldoutGroup("Animation", Title = "动画与段落", Expanded = true)]
+    [DeclareFoldoutGroup("StepAdvanceWindow", Title = "段落推进窗口", Expanded = true)]
+    [DeclareFoldoutGroup("HitWindow", Title = "命中窗口", Expanded = true)]
     public sealed class PlayerSkillStepData
     {
+        [Group("Animation")]
+        [LabelText("动画片段")]
         [Tooltip("技能段落动画片段")]
         [SerializeField] private AnimationClip AnimationClipValue;
 
+        [Group("Animation")]
+        [LabelText("持续时间")]
         [Tooltip("技能段落持续时间")]
         [SerializeField, Min(0f)] private float DurationValue = 0.5f;
 
+        [Group("Animation")]
+        [LabelText("使用 Root Motion")]
         [Tooltip("是否使用动画根运动位移")]
         [SerializeField] private bool UseRootMotionValue;
 
+        [Group("StepAdvanceWindow")]
+        [LabelText("启用推进窗口")]
         [Tooltip("是否启用下一段推进窗口")]
         [SerializeField] private bool UseStepAdvanceWindowValue;
 
+        [Group("StepAdvanceWindow")]
         [ShowIf(nameof(UseStepAdvanceWindowValue))]
-        [AllowNesting]
+        [LabelText("开始时间")]
         [Tooltip("下一段推进窗口开始时间（归一化）")]
         [SerializeField, Range(0f, 1f)] private float StepAdvanceOpenNormalizedTimeValue = 0.35f;
 
+        [Group("StepAdvanceWindow")]
         [ShowIf(nameof(UseStepAdvanceWindowValue))]
-        [AllowNesting]
+        [LabelText("结束时间")]
         [Tooltip("下一段推进窗口结束时间（归一化）")]
         [SerializeField, Range(0f, 1f)] private float StepAdvanceCloseNormalizedTimeValue = 0.75f;
 
+        [Group("HitWindow")]
+        [LabelText("启用命中窗口")]
         [Tooltip("是否启用命中窗口")]
         [SerializeField] private bool UseHitWindowValue;
 
+        [Group("HitWindow")]
         [ShowIf(nameof(UseHitWindowValue))]
-        [AllowNesting]
+        [LabelText("开始时间")]
         [Tooltip("命中窗口开始时间（归一化）")]
         [SerializeField, Range(0f, 1f)] private float HitOpenNormalizedTimeValue;
 
+        [Group("HitWindow")]
         [ShowIf(nameof(UseHitWindowValue))]
-        [AllowNesting]
+        [LabelText("结束时间")]
         [Tooltip("命中窗口结束时间（归一化）")]
         [SerializeField, Range(0f, 1f)] private float HitCloseNormalizedTimeValue;
 
+        [Group("HitWindow")]
         [ShowIf(nameof(UseHitWindowValue))]
-        [AllowNesting]
+        [LabelText("伤害")]
         [Tooltip("该段技能造成的伤害")]
         [SerializeField, Min(0f)] private float DamageValue;
 
@@ -113,4 +131,3 @@ namespace Module.Player.Skill.Data
         }
     }
 }
-
