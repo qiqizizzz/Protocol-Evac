@@ -11,7 +11,6 @@ using UnityEngine;
 
 namespace Module.Player.Skill.Data
 {
-    [CreateAssetMenu(fileName = "PlayerSkillConfig", menuName = "配置/玩家/技能/玩家技能配置")]
     public class PlayerSkillConfigSO : ScriptableObject
     {
         [Header("技能段落")]
