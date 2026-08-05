@@ -35,18 +35,7 @@ namespace Module.Player.Skill.Core
             m_timeline = new PlayerSkillTimeline();
         }
 
-        // 注册玩家技能配置
-        public void RegisterConfig(PlayerSkillType skillType, PlayerSkillConfigSO config)
-        {
-            if (config == null)
-            {
-                QLog.Error($"注册玩家技能配置失败：{skillType} 的配置为空");
-                return;
-            }
-
-            m_skillConfigs[skillType] = config;
-        }
-
+        #region 生命周期
         public void Open(PlayerSkillType skillType)
         {
             if (!m_skillConfigs.TryGetValue(skillType, out PlayerSkillConfigSO config))
@@ -74,6 +63,19 @@ namespace Module.Player.Skill.Core
         public void Close()
         {
             m_timeline.Close(m_context);
+        }
+        #endregion
+        
+        // 注册玩家技能配置
+        public void RegisterConfig(PlayerSkillType skillType, PlayerSkillConfigSO config)
+        {
+            if (config == null)
+            {
+                QLog.Error($"注册玩家技能配置失败：{skillType} 的配置为空");
+                return;
+            }
+
+            m_skillConfigs[skillType] = config;
         }
     }
 }
