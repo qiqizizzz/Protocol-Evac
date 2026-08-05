@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: PlayerNormalAttackConfig
   m_EditorClassIdentifier: 
   StepValues:
-  - AnimationClipValue: {fileID: -203655887218126122, guid: 4ef9dee05d899e74e875ca517e55b350,
+  - AnimationClipValue: {fileID: -623603649343465320, guid: b600b20782cfc7e488ec14cd0b58c74e,
       type: 3}
-    DurationValue: 1.2666668
+    DurationValue: 3.0666668
     UseRootMotionValue: 0
     UseStepAdvanceWindowValue: 1
     StepAdvanceOpenNormalizedTimeValue: 0.2
@@ -24,9 +24,9 @@ MonoBehaviour:
     HitOpenNormalizedTimeValue: 0
     HitCloseNormalizedTimeValue: 0
     DamageValue: 0
-  - AnimationClipValue: {fileID: -203655887218126122, guid: ab00617f0cb353d4e95c4cf6c5ba57fa,
+  - AnimationClipValue: {fileID: -623603649343465320, guid: 2f8f77bc67401ad499948cd7d4b59070,
       type: 3}
-    DurationValue: 1.8333334
+    DurationValue: 5.566667
     UseRootMotionValue: 0
     UseStepAdvanceWindowValue: 1
     StepAdvanceOpenNormalizedTimeValue: 0.2
@@ -35,9 +35,9 @@ MonoBehaviour:
     HitOpenNormalizedTimeValue: 0
     HitCloseNormalizedTimeValue: 0
     DamageValue: 0
-  - AnimationClipValue: {fileID: -203655887218126122, guid: f291699eed259524ebeb67f9fc64c8cd,
+  - AnimationClipValue: {fileID: -623603649343465320, guid: a6f2cadc3cff35b4db2dd6a92c5741d6,
       type: 3}
-    DurationValue: 1.8000001
+    DurationValue: 11.966667
     UseRootMotionValue: 1
     UseStepAdvanceWindowValue: 0
     StepAdvanceOpenNormalizedTimeValue: 0.35

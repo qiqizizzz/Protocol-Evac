@@ -19,7 +19,7 @@ namespace Module.Player.HFSM.Animation
         private static readonly int S_VerticalSpeedHash = Animator.StringToHash("verticalSpeed");
         private static readonly int S_IsGroundedHash = Animator.StringToHash("isGrounded");
         private static readonly int S_NormalAttackIndexHash = Animator.StringToHash("normalAttackIndex");
-        private static readonly int S_JumpStateHash = Animator.StringToHash("Base Layer.jump");
+        private static readonly int S_JumpStateHash = Animator.StringToHash("Base Layer.Air.jump_begin");
         private static readonly int S_DodgeStateHash = Animator.StringToHash("Base Layer.Action.dodge");
         private static readonly int S_GroundedCommonStateHash = Animator.StringToHash("Base Layer.Grounded_Common");
         private static readonly int S_SkillNormalAttack01StateHash = Animator.StringToHash("Base Layer.Skill.NormalAttack.attack01");

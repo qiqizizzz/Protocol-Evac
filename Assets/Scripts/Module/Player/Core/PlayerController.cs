@@ -27,6 +27,7 @@ using Module.Player.Input.Config;
 using Module.Player.Skill;
 using Module.Player.Skill.Core;
 using Module.Player.Skill.Data;
+using TriInspector;
 using UnityEngine;
 using Utils.Find;
 using Utils.log;
@@ -45,21 +46,27 @@ namespace Module.Player.Core
         #region 配置相关
         [Header("移动配置")]
         [Tooltip("玩家移动配置")]
+        [DrawWithUnity]
         [SerializeField] private PlayerMoveConfigSO MoveConfig;
         [Header("输入配置")]
         [Tooltip("玩家输入解释配置")]
+        [DrawWithUnity]
         [SerializeField] private PlayerInputConfigSO InputConfig;
         [Header("空中配置")]
         [Tooltip("玩家空中配置")]
+        [DrawWithUnity]
         [SerializeField] private PlayerAirConfigSO AirConfig;
         [Header("动作配置")]
         [Tooltip("玩家闪避配置")]
+        [DrawWithUnity]
         [SerializeField] private PlayerDodgeConfigSO DodgeConfig;
         [Header("技能配置")]
         [Tooltip("玩家普通攻击配置")]
+        [DrawWithUnity]
         [SerializeField] private PlayerNormalAttackConfigSO NormalAttackConfig;
         [Header("视角配置")]
         [Tooltip("玩家视角配置")]
+        [DrawWithUnity]
         [SerializeField] private PlayerViewConfigSO ViewConfig;
         #endregion
         
@@ -231,6 +238,8 @@ namespace Module.Player.Core
 
             if (AirConfig == null)
                 QLog.Warning("AirConfig 未配置，空中模块可能无法正常运行");
+            else if (AirConfig.StateClipCount != PlayerAirConfigSO.REQUIRED_STATE_CLIP_COUNT)
+                QLog.Error("AirConfig 必须按 JumpBegin、FallLoop、FallEnd 顺序配置三段动画");
 
             if (DodgeConfig == null)
                 QLog.Warning("DodgeConfig 未配置，闪避可能无法正常运行");

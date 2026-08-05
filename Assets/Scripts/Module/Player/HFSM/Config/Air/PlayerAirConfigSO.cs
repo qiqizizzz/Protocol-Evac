@@ -14,6 +14,12 @@ namespace Module.Player.HFSM.Config.Air
     [CreateAssetMenu(fileName = "PlayerAirConfig", menuName = "配置/玩家/空中/玩家空中配置")]
     public sealed class PlayerAirConfigSO : PlayerStateCommonConfigSO
     {
+        private const int JUMP_BEGIN_CLIP_INDEX = 0;
+        private const int FALL_LOOP_CLIP_INDEX = 1;
+        private const int FALL_END_CLIP_INDEX = 2;
+
+        public const int REQUIRED_STATE_CLIP_COUNT = 3;
+
         [Header("跳跃")]
         [Tooltip("玩家起跳时写入的竖直速度")]
         [SerializeField, Min(0f)] private float JumpForceValue = 6f;
@@ -35,5 +41,11 @@ namespace Module.Player.HFSM.Config.Air
         public float JumpBufferTime => JumpBufferTimeValue;
 
         public float CoyoteTime => CoyoteTimeValue;
+
+        public PlayerStateClipData JumpBeginClipData => GetStateClip(JUMP_BEGIN_CLIP_INDEX);
+
+        public PlayerStateClipData FallLoopClipData => GetStateClip(FALL_LOOP_CLIP_INDEX);
+
+        public PlayerStateClipData FallEndClipData => GetStateClip(FALL_END_CLIP_INDEX);
     }
 }
