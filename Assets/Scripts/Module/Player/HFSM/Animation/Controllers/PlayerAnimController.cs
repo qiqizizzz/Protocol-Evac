@@ -7,6 +7,7 @@
  */
 
 using System.Collections.Generic;
+using Framework.QTower.Controller;
 using Module.Player.Context;
 using Module.Player.HFSM.Animation;
 using Module.Player.HFSM.Animation.Rules;
@@ -15,20 +16,27 @@ using Utils.log;
 
 namespace Module.Player.HFSM.Animation.Controllers
 {
-    public sealed class PlayerAnimController
+    public sealed class PlayerAnimController : BaseController
     {
         private readonly Dictionary<PlayerStateId, PlayerAnimRule.ResolveHandler> m_handlers =
             new Dictionary<PlayerStateId, PlayerAnimRule.ResolveHandler>();
+        private readonly PlayerContext m_context;
 
         public IReadOnlyDictionary<PlayerStateId, PlayerAnimRule.ResolveHandler> Handlers => m_handlers;
 
-        // 初始化玩家动画规则
-        public void Init(PlayerContext context)
+        // 创建玩家动画控制器
+        public PlayerAnimController(PlayerContext context)
         {
-            register(PlayerMoveAnimRules.Create(context));
-            register(PlayerAirAnimRules.Create(context));
-            register(PlayerActionAnimRules.Create(context));
-            register(PlayerSkillAnimRules.Create(context));
+            m_context = context;
+        }
+
+        // 初始化玩家动画规则
+        protected override void OnInit()
+        {
+            register(PlayerMoveAnimRules.Create(m_context));
+            register(PlayerAirAnimRules.Create(m_context));
+            register(PlayerActionAnimRules.Create(m_context));
+            register(PlayerSkillAnimRules.Create(m_context));
         }
 
         // 注册一组玩家动画规则

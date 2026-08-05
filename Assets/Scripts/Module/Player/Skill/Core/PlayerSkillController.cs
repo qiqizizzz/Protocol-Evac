@@ -7,6 +7,7 @@
  */
 
 using System.Collections.Generic;
+using Framework.QTower.Controller;
 using Module.Player.Context;
 using Module.Player.Skill;
 using Module.Player.Skill.Data;
@@ -14,7 +15,7 @@ using Utils.log;
 
 namespace Module.Player.Skill.Core
 {
-    public sealed class PlayerSkillController
+    public sealed class PlayerSkillController : BaseController
     {
         private readonly PlayerContext m_context;
         private readonly Dictionary<PlayerSkillType, PlayerSkillConfigSO> m_skillConfigs;
@@ -55,7 +56,7 @@ namespace Module.Player.Skill.Core
             m_timeline.Open(skillType, config, m_context);
         }
         
-        public void Tick(float deltaTime)
+        public override void Tick(float deltaTime)
         {
             m_timeline.Tick(deltaTime, m_context);
         }
@@ -63,6 +64,12 @@ namespace Module.Player.Skill.Core
         public void Close()
         {
             m_timeline.Close(m_context);
+        }
+
+        // 销毁时关闭当前技能
+        protected override void OnDestroy()
+        {
+            Close();
         }
         #endregion
         

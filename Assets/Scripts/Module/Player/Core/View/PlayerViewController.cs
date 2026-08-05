@@ -6,27 +6,32 @@
  * └──────────────────────────────────┘
  */
 
+using Framework.QTower.Controller;
 using Module.Player.Context;
 using Module.Player.Core.View.Config;
 using UnityEngine;
-using Utils.log;
 
 namespace Module.Player.Core.View
 {
-    public sealed class PlayerViewController
+    public sealed class PlayerViewController : BaseController
     {
-        private PlayerContext m_context;
-        private PlayerViewConfigSO m_viewConfig;
-        private Transform m_viewRoot;
-        private Camera m_playerCamera;
+        private readonly PlayerContext m_context;
+        private readonly PlayerViewConfigSO m_viewConfig;
+        private readonly Transform m_viewRoot;
+        private readonly Camera m_playerCamera;
 
-        // 初始化玩家视角控制器
-        public void Init(PlayerContext context, PlayerViewConfigSO viewConfig, Transform viewRoot, Camera playerCamera)
+        // 创建玩家视角控制器
+        public PlayerViewController(PlayerContext context, PlayerViewConfigSO viewConfig, Transform viewRoot, Camera playerCamera)
         {
             m_context = context;
             m_viewConfig = viewConfig;
             m_viewRoot = viewRoot;
             m_playerCamera = playerCamera;
+        }
+
+        // 初始化玩家视角控制器
+        protected override void OnInit()
+        {
             m_context.ViewMode = m_viewConfig.DefaultViewMode;
             m_context.CameraYaw = m_context.Transform.eulerAngles.y;
             m_context.CameraPitch = 0f;
@@ -34,11 +39,8 @@ namespace Module.Player.Core.View
         }
 
         // 更新玩家视角数据
-        public void Tick(float deltaTime)
+        public override void Tick(float deltaTime)
         {
-            if (m_context == null)
-                return;
-
             switchPlayerView();
             updateViewAngles(deltaTime);
             refreshCameraTransform();

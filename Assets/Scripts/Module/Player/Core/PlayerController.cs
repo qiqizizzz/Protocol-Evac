@@ -6,6 +6,7 @@
  * └──────────────────────────────────┘
  */
 
+using Framework.QTower.Controller;
 using Module.Player.Context;
 using Module.Player.Core.View;
 using Module.Player.Core.View.Config;
@@ -73,6 +74,7 @@ namespace Module.Player.Core
         private Camera m_playerCamera;
         //context
         private PlayerContext m_context;
+        private readonly ControllerManager m_controllerManager = new();
         private bool m_isInited;
         //Anim
         private PlayerAnimWriter m_animWriter;
@@ -125,6 +127,8 @@ namespace Module.Player.Core
 
         private void OnDestroy()
         {
+            m_controllerManager.Destroy();
+
             if (m_inputReader != null)
                 m_inputReader.UnInit();
         }
@@ -145,15 +149,16 @@ namespace Module.Player.Core
             m_motor = new PlayerMotor();
             m_motor.Init(m_characterController, m_context, MoveConfig, ViewConfig);
 
-            m_viewController = new PlayerViewController();
-            m_viewController.Init(m_context, ViewConfig, m_viewRoot, m_playerCamera);
+            m_viewController = m_controllerManager.Register(
+                new PlayerViewController(m_context, ViewConfig, m_viewRoot, m_playerCamera));
         }
 
         // 初始化玩家技能总控
         private void initSkill()
         {
-            m_skillController = new PlayerSkillController(m_context);
-            m_skillController.RegisterConfig(PlayerSkillType.NormalAttack, NormalAttackConfig);
+            PlayerSkillController skillController = new PlayerSkillController(m_context);
+            skillController.RegisterConfig(PlayerSkillType.NormalAttack, NormalAttackConfig);
+            m_skillController = m_controllerManager.Register(skillController);
         }
 
         // 初始化玩家状态机与状态转换
@@ -161,8 +166,8 @@ namespace Module.Player.Core
         {
             RegisterAllStates();
 
-            m_transitionController = new PlayerTransitionController();
-            m_transitionController.Init(m_context, AirConfig, DodgeConfig, NormalAttackConfig);
+            m_transitionController = m_controllerManager.Register(
+                new PlayerTransitionController(m_context, AirConfig, DodgeConfig, NormalAttackConfig));
 
             m_transitionSelector = new PlayerTransitionSelector(m_stateMachine, m_transitionController.Rules);
         }
@@ -170,8 +175,7 @@ namespace Module.Player.Core
         // 初始化玩家动画表现层
         private void initAnim()
         {
-            m_animController = new PlayerAnimController();
-            m_animController.Init(m_context);
+            m_animController = m_controllerManager.Register(new PlayerAnimController(m_context));
 
             m_animResolver = new PlayerAnimResolver();
             m_animResolver.Init(m_stateMachine, m_animController.Handlers);
