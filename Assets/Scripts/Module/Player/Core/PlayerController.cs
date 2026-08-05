@@ -23,6 +23,8 @@ using Module.Player.HFSM.Transition;
 using Module.Player.HFSM.Transition.Controllers;
 using Module.Player.Input;
 using Module.Player.Input.Config;
+using Module.Player.Skill;
+using Module.Player.Skill.Core;
 using Module.Player.Skill.Data;
 using UnityEngine;
 using Utils.Find;
@@ -39,6 +41,7 @@ namespace Module.Player.Core
         private const string PLAYER_CAMERA_PATH = "ViewRoot/PlayerCamera";
         #endregion
 
+        #region 配置相关
         [Header("移动配置")]
         [Tooltip("玩家移动配置")]
         [SerializeField] private PlayerMoveConfigSO MoveConfig;
@@ -57,6 +60,7 @@ namespace Module.Player.Core
         [Header("视角配置")]
         [Tooltip("玩家视角配置")]
         [SerializeField] private PlayerViewConfigSO ViewConfig;
+        #endregion
         
         // ==================== 状态机相关 ====================
         private Transform m_transform;
@@ -67,6 +71,9 @@ namespace Module.Player.Core
         private CharacterController m_characterController;
         private Transform m_viewRoot;
         private Camera m_playerCamera;
+        //context
+        private PlayerContext m_context;
+        private bool m_isInited;
         //Anim
         private PlayerAnimWriter m_animWriter;
         private PlayerAnimController m_animController;
@@ -77,8 +84,8 @@ namespace Module.Player.Core
         private PlayerTransitionSelector m_transitionSelector;
         //Input
         private PlayerInputReader m_inputReader;
-        private PlayerContext m_context;
-        private bool m_isInited;
+        //Skill
+        private PlayerSkillController m_skillController;
         
         #region 生命周期
         private void Awake()
@@ -87,6 +94,7 @@ namespace Module.Player.Core
             validateConfigReferences();
 
             initCore();
+            initSkill();
             initHFSM();
             initAnim();
 
@@ -102,6 +110,7 @@ namespace Module.Player.Core
             m_viewController.Tick(Time.deltaTime);
             m_transitionSelector.Tick();
             m_stateMachine.Tick(Time.deltaTime);
+            m_skillController.Tick(Time.deltaTime);
             m_animWriter.Tick(Time.deltaTime);
         }
 
@@ -138,6 +147,13 @@ namespace Module.Player.Core
 
             m_viewController = new PlayerViewController();
             m_viewController.Init(m_context, ViewConfig, m_viewRoot, m_playerCamera);
+        }
+
+        // 初始化玩家技能总控
+        private void initSkill()
+        {
+            m_skillController = new PlayerSkillController(m_context);
+            m_skillController.RegisterConfig(PlayerSkillType.NormalAttack, NormalAttackConfig);
         }
 
         // 初始化玩家状态机与状态转换
@@ -237,6 +253,7 @@ namespace Module.Player.Core
                 && m_animController != null
                 && m_animResolver != null
                 && m_animWriter != null
+                && m_skillController != null
                 && m_motor != null
                 && m_viewController != null;
         }
