@@ -31,13 +31,13 @@ namespace Module.Player.HFSM.Transition.Rules
             return new PlayerTransitionRule[]
             {
                 new PlayerTransitionRule(PlayerStateId.Grounded, PlayerStateId.ActionDodge,
-                    PlayerTransitionPriority.Action, () => canDodge(context, dodgeConfig), 30),
+                    PlayerTransitionPriority.Action, () => CanDodge(context, dodgeConfig), 30),
 
                 new PlayerTransitionRule(PlayerStateId.ActionDodge, PlayerStateId.AirborneFall,
                     PlayerTransitionPriority.Action, () => context.IsStateFinished && !context.IsGrounded, 20),
 
                 new PlayerTransitionRule(PlayerStateId.ActionDodge, PlayerStateId.GroundedMove,
-                    PlayerTransitionPriority.Action, () => context.IsStateFinished && context.IsGrounded && canMove(context), 10),
+                    PlayerTransitionPriority.Action, () => context.IsStateFinished && context.IsGrounded && CanMove(context), 10),
 
                 new PlayerTransitionRule(PlayerStateId.ActionDodge, PlayerStateId.GroundedIdle,
                     PlayerTransitionPriority.Action, () => context.IsStateFinished && context.IsGrounded)
@@ -45,7 +45,7 @@ namespace Module.Player.HFSM.Transition.Rules
         }
 
         // 判断当前是否可以触发地面闪避
-        private static bool canDodge(PlayerContext context, PlayerDodgeConfigSO dodgeConfig)
+        private static bool CanDodge(PlayerContext context, PlayerDodgeConfigSO dodgeConfig)
         {
             return
                 !context.IsInputLocked &&
@@ -55,7 +55,7 @@ namespace Module.Player.HFSM.Transition.Rules
         }
 
         // 判断动作结束后是否应回到地面移动
-        private static bool canMove(PlayerContext context)
+        private static bool CanMove(PlayerContext context)
         {
             return
                 !context.IsInputLocked &&

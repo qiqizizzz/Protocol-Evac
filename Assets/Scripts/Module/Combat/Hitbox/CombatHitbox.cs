@@ -88,7 +88,7 @@ namespace Module.Combat.Hitbox
         {
             if (!m_isOpen) return;
             
-            detectTargets();
+            DetectTargets();
         }
 
         private void OnDisable()
@@ -98,7 +98,7 @@ namespace Module.Combat.Hitbox
         #endregion
 
         //检测当前命中盒范围内
-        private void detectTargets()
+        private void DetectTargets()
         {
             int hitCount = Physics.OverlapBoxNonAlloc(transform.position, HalfExtents, m_overlapResults,
                 transform.rotation, TargetLayers.value, QueryTriggerInteraction.Ignore);
@@ -111,12 +111,12 @@ namespace Module.Combat.Hitbox
 
             for (int i = 0; i < hitCount; i++)
             {
-                tryApplyDamage(m_overlapResults[i]);
+                TryApplyDamage(m_overlapResults[i]);
             }
         }
 
         //尝试造成伤害
-        private void tryApplyDamage(Collider hitCollider)
+        private void TryApplyDamage(Collider hitCollider)
         {
             //剔除无效目标与自身
             if(!hitCollider) return;

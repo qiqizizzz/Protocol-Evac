@@ -27,20 +27,20 @@ namespace Module.Player.HFSM.Animation.Rules
             {
                 new PlayerAnimRule(
                     PlayerStateId.ActionDodge,
-                    (ref PlayerAnimParams animParams) => resolveDodge(context, ref animParams))
+                    (ref PlayerAnimParams animParams) => ResolveDodge(context, ref animParams))
             };
         }
 
         // 解析闪避动画参数
-        private static void resolveDodge(PlayerContext context, ref PlayerAnimParams animParams)
+        private static void ResolveDodge(PlayerContext context, ref PlayerAnimParams animParams)
         {
-            animParams.MoveSpeed = getHorizontalSpeed(context);
+            animParams.MoveSpeed = GetHorizontalSpeed(context);
             animParams.VerticalSpeed = context.Velocity.y;
             animParams.IsGrounded = context.IsGrounded;
         }
 
         // 获取玩家水平速度
-        private static float getHorizontalSpeed(PlayerContext context)
+        private static float GetHorizontalSpeed(PlayerContext context)
         {
             Vector3 velocity = context.Velocity;
             velocity.y = 0f;

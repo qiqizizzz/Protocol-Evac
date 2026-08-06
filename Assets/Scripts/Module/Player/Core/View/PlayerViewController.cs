@@ -35,19 +35,19 @@ namespace Module.Player.Core.View
             m_context.ViewMode = m_viewConfig.DefaultViewMode;
             m_context.CameraYaw = m_context.Transform.eulerAngles.y;
             m_context.CameraPitch = 0f;
-            refreshCameraTransform();
+            RefreshCameraTransform();
         }
 
         // 更新玩家视角数据
         public override void Tick(float deltaTime)
         {
-            switchPlayerView();
-            updateViewAngles(deltaTime);
-            refreshCameraTransform();
+            SwitchPlayerView();
+            UpdateViewAngles(deltaTime);
+            RefreshCameraTransform();
         }
         
         // 处理玩家视角模式切换请求
-        private void switchPlayerView()
+        private void SwitchPlayerView()
         {
             if (!m_context.TargetViewMode.HasValue)
                 return;
@@ -55,12 +55,12 @@ namespace Module.Player.Core.View
             //切换视角
             m_context.ViewMode = m_context.TargetViewMode.Value;
             m_context.CameraYaw = m_context.Transform.eulerAngles.y;
-            refreshCameraTransform();
+            RefreshCameraTransform();
             m_context.TargetViewMode = null;//置空
         }
 
         // 根据输入更新视角水平角与俯仰角
-        private void updateViewAngles(float deltaTime)
+        private void UpdateViewAngles(float deltaTime)
         {
             Vector2 lookInput = m_context.LookInput;
             
@@ -81,7 +81,7 @@ namespace Module.Player.Core.View
         }
         
         // 根据当前视角模式刷新相机枢轴与相机本地位置
-        private void refreshCameraTransform()
+        private void RefreshCameraTransform()
         {
             m_viewRoot.position = m_context.Transform.position;
 

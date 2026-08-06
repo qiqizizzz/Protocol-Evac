@@ -67,13 +67,13 @@ namespace Module.Player.Core
         #region 生命周期
         private void Awake()
         {
-            findReferences();
-            checkConfigs();
+            FindReferences();
+            CheckConfigs();
 
-            initCore();
-            initSkill();
-            initHFSM();
-            initAnim();
+            InitCore();
+            InitSkill();
+            InitHFSM();
+            InitAnim();
         }
 
         private void Update()
@@ -103,7 +103,7 @@ namespace Module.Player.Core
         
         #region 初始化
         // 初始化玩家核心运行依赖
-        private void initCore()
+        private void InitCore()
         {
             m_context = new PlayerContext(m_transform);
             m_context.IsGrounded = m_characterController.isGrounded;
@@ -121,7 +121,7 @@ namespace Module.Player.Core
         }
 
         // 初始化玩家技能总控
-        private void initSkill()
+        private void InitSkill()
         {
             PlayerSkillController skillController = new PlayerSkillController(m_context);
             skillController.RegisterConfig(PlayerSkillType.NormalAttack, Settings.NormalAttackConfig);
@@ -129,7 +129,7 @@ namespace Module.Player.Core
         }
 
         // 初始化玩家状态机与状态转换
-        private void initHFSM()
+        private void InitHFSM()
         {
             m_stateMachine = PlayerStateFactory.Create(m_context, Settings, m_skillController);
 
@@ -140,7 +140,7 @@ namespace Module.Player.Core
         }
 
         // 初始化玩家动画表现层
-        private void initAnim()
+        private void InitAnim()
         {
             m_animController = m_controllerManager.Register(new PlayerAnimController(m_context));
 
@@ -160,7 +160,7 @@ namespace Module.Player.Core
         #endregion
 
         // 查找玩家运行依赖引用
-        private void findReferences()
+        private void FindReferences()
         {
             m_transform = transform;
             m_characterController = this.GetOwnerComponent<CharacterController>();
@@ -170,7 +170,7 @@ namespace Module.Player.Core
         }
 
         // 校验玩家配置引用，缺失时在控制台提示
-        private void checkConfigs()
+        private void CheckConfigs()
         {
             if (Settings == null)
             {

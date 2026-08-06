@@ -33,14 +33,14 @@ namespace Module.Player.HFSM.Animation.Controllers
         // 初始化玩家动画规则
         protected override void OnInit()
         {
-            register(PlayerMoveAnimRules.Create(m_context));
-            register(PlayerAirAnimRules.Create(m_context));
-            register(PlayerActionAnimRules.Create(m_context));
-            register(PlayerSkillAnimRules.Create(m_context));
+            Register(PlayerMoveAnimRules.Create(m_context));
+            Register(PlayerAirAnimRules.Create(m_context));
+            Register(PlayerActionAnimRules.Create(m_context));
+            Register(PlayerSkillAnimRules.Create(m_context));
         }
 
         // 注册一组玩家动画规则
-        private void register(IReadOnlyList<PlayerAnimRule> rules)
+        private void Register(IReadOnlyList<PlayerAnimRule> rules)
         {
             if (rules == null)
             {

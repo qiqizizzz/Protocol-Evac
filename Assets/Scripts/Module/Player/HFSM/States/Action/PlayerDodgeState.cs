@@ -39,7 +39,7 @@ namespace Module.Player.HFSM.States.Action
             m_context.IsStateFinished = false;
             m_context.IsMovementLocked = true;
 
-            Vector3 dodgeDirection = resolveDodgeDirection();
+            Vector3 dodgeDirection = ResolveDodgeDirection();
             m_context.MoveDir = dodgeDirection;
             m_context.SetForcedMoveVelocity(dodgeDirection * m_dodgeConfig.DodgeSpeed);
             m_context.RequestAnimReplay(PlayerStateId.ActionDodge);
@@ -64,7 +64,7 @@ namespace Module.Player.HFSM.States.Action
         }
 
         // 解析本次闪避方向
-        private Vector3 resolveDodgeDirection()
+        private Vector3 ResolveDodgeDirection()
         {
             Vector3 inputDirection = PlayerMoveDirectionResolver.Resolve(m_context, m_context.MoveInput);
 

@@ -36,7 +36,7 @@ namespace Module.Player.HFSM.States.Air
 
         public override void FixedTick(float fixedDeltaTime)
         {
-            if (!canAirMove())
+            if (!CanAirMove())
             {
                 m_context.MoveDir = Vector3.zero;
                 m_context.TargetMoveSpeed = 0f;
@@ -48,7 +48,7 @@ namespace Module.Player.HFSM.States.Air
         }
 
         // 判断玩家当前是否可以进行空中水平移动
-        private bool canAirMove()
+        private bool CanAirMove()
         {
             return
                 !m_context.IsInputLocked &&

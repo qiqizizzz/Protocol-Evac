@@ -84,11 +84,11 @@ namespace Module.Player.HFSM
                 return;
             }
 
-            if (!validateStateTree())
+            if (!ValidateStateTree())
                 return;
 
             List<PlayerStateId> initialPath =
-                buildExpandedPath(initStateId);
+                BuildExpandedPath(initStateId);
 
             if (initialPath.Count == 0)
                 return;
@@ -98,7 +98,7 @@ namespace Module.Player.HFSM
             
             try
             {
-                enterInitialPath(initialPath);
+                EnterInitialPath(initialPath);
                 IsInited = true;
             }
             catch (System.Exception exception)
@@ -115,22 +115,22 @@ namespace Module.Player.HFSM
         // 切换到目标状态，复合状态会自动展开到默认叶子状态
         public void ChangeState(PlayerStateId targetStateId)
         {
-            if (!isStateMachineValid(nameof(ChangeState)))
+            if (!IsStateMachineValid(nameof(ChangeState)))
                 return;
 
-            List<PlayerStateId> targetPath = buildExpandedPath(targetStateId);
+            List<PlayerStateId> targetPath = BuildExpandedPath(targetStateId);
 
-            if (targetPath.Count == 0 || isSameActivePath(targetPath))
+            if (targetPath.Count == 0 || IsSameActivePath(targetPath))
                 return;
             
-            int commonPrefixLength = getCommonPrefixLength(targetPath);
+            int commonPrefixLength = GetCommonPrefixLength(targetPath);
 
             m_isExecutingLifecycle = true;
 
             try
             {
-                exitCurrentPath(commonPrefixLength);
-                enterTargetPath(targetPath, commonPrefixLength);
+                ExitCurrentPath(commonPrefixLength);
+                EnterTargetPath(targetPath, commonPrefixLength);
             }
             catch (System.Exception exception)
             {
@@ -146,7 +146,7 @@ namespace Module.Player.HFSM
         // 按父状态到叶子状态的顺序执行帧更新
         public void Tick(float deltaTime)
         {
-            if (!isStateMachineValid(nameof(Tick)))
+            if (!IsStateMachineValid(nameof(Tick)))
                 return;
 
             m_isExecutingLifecycle = true;
@@ -173,7 +173,7 @@ namespace Module.Player.HFSM
         // 按父状态到叶子状态的顺序执行物理帧更新
         public void FixedTick(float fixedDeltaTime)
         {
-            if (!isStateMachineValid(nameof(FixedTick)))
+            if (!IsStateMachineValid(nameof(FixedTick)))
                 return;
 
             m_isExecutingLifecycle = true;
@@ -199,7 +199,7 @@ namespace Module.Player.HFSM
 
         #region 检验状态树
         // 校验状态树的父子关系、环路与默认子状态
-        private bool validateStateTree()
+        private bool ValidateStateTree()
         {
             if (m_states.Count == 0)
             {
@@ -209,19 +209,19 @@ namespace Module.Player.HFSM
 
             foreach (BasePlayerState state in m_states.Values)
             {
-                if (!validateParent(state))
+                if (!ValidateParent(state))
                     return false;
             }
 
             foreach (BasePlayerState state in m_states.Values)
             {
-                if (!validateParentChain(state))
+                if (!ValidateParentChain(state))
                     return false;
             }
 
             foreach (BasePlayerState state in m_states.Values)
             {
-                if (state is PlayerCompositeState compositeState && !validateInitialChild(compositeState))
+                if (state is PlayerCompositeState compositeState && !ValidateInitialChild(compositeState))
                     return false;
             }
 
@@ -229,7 +229,7 @@ namespace Module.Player.HFSM
         }
 
         // 校验状态声明的父节点存在且为复合状态
-        private bool validateParent(BasePlayerState state)
+        private bool ValidateParent(BasePlayerState state)
         {
             if (state.ParentId == PlayerStateId.None)
                 return true;
@@ -250,7 +250,7 @@ namespace Module.Player.HFSM
         }
 
         // 校验状态的父链不存在环路
-        private bool validateParentChain(BasePlayerState state)
+        private bool ValidateParentChain(BasePlayerState state)
         {
             HashSet<PlayerStateId> visitedStateIds = new HashSet<PlayerStateId>();
 
@@ -272,7 +272,7 @@ namespace Module.Player.HFSM
         }
 
         // 校验复合状态的默认状态是已注册的直接子状态
-        private bool validateInitialChild(PlayerCompositeState compositeState)
+        private bool ValidateInitialChild(PlayerCompositeState compositeState)
         {
             PlayerStateId initialChildId = compositeState.GetInitialChildId();
 
@@ -298,7 +298,7 @@ namespace Module.Player.HFSM
         }
 
         // 构建从顶层状态到目标叶子状态的完整路径
-        private List<PlayerStateId> buildExpandedPath(PlayerStateId targetStateId)
+        private List<PlayerStateId> BuildExpandedPath(PlayerStateId targetStateId)
         {
             if (!m_states.TryGetValue(targetStateId, out BasePlayerState targetState))
             {
@@ -332,7 +332,7 @@ namespace Module.Player.HFSM
         }
 
         // 按父状态到叶子状态的顺序进入初始路径
-        private void enterInitialPath(IReadOnlyList<PlayerStateId> initialPath)
+        private void EnterInitialPath(IReadOnlyList<PlayerStateId> initialPath)
         {
             for (int i = 0; i < initialPath.Count; i++)
             {
@@ -346,7 +346,7 @@ namespace Module.Player.HFSM
 
         #region 检验状态
         // 校验状态机是否正常执行
-        private bool isStateMachineValid(string operationName)
+        private bool IsStateMachineValid(string operationName)
         {
             if (m_isExecutingLifecycle)
             {
@@ -371,7 +371,7 @@ namespace Module.Player.HFSM
         }
 
         //判断目标路径是否与当前活动路径完全一致,避免切换到重复state
-        private bool isSameActivePath(IReadOnlyList<PlayerStateId> targetPath)
+        private bool IsSameActivePath(IReadOnlyList<PlayerStateId> targetPath)
         {
             if (m_activeStatePath.Count != targetPath.Count)
                 return false;
@@ -385,7 +385,7 @@ namespace Module.Player.HFSM
         }
 
         // 计算当前活动路径与目标路径的公共前缀长度, 用于判断需要退出和进入的状态
-        private int getCommonPrefixLength(IReadOnlyList<PlayerStateId> targetPath)
+        private int GetCommonPrefixLength(IReadOnlyList<PlayerStateId> targetPath)
         {
             int maxLength = m_activeStatePath.Count < targetPath.Count ? m_activeStatePath.Count : targetPath.Count;
 
@@ -399,7 +399,7 @@ namespace Module.Player.HFSM
         }
 
         // 从当前叶子状态向上退出到公共前缀之后
-        private void exitCurrentPath(int commonPrefixLength)
+        private void ExitCurrentPath(int commonPrefixLength)
         {
             for (int i = m_activeStatePath.Count - 1; i >= commonPrefixLength; i--)
             {
@@ -411,7 +411,7 @@ namespace Module.Player.HFSM
         }
 
         // 从公共前缀之后进入目标路径到叶子状态
-        private void enterTargetPath(IReadOnlyList<PlayerStateId> targetPath, int commonPrefixLength)
+        private void EnterTargetPath(IReadOnlyList<PlayerStateId> targetPath, int commonPrefixLength)
         {
             for (int i = commonPrefixLength; i < targetPath.Count; i++)
             {

@@ -27,15 +27,15 @@ namespace Module.Player.HFSM.Transition.Rules
             return new PlayerTransitionRule[]
             {
                 new PlayerTransitionRule(PlayerStateId.GroundedIdle, PlayerStateId.GroundedMove,
-                    PlayerTransitionPriority.Move, () => canMove(context)),
+                    PlayerTransitionPriority.Move, () => CanMove(context)),
 
                 new PlayerTransitionRule(PlayerStateId.GroundedMove, PlayerStateId.GroundedIdle,
-                    PlayerTransitionPriority.Move, () => !canMove(context))
+                    PlayerTransitionPriority.Move, () => !CanMove(context))
             };
         }
 
         // 判断玩家当前是否具备地面移动条件
-        private static bool canMove(PlayerContext context)
+        private static bool CanMove(PlayerContext context)
         {
             return
                 !context.IsInputLocked &&

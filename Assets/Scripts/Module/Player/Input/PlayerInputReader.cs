@@ -52,9 +52,9 @@ namespace Module.Player.Input
                 m_inputActions.Player.Sprint.IsPressed(),
                 m_inputActions.Player.Sprint.WasReleasedThisFrame());
             //Space: 跳跃
-            recordBufferedInput(PlayerBufferedInputType.Jump, m_inputActions.Player.Jump.WasPressedThisFrame());
+            RecordBufferedInput(PlayerBufferedInputType.Jump, m_inputActions.Player.Jump.WasPressedThisFrame());
             //鼠标左键: 普通攻击
-            recordBufferedInput(PlayerBufferedInputType.NormalAttack, m_inputActions.Player.Attack.WasPressedThisFrame());
+            RecordBufferedInput(PlayerBufferedInputType.NormalAttack, m_inputActions.Player.Attack.WasPressedThisFrame());
             //鼠标移动: 视角
             m_context.LookInput = m_inputActions.Player.Look.ReadValue<Vector2>();
             //F1/F3: 切换视角
@@ -66,7 +66,7 @@ namespace Module.Player.Input
         }
 
         // 按条件写入离散输入缓存
-        private void recordBufferedInput(PlayerBufferedInputType inputType, bool wasPressedThisFrame)
+        private void RecordBufferedInput(PlayerBufferedInputType inputType, bool wasPressedThisFrame)
         {
             if (!wasPressedThisFrame)
                 return;

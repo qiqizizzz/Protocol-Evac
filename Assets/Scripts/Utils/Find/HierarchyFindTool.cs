@@ -37,7 +37,7 @@ namespace Utils.Find
         public static T FindChildComponent<T>(this GameObject owner, string path) where T : Component
         {
             Transform target = owner.FindChild(path);
-            return getComponent<T>(target, path);
+            return GetComponent<T>(target, path);
         }
         #endregion
 
@@ -97,7 +97,7 @@ namespace Utils.Find
         public static T FindChildComponent<T>(this Component owner, string path) where T : Component
         {
             Transform target = owner.FindChild(path);
-            return getComponent<T>(target, path);
+            return GetComponent<T>(target, path);
         }
         #endregion
 
@@ -138,13 +138,13 @@ namespace Utils.Find
         public static T FindChildComponent<T>(this Transform root, string path) where T : Component
         {
             Transform target = root.Find(path);
-            return getComponent<T>(target, path);
+            return GetComponent<T>(target, path);
         }
         #endregion
 
         #region Private Function
         // 获取目标节点上的组件
-        private static T getComponent<T>(Transform target, string path) where T : Component
+        private static T GetComponent<T>(Transform target, string path) where T : Component
         {
             if (target == null)
                 return null;

@@ -49,12 +49,12 @@ namespace Module.Player.HFSM.Animation
                 return;
 
             PlayerAnimParams animParams = m_resolver.Resolve();
-            applyParams(animParams);
-            applyReplayRequest();
+            ApplyParams(animParams);
+            ApplyReplayRequest();
         }
 
         // 将动画参数写入 Animator
-        private void applyParams(PlayerAnimParams animParams)
+        private void ApplyParams(PlayerAnimParams animParams)
         {
             m_animator.SetFloat(S_MoveSpeedHash, animParams.MoveSpeed);
             m_animator.SetFloat(S_VerticalSpeedHash, animParams.VerticalSpeed);
@@ -63,7 +63,7 @@ namespace Module.Player.HFSM.Animation
         }
 
         // 消费并执行一次性动画重播请求
-        private void applyReplayRequest()
+        private void ApplyReplayRequest()
         {
             PlayerStateId? stateId = m_context.ConsumeAnimReplayRequest();
             if (stateId == PlayerStateId.AirborneJump)

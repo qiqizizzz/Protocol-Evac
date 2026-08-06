@@ -37,7 +37,7 @@ namespace Module.Player.Core
             Vector3 rootMotionDeltaPosition = m_context.ConsumeRootMotionDeltaPosition();
             if (rootMotionDeltaPosition.sqrMagnitude > 0f)
             {
-                applyRootMotionMove(rootMotionDeltaPosition, ref velocity, fixedDeltaTime);
+                ApplyRootMotionMove(rootMotionDeltaPosition, ref velocity, fixedDeltaTime);
                 return;
             }
 
@@ -95,7 +95,7 @@ namespace Module.Player.Core
         }
 
         // 使用动画根运动驱动本次固定帧位移
-        private void applyRootMotionMove(Vector3 rootMotionDeltaPosition, ref Vector3 velocity, float fixedDeltaTime)
+        private void ApplyRootMotionMove(Vector3 rootMotionDeltaPosition, ref Vector3 velocity, float fixedDeltaTime)
         {
             if (m_characterController.isGrounded && velocity.y < 0f)
                 velocity.y = -2f;

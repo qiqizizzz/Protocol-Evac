@@ -143,10 +143,13 @@ Combat + Hitbox = CombatHitbox
 | 类型     | 规则                                  | 示例                                      |
 | -------- | ------------------------------------- | ----------------------------------------- |
 | 公共方法 | PascalCase                            | `TakeDamage()`, `MoveToPosition()`        |
-| 私有方法 | camelCase                             | `calculateDamage()`, `updateUI()`         |
+| 私有方法 | PascalCase                            | `CalculateDamage()`, `UpdateUI()`         |
+| 保护方法 | PascalCase                            | `OnInit()`, `BuildStateTree()`            |
 | 属性     | PascalCase                            | `public int Health { get; private set; }` |
 | 事件     | `On` + PascalCase                     | `OnDamageTaken`, `OnItemCollected`        |
 | 协程     | PascalCase + `Coroutine` 后缀（可选） | `SpawnEnemyCoroutine()`                   |
+
+项目自有方法无论使用 `public`、`private` 还是 `protected`，名称都统一使用 PascalCase。Unity 生命周期函数继续使用 Unity 官方定义的 PascalCase 名称。`Assets/Plugins/` 中的第三方源码和工具生成的 `.cs` 文件不做批量改名，避免破坏插件升级或被重新生成覆盖。
 
 ### 字段命名（个人规范）
 
@@ -227,7 +230,7 @@ public class PlayerController : MonoBehaviour
     public void TakeDamage(float damage) { }
 
     // ==================== Private Function ====================
-    private void handleMovement() { }
+    private void HandleMovement() { }
 
     // ==================== Coroutine ====================
     private IEnumerator RespawnCoroutine() { yield return null; }
@@ -288,13 +291,13 @@ if (m_target is null) return;       // ❌ 错误，无法检测已销毁对象
 ```csharp
 private void OnEnable()
 {
-    GameManager.Instance.OnGameOver += handleGameOver;
+    GameManager.Instance.OnGameOver += HandleGameOver;
 }
 
 private void OnDisable()
 {
     if (GameManager.Instance != null)
-        GameManager.Instance.OnGameOver -= handleGameOver;
+        GameManager.Instance.OnGameOver -= HandleGameOver;
 }
 ```
 
@@ -328,7 +331,7 @@ private void FixedUpdate()
 ### 对象池
 
 ```csharp
-private void fire()
+private void Fire()
 {
     GameObject bullet = BulletPool.Instance.GetBullet();
     bullet.transform.SetPositionAndRotation(m_firePoint.position, m_firePoint.rotation);
@@ -558,7 +561,7 @@ if (m_target == null) return;
 private void OnDisable()
 {
     if (GameManager.Instance != null)
-        GameManager.Instance.OnGameOver -= handleGameOver;
+        GameManager.Instance.OnGameOver -= HandleGameOver;
 }
 ```
 

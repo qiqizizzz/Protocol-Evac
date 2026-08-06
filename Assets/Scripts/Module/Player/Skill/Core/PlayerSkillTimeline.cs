@@ -35,13 +35,13 @@ namespace Module.Player.Skill.Core
         public PlayerSkillTimeline()
         {
             m_stepTimer = new DurationTimer();
-            reset();
+            Reset();
         }
 
         #region 生命周期
         public void Open(PlayerSkillType skillType, PlayerSkillConfigSO config, PlayerContext context)
         {
-            reset();
+            Reset();
 
             CurrentSkillType = skillType;
             m_currentConfig = config;
@@ -49,7 +49,7 @@ namespace Module.Player.Skill.Core
             IsRunning = true;
             context.IsStateFinished = false;
 
-            enterCurrentStep(context);
+            EnterCurrentStep(context);
         }
 
         public void Tick(float deltaTime, PlayerContext context)
@@ -59,20 +59,20 @@ namespace Module.Player.Skill.Core
 
             float previousNormalizedTime = m_stepTimer.NormalizedTime;
             m_stepTimer.Tick(deltaTime);
-            updateStepAdvanceBuffer(previousNormalizedTime, m_stepTimer.NormalizedTime);
+            UpdateStepAdvanceBuffer(previousNormalizedTime, m_stepTimer.NormalizedTime);
 
             if (!m_stepTimer.IsFinished)
                 return;
 
-            if (tryAdvanceStep(context))
+            if (TryAdvanceStep(context))
                 return;
 
-            finish(context);
+            Finish(context);
         }
 
         public void Close(PlayerContext context)
         {
-            reset();
+            Reset();
             context.IsStateFinished = false;
             context.SetRootMotionMoveEnabled(false);
         }
@@ -88,13 +88,13 @@ namespace Module.Player.Skill.Core
         }
 
         // 进入当前技能段落
-        private void enterCurrentStep(PlayerContext context)
+        private void EnterCurrentStep(PlayerContext context)
         {
             PlayerSkillStepData stepData = CurrentStep;
             if (stepData == null)
             {
                 QLog.Error($"进入玩家技能段落失败：{CurrentSkillType} 第 {m_currentStepIndex} 段配置为空");
-                finish(context);
+                Finish(context);
                 return;
             }
 
@@ -112,7 +112,7 @@ namespace Module.Player.Skill.Core
         }
 
         // 刷新段落推进缓存
-        private void updateStepAdvanceBuffer(float previousNormalizedTime, float currentNormalizedTime)
+        private void UpdateStepAdvanceBuffer(float previousNormalizedTime, float currentNormalizedTime)
         {
             if (!m_isStepAdvanceRequested || m_isStepAdvanceBuffered)
                 return;
@@ -128,7 +128,7 @@ namespace Module.Player.Skill.Core
                 return;
             }
 
-            if (!isNormalizedTimeInWindow(previousNormalizedTime, currentNormalizedTime, openNormalizedTime, closeNormalizedTime))
+            if (!IsNormalizedTimeInWindow(previousNormalizedTime, currentNormalizedTime, openNormalizedTime, closeNormalizedTime))
             {
                 m_isStepAdvanceRequested = false;
                 return;
@@ -139,7 +139,7 @@ namespace Module.Player.Skill.Core
         }
 
         // 尝试推进到下一段技能
-        private bool tryAdvanceStep(PlayerContext context)
+        private bool TryAdvanceStep(PlayerContext context)
         {
             if (!m_isStepAdvanceBuffered)
                 return false;
@@ -152,17 +152,17 @@ namespace Module.Player.Skill.Core
                 context.InputBuffer.Consume(PlayerBufferedInputType.NormalAttack);
 
             m_currentStepIndex = nextStepIndex;
-            enterCurrentStep(context);
+            EnterCurrentStep(context);
             return IsRunning;
         }
 
         // 判断归一化时间段是否覆盖指定窗口
-        private bool isNormalizedTimeInWindow(float previousNormalizedTime, float currentNormalizedTime, float openNormalizedTime, float closeNormalizedTime)
+        private bool IsNormalizedTimeInWindow(float previousNormalizedTime, float currentNormalizedTime, float openNormalizedTime, float closeNormalizedTime)
         {
             return currentNormalizedTime >= openNormalizedTime && previousNormalizedTime <= closeNormalizedTime;
         }
 
-        private void finish(PlayerContext context)
+        private void Finish(PlayerContext context)
         {
             IsRunning = false;
             IsFinished = true;
@@ -173,7 +173,7 @@ namespace Module.Player.Skill.Core
             context.SetRootMotionMoveEnabled(false);
         }
 
-        private void reset()
+        private void Reset()
         {
             CurrentSkillType = null;
             m_currentConfig = null;

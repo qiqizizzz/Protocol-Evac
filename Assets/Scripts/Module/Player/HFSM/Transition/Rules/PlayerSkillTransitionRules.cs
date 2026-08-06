@@ -31,13 +31,13 @@ namespace Module.Player.HFSM.Transition.Rules
             return new PlayerTransitionRule[]
             {
                 new PlayerTransitionRule(PlayerStateId.Grounded, PlayerStateId.Skill,
-                    PlayerTransitionPriority.Skill, () => canTriggerNormalAttack(context, normalAttackConfig), 30),
+                    PlayerTransitionPriority.Skill, () => CanTriggerNormalAttack(context, normalAttackConfig), 30),
 
                 new PlayerTransitionRule(PlayerStateId.SkillNormalAttack, PlayerStateId.AirborneFall,
                     PlayerTransitionPriority.Skill, () => context.IsStateFinished && !context.IsGrounded, 20),
 
                 new PlayerTransitionRule(PlayerStateId.SkillNormalAttack, PlayerStateId.GroundedMove,
-                    PlayerTransitionPriority.Skill, () => context.IsStateFinished && context.IsGrounded && canMove(context), 10),
+                    PlayerTransitionPriority.Skill, () => context.IsStateFinished && context.IsGrounded && CanMove(context), 10),
 
                 new PlayerTransitionRule(PlayerStateId.SkillNormalAttack, PlayerStateId.GroundedIdle,
                     PlayerTransitionPriority.Skill, () => context.IsStateFinished && context.IsGrounded)
@@ -45,7 +45,7 @@ namespace Module.Player.HFSM.Transition.Rules
         }
 
         // 判断当前是否满足普攻触发条件
-        private static bool canTriggerNormalAttack(PlayerContext context, PlayerNormalAttackConfigSO normalAttackConfig)
+        private static bool CanTriggerNormalAttack(PlayerContext context, PlayerNormalAttackConfigSO normalAttackConfig)
         {
             return
                 !context.IsInputLocked &&
@@ -55,7 +55,7 @@ namespace Module.Player.HFSM.Transition.Rules
         }
 
         // 判断技能结束后是否应回到地面移动
-        private static bool canMove(PlayerContext context)
+        private static bool CanMove(PlayerContext context)
         {
             return
                 !context.IsInputLocked &&

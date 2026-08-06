@@ -104,7 +104,7 @@ namespace Module.Player.Skill.Data
             if (!UseStepAdvanceWindowValue)
                 return false;
 
-            normalizeWindow(ref openNormalizedTime, ref closeNormalizedTime);
+            NormalizeWindow(ref openNormalizedTime, ref closeNormalizedTime);
             return true;
         }
 
@@ -117,12 +117,12 @@ namespace Module.Player.Skill.Data
             if (!UseHitWindowValue)
                 return false;
 
-            normalizeWindow(ref openNormalizedTime, ref closeNormalizedTime);
+            NormalizeWindow(ref openNormalizedTime, ref closeNormalizedTime);
             return true;
         }
 
         // 约束归一化窗口并保证结束时间不早于开始时间
-        private void normalizeWindow(ref float openNormalizedTime, ref float closeNormalizedTime)
+        private void NormalizeWindow(ref float openNormalizedTime, ref float closeNormalizedTime)
         {
             openNormalizedTime = Mathf.Clamp01(openNormalizedTime);
             closeNormalizedTime = Mathf.Clamp01(closeNormalizedTime);

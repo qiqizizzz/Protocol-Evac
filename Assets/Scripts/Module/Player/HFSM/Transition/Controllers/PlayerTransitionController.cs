@@ -40,14 +40,14 @@ namespace Module.Player.HFSM.Transition.Controllers
         // 初始化玩家状态转换规则
         protected override void OnInit()
         {
-            register(PlayerMoveTransitionRules.Create(m_context));
-            register(PlayerAirTransitionRules.Create(m_context, m_airConfig));
-            register(PlayerActionTransitionRules.Create(m_context, m_dodgeConfig));
-            register(PlayerSkillTransitionRules.Create(m_context, m_normalAttackConfig));
+            Register(PlayerMoveTransitionRules.Create(m_context));
+            Register(PlayerAirTransitionRules.Create(m_context, m_airConfig));
+            Register(PlayerActionTransitionRules.Create(m_context, m_dodgeConfig));
+            Register(PlayerSkillTransitionRules.Create(m_context, m_normalAttackConfig));
         }
 
         // 注册一组玩家状态转换规则
-        private void register(IReadOnlyList<PlayerTransitionRule> rules)
+        private void Register(IReadOnlyList<PlayerTransitionRule> rules)
         {
             if (rules == null)
             {

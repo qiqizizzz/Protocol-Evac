@@ -27,21 +27,21 @@ namespace Module.Player.HFSM.Animation.Rules
             {
                 new PlayerAnimRule(
                     PlayerStateId.SkillNormalAttack,
-                    (ref PlayerAnimParams animParams) => resolveNormalAttack(context, ref animParams))
+                    (ref PlayerAnimParams animParams) => ResolveNormalAttack(context, ref animParams))
             };
         }
 
         // 解析普通攻击动画参数
-        private static void resolveNormalAttack(PlayerContext context, ref PlayerAnimParams animParams)
+        private static void ResolveNormalAttack(PlayerContext context, ref PlayerAnimParams animParams)
         {
-            animParams.MoveSpeed = getHorizontalSpeed(context);
+            animParams.MoveSpeed = GetHorizontalSpeed(context);
             animParams.VerticalSpeed = context.Velocity.y;
             animParams.IsGrounded = context.IsGrounded;
             animParams.NormalAttackIndex = context.NormalAttackIndex;
         }
 
         // 获取玩家水平速度
-        private static float getHorizontalSpeed(PlayerContext context)
+        private static float GetHorizontalSpeed(PlayerContext context)
         {
             Vector3 velocity = context.Velocity;
             velocity.y = 0f;

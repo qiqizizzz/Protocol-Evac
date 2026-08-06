@@ -27,24 +27,24 @@ namespace Module.Player.HFSM.Animation.Rules
             {
                 new PlayerAnimRule(
                     PlayerStateId.AirborneJump,
-                    (ref PlayerAnimParams animParams) => resolveAirborne(context, ref animParams)),
+                    (ref PlayerAnimParams animParams) => ResolveAirborne(context, ref animParams)),
 
                 new PlayerAnimRule(
                     PlayerStateId.AirborneFall,
-                    (ref PlayerAnimParams animParams) => resolveAirborne(context, ref animParams))
+                    (ref PlayerAnimParams animParams) => ResolveAirborne(context, ref animParams))
             };
         }
 
         // 解析空中动画参数
-        private static void resolveAirborne(PlayerContext context, ref PlayerAnimParams animParams)
+        private static void ResolveAirborne(PlayerContext context, ref PlayerAnimParams animParams)
         {
-            animParams.MoveSpeed = getHorizontalSpeed(context);
+            animParams.MoveSpeed = GetHorizontalSpeed(context);
             animParams.VerticalSpeed = context.Velocity.y;
             animParams.IsGrounded = context.IsGrounded;
         }
 
         // 获取玩家水平速度
-        private static float getHorizontalSpeed(PlayerContext context)
+        private static float GetHorizontalSpeed(PlayerContext context)
         {
             Vector3 velocity = context.Velocity;
             velocity.y = 0f;

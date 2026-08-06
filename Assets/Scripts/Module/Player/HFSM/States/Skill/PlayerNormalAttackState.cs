@@ -69,14 +69,14 @@ namespace Module.Player.HFSM.States.Skill
                 return;
             }
 
-            if (canAdvanceCombo())
+            if (CanAdvanceCombo())
                 m_skillController.RequestNextStep();
 
             m_context.IsStateFinished = m_skillController.IsFinished;
         }
 
         // 判断当前普攻是否允许推进下一段
-        private bool canAdvanceCombo()
+        private bool CanAdvanceCombo()
         {
             return m_context.InputBuffer.Has(PlayerBufferedInputType.NormalAttack, Time.time, m_normalAttackConfig.NormalAttackBufferTime);
         }

@@ -38,7 +38,7 @@ namespace Module.Player.Input.Interpreter
 
             if (wasReleasedThisFrame)
             {
-                recordDodgeIfSprintWasTapped();
+                RecordDodgeIfSprintWasTapped();
                 m_context.IsSprintPressed = false;
                 m_isSprintPressing = false;
                 return;
@@ -46,23 +46,23 @@ namespace Module.Player.Input.Interpreter
 
             m_context.IsSprintPressed = m_isSprintPressing
                 && isPressed
-                && Time.time - m_sprintPressedTime >= getSprintHoldTime();
+                && Time.time - m_sprintPressedTime >= GetSprintHoldTime();
         }
 
         // Shift 松开时按短按规则写入闪避缓存
-        private void recordDodgeIfSprintWasTapped()
+        private void RecordDodgeIfSprintWasTapped()
         {
             if (!m_isSprintPressing)
                 return;
 
-            if (Time.time - m_sprintPressedTime >= getSprintHoldTime())
+            if (Time.time - m_sprintPressedTime >= GetSprintHoldTime())
                 return;
 
             m_context.InputBuffer.Record(PlayerBufferedInputType.Dodge, Time.time);
         }
 
         // 获取 Shift 长按判定时间
-        private float getSprintHoldTime()
+        private float GetSprintHoldTime()
         {
             return m_inputConfig.SprintHoldTime;
         }

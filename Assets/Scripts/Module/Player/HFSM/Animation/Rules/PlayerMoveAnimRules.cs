@@ -27,26 +27,26 @@ namespace Module.Player.HFSM.Animation.Rules
             {
                 new PlayerAnimRule(
                     PlayerStateId.GroundedIdle,
-                    (ref PlayerAnimParams animParams) => resolveGrounded(context, ref animParams)),
+                    (ref PlayerAnimParams animParams) => ResolveGrounded(context, ref animParams)),
 
                 new PlayerAnimRule(
                     PlayerStateId.GroundedMove,
-                    (ref PlayerAnimParams animParams) => resolveGrounded(context, ref animParams))
+                    (ref PlayerAnimParams animParams) => ResolveGrounded(context, ref animParams))
             };
         }
 
         #region 解析并绑定动画参数
         // 解析地面动画参数
-        private static void resolveGrounded(PlayerContext context, ref PlayerAnimParams animParams)
+        private static void ResolveGrounded(PlayerContext context, ref PlayerAnimParams animParams)
         {
-            animParams.MoveSpeed = getHorizontalSpeed(context);
+            animParams.MoveSpeed = GetHorizontalSpeed(context);
             animParams.VerticalSpeed = context.Velocity.y;
             animParams.IsGrounded = context.IsGrounded;
         }
         #endregion
 
         // 获取玩家水平速度
-        private static float getHorizontalSpeed(PlayerContext context)
+        private static float GetHorizontalSpeed(PlayerContext context)
         {
             Vector3 velocity = context.Velocity;
             velocity.y = 0f;

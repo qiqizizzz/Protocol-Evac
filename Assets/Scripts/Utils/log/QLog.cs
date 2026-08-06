@@ -18,13 +18,13 @@ namespace Utils.log
     public static class QLog
     {
         [Conditional("UNITY_EDITOR")]
-        public static void Info(object msg) => Debug.Log(formatMessage(msg));
+        public static void Info(object msg) => Debug.Log(FormatMessage(msg));
 
         [Conditional("UNITY_EDITOR")]
-        public static void Warning(object msg) => Debug.LogWarning(formatMessage(msg));
+        public static void Warning(object msg) => Debug.LogWarning(FormatMessage(msg));
 
         [Conditional("UNITY_EDITOR")]
-        public static void Error(object msg) => Debug.LogError(formatMessage(msg));
+        public static void Error(object msg) => Debug.LogError(FormatMessage(msg));
 
         /// <summary>
         /// 在编辑器中记录异常，并在所有构建中抛出异常
@@ -43,9 +43,9 @@ namespace Utils.log
 
         #region 日志类名查询方法
         // 构建带调用类名前缀的日志内容
-        private static string formatMessage(object msg)
+        private static string FormatMessage(object msg)
         {
-            string callerTypeName = getCallerTypeName();
+            string callerTypeName = GetCallerTypeName();
             string message = msg == null ? "null" : msg.ToString();
 
             if (string.IsNullOrEmpty(callerTypeName))
@@ -55,7 +55,7 @@ namespace Utils.log
         }
 
         // 从调用栈中查找第一个非 QLog 的调用类型
-        private static string getCallerTypeName()
+        private static string GetCallerTypeName()
         {
             StackTrace stackTrace = new StackTrace(false);
 
