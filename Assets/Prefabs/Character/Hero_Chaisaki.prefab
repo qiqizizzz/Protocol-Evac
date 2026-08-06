@@ -47,12 +47,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 705e99f84f684729a7941b04217ae93d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  MoveConfig: {fileID: 11400000, guid: f6f3c8a1cc0173c439adb7439e75ead8, type: 2}
-  InputConfig: {fileID: 11400000, guid: a560e68d0c7150c45a1ec86765f30bbb, type: 2}
-  AirConfig: {fileID: 11400000, guid: 66dae45d9508402cbef54d1a0830bb96, type: 2}
-  DodgeConfig: {fileID: 11400000, guid: 68a9e2d8664d31349b84374218ea6354, type: 2}
-  NormalAttackConfig: {fileID: 11400000, guid: 8f2ef84f717a18e4fa32220d4f11a568, type: 2}
-  ViewConfig: {fileID: 11400000, guid: 0cd196151569e14499d7801fe9fda3af, type: 2}
+  Settings: {fileID: 11400000, guid: ba4769035c52481582f00b99328d34b2, type: 2}
 --- !u!143 &8036122143564619715
 CharacterController:
   m_ObjectHideFlags: 0

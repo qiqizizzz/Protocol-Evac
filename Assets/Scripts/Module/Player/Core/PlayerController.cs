@@ -7,15 +7,13 @@
  */
 
 using Framework.QTower.Controller;
+using Module.Player.Config;
 using Module.Player.Context;
 using Module.Player.Core.View;
-using Module.Player.Core.View.Config;
+using Module.Player.HFSM.Config.Air;
 using Module.Player.HFSM;
 using Module.Player.HFSM.Animation;
 using Module.Player.HFSM.Animation.Controllers;
-using Module.Player.HFSM.Config.Action;
-using Module.Player.HFSM.Config.Air;
-using Module.Player.HFSM.Config.Move;
 using Module.Player.HFSM.States.Action;
 using Module.Player.HFSM.States.Air;
 using Module.Player.HFSM.States.Ground;
@@ -23,10 +21,8 @@ using Module.Player.HFSM.States.Skill;
 using Module.Player.HFSM.Transition;
 using Module.Player.HFSM.Transition.Controllers;
 using Module.Player.Input;
-using Module.Player.Input.Config;
 using Module.Player.Skill;
 using Module.Player.Skill.Core;
-using Module.Player.Skill.Data;
 using TriInspector;
 using UnityEngine;
 using Utils.Find;
@@ -44,30 +40,8 @@ namespace Module.Player.Core
         #endregion
 
         #region 配置相关
-        [Header("移动配置")]
-        [Tooltip("玩家移动配置")]
-        [DrawWithUnity]
-        [SerializeField] private PlayerMoveConfigSO MoveConfig;
-        [Header("输入配置")]
-        [Tooltip("玩家输入解释配置")]
-        [DrawWithUnity]
-        [SerializeField] private PlayerInputConfigSO InputConfig;
-        [Header("空中配置")]
-        [Tooltip("玩家空中配置")]
-        [DrawWithUnity]
-        [SerializeField] private PlayerAirConfigSO AirConfig;
-        [Header("动作配置")]
-        [Tooltip("玩家闪避配置")]
-        [DrawWithUnity]
-        [SerializeField] private PlayerDodgeConfigSO DodgeConfig;
-        [Header("技能配置")]
-        [Tooltip("玩家普通攻击配置")]
-        [DrawWithUnity]
-        [SerializeField] private PlayerNormalAttackConfigSO NormalAttackConfig;
-        [Header("视角配置")]
-        [Tooltip("玩家视角配置")]
-        [DrawWithUnity]
-        [SerializeField] private PlayerViewConfigSO ViewConfig;
+        [LabelText("玩家配置")]
+        [SerializeField] private PlayerSettingsSO Settings;
         #endregion
         
         // ==================== 状态机相关 ====================
@@ -151,20 +125,20 @@ namespace Module.Player.Core
                 m_context.LastGroundedTime = Time.time;
 
             m_inputReader = new PlayerInputReader();
-            m_inputReader.Init(m_context, InputConfig);
+            m_inputReader.Init(m_context, Settings.InputConfig);
 
             m_motor = new PlayerMotor();
-            m_motor.Init(m_characterController, m_context, MoveConfig, ViewConfig);
+            m_motor.Init(m_characterController, m_context, Settings.MoveConfig, Settings.ViewConfig);
 
             m_viewController = m_controllerManager.Register(
-                new PlayerViewController(m_context, ViewConfig, m_viewRoot, m_playerCamera));
+                new PlayerViewController(m_context, Settings.ViewConfig, m_viewRoot, m_playerCamera));
         }
 
         // 初始化玩家技能总控
         private void initSkill()
         {
             PlayerSkillController skillController = new PlayerSkillController(m_context);
-            skillController.RegisterConfig(PlayerSkillType.NormalAttack, NormalAttackConfig);
+            skillController.RegisterConfig(PlayerSkillType.NormalAttack, Settings.NormalAttackConfig);
             m_skillController = m_controllerManager.Register(skillController);
         }
 
@@ -174,7 +148,7 @@ namespace Module.Player.Core
             RegisterAllStates();
 
             m_transitionController = m_controllerManager.Register(
-                new PlayerTransitionController(m_context, AirConfig, DodgeConfig, NormalAttackConfig));
+                new PlayerTransitionController(m_context, Settings.AirConfig, Settings.DodgeConfig, Settings.NormalAttackConfig));
 
             m_transitionSelector = new PlayerTransitionSelector(m_stateMachine, m_transitionController.Rules);
         }
@@ -204,14 +178,14 @@ namespace Module.Player.Core
 
             m_stateMachine.RegisterState(new PlayerGroundedState());
             m_stateMachine.RegisterState(new PlayerIdleState(m_context));
-            m_stateMachine.RegisterState(new PlayerMoveState(m_context, MoveConfig));
-            m_stateMachine.RegisterState(new PlayerAirborneState(m_context, AirConfig));
-            m_stateMachine.RegisterState(new PlayerJumpState(m_context, AirConfig));
+            m_stateMachine.RegisterState(new PlayerMoveState(m_context, Settings.MoveConfig));
+            m_stateMachine.RegisterState(new PlayerAirborneState(m_context, Settings.AirConfig));
+            m_stateMachine.RegisterState(new PlayerJumpState(m_context, Settings.AirConfig));
             m_stateMachine.RegisterState(new PlayerFallState());
             m_stateMachine.RegisterState(new PlayerActionState());
-            m_stateMachine.RegisterState(new PlayerDodgeState(m_context, DodgeConfig));
+            m_stateMachine.RegisterState(new PlayerDodgeState(m_context, Settings.DodgeConfig));
             m_stateMachine.RegisterState(new PlayerSkillState());
-            m_stateMachine.RegisterState(new PlayerNormalAttackState(m_context, m_skillController, NormalAttackConfig));
+            m_stateMachine.RegisterState(new PlayerNormalAttackState(m_context, m_skillController, Settings.NormalAttackConfig));
             
             m_stateMachine.Init(PlayerStateId.Grounded);
         }
@@ -230,28 +204,34 @@ namespace Module.Player.Core
         // 校验玩家配置引用，缺失时在控制台提示
         private void validateConfigReferences()
         {
-            if (MoveConfig == null)
-                QLog.Warning("MoveConfig 未配置，移动模块可能无法正常运行");
+            if (Settings == null)
+            {
+                QLog.Warning("PlayerSettings 未配置，玩家模块无法正常运行");
+                return;
+            }
 
-            if (InputConfig == null)
-                QLog.Warning("InputConfig 未配置，Shift 短按/长按将无法正常解释");
-
-            if (AirConfig == null)
+            if (Settings.AirConfig == null)
                 QLog.Warning("AirConfig 未配置，空中模块可能无法正常运行");
-            else if (AirConfig.StateClipCount != PlayerAirConfigSO.REQUIRED_STATE_CLIP_COUNT)
+            else if (Settings.AirConfig.StateClipCount != PlayerAirConfigSO.REQUIRED_STATE_CLIP_COUNT)
                 QLog.Error("AirConfig 必须按 JumpBegin、FallLoop、FallEnd 顺序配置三段动画");
 
-            if (DodgeConfig == null)
+            if (Settings.MoveConfig == null)
+                QLog.Warning("MoveConfig 未配置，移动模块可能无法正常运行");
+
+            if (Settings.InputConfig == null)
+                QLog.Warning("InputConfig 未配置，Shift 短按/长按将无法正常解释");
+
+            if (Settings.DodgeConfig == null)
                 QLog.Warning("DodgeConfig 未配置，闪避可能无法正常运行");
-            else if (DodgeConfig.StateClipCount == 0)
+            else if (Settings.DodgeConfig.StateClipCount == 0)
                 QLog.Error("DodgeConfig 未配置任何动画段落，闪避无法运行");
 
-            if (NormalAttackConfig == null)
+            if (Settings.NormalAttackConfig == null)
                 QLog.Warning("NormalAttackConfig 未配置，普通攻击将无法正常进入");
-            else if (NormalAttackConfig.StepCount == 0)
+            else if (Settings.NormalAttackConfig.StepCount == 0)
                 QLog.Error("NormalAttackConfig 未配置任何动画段落，普通攻击无法运行");
 
-            if (ViewConfig == null)
+            if (Settings.ViewConfig == null)
                 QLog.Warning("ViewConfig 未配置，视角模块可能无法正常运行");
         }
         

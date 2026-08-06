@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4304621a70d4f93992adda3be3016f9, type: 3}
+  m_Name: PlayerSettings
+  m_EditorClassIdentifier: 
+  MoveConfigValue: {fileID: 11400000, guid: f6f3c8a1cc0173c439adb7439e75ead8, type: 2}
+  InputConfigValue: {fileID: 11400000, guid: a560e68d0c7150c45a1ec86765f30bbb, type: 2}
+  AirConfigValue: {fileID: 11400000, guid: 66dae45d9508402cbef54d1a0830bb96, type: 2}
+  DodgeConfigValue: {fileID: 11400000, guid: 68a9e2d8664d31349b84374218ea6354, type: 2}
+  NormalAttackConfigValue: {fileID: 11400000, guid: 8f2ef84f717a18e4fa32220d4f11a568, type: 2}
+  ViewConfigValue: {fileID: 11400000, guid: 0cd196151569e14499d7801fe9fda3af, type: 2}
