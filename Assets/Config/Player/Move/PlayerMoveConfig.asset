@@ -12,7 +12,28 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2e6ffad073144ea3a78b2f023a930ffd, type: 3}
   m_Name: PlayerMoveConfig
   m_EditorClassIdentifier: 
-  StateClipValues: []
+  StateClipValues:
+  - StateClipValue: {fileID: -623603649343465320, guid: 452b4e86ae9153f438e765aded97a1c2,
+      type: 3}
+    StateDurationValue: 2.6666667
+    ShowWeaponValue: 0
+    UseComboWindowValue: 0
+    ComboOpenNormalizedTimeValue: 0.35
+    ComboCloseNormalizedTimeValue: 0.75
+  - StateClipValue: {fileID: -623603649343465320, guid: c5b2f5a04b4f70f41898453a1174c7c4,
+      type: 3}
+    StateDurationValue: 1.2666668
+    ShowWeaponValue: 0
+    UseComboWindowValue: 0
+    ComboOpenNormalizedTimeValue: 0.35
+    ComboCloseNormalizedTimeValue: 0.75
+  - StateClipValue: {fileID: -623603649343465320, guid: bd85336ffff0f8547b3c795191256179,
+      type: 3}
+    StateDurationValue: 0.73333335
+    ShowWeaponValue: 0
+    UseComboWindowValue: 0
+    ComboOpenNormalizedTimeValue: 0.35
+    ComboCloseNormalizedTimeValue: 0.75
   WalkSpeedValue: 4
   SprintSpeedValue: 6
   AccelerationValue: 20

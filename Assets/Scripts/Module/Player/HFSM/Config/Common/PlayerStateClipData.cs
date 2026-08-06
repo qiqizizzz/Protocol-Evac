@@ -1,6 +1,6 @@
 /*
  * ┌────────────────────────────────────────────┐
- * │  描    述: 玩家状态动画段落数据，保存动画片段与持续时间
+ * │  描    述: 玩家状态动画段落数据，保存动画片段、持续时间与武器表现
  * │  类    名: PlayerStateClipData.cs
  * │  创    建: By qiqizizzz
  * └────────────────────────────────────────────┘
@@ -27,6 +27,11 @@ namespace Module.Player.HFSM.Config.Common
         [Tooltip("状态持续时间")]
         [SerializeField, Min(0f)] private float StateDurationValue = 0.5f;
 
+        [Group("Animation")]
+        [LabelText("显示武器")]
+        [Tooltip("播放该动画段落时是否显示武器")]
+        [SerializeField] private bool ShowWeaponValue;
+
         [Group("ComboWindow")]
         [LabelText("启用连段窗口")]
         [Tooltip("是否启用连段窗口")]
@@ -47,6 +52,8 @@ namespace Module.Player.HFSM.Config.Common
         public AnimationClip StateClip => StateClipValue;
 
         public float StateDuration => StateDurationValue;
+
+        public bool ShowWeapon => ShowWeaponValue;
 
         public bool UseComboWindow => UseComboWindowValue;
 

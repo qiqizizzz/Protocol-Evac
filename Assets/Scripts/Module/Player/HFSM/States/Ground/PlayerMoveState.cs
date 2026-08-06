@@ -8,6 +8,7 @@
 
 using Module.Player.Context;
 using Module.Player.Core;
+using Module.Player.HFSM.Config.Common;
 using Module.Player.HFSM.Config.Move;
 using UnityEngine;
 
@@ -27,6 +28,18 @@ namespace Module.Player.HFSM.States.Ground
             m_moveConfig = moveConfig;
         }
 
+        // 进入移动状态并应用移动配置的武器表现
+        public override void Enter()
+        {
+            RefreshWeaponVisibility();
+        }
+
+        // 按当前移动档位持续同步武器表现
+        public override void Tick(float deltaTime)
+        {
+            RefreshWeaponVisibility();
+        }
+
         public override void FixedTick(float fixedDeltaTime)
         {
             Vector2 moveInput = m_context.MoveInput;
@@ -34,6 +47,16 @@ namespace Module.Player.HFSM.States.Ground
 
             m_context.MoveDir = moveDir;
             m_context.TargetMoveSpeed = m_context.IsSprintPressed ? m_moveConfig.SprintSpeed : m_moveConfig.WalkSpeed;
+        }
+
+        // 根据当前移动档位刷新武器表现
+        private void RefreshWeaponVisibility()
+        {
+            PlayerStateClipData clipData = m_context.IsSprintPressed
+                ? m_moveConfig.RunClipData
+                : m_moveConfig.WalkClipData;
+
+            m_context.IsWeaponVisible = clipData.ShowWeapon;
         }
     }
 }

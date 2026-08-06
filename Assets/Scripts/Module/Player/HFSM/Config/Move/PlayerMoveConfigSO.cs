@@ -1,6 +1,6 @@
 /*
  * ┌────────────────────────────────────────────┐
- * │  描    述: 玩家固定配置，保存移动与地面检测参数
+ * │  描    述: 玩家移动配置，保存地面动画、移动与地面检测参数
  * │  类    名: PlayerMoveConfigSO.cs
  * │  创    建: By qiqizizzz
  * └────────────────────────────────────────────┘
@@ -14,6 +14,12 @@ namespace Module.Player.HFSM.Config.Move
     [CreateAssetMenu(fileName = "PlayerMoveConfig",menuName = "配置/玩家/移动/玩家移动配置")]
     public sealed class PlayerMoveConfigSO : PlayerStateCommonConfigSO
     {
+        private const int IDLE_CLIP_INDEX = 0;
+        private const int WALK_CLIP_INDEX = 1;
+        private const int RUN_CLIP_INDEX = 2;
+
+        public const int REQUIRED_STATE_CLIP_COUNT = 3;
+
         [Header("地面移动")]
         [Tooltip("玩家普通移动速度")]
         [SerializeField, Min(0f)] private float WalkSpeedValue = 4f;
@@ -45,5 +51,11 @@ namespace Module.Player.HFSM.Config.Move
         public float GroundCheckDistance => GroundCheckDistanceValue;
 
         public LayerMask GroundLayer => GroundLayerValue;
+
+        public PlayerStateClipData IdleClipData => GetStateClip(IDLE_CLIP_INDEX);
+
+        public PlayerStateClipData WalkClipData => GetStateClip(WALK_CLIP_INDEX);
+
+        public PlayerStateClipData RunClipData => GetStateClip(RUN_CLIP_INDEX);
     }
 }

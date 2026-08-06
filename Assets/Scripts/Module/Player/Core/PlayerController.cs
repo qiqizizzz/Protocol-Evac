@@ -11,6 +11,7 @@ using Module.Player.Config;
 using Module.Player.Context;
 using Module.Player.Core.View;
 using Module.Player.HFSM.Config.Air;
+using Module.Player.HFSM.Config.Move;
 using Module.Player.HFSM;
 using Module.Player.HFSM.Animation;
 using Module.Player.HFSM.Animation.Controllers;
@@ -190,6 +191,8 @@ namespace Module.Player.Core
 
             if (Settings.MoveConfig == null)
                 QLog.Warning("MoveConfig 未配置，移动模块可能无法正常运行");
+            else if (Settings.MoveConfig.StateClipCount != PlayerMoveConfigSO.REQUIRED_STATE_CLIP_COUNT)
+                QLog.Error("MoveConfig 必须按 Idle、Walk、Run 顺序配置三段动画");
 
             if (Settings.InputConfig == null)
                 QLog.Warning("InputConfig 未配置，Shift 短按/长按将无法正常解释");

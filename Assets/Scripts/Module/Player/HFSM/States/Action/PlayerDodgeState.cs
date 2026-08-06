@@ -32,12 +32,14 @@ namespace Module.Player.HFSM.States.Action
             m_dodgeTimer = new DurationTimer();
         }
 
+        // 进入闪避状态并应用闪避配置的武器表现
         public override void Enter()
         {
             m_dodgeTimer.Reset();
             m_context.InputBuffer.Consume(PlayerBufferedInputType.Dodge);
             m_context.IsStateFinished = false;
             m_context.IsMovementLocked = true;
+            m_context.IsWeaponVisible = m_dodgeConfig.DodgeClipData.ShowWeapon;
 
             Vector3 dodgeDirection = ResolveDodgeDirection();
             m_context.MoveDir = dodgeDirection;

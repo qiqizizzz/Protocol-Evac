@@ -31,5 +31,7 @@ namespace Module.Player.HFSM.Config.Action
         public float DodgeInputThresholdSqr => DodgeInputThresholdSqrValue;
 
         public float DodgeBufferTime => DodgeBufferTimeValue;
+
+        public PlayerStateClipData DodgeClipData => GetStateClip(0);
     }
 }
