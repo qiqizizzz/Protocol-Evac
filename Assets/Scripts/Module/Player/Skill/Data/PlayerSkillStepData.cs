@@ -33,6 +33,11 @@ namespace Module.Player.Skill.Data
         [Tooltip("是否使用动画根运动位移")]
         [SerializeField] private bool UseRootMotionValue;
 
+        [Group("Animation")]
+        [LabelText("显示武器")]
+        [Tooltip("播放该技能段落时是否显示武器")]
+        [SerializeField] private bool ShowWeaponValue;
+
         [Group("StepAdvanceWindow")]
         [LabelText("启用推进窗口")]
         [Tooltip("是否启用下一段推进窗口")]
@@ -78,6 +83,8 @@ namespace Module.Player.Skill.Data
         public float Duration => DurationValue;
 
         public bool UseRootMotion => UseRootMotionValue;
+
+        public bool ShowWeapon => ShowWeaponValue;
 
         public bool UseStepAdvanceWindow => UseStepAdvanceWindowValue;
 

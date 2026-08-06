@@ -43,6 +43,7 @@ namespace Module.Player.Core
         private Transform m_transform;
         private Animator m_animator;
         private PlayerMotor m_motor;
+        private PlayerWeaponController m_weaponController;
         private PlayerViewController m_viewController;
         private PlayerStateMachine m_stateMachine;
         private CharacterController m_characterController;
@@ -83,6 +84,7 @@ namespace Module.Player.Core
             m_transitionSelector.Tick();
             m_stateMachine.Tick(Time.deltaTime);
             m_skillController.Tick(Time.deltaTime);
+            m_weaponController.Tick();
             m_animWriter.Tick(Time.deltaTime);
         }
 
@@ -115,6 +117,8 @@ namespace Module.Player.Core
 
             m_motor = new PlayerMotor();
             m_motor.Init(m_characterController, m_context, Settings.MoveConfig, Settings.ViewConfig);
+
+            m_weaponController.Init(m_context);
 
             m_viewController = m_controllerManager.Register(
                 new PlayerViewController(m_context, Settings.ViewConfig, m_viewRoot, m_playerCamera));
@@ -165,6 +169,7 @@ namespace Module.Player.Core
             m_transform = transform;
             m_characterController = this.GetOwnerComponent<CharacterController>();
             m_animator = this.GetChildComponent<Animator>();
+            m_weaponController = this.GetChildComponent<PlayerWeaponController>();
             m_viewRoot = this.FindChild(VIEW_ROOT_PATH);
             m_playerCamera = this.FindChildComponent<Camera>(PLAYER_CAMERA_PATH);
         }

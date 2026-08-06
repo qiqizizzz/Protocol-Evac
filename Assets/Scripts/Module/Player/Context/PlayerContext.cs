@@ -37,6 +37,7 @@ namespace Module.Player.Context
         public int NormalAttackIndex { get; set; } //当前普通攻击段数
         public bool IsRootMotionMoveEnabled { get; private set; } //是否允许使用动画根运动位移
         public Vector3 RootMotionDeltaPosition { get; private set; } //动画累计的根运动位移
+        public bool IsWeaponVisible { get; set; } //武器是否显示
 
         // ==================== 视角相关 ====================
         public Vector2 LookInput { get; set; } //视角输入
@@ -72,6 +73,7 @@ namespace Module.Player.Context
             NormalAttackIndex = 0;
             IsRootMotionMoveEnabled = false;
             RootMotionDeltaPosition = Vector3.zero;
+            IsWeaponVisible = false;
             InputBuffer.ClearAll();
             LookInput = Vector2.zero;
             ViewMode = PlayerViewMode.FirstPerson;

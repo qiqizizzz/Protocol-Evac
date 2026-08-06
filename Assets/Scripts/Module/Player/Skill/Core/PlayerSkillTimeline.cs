@@ -75,6 +75,7 @@ namespace Module.Player.Skill.Core
             Reset();
             context.IsStateFinished = false;
             context.SetRootMotionMoveEnabled(false);
+            context.IsWeaponVisible = false;
         }
         #endregion
         
@@ -103,6 +104,7 @@ namespace Module.Player.Skill.Core
             m_stepTimer.Reset();
             m_stepTimer.Start(stepData.Duration);
             context.SetRootMotionMoveEnabled(stepData.UseRootMotion);
+            context.IsWeaponVisible = stepData.ShowWeapon;
 
             if (CurrentSkillType == PlayerSkillType.NormalAttack)
             {
@@ -171,6 +173,7 @@ namespace Module.Player.Skill.Core
             m_stepTimer.Complete();
             context.IsStateFinished = true;
             context.SetRootMotionMoveEnabled(false);
+            context.IsWeaponVisible = false;
         }
 
         private void Reset()
