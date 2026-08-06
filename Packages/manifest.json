@@ -1,7 +1,7 @@
 {
   "dependencies": {
     "com.candidumgames.unitymmdtools": "https://github.com/qiqizizzz/Fork_UnityMMDTools.git",
-    "com.codewriter.triinspector": "https://github.com/codewriter-packages/Tri-Inspector.git#1.15.1",
+    "com.codewriter.triinspector": "https://github.com/codewriter-packages/Tri-Inspector.git#d75c4dac2e449bc19b5313ce741bd496fca7c123",
     "com.ivanmurzak.unity.mcp": "0.83.1",
     "com.unity.collab-proxy": "2.12.4",
     "com.unity.ide.rider": "3.0.36",
