@@ -14,10 +14,7 @@ using Module.Player.HFSM.Config.Air;
 using Module.Player.HFSM;
 using Module.Player.HFSM.Animation;
 using Module.Player.HFSM.Animation.Controllers;
-using Module.Player.HFSM.States.Action;
-using Module.Player.HFSM.States.Air;
-using Module.Player.HFSM.States.Ground;
-using Module.Player.HFSM.States.Skill;
+using Module.Player.HFSM.Factory;
 using Module.Player.HFSM.Transition;
 using Module.Player.HFSM.Transition.Controllers;
 using Module.Player.Input;
@@ -32,8 +29,6 @@ namespace Module.Player.Core
 {
     public class PlayerController : MonoBehaviour
     {
-        public PlayerContext Context => m_context;
-
         #region 路径
         private const string VIEW_ROOT_PATH = "ViewRoot";
         private const string PLAYER_CAMERA_PATH = "ViewRoot/PlayerCamera";
@@ -56,7 +51,6 @@ namespace Module.Player.Core
         //context
         private PlayerContext m_context;
         private readonly ControllerManager m_controllerManager = new();
-        private bool m_isInited;
         //Anim
         private PlayerAnimWriter m_animWriter;
         private PlayerAnimController m_animController;
@@ -74,21 +68,16 @@ namespace Module.Player.Core
         private void Awake()
         {
             findReferences();
-            validateConfigReferences();
+            checkConfigs();
 
             initCore();
             initSkill();
             initHFSM();
             initAnim();
-
-            m_isInited = true;
         }
 
         private void Update()
         {
-            if (!isRuntimeReady())
-                return;
-
             m_inputReader.Tick();
             m_viewController.Tick(Time.deltaTime);
             m_transitionSelector.Tick();
@@ -99,9 +88,6 @@ namespace Module.Player.Core
 
         private void FixedUpdate()
         {
-            if (!isRuntimeReady())
-                return;
-
             m_stateMachine.FixedTick(Time.fixedDeltaTime);
             m_motor.FixedTick(Time.fixedDeltaTime);
         }
@@ -145,7 +131,7 @@ namespace Module.Player.Core
         // 初始化玩家状态机与状态转换
         private void initHFSM()
         {
-            RegisterAllStates();
+            m_stateMachine = PlayerStateFactory.Create(m_context, Settings, m_skillController);
 
             m_transitionController = m_controllerManager.Register(
                 new PlayerTransitionController(m_context, Settings.AirConfig, Settings.DodgeConfig, Settings.NormalAttackConfig));
@@ -171,24 +157,6 @@ namespace Module.Player.Core
             m_rootMotionReceiver.Init(m_animator, m_context);
         }
 
-        // 注册玩家初始地面状态树
-        private void RegisterAllStates()
-        {
-            m_stateMachine = new PlayerStateMachine();
-
-            m_stateMachine.RegisterState(new PlayerGroundedState());
-            m_stateMachine.RegisterState(new PlayerIdleState(m_context));
-            m_stateMachine.RegisterState(new PlayerMoveState(m_context, Settings.MoveConfig));
-            m_stateMachine.RegisterState(new PlayerAirborneState(m_context, Settings.AirConfig));
-            m_stateMachine.RegisterState(new PlayerJumpState(m_context, Settings.AirConfig));
-            m_stateMachine.RegisterState(new PlayerFallState());
-            m_stateMachine.RegisterState(new PlayerActionState());
-            m_stateMachine.RegisterState(new PlayerDodgeState(m_context, Settings.DodgeConfig));
-            m_stateMachine.RegisterState(new PlayerSkillState());
-            m_stateMachine.RegisterState(new PlayerNormalAttackState(m_context, m_skillController, Settings.NormalAttackConfig));
-            
-            m_stateMachine.Init(PlayerStateId.Grounded);
-        }
         #endregion
 
         // 查找玩家运行依赖引用
@@ -202,7 +170,7 @@ namespace Module.Player.Core
         }
 
         // 校验玩家配置引用，缺失时在控制台提示
-        private void validateConfigReferences()
+        private void checkConfigs()
         {
             if (Settings == null)
             {
@@ -233,22 +201,6 @@ namespace Module.Player.Core
 
             if (Settings.ViewConfig == null)
                 QLog.Warning("ViewConfig 未配置，视角模块可能无法正常运行");
-        }
-        
-        // 检查运行期依赖是否仍然可用，避免 Play Mode 热重载后字段丢失
-        private bool isRuntimeReady()
-        {
-            return m_isInited
-                && m_inputReader != null
-                && m_transitionController != null
-                && m_transitionSelector != null
-                && m_stateMachine != null
-                && m_animController != null
-                && m_animResolver != null
-                && m_animWriter != null
-                && m_skillController != null
-                && m_motor != null
-                && m_viewController != null;
         }
     }
 }
