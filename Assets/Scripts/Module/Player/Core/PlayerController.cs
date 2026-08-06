@@ -146,7 +146,6 @@ namespace Module.Player.Core
         private void initCore()
         {
             m_context = new PlayerContext(m_transform);
-            m_stateMachine = new PlayerStateMachine();
             m_context.IsGrounded = m_characterController.isGrounded;
             if (m_context.IsGrounded)
                 m_context.LastGroundedTime = Time.time;
@@ -164,7 +163,7 @@ namespace Module.Player.Core
         // 初始化玩家技能总控
         private void initSkill()
         {
-            PlayerSkillController skillController = new PlayerSkillController(m_context, m_stateMachine);
+            PlayerSkillController skillController = new PlayerSkillController(m_context);
             skillController.RegisterConfig(PlayerSkillType.NormalAttack, NormalAttackConfig);
             m_skillController = m_controllerManager.Register(skillController);
         }
@@ -201,6 +200,8 @@ namespace Module.Player.Core
         // 注册玩家初始地面状态树
         private void RegisterAllStates()
         {
+            m_stateMachine = new PlayerStateMachine();
+
             m_stateMachine.RegisterState(new PlayerGroundedState());
             m_stateMachine.RegisterState(new PlayerIdleState(m_context));
             m_stateMachine.RegisterState(new PlayerMoveState(m_context, MoveConfig));
@@ -210,6 +211,7 @@ namespace Module.Player.Core
             m_stateMachine.RegisterState(new PlayerActionState());
             m_stateMachine.RegisterState(new PlayerDodgeState(m_context, DodgeConfig));
             m_stateMachine.RegisterState(new PlayerSkillState());
+            m_stateMachine.RegisterState(new PlayerNormalAttackState(m_context, m_skillController, NormalAttackConfig));
             
             m_stateMachine.Init(PlayerStateId.Grounded);
         }
