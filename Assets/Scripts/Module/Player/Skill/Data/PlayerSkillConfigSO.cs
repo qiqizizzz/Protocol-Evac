@@ -15,7 +15,7 @@ namespace Module.Player.Skill.Data
     public class PlayerSkillConfigSO : ScriptableObject
     {
         [LabelText("技能段落")]
-        [ListDrawerSettings(Draggable = true, ShowElementLabels = true)]
+        [ListDrawerSettings(Draggable = false, ShowElementLabels = true)]
         [Tooltip("技能段落列表")]
         [SerializeField] private PlayerSkillStepData[] StepValues;
 

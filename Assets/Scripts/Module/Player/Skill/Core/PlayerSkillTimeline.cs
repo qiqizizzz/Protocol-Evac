@@ -7,6 +7,8 @@
  */
 
 using Module.Player.Context;
+using Module.Player.HFSM;
+using Module.Player.Input.Buffer;
 using Module.Player.Skill;
 using Module.Player.Skill.Data;
 using Utils.log;
@@ -76,7 +78,8 @@ namespace Module.Player.Skill.Core
         }
         #endregion
         
-        public void RequestStepAdvance()
+        // 记录进入下一段的请求，等待推进窗口满足后执行
+        public void RequestNextStep()
         {
             if (!IsRunning)
                 return;
@@ -102,7 +105,10 @@ namespace Module.Player.Skill.Core
             context.SetRootMotionMoveEnabled(stepData.UseRootMotion);
 
             if (CurrentSkillType == PlayerSkillType.NormalAttack)
+            {
                 context.NormalAttackIndex = m_currentStepIndex;
+                context.RequestAnimReplay(PlayerStateId.SkillNormalAttack);
+            }
         }
 
         // 刷新段落推进缓存
@@ -123,7 +129,10 @@ namespace Module.Player.Skill.Core
             }
 
             if (!isNormalizedTimeInWindow(previousNormalizedTime, currentNormalizedTime, openNormalizedTime, closeNormalizedTime))
+            {
+                m_isStepAdvanceRequested = false;
                 return;
+            }
 
             m_isStepAdvanceBuffered = true;
             m_isStepAdvanceRequested = false;
@@ -138,6 +147,9 @@ namespace Module.Player.Skill.Core
             int nextStepIndex = m_currentStepIndex + 1;
             if (m_currentConfig == null || nextStepIndex >= m_currentConfig.StepCount)
                 return false;
+
+            if (CurrentSkillType == PlayerSkillType.NormalAttack)
+                context.InputBuffer.Consume(PlayerBufferedInputType.NormalAttack);
 
             m_currentStepIndex = nextStepIndex;
             enterCurrentStep(context);
