@@ -13,23 +13,22 @@ using Utils.log;
 
 namespace Module.Combat.Hitbox
 {
+    [RequireComponent(typeof(BoxCollider))]
     public sealed class CombatHitbox : MonoBehaviour
     {
-        private const int OVERLAP_RESULT_CAPACITY = 32;//重叠盒子
+        private const int OVERLAP_RESULT_CAPACITY = 32;
 
-        [Tooltip("命中盒相对于当前Transform的半尺寸")] 
-        [SerializeField] private Vector3 HalfExtents = new Vector3(0.5f, 0.5f, 0.5f);
-
-        [Tooltip("允许命中的目标Layer")] 
+        [Tooltip("允许命中的目标 Layer")]
         [SerializeField] private LayerMask TargetLayers;
         
         private readonly Collider[] m_overlapResults = new Collider[OVERLAP_RESULT_CAPACITY];
         private readonly HashSet<IDamageable> m_hitTargets = new HashSet<IDamageable>();
 
+        private BoxCollider m_boxCollider;
         private GameObject m_source;
         private float m_damage;
         private bool m_isOpen;
-        private bool m_hasWarnedCapacity;//是否已经警告过容量
+        private bool m_hasWarnedCapacity;
 
         /// <summary>
         /// 开启命中窗口
@@ -57,7 +56,7 @@ namespace Module.Combat.Hitbox
             m_isOpen = true;
         }
 
-        //关闭命中窗口
+        // 关闭命中窗口
         public void Close()
         {
             m_isOpen = false;
@@ -70,18 +69,23 @@ namespace Module.Combat.Hitbox
         #region 生命周期
         private void Awake()
         {
-            if (HalfExtents.x <= 0f || HalfExtents.y <= 0f || HalfExtents.z <= 0f)
+            m_boxCollider = GetComponent<BoxCollider>();
+            if (m_boxCollider.size.x <= 0f || m_boxCollider.size.y <= 0f || m_boxCollider.size.z <= 0f)
             {
-                QLog.Error("CombatHitBox的Half Extents必须全部大于0");
+                QLog.Error("CombatHitbox 的 BoxCollider Size 必须全部大于 0");
                 enabled = false;
                 return;
             }
 
             if (TargetLayers.value == 0)
             {
-                QLog.Error("CombatHitBox未配置TargetLayers");
+                QLog.Error("CombatHitbox 未配置 TargetLayers");
                 enabled = false;
+                return;
             }
+
+            // BoxCollider 仅作为可视化形状数据，不参与 Unity 物理碰撞
+            m_boxCollider.enabled = false;
         }
 
         private void FixedUpdate()
@@ -97,37 +101,45 @@ namespace Module.Combat.Hitbox
         }
         #endregion
 
-        //检测当前命中盒范围内
+        // 检测当前命中盒范围内的可受击目标
         private void DetectTargets()
         {
-            int hitCount = Physics.OverlapBoxNonAlloc(transform.position, HalfExtents, m_overlapResults,
+            Vector3 lossyScale = transform.lossyScale;
+            Vector3 absoluteScale = new Vector3(
+                Mathf.Abs(lossyScale.x),
+                Mathf.Abs(lossyScale.y),
+                Mathf.Abs(lossyScale.z));
+            Vector3 hitboxCenter = transform.TransformPoint(m_boxCollider.center);
+            Vector3 halfExtents = Vector3.Scale(m_boxCollider.size * 0.5f, absoluteScale);
+
+            int hitCount = Physics.OverlapBoxNonAlloc(hitboxCenter, halfExtents, m_overlapResults,
                 transform.rotation, TargetLayers.value, QueryTriggerInteraction.Ignore);
 
             if (hitCount == OVERLAP_RESULT_CAPACITY && !m_hasWarnedCapacity)
             {
-                QLog.Warning($"CombatHitBox检测结果达到容量上限: {OVERLAP_RESULT_CAPACITY}");
+                QLog.Warning($"CombatHitbox 检测结果达到容量上限：{OVERLAP_RESULT_CAPACITY}");
                 m_hasWarnedCapacity = true;
             }
 
             for (int i = 0; i < hitCount; i++)
             {
-                TryApplyDamage(m_overlapResults[i]);
+                TryApplyDamage(m_overlapResults[i], hitboxCenter);
             }
         }
 
-        //尝试造成伤害
-        private void TryApplyDamage(Collider hitCollider)
+        // 尝试对目标造成伤害
+        private void TryApplyDamage(Collider hitCollider, Vector3 hitboxCenter)
         {
-            //剔除无效目标与自身
-            if(!hitCollider) return;
+            // 剔除无效目标与自身
+            if (!hitCollider) return;
             if (hitCollider.transform.IsChildOf(m_source.transform)) return;
 
             IDamageable damageable = hitCollider.GetComponentInParent<IDamageable>();
 
-            //判断是否是有效可受伤目标或重复目标
+            // 判断是否为有效可受伤目标或重复目标
             if (damageable == null || !m_hitTargets.Add(damageable)) return;
 
-            Vector3 hitPoint = hitCollider.ClosestPoint(transform.position);
+            Vector3 hitPoint = hitCollider.ClosestPoint(hitboxCenter);
             Vector3 hitDirection = (hitCollider.bounds.center - m_source.transform.position).normalized;
 
             DamageData damageData = new DamageData(m_damage, m_source, hitPoint, hitDirection);
@@ -137,15 +149,12 @@ namespace Module.Combat.Hitbox
 
         private void OnDrawGizmosSelected()
         {
+            BoxCollider boxCollider = GetComponent<BoxCollider>();
             Matrix4x4 previousMatrix = Gizmos.matrix;
 
             Gizmos.color = Color.red;
-            Gizmos.matrix = Matrix4x4.TRS(
-                transform.position,
-                transform.rotation,
-                Vector3.one);
-
-            Gizmos.DrawWireCube(Vector3.zero, HalfExtents * 2f);
+            Gizmos.matrix = transform.localToWorldMatrix;
+            Gizmos.DrawWireCube(boxCollider.center, boxCollider.size);
             Gizmos.matrix = previousMatrix;
         }
     }
