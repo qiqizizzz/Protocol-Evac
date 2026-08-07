@@ -34,6 +34,7 @@ namespace Module.Player.Core
         #region 路径
         private const string VIEW_ROOT_PATH = "ViewRoot";
         private const string PLAYER_CAMERA_PATH = "ViewRoot/PlayerCamera";
+        private const string MODEL_ROOT_MOTION_NODE_PATH = "Root";
         #endregion
 
         #region 配置相关
@@ -158,11 +159,15 @@ namespace Module.Player.Core
             m_animWriter = new PlayerAnimWriter();
             m_animWriter.Init(m_animator, m_animResolver, m_context);
 
+            Transform rootMotionNode = m_animator.FindChild(MODEL_ROOT_MOTION_NODE_PATH);
+            if (rootMotionNode == null)
+                return;
+
             m_rootMotionReceiver = m_animator.GetComponent<PlayerRootMotionReceiver>();
             if (m_rootMotionReceiver == null)
                 m_rootMotionReceiver = m_animator.gameObject.AddComponent<PlayerRootMotionReceiver>();
 
-            m_rootMotionReceiver.Init(m_animator, m_context);
+            m_rootMotionReceiver.Init(m_animator, rootMotionNode, m_context);
         }
 
         #endregion
