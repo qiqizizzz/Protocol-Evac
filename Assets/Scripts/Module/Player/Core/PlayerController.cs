@@ -7,6 +7,7 @@
  */
 
 using Framework.QTower.Controller;
+using Module.Combat.Hitbox;
 using Module.Player.Config;
 using Module.Player.Context;
 using Module.Player.Core.View;
@@ -63,6 +64,8 @@ namespace Module.Player.Core
         private PlayerTransitionSelector m_transitionSelector;
         //Input
         private PlayerInputReader m_inputReader;
+        //Combat
+        private CombatHitbox m_combatHitbox;
         //Skill
         private PlayerSkillController m_skillController;
         
@@ -128,7 +131,7 @@ namespace Module.Player.Core
         // 初始化玩家技能总控
         private void InitSkill()
         {
-            PlayerSkillController skillController = new PlayerSkillController(m_context);
+            PlayerSkillController skillController = new PlayerSkillController(m_context, m_combatHitbox, gameObject);
             skillController.RegisterConfig(PlayerSkillType.NormalAttack, Settings.NormalAttackConfig);
             m_skillController = m_controllerManager.Register(skillController);
         }
@@ -170,6 +173,7 @@ namespace Module.Player.Core
             m_transform = transform;
             m_characterController = this.GetOwnerComponent<CharacterController>();
             m_animator = this.GetChildComponent<Animator>();
+            m_combatHitbox = this.GetChildComponent<CombatHitbox>();
             m_weaponController = this.GetChildComponent<PlayerWeaponController>();
             m_viewRoot = this.FindChild(VIEW_ROOT_PATH);
             m_playerCamera = this.FindChildComponent<Camera>(PLAYER_CAMERA_PATH);

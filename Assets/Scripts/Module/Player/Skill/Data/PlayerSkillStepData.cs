@@ -26,7 +26,7 @@ namespace Module.Player.Skill.Data
         [Group("Animation")]
         [LabelText("持续时间")]
         [Tooltip("技能段落持续时间")]
-        [SerializeField, Min(0f)] private float DurationValue = 0.5f;
+        [SerializeField] private float DurationValue = 0.5f;
 
         [Group("Animation")]
         [LabelText("使用 Root Motion")]
@@ -47,13 +47,15 @@ namespace Module.Player.Skill.Data
         [ShowIf(nameof(UseStepAdvanceWindowValue))]
         [LabelText("开始时间")]
         [Tooltip("下一段推进窗口开始时间（归一化）")]
-        [SerializeField, Range(0f, 1f)] private float StepAdvanceOpenNormalizedTimeValue = 0.35f;
+        [Slider(0f, 1f)]
+        [SerializeField] private float StepAdvanceOpenNormalizedTimeValue = 0.35f;
 
         [Group("StepAdvanceWindow")]
         [ShowIf(nameof(UseStepAdvanceWindowValue))]
         [LabelText("结束时间")]
         [Tooltip("下一段推进窗口结束时间（归一化）")]
-        [SerializeField, Range(0f, 1f)] private float StepAdvanceCloseNormalizedTimeValue = 0.75f;
+        [Slider(0f, 1f)]
+        [SerializeField] private float StepAdvanceCloseNormalizedTimeValue = 0.75f;
 
         [Group("HitWindow")]
         [LabelText("启用命中窗口")]
@@ -64,19 +66,21 @@ namespace Module.Player.Skill.Data
         [ShowIf(nameof(UseHitWindowValue))]
         [LabelText("开始时间")]
         [Tooltip("命中窗口开始时间（归一化）")]
-        [SerializeField, Range(0f, 1f)] private float HitOpenNormalizedTimeValue;
+        [Slider(0f, 1f)]
+        [SerializeField] private float HitOpenNormalizedTimeValue;
 
         [Group("HitWindow")]
         [ShowIf(nameof(UseHitWindowValue))]
         [LabelText("结束时间")]
         [Tooltip("命中窗口结束时间（归一化）")]
-        [SerializeField, Range(0f, 1f)] private float HitCloseNormalizedTimeValue;
+        [Slider(0f, 1f)]
+        [SerializeField] private float HitCloseNormalizedTimeValue;
 
         [Group("HitWindow")]
         [ShowIf(nameof(UseHitWindowValue))]
         [LabelText("伤害")]
         [Tooltip("该段技能造成的伤害")]
-        [SerializeField, Min(0f)] private float DamageValue;
+        [SerializeField] private float DamageValue;
 
         public AnimationClip AnimationClip => AnimationClipValue;
 
@@ -136,5 +140,6 @@ namespace Module.Player.Skill.Data
             if (closeNormalizedTime < openNormalizedTime)
                 closeNormalizedTime = openNormalizedTime;
         }
+
     }
 }

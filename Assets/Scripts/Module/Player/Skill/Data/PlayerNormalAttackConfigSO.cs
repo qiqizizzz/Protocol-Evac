@@ -15,7 +15,7 @@ namespace Module.Player.Skill.Data
     {
         [Header("输入容错")]
         [Tooltip("普攻输入缓存时间")]
-        [SerializeField, Min(0f)] private float NormalAttackBufferTimeValue = 0.25f;
+        [SerializeField] private float NormalAttackBufferTimeValue = 0.25f;
 
         [Header("控制锁定")]
         [Tooltip("普攻期间是否锁定移动")]
@@ -23,7 +23,7 @@ namespace Module.Player.Skill.Data
 
         [Header("退出过渡")]
         [Tooltip("普攻退出时回到 Idle/Move 的混合时长")]
-        [SerializeField, Min(0f)] private float NormalAttackExitBlendDurationValue = 0.15f;
+        [SerializeField] private float NormalAttackExitBlendDurationValue = 0.15f;
 
         public float NormalAttackDuration => GetStepDuration(0);
 
@@ -32,6 +32,12 @@ namespace Module.Player.Skill.Data
         public bool LockMovement => LockMovementValue;
 
         public float NormalAttackExitBlendDuration => NormalAttackExitBlendDurationValue;
+
+        private void OnValidate()
+        {
+            NormalAttackBufferTimeValue = Mathf.Max(0f, NormalAttackBufferTimeValue);
+            NormalAttackExitBlendDurationValue = Mathf.Max(0f, NormalAttackExitBlendDurationValue);
+        }
 
         // 尝试读取指定普攻段的连段窗口
         public bool TryGetComboWindow(int attackIndex, out float comboOpenNormalizedTime, out float comboCloseNormalizedTime)
@@ -45,6 +51,7 @@ namespace Module.Player.Skill.Data
 
             return stepData.TryGetStepAdvanceWindow(out comboOpenNormalizedTime, out comboCloseNormalizedTime);
         }
+
     }
 }
 
