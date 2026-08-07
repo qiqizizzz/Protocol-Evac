@@ -27,6 +27,7 @@ namespace Module.Player.Skill.Core
 
         public PlayerSkillType? CurrentSkillType { get; private set; }
         public int CurrentStepIndex => m_currentStepIndex;
+        public PlayerSkillStepPhase CurrentPhase { get; private set; }
         public float NormalizedTime => m_stepTimer.NormalizedTime;
         public bool IsRunning { get; private set; }
         public bool IsFinished { get; private set; }
@@ -49,7 +50,7 @@ namespace Module.Player.Skill.Core
             IsRunning = true;
             context.IsStateFinished = false;
 
-            EnterCurrentStep(context);
+            EnterCurrentStepBegin(context);
         }
 
         public void Tick(float deltaTime, PlayerContext context)
@@ -59,13 +60,20 @@ namespace Module.Player.Skill.Core
 
             float previousNormalizedTime = m_stepTimer.NormalizedTime;
             m_stepTimer.Tick(deltaTime);
-            UpdateStepAdvanceBuffer(previousNormalizedTime, m_stepTimer.NormalizedTime);
+            if (CurrentPhase == PlayerSkillStepPhase.Begin)
+                UpdateStepAdvanceBuffer(previousNormalizedTime, m_stepTimer.NormalizedTime);
 
             if (!m_stepTimer.IsFinished)
                 return;
 
-            if (TryAdvanceStep(context))
+            if (CurrentPhase == PlayerSkillStepPhase.Begin)
+            {
+                if (TryAdvanceStep(context))
+                    return;
+
+                EnterCurrentStepRecovery(context);
                 return;
+            }
 
             Finish(context);
         }
@@ -82,14 +90,14 @@ namespace Module.Player.Skill.Core
         // 记录进入下一段的请求，等待推进窗口满足后执行
         public void RequestNextStep()
         {
-            if (!IsRunning)
+            if (!IsRunning || CurrentPhase != PlayerSkillStepPhase.Begin)
                 return;
 
             m_isStepAdvanceRequested = true;
         }
 
-        // 进入当前技能段落
-        private void EnterCurrentStep(PlayerContext context)
+        // 进入当前技能段落的攻击阶段
+        private void EnterCurrentStepBegin(PlayerContext context)
         {
             PlayerSkillStepData stepData = CurrentStep;
             if (stepData == null)
@@ -101,14 +109,35 @@ namespace Module.Player.Skill.Core
 
             m_isStepAdvanceRequested = false;
             m_isStepAdvanceBuffered = false;
+            CurrentPhase = PlayerSkillStepPhase.Begin;
             m_stepTimer.Reset();
-            m_stepTimer.Start(stepData.Duration);
-            context.SetRootMotionMoveEnabled(stepData.UseRootMotion);
+            m_stepTimer.Start(stepData.BeginDuration);
+            context.SetRootMotionMoveEnabled(stepData.BeginUseRootMotion);
             context.IsWeaponVisible = stepData.ShowWeapon;
 
             if (CurrentSkillType == PlayerSkillType.NormalAttack)
             {
                 context.NormalAttackIndex = m_currentStepIndex;
+                context.NormalAttackPhase = PlayerSkillStepPhase.Begin;
+                context.RequestAnimReplay(PlayerStateId.SkillNormalAttack);
+            }
+        }
+
+        // 进入当前技能段落的收招阶段
+        private void EnterCurrentStepRecovery(PlayerContext context)
+        {
+            PlayerSkillStepData stepData = CurrentStep;
+            CurrentPhase = PlayerSkillStepPhase.Recovery;
+            m_isStepAdvanceRequested = false;
+            m_isStepAdvanceBuffered = false;
+            m_stepTimer.Reset();
+            m_stepTimer.Start(stepData.RecoveryDuration);
+            context.SetRootMotionMoveEnabled(stepData.RecoveryUseRootMotion);
+            context.IsWeaponVisible = stepData.ShowWeapon;
+
+            if (CurrentSkillType == PlayerSkillType.NormalAttack)
+            {
+                context.NormalAttackPhase = PlayerSkillStepPhase.Recovery;
                 context.RequestAnimReplay(PlayerStateId.SkillNormalAttack);
             }
         }
@@ -154,7 +183,7 @@ namespace Module.Player.Skill.Core
                 context.InputBuffer.Consume(PlayerBufferedInputType.NormalAttack);
 
             m_currentStepIndex = nextStepIndex;
-            EnterCurrentStep(context);
+            EnterCurrentStepBegin(context);
             return IsRunning;
         }
 
@@ -181,6 +210,7 @@ namespace Module.Player.Skill.Core
             CurrentSkillType = null;
             m_currentConfig = null;
             m_currentStepIndex = -1;
+            CurrentPhase = PlayerSkillStepPhase.Begin;
             IsRunning = false;
             IsFinished = false;
             m_isStepAdvanceRequested = false;

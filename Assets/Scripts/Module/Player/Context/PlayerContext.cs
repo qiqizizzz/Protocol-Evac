@@ -10,6 +10,7 @@ using UnityEngine;
 using Module.Player.Core.View;
 using Module.Player.HFSM;
 using Module.Player.Input.Buffer;
+using Module.Player.Skill;
 
 namespace Module.Player.Context
 {
@@ -35,6 +36,7 @@ namespace Module.Player.Context
         public bool IsInputLocked { get; set; } //是否输入被禁止
         public bool IsStateFinished { get; set; } //当前状态是否已经完成
         public int NormalAttackIndex { get; set; } //当前普通攻击段数
+        public PlayerSkillStepPhase NormalAttackPhase { get; set; } //当前普通攻击段落阶段
         public bool IsRootMotionMoveEnabled { get; private set; } //是否允许使用动画根运动位移
         public Vector3 RootMotionDeltaPosition { get; private set; } //动画累计的根运动位移
         public bool IsWeaponVisible { get; set; } //武器是否显示
@@ -71,6 +73,7 @@ namespace Module.Player.Context
             IsInputLocked = false;
             IsStateFinished = false;
             NormalAttackIndex = 0;
+            NormalAttackPhase = PlayerSkillStepPhase.Begin;
             IsRootMotionMoveEnabled = false;
             RootMotionDeltaPosition = Vector3.zero;
             IsWeaponVisible = false;

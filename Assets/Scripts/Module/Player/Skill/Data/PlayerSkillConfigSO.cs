@@ -38,7 +38,7 @@ namespace Module.Player.Skill.Data
         public float GetStepDuration(int index)
         {
             PlayerSkillStepData stepData = GetStep(index);
-            return stepData.Duration;
+            return stepData.TotalDuration;
         }
 
         // 同步全部技能段落的动画持续时间
@@ -57,7 +57,7 @@ namespace Module.Player.Skill.Data
                 if (stepData == null)
                     continue;
 
-                hasSynced |= stepData.SyncDurationFromClip();
+                hasSynced |= stepData.SyncDurationsFromClips();
             }
 
             return hasSynced;

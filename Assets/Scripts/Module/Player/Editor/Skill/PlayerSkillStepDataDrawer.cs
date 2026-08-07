@@ -21,13 +21,18 @@ namespace Module.Player.Editor.Skill
         private const float GROUP_INSET = 4f;
         private const float HEADER_HORIZONTAL_INSET = 6f;
 
-        private const string ANIMATION_GROUP = "Animation";
+        private const string BEGIN_ANIMATION_GROUP = "BeginAnimation";
+        private const string RECOVERY_ANIMATION_GROUP = "RecoveryAnimation";
+        private const string STEP_SETTINGS_GROUP = "StepSettings";
         private const string STEP_ADVANCE_GROUP = "StepAdvanceWindow";
         private const string HIT_GROUP = "HitWindow";
 
-        private const string ANIMATION_CLIP_PROPERTY = "AnimationClipValue";
-        private const string DURATION_PROPERTY = "DurationValue";
-        private const string USE_ROOT_MOTION_PROPERTY = "UseRootMotionValue";
+        private const string BEGIN_ANIMATION_CLIP_PROPERTY = "BeginAnimationClipValue";
+        private const string BEGIN_DURATION_PROPERTY = "BeginDurationValue";
+        private const string BEGIN_USE_ROOT_MOTION_PROPERTY = "BeginUseRootMotionValue";
+        private const string RECOVERY_ANIMATION_CLIP_PROPERTY = "RecoveryAnimationClipValue";
+        private const string RECOVERY_DURATION_PROPERTY = "RecoveryDurationValue";
+        private const string RECOVERY_USE_ROOT_MOTION_PROPERTY = "RecoveryUseRootMotionValue";
         private const string SHOW_WEAPON_PROPERTY = "ShowWeaponValue";
         private const string USE_STEP_ADVANCE_WINDOW_PROPERTY = "UseStepAdvanceWindowValue";
         private const string STEP_ADVANCE_OPEN_PROPERTY = "StepAdvanceOpenNormalizedTimeValue";
@@ -37,9 +42,12 @@ namespace Module.Player.Editor.Skill
         private const string HIT_CLOSE_PROPERTY = "HitCloseNormalizedTimeValue";
         private const string DAMAGE_PROPERTY = "DamageValue";
 
-        private static readonly GUIContent SAnimationClipLabel = new GUIContent("动画片段");
-        private static readonly GUIContent SDurationLabel = new GUIContent("持续时间");
-        private static readonly GUIContent SUseRootMotionLabel = new GUIContent("使用 Root Motion");
+        private static readonly GUIContent SBeginAnimationClipLabel = new GUIContent("动画片段");
+        private static readonly GUIContent SBeginDurationLabel = new GUIContent("持续时间");
+        private static readonly GUIContent SBeginUseRootMotionLabel = new GUIContent("使用 Root Motion");
+        private static readonly GUIContent SRecoveryAnimationClipLabel = new GUIContent("动画片段");
+        private static readonly GUIContent SRecoveryDurationLabel = new GUIContent("持续时间");
+        private static readonly GUIContent SRecoveryUseRootMotionLabel = new GUIContent("使用 Root Motion");
         private static readonly GUIContent SShowWeaponLabel = new GUIContent("显示武器");
         private static readonly GUIContent SUseStepAdvanceWindowLabel = new GUIContent("启用推进窗口");
         private static readonly GUIContent SStepAdvanceOpenLabel = new GUIContent("开始时间");
@@ -56,7 +64,11 @@ namespace Module.Player.Editor.Skill
                 return height;
 
             height += EditorGUIUtility.standardVerticalSpacing;
-            height += GetGroupHeight(property, ANIMATION_GROUP, 4);
+            height += GetGroupHeight(property, BEGIN_ANIMATION_GROUP, 3);
+            height += EditorGUIUtility.standardVerticalSpacing;
+            height += GetGroupHeight(property, RECOVERY_ANIMATION_GROUP, 3);
+            height += EditorGUIUtility.standardVerticalSpacing;
+            height += GetGroupHeight(property, STEP_SETTINGS_GROUP, 1);
             height += EditorGUIUtility.standardVerticalSpacing;
 
             SerializedProperty useStepAdvance = property.FindPropertyRelative(USE_STEP_ADVANCE_WINDOW_PROPERTY);
@@ -81,7 +93,11 @@ namespace Module.Player.Editor.Skill
             }
 
             position.y += EditorGUIUtility.standardVerticalSpacing;
-            DrawAnimationGroup(ref position, property);
+            DrawBeginAnimationGroup(ref position, property);
+            position.y += EditorGUIUtility.standardVerticalSpacing;
+            DrawRecoveryAnimationGroup(ref position, property);
+            position.y += EditorGUIUtility.standardVerticalSpacing;
+            DrawStepSettingsGroup(ref position, property);
             position.y += EditorGUIUtility.standardVerticalSpacing;
             DrawStepAdvanceGroup(ref position, property);
             position.y += EditorGUIUtility.standardVerticalSpacing;
@@ -90,19 +106,46 @@ namespace Module.Player.Editor.Skill
             EditorGUI.EndProperty();
         }
 
-        // 绘制动画与段落分组
-        private static void DrawAnimationGroup(ref Rect position, SerializedProperty property)
+        // 绘制攻击阶段动画分组
+        private static void DrawBeginAnimationGroup(ref Rect position, SerializedProperty property)
         {
-            const int FIELD_COUNT = 4;
-            float groupHeight = GetGroupHeight(property, ANIMATION_GROUP, FIELD_COUNT);
+            const int FIELD_COUNT = 3;
+            float groupHeight = GetGroupHeight(property, BEGIN_ANIMATION_GROUP, FIELD_COUNT);
             Rect groupRect = TakeRect(ref position, groupHeight);
-            if (!DrawGroupHeader(groupRect, property, ANIMATION_GROUP, "动画与段落"))
+            if (!DrawGroupHeader(groupRect, property, BEGIN_ANIMATION_GROUP, "攻击阶段"))
                 return;
 
             Rect contentRect = GetGroupContentRect(groupRect, FIELD_COUNT);
-            DrawProperty(ref contentRect, property.FindPropertyRelative(ANIMATION_CLIP_PROPERTY), SAnimationClipLabel);
-            DrawNonNegativeFloat(ref contentRect, property.FindPropertyRelative(DURATION_PROPERTY), SDurationLabel);
-            DrawProperty(ref contentRect, property.FindPropertyRelative(USE_ROOT_MOTION_PROPERTY), SUseRootMotionLabel);
+            DrawProperty(ref contentRect, property.FindPropertyRelative(BEGIN_ANIMATION_CLIP_PROPERTY), SBeginAnimationClipLabel);
+            DrawNonNegativeFloat(ref contentRect, property.FindPropertyRelative(BEGIN_DURATION_PROPERTY), SBeginDurationLabel);
+            DrawProperty(ref contentRect, property.FindPropertyRelative(BEGIN_USE_ROOT_MOTION_PROPERTY), SBeginUseRootMotionLabel);
+        }
+
+        // 绘制收招阶段动画分组
+        private static void DrawRecoveryAnimationGroup(ref Rect position, SerializedProperty property)
+        {
+            const int FIELD_COUNT = 3;
+            float groupHeight = GetGroupHeight(property, RECOVERY_ANIMATION_GROUP, FIELD_COUNT);
+            Rect groupRect = TakeRect(ref position, groupHeight);
+            if (!DrawGroupHeader(groupRect, property, RECOVERY_ANIMATION_GROUP, "收招阶段"))
+                return;
+
+            Rect contentRect = GetGroupContentRect(groupRect, FIELD_COUNT);
+            DrawProperty(ref contentRect, property.FindPropertyRelative(RECOVERY_ANIMATION_CLIP_PROPERTY), SRecoveryAnimationClipLabel);
+            DrawNonNegativeFloat(ref contentRect, property.FindPropertyRelative(RECOVERY_DURATION_PROPERTY), SRecoveryDurationLabel);
+            DrawProperty(ref contentRect, property.FindPropertyRelative(RECOVERY_USE_ROOT_MOTION_PROPERTY), SRecoveryUseRootMotionLabel);
+        }
+
+        // 绘制段落通用设置分组
+        private static void DrawStepSettingsGroup(ref Rect position, SerializedProperty property)
+        {
+            const int FIELD_COUNT = 1;
+            float groupHeight = GetGroupHeight(property, STEP_SETTINGS_GROUP, FIELD_COUNT);
+            Rect groupRect = TakeRect(ref position, groupHeight);
+            if (!DrawGroupHeader(groupRect, property, STEP_SETTINGS_GROUP, "段落设置"))
+                return;
+
+            Rect contentRect = GetGroupContentRect(groupRect, FIELD_COUNT);
             DrawProperty(ref contentRect, property.FindPropertyRelative(SHOW_WEAPON_PROPERTY), SShowWeaponLabel);
         }
 

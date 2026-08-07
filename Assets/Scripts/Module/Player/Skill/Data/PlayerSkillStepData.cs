@@ -9,33 +9,54 @@
 using System;
 using TriInspector;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Module.Player.Skill.Data
 {
     [Serializable]
-    [DeclareFoldoutGroup("Animation", Title = "动画与段落", Expanded = true)]
+    [DeclareFoldoutGroup("BeginAnimation", Title = "攻击阶段", Expanded = true)]
+    [DeclareFoldoutGroup("RecoveryAnimation", Title = "收招阶段", Expanded = true)]
+    [DeclareFoldoutGroup("StepSettings", Title = "段落设置", Expanded = true)]
     [DeclareFoldoutGroup("StepAdvanceWindow", Title = "段落推进窗口", Expanded = true)]
     [DeclareFoldoutGroup("HitWindow", Title = "命中窗口", Expanded = true)]
     public sealed class PlayerSkillStepData
     {
-        [Group("Animation")]
+        [Group("BeginAnimation")]
         [LabelText("动画片段")]
-        [Tooltip("技能段落动画片段")]
-        [SerializeField] private AnimationClip AnimationClipValue;
+        [Tooltip("技能段落的攻击阶段动画片段")]
+        [FormerlySerializedAs("AnimationClipValue")]
+        [SerializeField] private AnimationClip BeginAnimationClipValue;
 
-        [Group("Animation")]
+        [Group("BeginAnimation")]
         [LabelText("持续时间")]
-        [Tooltip("技能段落持续时间")]
-        [SerializeField] private float DurationValue = 0.5f;
+        [Tooltip("技能段落的攻击阶段持续时间")]
+        [FormerlySerializedAs("DurationValue")]
+        [SerializeField] private float BeginDurationValue = 0.5f;
 
-        [Group("Animation")]
+        [Group("BeginAnimation")]
         [LabelText("使用 Root Motion")]
-        [Tooltip("是否使用动画根运动位移")]
-        [SerializeField] private bool UseRootMotionValue;
+        [Tooltip("攻击阶段是否使用动画根运动位移")]
+        [FormerlySerializedAs("UseRootMotionValue")]
+        [SerializeField] private bool BeginUseRootMotionValue;
 
-        [Group("Animation")]
+        [Group("RecoveryAnimation")]
+        [LabelText("动画片段")]
+        [Tooltip("技能段落的收招阶段动画片段")]
+        [SerializeField] private AnimationClip RecoveryAnimationClipValue;
+
+        [Group("RecoveryAnimation")]
+        [LabelText("持续时间")]
+        [Tooltip("技能段落的收招阶段持续时间")]
+        [SerializeField] private float RecoveryDurationValue = 0.5f;
+
+        [Group("RecoveryAnimation")]
+        [LabelText("使用 Root Motion")]
+        [Tooltip("收招阶段是否使用动画根运动位移")]
+        [SerializeField] private bool RecoveryUseRootMotionValue;
+
+        [Group("StepSettings")]
         [LabelText("显示武器")]
-        [Tooltip("播放该技能段落时是否显示武器")]
+        [Tooltip("播放该技能段落的攻击与收招动画时是否显示武器")]
         [SerializeField] private bool ShowWeaponValue;
 
         [Group("StepAdvanceWindow")]
@@ -82,11 +103,19 @@ namespace Module.Player.Skill.Data
         [Tooltip("该段技能造成的伤害")]
         [SerializeField] private float DamageValue;
 
-        public AnimationClip AnimationClip => AnimationClipValue;
+        public AnimationClip BeginAnimationClip => BeginAnimationClipValue;
 
-        public float Duration => DurationValue;
+        public float BeginDuration => BeginDurationValue;
 
-        public bool UseRootMotion => UseRootMotionValue;
+        public bool BeginUseRootMotion => BeginUseRootMotionValue;
+
+        public AnimationClip RecoveryAnimationClip => RecoveryAnimationClipValue;
+
+        public float RecoveryDuration => RecoveryDurationValue;
+
+        public bool RecoveryUseRootMotion => RecoveryUseRootMotionValue;
+
+        public float TotalDuration => BeginDurationValue + RecoveryDurationValue;
 
         public bool ShowWeapon => ShowWeaponValue;
 
@@ -96,14 +125,23 @@ namespace Module.Player.Skill.Data
 
         public float Damage => DamageValue;
 
-        // 从动画片段同步技能段落持续时间
-        public bool SyncDurationFromClip()
+        // 从攻击与收招动画片段同步两个阶段的持续时间
+        public bool SyncDurationsFromClips()
         {
-            if (AnimationClipValue == null)
-                return false;
+            bool hasSynced = false;
+            if (BeginAnimationClipValue != null)
+            {
+                BeginDurationValue = BeginAnimationClipValue.length;
+                hasSynced = true;
+            }
 
-            DurationValue = AnimationClipValue.length;
-            return true;
+            if (RecoveryAnimationClipValue != null)
+            {
+                RecoveryDurationValue = RecoveryAnimationClipValue.length;
+                hasSynced = true;
+            }
+
+            return hasSynced;
         }
 
         // 尝试读取下一段推进窗口

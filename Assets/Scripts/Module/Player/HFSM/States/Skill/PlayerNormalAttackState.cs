@@ -53,6 +53,7 @@ namespace Module.Player.HFSM.States.Skill
             m_context.IsStateFinished = false;
             m_context.IsMovementLocked = false;
             m_context.NormalAttackIndex = 0;
+            m_context.NormalAttackPhase = PlayerSkillStepPhase.Begin;
 
             if (m_context.IsGrounded)
                 m_context.RequestAnimReplay(m_context.MoveInput.sqrMagnitude > MOVE_INPUT_THRESHOLD_SQR

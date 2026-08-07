@@ -30,6 +30,7 @@ namespace Module.Player.Skill.Core
 
         public PlayerSkillType? CurrentSkillType => m_timeline.CurrentSkillType;
         public int CurrentStepIndex => m_timeline.CurrentStepIndex;
+        public PlayerSkillStepPhase CurrentPhase => m_timeline.CurrentPhase;
         public float NormalizedTime => m_timeline.NormalizedTime;
         public bool IsRunning => m_timeline.IsRunning;
         public bool IsFinished => m_timeline.IsFinished;
@@ -108,6 +109,12 @@ namespace Module.Player.Skill.Core
         private void SyncHitWindow()
         {
             if (!m_timeline.IsRunning)
+            {
+                CloseHitWindow();
+                return;
+            }
+
+            if (m_timeline.CurrentPhase != PlayerSkillStepPhase.Begin)
             {
                 CloseHitWindow();
                 return;

@@ -8,7 +8,9 @@
 
 using Module.Player.Context;
 using Module.Player.HFSM;
+using Module.Player.Skill;
 using UnityEngine;
+using Utils.log;
 
 namespace Module.Player.HFSM.Animation
 {
@@ -18,13 +20,15 @@ namespace Module.Player.HFSM.Animation
         private static readonly int S_MoveSpeedHash = Animator.StringToHash("moveSpeed");
         private static readonly int S_VerticalSpeedHash = Animator.StringToHash("verticalSpeed");
         private static readonly int S_IsGroundedHash = Animator.StringToHash("isGrounded");
-        private static readonly int S_NormalAttackIndexHash = Animator.StringToHash("normalAttackIndex");
         private static readonly int S_JumpStateHash = Animator.StringToHash("Base Layer.Air.jump_begin");
         private static readonly int S_DodgeStateHash = Animator.StringToHash("Base Layer.Action.dodge");
         private static readonly int S_GroundedCommonStateHash = Animator.StringToHash("Base Layer.Grounded_Common");
         private static readonly int S_SkillNormalAttack01StateHash = Animator.StringToHash("Base Layer.Skill.NormalAttack.attack01");
         private static readonly int S_SkillNormalAttack02StateHash = Animator.StringToHash("Base Layer.Skill.NormalAttack.attack02");
         private static readonly int S_SkillNormalAttack03StateHash = Animator.StringToHash("Base Layer.Skill.NormalAttack.attack03");
+        private static readonly int S_SkillNormalAttack01RecoveryStateHash = Animator.StringToHash("Base Layer.Skill.NormalAttack.attack01_end");
+        private static readonly int S_SkillNormalAttack02RecoveryStateHash = Animator.StringToHash("Base Layer.Skill.NormalAttack.attack02_end");
+        private static readonly int S_SkillNormalAttack03RecoveryStateHash = Animator.StringToHash("Base Layer.Skill.NormalAttack.attack03_end");
         #endregion
 
         private Animator m_animator;
@@ -59,7 +63,6 @@ namespace Module.Player.HFSM.Animation
             m_animator.SetFloat(S_MoveSpeedHash, animParams.MoveSpeed);
             m_animator.SetFloat(S_VerticalSpeedHash, animParams.VerticalSpeed);
             m_animator.SetBool(S_IsGroundedHash, animParams.IsGrounded);
-            m_animator.SetInteger(S_NormalAttackIndexHash, animParams.NormalAttackIndex);
         }
 
         // 消费并执行一次性动画重播请求
@@ -87,15 +90,40 @@ namespace Module.Player.HFSM.Animation
 
             if (stateId == PlayerStateId.SkillNormalAttack)
             {
-                int fullStateHash = m_context.NormalAttackIndex switch
+                if (!TryGetNormalAttackStateHash(out int fullStateHash))
+                    return;
+
+                m_animator.CrossFadeInFixedTime(fullStateHash, 0.03f, 0, 0f);
+            }
+        }
+
+        // 根据普攻段数与阶段解析 Animator 状态
+        private bool TryGetNormalAttackStateHash(out int fullStateHash)
+        {
+            fullStateHash = m_context.NormalAttackPhase switch
+            {
+                PlayerSkillStepPhase.Begin => m_context.NormalAttackIndex switch
                 {
                     0 => S_SkillNormalAttack01StateHash,
                     1 => S_SkillNormalAttack02StateHash,
                     2 => S_SkillNormalAttack03StateHash,
-                    _ => S_SkillNormalAttack01StateHash
-                };
-                m_animator.CrossFadeInFixedTime(fullStateHash, 0.03f, 0, 0f);
-            }
+                    _ => 0
+                },
+                PlayerSkillStepPhase.Recovery => m_context.NormalAttackIndex switch
+                {
+                    0 => S_SkillNormalAttack01RecoveryStateHash,
+                    1 => S_SkillNormalAttack02RecoveryStateHash,
+                    2 => S_SkillNormalAttack03RecoveryStateHash,
+                    _ => 0
+                },
+                _ => 0
+            };
+
+            if (fullStateHash != 0)
+                return true;
+
+            QLog.Error($"播放普攻动画失败：段数 {m_context.NormalAttackIndex}，阶段 {m_context.NormalAttackPhase}");
+            return false;
         }
     }
 }

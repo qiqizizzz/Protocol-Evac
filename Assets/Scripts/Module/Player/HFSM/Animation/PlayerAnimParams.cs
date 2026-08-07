@@ -13,7 +13,6 @@ namespace Module.Player.HFSM.Animation
         public float MoveSpeed;
         public float VerticalSpeed;
         public bool IsGrounded;
-        public int NormalAttackIndex;
 
         // 重置玩家动画参数
         public void Reset()
@@ -21,7 +20,6 @@ namespace Module.Player.HFSM.Animation
             MoveSpeed = 0f;
             VerticalSpeed = 0f;
             IsGrounded = false;
-            NormalAttackIndex = 0;
         }
     }
 }

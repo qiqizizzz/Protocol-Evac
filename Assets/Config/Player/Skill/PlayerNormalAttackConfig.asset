@@ -13,10 +13,14 @@ MonoBehaviour:
   m_Name: PlayerNormalAttackConfig
   m_EditorClassIdentifier: 
   StepValues:
-  - AnimationClipValue: {fileID: -623603649343465320, guid: b600b20782cfc7e488ec14cd0b58c74e,
-      type: 3}
-    DurationValue: 3.0666668
-    UseRootMotionValue: 1
+  - BeginAnimationClipValue: {fileID: 7400000, guid: 1a6e3009131c65047b78d5bad21045be,
+      type: 2}
+    BeginDurationValue: 0.6333333
+    BeginUseRootMotionValue: 1
+    RecoveryAnimationClipValue: {fileID: 7400000, guid: 4fa24f2b8d158f9458ef1a0286d1eadb,
+      type: 2}
+    RecoveryDurationValue: 2.3666668
+    RecoveryUseRootMotionValue: 1
     ShowWeaponValue: 1
     UseStepAdvanceWindowValue: 1
     StepAdvanceOpenNormalizedTimeValue: 0.4
@@ -25,10 +29,14 @@ MonoBehaviour:
     HitOpenNormalizedTimeValue: 0.2
     HitCloseNormalizedTimeValue: 0.35
     DamageValue: 10
-  - AnimationClipValue: {fileID: -623603649343465320, guid: 2f8f77bc67401ad499948cd7d4b59070,
-      type: 3}
-    DurationValue: 5.566667
-    UseRootMotionValue: 1
+  - BeginAnimationClipValue: {fileID: 7400000, guid: 5cb2d1ad2743927489afad103d857b6b,
+      type: 2}
+    BeginDurationValue: 1.4666668
+    BeginUseRootMotionValue: 1
+    RecoveryAnimationClipValue: {fileID: 7400000, guid: 7da179929950e4142b0a8443b0713ce5,
+      type: 2}
+    RecoveryDurationValue: 4.033334
+    RecoveryUseRootMotionValue: 1
     ShowWeaponValue: 1
     UseStepAdvanceWindowValue: 1
     StepAdvanceOpenNormalizedTimeValue: 0.3
@@ -37,10 +45,14 @@ MonoBehaviour:
     HitOpenNormalizedTimeValue: 0.2
     HitCloseNormalizedTimeValue: 0.35
     DamageValue: 15
-  - AnimationClipValue: {fileID: -623603649343465320, guid: a6f2cadc3cff35b4db2dd6a92c5741d6,
-      type: 3}
-    DurationValue: 11.966667
-    UseRootMotionValue: 1
+  - BeginAnimationClipValue: {fileID: 7400000, guid: fc0d1abce176bef40987e5073bb60ca2,
+      type: 2}
+    BeginDurationValue: 1.9666667
+    BeginUseRootMotionValue: 1
+    RecoveryAnimationClipValue: {fileID: 7400000, guid: 9209ac3cac02d2c4d9d827c7bba131e4,
+      type: 2}
+    RecoveryDurationValue: 5.166667
+    RecoveryUseRootMotionValue: 1
     ShowWeaponValue: 1
     UseStepAdvanceWindowValue: 0
     StepAdvanceOpenNormalizedTimeValue: 0.35
