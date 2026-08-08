@@ -11,6 +11,9 @@ namespace Module.Player.HFSM.Animation
     public struct PlayerAnimParams
     {
         public float MoveSpeed;
+        public float LockOnWeight;
+        public float MoveX;
+        public float MoveY;
         public float VerticalSpeed;
         public bool IsGrounded;
 
@@ -18,6 +21,9 @@ namespace Module.Player.HFSM.Animation
         public void Reset()
         {
             MoveSpeed = 0f;
+            LockOnWeight = 0f;
+            MoveX = 0f;
+            MoveY = 0f;
             VerticalSpeed = 0f;
             IsGrounded = false;
         }

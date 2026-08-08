@@ -40,8 +40,13 @@ namespace Module.Player.HFSM.Animation.Rules
         private static void ResolveGrounded(PlayerContext context, ref PlayerAnimParams animParams)
         {
             animParams.MoveSpeed = GetHorizontalSpeed(context);
+            animParams.LockOnWeight = context.View.IsLockOn ? 1f : 0f;
             animParams.VerticalSpeed = context.Movement.Velocity.y;
             animParams.IsGrounded = context.Movement.IsGrounded;
+
+            Vector2 lockOnMoveDirection = GetLockOnMoveDirection(context);
+            animParams.MoveX = lockOnMoveDirection.x;
+            animParams.MoveY = lockOnMoveDirection.y;
         }
         #endregion
 
@@ -51,6 +56,17 @@ namespace Module.Player.HFSM.Animation.Rules
             Vector3 velocity = context.Movement.Velocity;
             velocity.y = 0f;
             return velocity.magnitude;
+        }
+
+        // 获取相对玩家朝向的锁定移动方向
+        private static Vector2 GetLockOnMoveDirection(PlayerContext context)
+        {
+            Vector3 localVelocity = context.Transform.InverseTransformDirection(context.Movement.Velocity);
+            Vector2 horizontalDirection = new Vector2(localVelocity.x, localVelocity.z);
+            if (horizontalDirection.sqrMagnitude <= Mathf.Epsilon)
+                return Vector2.zero;
+
+            return horizontalDirection.normalized;
         }
     }
 }

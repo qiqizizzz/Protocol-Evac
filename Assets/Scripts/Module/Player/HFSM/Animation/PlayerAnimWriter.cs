@@ -18,6 +18,9 @@ namespace Module.Player.HFSM.Animation
     {
         #region Animator 参数Hash
         private static readonly int S_MoveSpeedHash = Animator.StringToHash("moveSpeed");
+        private static readonly int S_LockOnWeightHash = Animator.StringToHash("lockOnWeight");
+        private static readonly int S_MoveXHash = Animator.StringToHash("moveX");
+        private static readonly int S_MoveYHash = Animator.StringToHash("moveY");
         private static readonly int S_VerticalSpeedHash = Animator.StringToHash("verticalSpeed");
         private static readonly int S_IsGroundedHash = Animator.StringToHash("isGrounded");
         private static readonly int S_JumpStateHash = Animator.StringToHash("Base Layer.Air.jump_begin");
@@ -61,6 +64,9 @@ namespace Module.Player.HFSM.Animation
         private void ApplyParams(PlayerAnimParams animParams)
         {
             m_animator.SetFloat(S_MoveSpeedHash, animParams.MoveSpeed);
+            m_animator.SetFloat(S_LockOnWeightHash, animParams.LockOnWeight);
+            m_animator.SetFloat(S_MoveXHash, animParams.MoveX);
+            m_animator.SetFloat(S_MoveYHash, animParams.MoveY);
             m_animator.SetFloat(S_VerticalSpeedHash, animParams.VerticalSpeed);
             m_animator.SetBool(S_IsGroundedHash, animParams.IsGrounded);
         }
