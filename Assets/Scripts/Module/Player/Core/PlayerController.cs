@@ -202,6 +202,8 @@ namespace Module.Player.Core
                 QLog.Warning("MoveConfig 未配置，移动模块可能无法正常运行");
             else if (Settings.MoveConfig.StateClipCount != PlayerMoveConfigSO.REQUIRED_STATE_CLIP_COUNT)
                 QLog.Error("MoveConfig 必须按 Idle、Walk、Run 顺序配置三段动画");
+            else if (Settings.MoveConfig.SprintRunClipData == null || Settings.MoveConfig.SprintRunClipData.StateClip == null)
+                QLog.Error("MoveConfig 未配置 SprintRun 动画，疾跑无法正常播放");
 
             if (Settings.InputConfig == null)
                 QLog.Warning("InputConfig 未配置，Shift 短按/长按将无法正常解释");
@@ -219,5 +221,6 @@ namespace Module.Player.Core
             if (Settings.ViewConfig == null)
                 QLog.Warning("ViewConfig 未配置，视角模块可能无法正常运行");
         }
+
     }
 }

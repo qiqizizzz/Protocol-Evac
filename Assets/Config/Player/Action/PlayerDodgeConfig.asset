@@ -16,9 +16,10 @@ MonoBehaviour:
   - StateClipValue: {fileID: -623603649343465320, guid: dab086bbf0738634385cac228fd0ba8a,
       type: 3}
     StateDurationValue: 1.8333334
+    ShowWeaponValue: 0
     UseComboWindowValue: 0
     ComboOpenNormalizedTimeValue: 0.35
     ComboCloseNormalizedTimeValue: 0.75
-  DodgeSpeedValue: 9
+  DodgeSpeedValue: 1.75
   DodgeInputThresholdSqrValue: 0.01
   DodgeBufferTimeValue: 0.18

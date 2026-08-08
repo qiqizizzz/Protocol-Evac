@@ -55,6 +55,7 @@ namespace Module.Player.HFSM.States.Action
             m_context.Action.IsStateFinished = false;
             m_context.Movement.IsMovementLocked = false;
             m_context.Movement.ClearForcedMoveVelocity();
+            m_context.Movement.ClearHorizontalVelocity();
         }
 
         public override void Tick(float deltaTime)

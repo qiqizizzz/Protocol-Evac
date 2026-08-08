@@ -16,11 +16,12 @@ namespace Module.Player.Input.Config
         [Header("Shift 输入")]
         [Tooltip("按住 Shift 超过该时间后判定为疾跑，短于该时间松开则判定为闪避")]
         [SerializeField, Min(0f)] private float SprintHoldTimeValue = 0.2f;
-        [Tooltip("连续按住 Shift 超过该时间后锁存自动奔跑")]
+        [Tooltip("连续按住 Shift 超过该时间后锁存自动疾跑")]
         [SerializeField, Min(0f)] private float AutoRunHoldTimeValue = 3f;
 
         public float SprintHoldTime => SprintHoldTimeValue;
 
         public float AutoRunHoldTime => AutoRunHoldTimeValue;
+
     }
 }

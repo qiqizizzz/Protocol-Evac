@@ -165,6 +165,15 @@ namespace Module.Player.Input
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""ToggleWalk"",
+                    ""type"": ""Button"",
+                    ""id"": ""94b1f275-f191-4adf-a2a1-bb9f03f65906"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -310,6 +319,28 @@ namespace Module.Player.Input
                     ""action"": ""LockOn"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""060fa5a5-21ed-48b0-85f0-8d99b17ca099"",
+                    ""path"": ""<Keyboard>/leftCtrl"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ToggleWalk"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""ed02b3e3-0b13-4b97-9205-1d44ec463b73"",
+                    ""path"": ""<Keyboard>/rightCtrl"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""ToggleWalk"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -354,6 +385,7 @@ namespace Module.Player.Input
             m_Player_SwitchToThirdPerson = m_Player.FindAction("SwitchToThirdPerson", throwIfNotFound: true);
             m_Player_Attack = m_Player.FindAction("Attack", throwIfNotFound: true);
             m_Player_LockOn = m_Player.FindAction("LockOn", throwIfNotFound: true);
+            m_Player_ToggleWalk = m_Player.FindAction("ToggleWalk", throwIfNotFound: true);
         }
 
         ~@PlayerInputActions()
@@ -442,6 +474,7 @@ namespace Module.Player.Input
         private readonly InputAction m_Player_SwitchToThirdPerson;
         private readonly InputAction m_Player_Attack;
         private readonly InputAction m_Player_LockOn;
+        private readonly InputAction m_Player_ToggleWalk;
         /// <summary>
         /// Provides access to input actions defined in input action map "Player".
         /// </summary>
@@ -485,6 +518,10 @@ namespace Module.Player.Input
             /// Provides access to the underlying input action "Player/LockOn".
             /// </summary>
             public InputAction @LockOn => m_Wrapper.m_Player_LockOn;
+            /// <summary>
+            /// Provides access to the underlying input action "Player/ToggleWalk".
+            /// </summary>
+            public InputAction @ToggleWalk => m_Wrapper.m_Player_ToggleWalk;
             /// <summary>
             /// Provides access to the underlying input action map instance.
             /// </summary>
@@ -535,6 +572,9 @@ namespace Module.Player.Input
                 @LockOn.started += instance.OnLockOn;
                 @LockOn.performed += instance.OnLockOn;
                 @LockOn.canceled += instance.OnLockOn;
+                @ToggleWalk.started += instance.OnToggleWalk;
+                @ToggleWalk.performed += instance.OnToggleWalk;
+                @ToggleWalk.canceled += instance.OnToggleWalk;
             }
 
             /// <summary>
@@ -570,6 +610,9 @@ namespace Module.Player.Input
                 @LockOn.started -= instance.OnLockOn;
                 @LockOn.performed -= instance.OnLockOn;
                 @LockOn.canceled -= instance.OnLockOn;
+                @ToggleWalk.started -= instance.OnToggleWalk;
+                @ToggleWalk.performed -= instance.OnToggleWalk;
+                @ToggleWalk.canceled -= instance.OnToggleWalk;
             }
 
             /// <summary>
@@ -692,6 +735,13 @@ namespace Module.Player.Input
             /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
             /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
             void OnLockOn(InputAction.CallbackContext context);
+            /// <summary>
+            /// Method invoked when associated input action "ToggleWalk" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+            /// </summary>
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+            void OnToggleWalk(InputAction.CallbackContext context);
         }
     }
 }

@@ -70,13 +70,13 @@ namespace Module.Player.Input.Interpreter
             return m_inputConfig.SprintHoldTime;
         }
 
-        // 刷新自动奔跑的锁存与取消状态
+        // 刷新自动疾跑的锁存与取消状态
         private void RefreshAutoRunState()
         {
-            if (m_context.Input.IsAutoRun)
+            if (m_context.Input.IsAutoSprint)
             {
                 if (HasBackwardMoveInput() || !HasMoveInput())
-                    m_context.Input.IsAutoRun = false;
+                    m_context.Input.IsAutoSprint = false;
 
                 return;
             }
@@ -84,7 +84,7 @@ namespace Module.Player.Input.Interpreter
             if (m_isSprintPressing
                 && Time.time - m_sprintPressedTime >= m_inputConfig.AutoRunHoldTime
                 && HasForwardMoveInput())
-                m_context.Input.IsAutoRun = true;
+                m_context.Input.IsAutoSprint = true;
         }
 
         // 判断当前是否存在任意移动输入

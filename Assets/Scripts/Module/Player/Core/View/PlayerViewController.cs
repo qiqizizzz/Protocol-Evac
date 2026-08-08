@@ -90,17 +90,17 @@ namespace Module.Player.Core.View
             if (m_context.View.ViewMode != PlayerViewMode.ThirdPerson)
                 return;
 
-            Transform closestEnemyTarget = FindClosestEnemyTarget();
+            Transform closestEnemyTarget = FindClosestEnemyTarget(m_viewConfig.LockRange);
             if (closestEnemyTarget != null)
                 m_context.View.SetLockTarget(closestEnemyTarget);
         }
 
-        // 搜索锁定范围内距离玩家最近的 Enemy Tag 目标
-        private Transform FindClosestEnemyTarget()
+        // 搜索指定范围内距离玩家最近的 Enemy Tag 目标
+        private Transform FindClosestEnemyTarget(float range)
         {
             GameObject[] enemyObjects = GameObject.FindGameObjectsWithTag(ENEMY_TAG);
             Transform closestTarget = null;
-            float closestSqrDistance = m_viewConfig.LockRange * m_viewConfig.LockRange;
+            float closestSqrDistance = range * range;
 
             foreach (GameObject enemyObject in enemyObjects)
             {

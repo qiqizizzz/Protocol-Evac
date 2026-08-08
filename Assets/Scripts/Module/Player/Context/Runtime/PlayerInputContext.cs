@@ -19,8 +19,9 @@ namespace Module.Player.Context.Runtime
         public Vector2 MoveInput { get; set; }
         public Vector2 LookInput { get; set; }
         public bool IsSprintPressed { get; set; }
-        public bool IsAutoRun { get; set; }
-        public bool IsSprintActive => IsSprintPressed || IsAutoRun;
+        public bool IsAutoSprint { get; set; }
+        public bool IsWalkMode { get; private set; }
+        public bool IsSprintActive => IsSprintPressed || IsAutoSprint;
         public bool IsInputLocked { get; set; }
 
         // 创建输入运行时上下文
@@ -36,7 +37,8 @@ namespace Module.Player.Context.Runtime
             MoveInput = Vector2.zero;
             LookInput = Vector2.zero;
             IsSprintPressed = false;
-            IsAutoRun = false;
+            IsAutoSprint = false;
+            IsWalkMode = false;
             IsInputLocked = false;
             m_isLockOnToggleRequested = false;
             Buffer.ClearAll();
@@ -54,6 +56,14 @@ namespace Module.Player.Context.Runtime
             bool isRequested = m_isLockOnToggleRequested;
             m_isLockOnToggleRequested = false;
             return isRequested;
+        }
+
+        // 切换步行模式并在启用时取消自动疾跑
+        public void ToggleWalkMode()
+        {
+            IsWalkMode = !IsWalkMode;
+            if (IsWalkMode)
+                IsAutoSprint = false;
         }
     }
 }

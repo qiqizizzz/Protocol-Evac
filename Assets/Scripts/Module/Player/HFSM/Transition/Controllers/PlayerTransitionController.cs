@@ -29,7 +29,8 @@ namespace Module.Player.HFSM.Transition.Controllers
         public IReadOnlyList<PlayerTransitionRule> Rules => m_rules;
 
         // 创建玩家状态转换控制器
-        public PlayerTransitionController(PlayerContext context, PlayerAirConfigSO airConfig, PlayerDodgeConfigSO dodgeConfig, PlayerNormalAttackConfigSO normalAttackConfig)
+        public PlayerTransitionController(PlayerContext context, PlayerAirConfigSO airConfig, PlayerDodgeConfigSO dodgeConfig,
+            PlayerNormalAttackConfigSO normalAttackConfig)
         {
             m_context = context;
             m_airConfig = airConfig;

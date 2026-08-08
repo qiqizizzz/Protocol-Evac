@@ -55,5 +55,11 @@ namespace Module.Player.Context.Runtime
             HasForcedMoveVelocity = false;
             ForcedMoveVelocity = Vector3.zero;
         }
+
+        // 清空当前水平速度并保留竖直速度
+        public void ClearHorizontalVelocity()
+        {
+            Velocity = new Vector3(0f, Velocity.y, 0f);
+        }
     }
 }

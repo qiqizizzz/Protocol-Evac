@@ -64,6 +64,7 @@ namespace Module.Player.Input
             m_inputActions.Player.Jump.performed += OnJump;
             m_inputActions.Player.Attack.performed += OnAttack;
             m_inputActions.Player.LockOn.performed += OnLockOn;
+            m_inputActions.Player.ToggleWalk.performed += OnToggleWalk;
             m_inputActions.Player.SwitchToFirstPerson.performed += OnSwitchToFirstPerson;
             m_inputActions.Player.SwitchToThirdPerson.performed += OnSwitchToThirdPerson;
         }
@@ -74,6 +75,7 @@ namespace Module.Player.Input
             m_inputActions.Player.Jump.performed -= OnJump;
             m_inputActions.Player.Attack.performed -= OnAttack;
             m_inputActions.Player.LockOn.performed -= OnLockOn;
+            m_inputActions.Player.ToggleWalk.performed -= OnToggleWalk;
             m_inputActions.Player.SwitchToFirstPerson.performed -= OnSwitchToFirstPerson;
             m_inputActions.Player.SwitchToThirdPerson.performed -= OnSwitchToThirdPerson;
         }
@@ -95,6 +97,12 @@ namespace Module.Player.Input
         private void OnLockOn(InputAction.CallbackContext context)
         {
             m_context.Input.RequestLockOnToggle();
+        }
+
+        // 切换步行与奔跑模式
+        private void OnToggleWalk(InputAction.CallbackContext context)
+        {
+            m_context.Input.ToggleWalkMode();
         }
 
         // 请求切换至第一人称视角

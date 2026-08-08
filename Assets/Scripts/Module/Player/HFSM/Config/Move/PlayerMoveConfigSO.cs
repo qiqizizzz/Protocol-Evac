@@ -20,9 +20,15 @@ namespace Module.Player.HFSM.Config.Move
 
         public const int REQUIRED_STATE_CLIP_COUNT = 3;
 
+        [Header("疾跑")]
+        [Tooltip("疾跑时使用的循环动画")]
+        [SerializeField] private PlayerStateClipData SprintRunClipValue;
+
         [Header("地面移动")]
-        [Tooltip("玩家普通移动速度")]
-        [SerializeField, Min(0f)] private float WalkSpeedValue = 4f;
+        [Tooltip("步行移动速度")]
+        [SerializeField, Min(0f)] private float WalkSpeedValue = 2.5f;
+        [Tooltip("默认奔跑移动速度")]
+        [SerializeField, Min(0f)] private float RunSpeedValue = 4f;
         [Tooltip("玩家疾跑速度")]
         [SerializeField, Min(0f)] private float SprintSpeedValue = 6f;
         [Tooltip("玩家加速到目标速度的速率")]
@@ -39,6 +45,8 @@ namespace Module.Player.HFSM.Config.Move
         [SerializeField] private LayerMask GroundLayerValue;
         
         public float WalkSpeed => WalkSpeedValue;
+
+        public float RunSpeed => RunSpeedValue;
 
         public float SprintSpeed => SprintSpeedValue;
 
@@ -57,5 +65,7 @@ namespace Module.Player.HFSM.Config.Move
         public PlayerStateClipData WalkClipData => GetStateClip(WALK_CLIP_INDEX);
 
         public PlayerStateClipData RunClipData => GetStateClip(RUN_CLIP_INDEX);
+
+        public PlayerStateClipData SprintRunClipData => SprintRunClipValue;
     }
 }
