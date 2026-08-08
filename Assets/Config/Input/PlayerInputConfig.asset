@@ -13,3 +13,4 @@ MonoBehaviour:
   m_Name: PlayerInputConfig
   m_EditorClassIdentifier: 
   SprintHoldTimeValue: 0.2
+  AutoRunHoldTimeValue: 3

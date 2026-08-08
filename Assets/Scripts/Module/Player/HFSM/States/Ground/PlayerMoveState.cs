@@ -46,13 +46,13 @@ namespace Module.Player.HFSM.States.Ground
             Vector3 moveDir = PlayerMoveDirectionResolver.Resolve(m_context, moveInput);
 
             m_context.Movement.MoveDir = moveDir;
-            m_context.Movement.TargetMoveSpeed = m_context.Input.IsSprintPressed ? m_moveConfig.SprintSpeed : m_moveConfig.WalkSpeed;
+            m_context.Movement.TargetMoveSpeed = m_context.Input.IsSprintActive ? m_moveConfig.SprintSpeed : m_moveConfig.WalkSpeed;
         }
 
         // 根据当前移动档位刷新武器表现
         private void RefreshWeaponVisibility()
         {
-            PlayerStateClipData clipData = m_context.Input.IsSprintPressed
+            PlayerStateClipData clipData = m_context.Input.IsSprintActive
                 ? m_moveConfig.RunClipData
                 : m_moveConfig.WalkClipData;
 

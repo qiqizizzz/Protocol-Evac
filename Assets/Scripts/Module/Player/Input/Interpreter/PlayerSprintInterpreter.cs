@@ -41,12 +41,15 @@ namespace Module.Player.Input.Interpreter
                 RecordDodgeIfSprintWasTapped();
                 m_context.Input.IsSprintPressed = false;
                 m_isSprintPressing = false;
+                RefreshAutoRunState();
                 return;
             }
 
+            RefreshAutoRunState();
             m_context.Input.IsSprintPressed = m_isSprintPressing
                 && isPressed
-                && Time.time - m_sprintPressedTime >= GetSprintHoldTime();
+                && Time.time - m_sprintPressedTime >= GetSprintHoldTime()
+                && !HasBackwardMoveInput();
         }
 
         // Shift 松开时按短按规则写入闪避缓存
@@ -65,6 +68,41 @@ namespace Module.Player.Input.Interpreter
         private float GetSprintHoldTime()
         {
             return m_inputConfig.SprintHoldTime;
+        }
+
+        // 刷新自动奔跑的锁存与取消状态
+        private void RefreshAutoRunState()
+        {
+            if (m_context.Input.IsAutoRun)
+            {
+                if (HasBackwardMoveInput() || !HasMoveInput())
+                    m_context.Input.IsAutoRun = false;
+
+                return;
+            }
+
+            if (m_isSprintPressing
+                && Time.time - m_sprintPressedTime >= m_inputConfig.AutoRunHoldTime
+                && HasForwardMoveInput())
+                m_context.Input.IsAutoRun = true;
+        }
+
+        // 判断当前是否存在任意移动输入
+        private bool HasMoveInput()
+        {
+            return m_context.Input.MoveInput.sqrMagnitude > Mathf.Epsilon;
+        }
+
+        // 判断当前是否包含前进输入
+        private bool HasForwardMoveInput()
+        {
+            return m_context.Input.MoveInput.y > 0f;
+        }
+
+        // 判断当前是否包含后退输入
+        private bool HasBackwardMoveInput()
+        {
+            return m_context.Input.MoveInput.y < 0f;
         }
     }
 }

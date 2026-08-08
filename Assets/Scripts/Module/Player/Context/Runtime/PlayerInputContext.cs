@@ -19,6 +19,8 @@ namespace Module.Player.Context.Runtime
         public Vector2 MoveInput { get; set; }
         public Vector2 LookInput { get; set; }
         public bool IsSprintPressed { get; set; }
+        public bool IsAutoRun { get; set; }
+        public bool IsSprintActive => IsSprintPressed || IsAutoRun;
         public bool IsInputLocked { get; set; }
 
         // 创建输入运行时上下文
@@ -34,6 +36,7 @@ namespace Module.Player.Context.Runtime
             MoveInput = Vector2.zero;
             LookInput = Vector2.zero;
             IsSprintPressed = false;
+            IsAutoRun = false;
             IsInputLocked = false;
             m_isLockOnToggleRequested = false;
             Buffer.ClearAll();
