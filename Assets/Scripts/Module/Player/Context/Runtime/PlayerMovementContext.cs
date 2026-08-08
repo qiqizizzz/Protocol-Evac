@@ -22,6 +22,8 @@ namespace Module.Player.Context.Runtime
         public bool IsGrounded { get; set; }
         public bool HasGroundedChecked { get; set; }
         public float LastGroundedTime { get; set; }
+        public bool HasLastPlantedFoot { get; private set; }
+        public bool IsLastPlantedFootLeft { get; private set; }
 
         // 创建移动运行时上下文
         public PlayerMovementContext()
@@ -42,6 +44,8 @@ namespace Module.Player.Context.Runtime
             IsGrounded = false;
             HasGroundedChecked = false;
             LastGroundedTime = float.NegativeInfinity;
+            HasLastPlantedFoot = false;
+            IsLastPlantedFootLeft = false;
         }
 
         // 设置强制水平移动速度
@@ -69,6 +73,13 @@ namespace Module.Player.Context.Runtime
         {
             MoveDir = Vector3.zero;
             TargetMoveSpeed = 0f;
+        }
+
+        // 记录最近一次由移动动画触发的落脚
+        public void RecordPlantedFoot(bool isLeftFoot)
+        {
+            HasLastPlantedFoot = true;
+            IsLastPlantedFootLeft = isLeftFoot;
         }
     }
 }

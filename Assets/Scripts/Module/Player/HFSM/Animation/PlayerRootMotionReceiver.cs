@@ -71,6 +71,24 @@ namespace Module.Player.HFSM.Animation
             RestoreRootMotionNodeAnchor();
         }
 
+        // 接收移动动画左脚落地事件
+        public void OnLeftFootPlant()
+        {
+            if (!m_isInited)
+                return;
+
+            m_context.Movement.RecordPlantedFoot(true);
+        }
+
+        // 接收移动动画右脚落地事件
+        public void OnRightFootPlant()
+        {
+            if (!m_isInited)
+                return;
+
+            m_context.Movement.RecordPlantedFoot(false);
+        }
+
         // 将 Animator 子节点固定在玩家根节点挂点，避免 Generic 骨架重复表现根位移
         private void RestoreAnimatorAnchor()
         {

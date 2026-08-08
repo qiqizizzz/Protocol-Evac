@@ -20,8 +20,6 @@ namespace Module.Player.HFSM.States.Ground
         private readonly PlayerMoveConfigSO m_moveConfig;
         private readonly DurationTimer m_stopTimer;
 
-        private bool m_useLeftFoot;
-
         public override PlayerStateId Id => PlayerStateId.GroundedStop;
         public override PlayerStateId ParentId => PlayerStateId.Grounded;
 
@@ -78,12 +76,11 @@ namespace Module.Player.HFSM.States.Ground
             m_context.Movement.ClearHorizontalMoveIntent();
         }
 
-        // 根据水平速度档位和左右交替规则选择急停动作
+        // 根据水平速度档位和最近落脚选择急停动作
         private PlayerStopAnimationId SelectStopAnimationId()
         {
             float horizontalSpeed = GetHorizontalSpeed();
-            bool useLeftFoot = m_useLeftFoot;
-            m_useLeftFoot = !m_useLeftFoot;
+            bool useLeftFoot = SelectStopUseLeftFoot();
 
             if (horizontalSpeed >= (m_moveConfig.RunSpeed + m_moveConfig.SprintSpeed) * 0.5f)
                 return useLeftFoot ? PlayerStopAnimationId.SprintLeft : PlayerStopAnimationId.SprintRight;
@@ -92,6 +89,15 @@ namespace Module.Player.HFSM.States.Ground
                 return useLeftFoot ? PlayerStopAnimationId.RunLeft : PlayerStopAnimationId.RunRight;
 
             return useLeftFoot ? PlayerStopAnimationId.WalkLeft : PlayerStopAnimationId.WalkRight;
+        }
+
+        // 选择与最近落脚相反的急停起脚
+        private bool SelectStopUseLeftFoot()
+        {
+            if (m_context.Movement.HasLastPlantedFoot)
+                return !m_context.Movement.IsLastPlantedFootLeft;
+
+            return false;
         }
 
         // 判断指定急停动作是否使用左脚落地
