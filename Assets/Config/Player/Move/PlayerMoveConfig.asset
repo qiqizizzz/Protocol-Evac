@@ -34,8 +34,7 @@ MonoBehaviour:
     UseComboWindowValue: 0
     ComboOpenNormalizedTimeValue: 0.35
     ComboCloseNormalizedTimeValue: 0.75
-  SprintRunClipValue:
-    StateClipValue: {fileID: -623603649343465320, guid: 2c6661c6244bd31468005b7e671f85ce,
+  - StateClipValue: {fileID: -623603649343465320, guid: 2c6661c6244bd31468005b7e671f85ce,
       type: 3}
     StateDurationValue: 0.53333336
     ShowWeaponValue: 0

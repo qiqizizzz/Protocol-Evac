@@ -20,13 +20,9 @@ namespace Module.Player.HFSM.Config.Move
         private const int IDLE_CLIP_INDEX = 0;
         private const int WALK_CLIP_INDEX = 1;
         private const int RUN_CLIP_INDEX = 2;
+        private const int SPRINT_RUN_CLIP_INDEX = 3;
 
-        public const int REQUIRED_STATE_CLIP_COUNT = 3;
-
-        [Header("疾跑")]
-        [Tooltip("疾跑时使用的循环动画")]
-        [LabelText("疾跑循环动画")]
-        [SerializeField] private PlayerStateClipData SprintRunClipValue;
+        public const int REQUIRED_STATE_CLIP_COUNT = 4;
 
         [Group("StopAnimation")]
         [LabelText("步行急停")]
@@ -80,7 +76,7 @@ namespace Module.Player.HFSM.Config.Move
 
         public PlayerStateClipData RunClipData => GetStateClip(RUN_CLIP_INDEX);
 
-        public PlayerStateClipData SprintRunClipData => SprintRunClipValue;
+        public PlayerStateClipData SprintRunClipData => GetStateClip(SPRINT_RUN_CLIP_INDEX);
 
         // 获取指定急停动作的左右动作对
         public PlayerStopClipPairData GetStopClipPairData(PlayerStopAnimationId animationId)
