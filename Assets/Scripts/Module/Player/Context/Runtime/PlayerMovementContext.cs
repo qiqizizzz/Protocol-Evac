@@ -17,6 +17,7 @@ namespace Module.Player.Context.Runtime
         public Vector3 Velocity { get; set; }
         public bool HasForcedMoveVelocity { get; private set; }
         public Vector3 ForcedMoveVelocity { get; private set; }
+        public PlayerStopAnimationId StopAnimationId { get; set; }
         public bool IsMovementLocked { get; set; }
         public bool IsGrounded { get; set; }
         public bool HasGroundedChecked { get; set; }
@@ -36,6 +37,7 @@ namespace Module.Player.Context.Runtime
             Velocity = Vector3.zero;
             HasForcedMoveVelocity = false;
             ForcedMoveVelocity = Vector3.zero;
+            StopAnimationId = PlayerStopAnimationId.None;
             IsMovementLocked = false;
             IsGrounded = false;
             HasGroundedChecked = false;

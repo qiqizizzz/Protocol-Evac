@@ -31,6 +31,10 @@ namespace Module.Player.HFSM.Animation.Rules
 
                 new PlayerAnimRule(
                     PlayerStateId.GroundedMove,
+                    (ref PlayerAnimParams animParams) => ResolveGrounded(context, ref animParams)),
+
+                new PlayerAnimRule(
+                    PlayerStateId.GroundedStop,
                     (ref PlayerAnimParams animParams) => ResolveGrounded(context, ref animParams))
             };
         }

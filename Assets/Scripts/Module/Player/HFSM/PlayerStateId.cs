@@ -15,6 +15,7 @@ namespace Module.Player.HFSM
         Grounded,
         GroundedIdle,
         GroundedMove,
+        GroundedStop,
         GroundedSprint,
 
         Airborne,

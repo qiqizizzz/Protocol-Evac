@@ -27,6 +27,7 @@ namespace Module.Player.HFSM.Factory
             stateMachine.RegisterState(new PlayerGroundedState());
             stateMachine.RegisterState(new PlayerIdleState(context, settings.MoveConfig));
             stateMachine.RegisterState(new PlayerMoveState(context, settings.MoveConfig));
+            stateMachine.RegisterState(new PlayerStopState(context, settings.MoveConfig));
             stateMachine.RegisterState(new PlayerAirborneState(context, settings.AirConfig));
             stateMachine.RegisterState(new PlayerJumpState(context, settings.AirConfig));
             stateMachine.RegisterState(new PlayerFallState(context, settings.AirConfig));

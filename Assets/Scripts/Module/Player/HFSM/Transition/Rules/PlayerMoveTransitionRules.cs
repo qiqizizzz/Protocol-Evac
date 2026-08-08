@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using Module.Player.Context;
 using Module.Player.HFSM;
 using Module.Player.HFSM.Transition;
+using UnityEngine;
 
 namespace Module.Player.HFSM.Transition.Rules
 {
@@ -29,8 +30,17 @@ namespace Module.Player.HFSM.Transition.Rules
                 new PlayerTransitionRule(PlayerStateId.GroundedIdle, PlayerStateId.GroundedMove,
                     PlayerTransitionPriority.Move, () => CanMove(context)),
 
+                new PlayerTransitionRule(PlayerStateId.GroundedMove, PlayerStateId.GroundedStop,
+                    PlayerTransitionPriority.Move, () => CanStop(context), 10),
+
                 new PlayerTransitionRule(PlayerStateId.GroundedMove, PlayerStateId.GroundedIdle,
-                    PlayerTransitionPriority.Move, () => !CanMove(context))
+                    PlayerTransitionPriority.Move, () => !CanMove(context)),
+
+                new PlayerTransitionRule(PlayerStateId.GroundedStop, PlayerStateId.GroundedMove,
+                    PlayerTransitionPriority.Move, () => CanMove(context), 10),
+
+                new PlayerTransitionRule(PlayerStateId.GroundedStop, PlayerStateId.GroundedIdle,
+                    PlayerTransitionPriority.Move, () => context.Action.IsStateFinished)
             };
         }
 
@@ -41,6 +51,20 @@ namespace Module.Player.HFSM.Transition.Rules
                 !context.Input.IsInputLocked &&
                 !context.Movement.IsMovementLocked &&
                 context.Input.MoveInput.sqrMagnitude > MOVE_INPUT_THRESHOLD_SQR;
+        }
+
+        // 判断当前是否应播放非锁定状态下的急停动作
+        private static bool CanStop(PlayerContext context)
+        {
+            Vector3 velocity = context.Movement.Velocity;
+            velocity.y = 0f;
+
+            return
+                !context.View.IsLockOn &&
+                !context.Input.IsInputLocked &&
+                !context.Movement.IsMovementLocked &&
+                context.Input.MoveInput.sqrMagnitude <= MOVE_INPUT_THRESHOLD_SQR &&
+                velocity.sqrMagnitude > MOVE_INPUT_THRESHOLD_SQR;
         }
     }
 }

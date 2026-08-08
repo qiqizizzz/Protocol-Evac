@@ -6,12 +6,15 @@
  * └────────────────────────────────────────────┘
  */
 
+using Module.Player.Context.Runtime;
 using Module.Player.HFSM.Config.Common;
+using TriInspector;
 using UnityEngine;
 
 namespace Module.Player.HFSM.Config.Move
 {
     [CreateAssetMenu(fileName = "PlayerMoveConfig",menuName = "配置/玩家/移动/玩家移动配置")]
+    [DeclareFoldoutGroup("StopAnimation", Title = "急停动画段落")]
     public sealed class PlayerMoveConfigSO : PlayerStateCommonConfigSO
     {
         private const int IDLE_CLIP_INDEX = 0;
@@ -22,7 +25,18 @@ namespace Module.Player.HFSM.Config.Move
 
         [Header("疾跑")]
         [Tooltip("疾跑时使用的循环动画")]
+        [LabelText("疾跑循环动画")]
         [SerializeField] private PlayerStateClipData SprintRunClipValue;
+
+        [Group("StopAnimation")]
+        [LabelText("步行急停")]
+        [SerializeField] private PlayerStopClipPairData WalkStopClipPairValue;
+        [Group("StopAnimation")]
+        [LabelText("奔跑急停")]
+        [SerializeField] private PlayerStopClipPairData RunStopClipPairValue;
+        [Group("StopAnimation")]
+        [LabelText("疾跑急停")]
+        [SerializeField] private PlayerStopClipPairData SprintStopClipPairValue;
 
         [Header("地面移动")]
         [Tooltip("步行移动速度")]
@@ -67,5 +81,20 @@ namespace Module.Player.HFSM.Config.Move
         public PlayerStateClipData RunClipData => GetStateClip(RUN_CLIP_INDEX);
 
         public PlayerStateClipData SprintRunClipData => SprintRunClipValue;
+
+        // 获取指定急停动作的左右动作对
+        public PlayerStopClipPairData GetStopClipPairData(PlayerStopAnimationId animationId)
+        {
+            return animationId switch
+            {
+                PlayerStopAnimationId.WalkLeft => WalkStopClipPairValue,
+                PlayerStopAnimationId.WalkRight => WalkStopClipPairValue,
+                PlayerStopAnimationId.RunLeft => RunStopClipPairValue,
+                PlayerStopAnimationId.RunRight => RunStopClipPairValue,
+                PlayerStopAnimationId.SprintLeft => SprintStopClipPairValue,
+                PlayerStopAnimationId.SprintRight => SprintStopClipPairValue,
+                _ => null
+            };
+        }
     }
 }

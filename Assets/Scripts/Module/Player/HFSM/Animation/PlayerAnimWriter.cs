@@ -7,6 +7,7 @@
  */
 
 using Module.Player.Context;
+using Module.Player.Context.Runtime;
 using Module.Player.HFSM;
 using Module.Player.Skill;
 using UnityEngine;
@@ -25,7 +26,13 @@ namespace Module.Player.HFSM.Animation
         private static readonly int S_IsGroundedHash = Animator.StringToHash("isGrounded");
         private static readonly int S_JumpStateHash = Animator.StringToHash("Base Layer.Air.jump_begin");
         private static readonly int S_DodgeStateHash = Animator.StringToHash("Base Layer.Action.dodge");
-        private static readonly int S_GroundedCommonStateHash = Animator.StringToHash("Base Layer.Grounded_Common");
+        private static readonly int S_GroundedLocomotionStateHash = Animator.StringToHash("Base Layer.Grounded_Common.Grounded_Locomotion");
+        private static readonly int S_StopWalkLeftStateHash = Animator.StringToHash("Base Layer.Grounded_Common.Grounded_Stop.stop_walk_l");
+        private static readonly int S_StopWalkRightStateHash = Animator.StringToHash("Base Layer.Grounded_Common.Grounded_Stop.stop_walk_r");
+        private static readonly int S_StopRunLeftStateHash = Animator.StringToHash("Base Layer.Grounded_Common.Grounded_Stop.stop_run_l");
+        private static readonly int S_StopRunRightStateHash = Animator.StringToHash("Base Layer.Grounded_Common.Grounded_Stop.stop_run_r");
+        private static readonly int S_StopSprintLeftStateHash = Animator.StringToHash("Base Layer.Grounded_Common.Grounded_Stop.stop_sprint_l");
+        private static readonly int S_StopSprintRightStateHash = Animator.StringToHash("Base Layer.Grounded_Common.Grounded_Stop.stop_sprint_r");
         private static readonly int S_SkillNormalAttack01StateHash = Animator.StringToHash("Base Layer.Skill.NormalAttack.attack01");
         private static readonly int S_SkillNormalAttack02StateHash = Animator.StringToHash("Base Layer.Skill.NormalAttack.attack02");
         private static readonly int S_SkillNormalAttack03StateHash = Animator.StringToHash("Base Layer.Skill.NormalAttack.attack03");
@@ -90,7 +97,16 @@ namespace Module.Player.HFSM.Animation
             if (stateId == PlayerStateId.GroundedIdle || stateId == PlayerStateId.GroundedMove)
             {
                 float blendDuration = m_context.Action.AnimReplayBlendDuration > 0f ? m_context.Action.AnimReplayBlendDuration : 0.05f;
-                m_animator.CrossFadeInFixedTime(S_GroundedCommonStateHash, blendDuration, 0, 0f);
+                m_animator.CrossFadeInFixedTime(S_GroundedLocomotionStateHash, blendDuration, 0, 0f);
+                return;
+            }
+
+            if (stateId == PlayerStateId.GroundedStop)
+            {
+                if (!TryGetStopStateHash(out int fullStateHash))
+                    return;
+
+                m_animator.CrossFadeInFixedTime(fullStateHash, m_context.Action.AnimReplayBlendDuration, 0, 0f);
                 return;
             }
 
@@ -129,6 +145,27 @@ namespace Module.Player.HFSM.Animation
                 return true;
 
             QLog.Error($"播放普攻动画失败：段数 {m_context.Action.NormalAttackIndex}，阶段 {m_context.Action.NormalAttackPhase}");
+            return false;
+        }
+
+        // 根据当前急停动画标识解析 Animator 状态
+        private bool TryGetStopStateHash(out int fullStateHash)
+        {
+            fullStateHash = m_context.Movement.StopAnimationId switch
+            {
+                PlayerStopAnimationId.WalkLeft => S_StopWalkLeftStateHash,
+                PlayerStopAnimationId.WalkRight => S_StopWalkRightStateHash,
+                PlayerStopAnimationId.RunLeft => S_StopRunLeftStateHash,
+                PlayerStopAnimationId.RunRight => S_StopRunRightStateHash,
+                PlayerStopAnimationId.SprintLeft => S_StopSprintLeftStateHash,
+                PlayerStopAnimationId.SprintRight => S_StopSprintRightStateHash,
+                _ => 0
+            };
+
+            if (fullStateHash != 0)
+                return true;
+
+            QLog.Error($"播放急停动画失败：动画标识 {m_context.Movement.StopAnimationId}");
             return false;
         }
     }
