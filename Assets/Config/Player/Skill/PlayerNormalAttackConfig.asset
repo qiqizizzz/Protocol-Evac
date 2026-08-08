@@ -26,8 +26,8 @@ MonoBehaviour:
     StepAdvanceOpenNormalizedTimeValue: 0.4
     StepAdvanceCloseNormalizedTimeValue: 0.75
     UseHitWindowValue: 1
-    HitOpenNormalizedTimeValue: 0.2
-    HitCloseNormalizedTimeValue: 0.35
+    HitOpenNormalizedTimeValue: 0.02
+    HitCloseNormalizedTimeValue: 0.18
     DamageValue: 10
   - BeginAnimationClipValue: {fileID: 7400000, guid: 5cb2d1ad2743927489afad103d857b6b,
       type: 2}
