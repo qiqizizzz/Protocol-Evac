@@ -21,6 +21,7 @@ namespace Module.Player.HFSM.States.Action
         private readonly PlayerDodgeConfigSO m_dodgeConfig;
 
         private DurationTimer m_dodgeTimer;
+        private DurationTimer m_dodgeMoveTimer;
 
         public override PlayerStateId Id => PlayerStateId.ActionDodge;
         public override PlayerStateId ParentId => PlayerStateId.Action;
@@ -30,6 +31,7 @@ namespace Module.Player.HFSM.States.Action
             m_context = context;
             m_dodgeConfig = dodgeConfig;
             m_dodgeTimer = new DurationTimer();
+            m_dodgeMoveTimer = new DurationTimer();
         }
 
         // 进入闪避状态并应用闪避配置的武器表现
@@ -47,23 +49,31 @@ namespace Module.Player.HFSM.States.Action
             m_context.Action.RequestAnimReplay(PlayerStateId.ActionDodge);
             
             m_dodgeTimer.Start(m_dodgeConfig.DodgeDuration);
+            m_dodgeMoveTimer.Start(m_dodgeConfig.DodgeMoveDuration);
         }
 
         public override void Exit()
         {
             m_dodgeTimer.Reset();
+            m_dodgeMoveTimer.Reset();
             m_context.Action.IsStateFinished = false;
             m_context.Movement.IsMovementLocked = false;
-            m_context.Movement.ClearForcedMoveVelocity();
-            m_context.Movement.ClearHorizontalVelocity();
+            StopDodgeMovement();
         }
 
         public override void Tick(float deltaTime)
         {
             m_dodgeTimer.Tick(deltaTime);
+            m_dodgeMoveTimer.Tick(deltaTime);
+
+            if (m_dodgeMoveTimer.IsFinished)
+                StopDodgeMovement();
 
             if (m_dodgeTimer.IsFinished)
+            {
                 m_context.Action.IsStateFinished = true;
+                StopDodgeMovement();
+            }
         }
 
         // 解析本次闪避方向
@@ -74,6 +84,15 @@ namespace Module.Player.HFSM.States.Action
             return inputDirection.sqrMagnitude > m_dodgeConfig.DodgeInputThresholdSqr
                 ? inputDirection.normalized
                 : PlayerMoveDirectionResolver.ResolveForward(m_context);
+        }
+
+        // 截断闪避期间产生的全部水平位移来源
+        private void StopDodgeMovement()
+        {
+            m_context.Movement.ClearForcedMoveVelocity();
+            m_context.Movement.ClearHorizontalVelocity();
+            m_context.Movement.ClearHorizontalMoveIntent();
+            m_context.Action.ClearRootMotionDeltaPosition();
         }
     }
 }

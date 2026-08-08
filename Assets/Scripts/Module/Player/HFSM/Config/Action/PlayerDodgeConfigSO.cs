@@ -17,6 +17,8 @@ namespace Module.Player.HFSM.Config.Action
         [Header("闪避位移")]
         [Tooltip("闪避期间的水平速度")]
         [SerializeField, Min(0f)] private float DodgeSpeedValue = 9f;
+        [Tooltip("闪避动画中允许水平位移的结束时间（归一化）")]
+        [SerializeField, Range(0f, 1f)] private float DodgeMoveEndNormalizedTimeValue = 0.55f;
 
         [Header("输入容错")]
         [Tooltip("闪避动作的输入力度平方阈值")]
@@ -27,6 +29,8 @@ namespace Module.Player.HFSM.Config.Action
         public float DodgeSpeed => DodgeSpeedValue;
 
         public float DodgeDuration => GetStateDuration(0);
+
+        public float DodgeMoveDuration => DodgeDuration * DodgeMoveEndNormalizedTimeValue;
 
         public float DodgeInputThresholdSqr => DodgeInputThresholdSqrValue;
 

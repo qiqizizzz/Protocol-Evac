@@ -61,5 +61,12 @@ namespace Module.Player.Context.Runtime
         {
             Velocity = new Vector3(0f, Velocity.y, 0f);
         }
+
+        // 清空当前水平移动意图
+        public void ClearHorizontalMoveIntent()
+        {
+            MoveDir = Vector3.zero;
+            TargetMoveSpeed = 0f;
+        }
     }
 }

@@ -78,6 +78,12 @@ namespace Module.Player.Context.Runtime
             return deltaPosition;
         }
 
+        // 清空尚未消费的根运动位移
+        public void ClearRootMotionDeltaPosition()
+        {
+            RootMotionDeltaPosition = Vector3.zero;
+        }
+
         // 消费一次性动画重播请求
         public PlayerStateId? ConsumeAnimReplayRequest()
         {
