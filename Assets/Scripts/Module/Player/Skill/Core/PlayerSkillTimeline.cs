@@ -96,6 +96,29 @@ namespace Module.Player.Skill.Core
             m_isStepAdvanceRequested = true;
         }
 
+        // 尝试按当前阶段配置提前结束技能
+        public bool TryFinishEarly(PlayerContext context)
+        {
+            if (!IsRunning)
+                return false;
+
+            PlayerSkillStepData stepData = CurrentStep;
+            if (stepData == null)
+                return false;
+
+            bool canEndEarly = CurrentPhase switch
+            {
+                PlayerSkillStepPhase.Begin => stepData.BeginCanEndEarly,
+                PlayerSkillStepPhase.Recovery => stepData.RecoveryCanEndEarly,
+                _ => false
+            };
+            if (!canEndEarly)
+                return false;
+
+            Finish(context);
+            return true;
+        }
+
         // 进入当前技能段落的攻击阶段
         private void EnterCurrentStepBegin(PlayerContext context)
         {

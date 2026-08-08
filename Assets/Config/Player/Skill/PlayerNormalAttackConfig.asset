@@ -17,10 +17,12 @@ MonoBehaviour:
       type: 2}
     BeginDurationValue: 0.6333333
     BeginUseRootMotionValue: 1
+    BeginCanEndEarlyValue: 1
     RecoveryAnimationClipValue: {fileID: 7400000, guid: 4fa24f2b8d158f9458ef1a0286d1eadb,
       type: 2}
     RecoveryDurationValue: 2.3666668
     RecoveryUseRootMotionValue: 1
+    RecoveryCanEndEarlyValue: 1
     ShowWeaponValue: 1
     UseStepAdvanceWindowValue: 1
     StepAdvanceOpenNormalizedTimeValue: 0.4
@@ -33,10 +35,12 @@ MonoBehaviour:
       type: 2}
     BeginDurationValue: 1.4666668
     BeginUseRootMotionValue: 1
+    BeginCanEndEarlyValue: 1
     RecoveryAnimationClipValue: {fileID: 7400000, guid: 7da179929950e4142b0a8443b0713ce5,
       type: 2}
     RecoveryDurationValue: 4.033334
     RecoveryUseRootMotionValue: 1
+    RecoveryCanEndEarlyValue: 1
     ShowWeaponValue: 1
     UseStepAdvanceWindowValue: 1
     StepAdvanceOpenNormalizedTimeValue: 0.3
@@ -49,10 +53,12 @@ MonoBehaviour:
       type: 2}
     BeginDurationValue: 1.9666667
     BeginUseRootMotionValue: 1
+    BeginCanEndEarlyValue: 1
     RecoveryAnimationClipValue: {fileID: 7400000, guid: 9209ac3cac02d2c4d9d827c7bba131e4,
       type: 2}
     RecoveryDurationValue: 5.166667
     RecoveryUseRootMotionValue: 1
+    RecoveryCanEndEarlyValue: 1
     ShowWeaponValue: 1
     UseStepAdvanceWindowValue: 0
     StepAdvanceOpenNormalizedTimeValue: 0.35

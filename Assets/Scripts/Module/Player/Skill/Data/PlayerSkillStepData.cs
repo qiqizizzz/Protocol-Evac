@@ -39,6 +39,11 @@ namespace Module.Player.Skill.Data
         [FormerlySerializedAs("UseRootMotionValue")]
         [SerializeField] private bool BeginUseRootMotionValue;
 
+        [Group("BeginAnimation")]
+        [LabelText("允许提前结束")]
+        [Tooltip("收到移动或冲刺取消意图时，攻击阶段是否允许提前结束")]
+        [SerializeField] private bool BeginCanEndEarlyValue = true;
+
         [Group("RecoveryAnimation")]
         [LabelText("动画片段")]
         [Tooltip("技能段落的收招阶段动画片段")]
@@ -53,6 +58,11 @@ namespace Module.Player.Skill.Data
         [LabelText("使用 Root Motion")]
         [Tooltip("收招阶段是否使用动画根运动位移")]
         [SerializeField] private bool RecoveryUseRootMotionValue;
+
+        [Group("RecoveryAnimation")]
+        [LabelText("允许提前结束")]
+        [Tooltip("收到移动或冲刺取消意图时，收招阶段是否允许提前结束")]
+        [SerializeField] private bool RecoveryCanEndEarlyValue = true;
 
         [Group("StepSettings")]
         [LabelText("显示武器")]
@@ -109,11 +119,15 @@ namespace Module.Player.Skill.Data
 
         public bool BeginUseRootMotion => BeginUseRootMotionValue;
 
+        public bool BeginCanEndEarly => BeginCanEndEarlyValue;
+
         public AnimationClip RecoveryAnimationClip => RecoveryAnimationClipValue;
 
         public float RecoveryDuration => RecoveryDurationValue;
 
         public bool RecoveryUseRootMotion => RecoveryUseRootMotionValue;
+
+        public bool RecoveryCanEndEarly => RecoveryCanEndEarlyValue;
 
         public float TotalDuration => BeginDurationValue + RecoveryDurationValue;
 

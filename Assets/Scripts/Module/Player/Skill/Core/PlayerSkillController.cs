@@ -19,6 +19,8 @@ namespace Module.Player.Skill.Core
 {
     public sealed class PlayerSkillController : BaseController
     {
+        private const float MOVE_INPUT_THRESHOLD_SQR = 0.01f;
+
         private readonly PlayerContext m_context;
         private readonly CombatHitbox m_combatHitbox;
         private readonly GameObject m_damageSource;
@@ -27,6 +29,8 @@ namespace Module.Player.Skill.Core
 
         private int m_hitWindowStepIndex;
         private bool m_isHitWindowOpen;
+        private Vector2 m_previousMoveInput;
+        private bool m_wasSprintActive;
 
         public PlayerSkillType? CurrentSkillType => m_timeline.CurrentSkillType;
         public int CurrentStepIndex => m_timeline.CurrentStepIndex;
@@ -65,11 +69,18 @@ namespace Module.Player.Skill.Core
             }
 
             m_timeline.Open(skillType, config, m_context);
+            RecordCancelInputState();
             SyncHitWindow();
         }
 
         public override void Tick(float deltaTime)
         {
+            if (TryFinishEarlyByPlayerInput())
+            {
+                SyncHitWindow();
+                return;
+            }
+
             m_timeline.Tick(deltaTime, m_context);
             SyncHitWindow();
         }
@@ -78,6 +89,7 @@ namespace Module.Player.Skill.Core
         {
             CloseHitWindow();
             m_timeline.Close(m_context);
+            ResetCancelInputState();
         }
 
         // 销毁时关闭当前技能
@@ -103,6 +115,38 @@ namespace Module.Player.Skill.Core
             }
 
             m_skillConfigs[skillType] = config;
+        }
+
+        // 根据新的移动或疾跑意图尝试提前结束当前技能
+        private bool TryFinishEarlyByPlayerInput()
+        {
+            if (!m_timeline.IsRunning)
+                return false;
+
+            bool hasMoveInput = m_context.Input.MoveInput.sqrMagnitude > MOVE_INPUT_THRESHOLD_SQR;
+            bool hadMoveInput = m_previousMoveInput.sqrMagnitude > MOVE_INPUT_THRESHOLD_SQR;
+            bool hasNewMoveInput = hasMoveInput && !hadMoveInput;
+            bool hasNewSprintInput = m_context.Input.IsSprintActive && !m_wasSprintActive;
+            RecordCancelInputState();
+
+            if (!hasNewMoveInput && !hasNewSprintInput)
+                return false;
+
+            return m_timeline.TryFinishEarly(m_context);
+        }
+
+        // 记录本帧取消输入状态
+        private void RecordCancelInputState()
+        {
+            m_previousMoveInput = m_context.Input.MoveInput;
+            m_wasSprintActive = m_context.Input.IsSprintActive;
+        }
+
+        // 重置取消输入状态
+        private void ResetCancelInputState()
+        {
+            m_previousMoveInput = Vector2.zero;
+            m_wasSprintActive = false;
         }
 
         // 根据当前技能段落与时间轴同步命中窗口
