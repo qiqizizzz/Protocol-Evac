@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 2c6661c6244bd31468005b7e671f85ce
+guid: d8af238977301cb45a4ed1e915363b97
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
@@ -33,18 +33,18 @@ ModelImporter:
     extraUserProperties: []
     clipAnimations:
     - serializedVersion: 16
-      name: SprintRun
+      name: Stop_Walk_L
       takeName: Scene
       internalID: -623603649343465320
       firstFrame: 0
-      lastFrame: 16
+      lastFrame: 93
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
       cycleOffset: 0
       loop: 0
       hasAdditiveReferencePose: 0
-      loopTime: 1
+      loopTime: 0
       loopBlend: 0
       loopBlendOrientation: 0
       loopBlendPositionY: 0
