@@ -34,13 +34,13 @@ namespace Module.Player.HFSM.Transition.Rules
                     PlayerTransitionPriority.Skill, () => CanTriggerNormalAttack(context, normalAttackConfig), 30),
 
                 new PlayerTransitionRule(PlayerStateId.SkillNormalAttack, PlayerStateId.AirborneFall,
-                    PlayerTransitionPriority.Skill, () => context.IsStateFinished && !context.IsGrounded, 20),
+                    PlayerTransitionPriority.Skill, () => context.Action.IsStateFinished && !context.Movement.IsGrounded, 20),
 
                 new PlayerTransitionRule(PlayerStateId.SkillNormalAttack, PlayerStateId.GroundedMove,
-                    PlayerTransitionPriority.Skill, () => context.IsStateFinished && context.IsGrounded && CanMove(context), 10),
+                    PlayerTransitionPriority.Skill, () => context.Action.IsStateFinished && context.Movement.IsGrounded && CanMove(context), 10),
 
                 new PlayerTransitionRule(PlayerStateId.SkillNormalAttack, PlayerStateId.GroundedIdle,
-                    PlayerTransitionPriority.Skill, () => context.IsStateFinished && context.IsGrounded)
+                    PlayerTransitionPriority.Skill, () => context.Action.IsStateFinished && context.Movement.IsGrounded)
             };
         }
 
@@ -48,18 +48,18 @@ namespace Module.Player.HFSM.Transition.Rules
         private static bool CanTriggerNormalAttack(PlayerContext context, PlayerNormalAttackConfigSO normalAttackConfig)
         {
             return
-                !context.IsInputLocked &&
-                !context.IsMovementLocked &&
-                context.IsGrounded &&
-                context.InputBuffer.Has(PlayerBufferedInputType.NormalAttack, Time.time, normalAttackConfig.NormalAttackBufferTime);
+                !context.Input.IsInputLocked &&
+                !context.Movement.IsMovementLocked &&
+                context.Movement.IsGrounded &&
+                context.Input.Buffer.Has(PlayerBufferedInputType.NormalAttack, Time.time, normalAttackConfig.NormalAttackBufferTime);
         }
 
         // 判断技能结束后是否应回到地面移动
         private static bool CanMove(PlayerContext context)
         {
             return
-                !context.IsInputLocked &&
-                context.MoveInput.sqrMagnitude > MOVE_INPUT_THRESHOLD_SQR;
+                !context.Input.IsInputLocked &&
+                context.Input.MoveInput.sqrMagnitude > MOVE_INPUT_THRESHOLD_SQR;
         }
     }
 }

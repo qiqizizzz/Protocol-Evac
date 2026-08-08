@@ -156,6 +156,15 @@ namespace Module.Player.Input
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""LockOn"",
+                    ""type"": ""Button"",
+                    ""id"": ""0c9500d5-5b08-4c01-b312-2ff1bdf52324"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -290,6 +299,17 @@ namespace Module.Player.Input
                     ""action"": ""SwitchToThirdPerson"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""935c7f28-3124-442b-832e-d4f10f8dd5c3"",
+                    ""path"": ""<Mouse>/middleButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""LockOn"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -333,6 +353,7 @@ namespace Module.Player.Input
             m_Player_SwitchToFirstPerson = m_Player.FindAction("SwitchToFirstPerson", throwIfNotFound: true);
             m_Player_SwitchToThirdPerson = m_Player.FindAction("SwitchToThirdPerson", throwIfNotFound: true);
             m_Player_Attack = m_Player.FindAction("Attack", throwIfNotFound: true);
+            m_Player_LockOn = m_Player.FindAction("LockOn", throwIfNotFound: true);
         }
 
         ~@PlayerInputActions()
@@ -420,6 +441,7 @@ namespace Module.Player.Input
         private readonly InputAction m_Player_SwitchToFirstPerson;
         private readonly InputAction m_Player_SwitchToThirdPerson;
         private readonly InputAction m_Player_Attack;
+        private readonly InputAction m_Player_LockOn;
         /// <summary>
         /// Provides access to input actions defined in input action map "Player".
         /// </summary>
@@ -459,6 +481,10 @@ namespace Module.Player.Input
             /// Provides access to the underlying input action "Player/Attack".
             /// </summary>
             public InputAction @Attack => m_Wrapper.m_Player_Attack;
+            /// <summary>
+            /// Provides access to the underlying input action "Player/LockOn".
+            /// </summary>
+            public InputAction @LockOn => m_Wrapper.m_Player_LockOn;
             /// <summary>
             /// Provides access to the underlying input action map instance.
             /// </summary>
@@ -506,6 +532,9 @@ namespace Module.Player.Input
                 @Attack.started += instance.OnAttack;
                 @Attack.performed += instance.OnAttack;
                 @Attack.canceled += instance.OnAttack;
+                @LockOn.started += instance.OnLockOn;
+                @LockOn.performed += instance.OnLockOn;
+                @LockOn.canceled += instance.OnLockOn;
             }
 
             /// <summary>
@@ -538,6 +567,9 @@ namespace Module.Player.Input
                 @Attack.started -= instance.OnAttack;
                 @Attack.performed -= instance.OnAttack;
                 @Attack.canceled -= instance.OnAttack;
+                @LockOn.started -= instance.OnLockOn;
+                @LockOn.performed -= instance.OnLockOn;
+                @LockOn.canceled -= instance.OnLockOn;
             }
 
             /// <summary>
@@ -653,6 +685,13 @@ namespace Module.Player.Input
             /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
             /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
             void OnAttack(InputAction.CallbackContext context);
+            /// <summary>
+            /// Method invoked when associated input action "LockOn" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+            /// </summary>
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+            void OnLockOn(InputAction.CallbackContext context);
         }
     }
 }

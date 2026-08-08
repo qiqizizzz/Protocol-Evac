@@ -42,21 +42,21 @@ namespace Module.Player.HFSM.States.Ground
 
         public override void FixedTick(float fixedDeltaTime)
         {
-            Vector2 moveInput = m_context.MoveInput;
+            Vector2 moveInput = m_context.Input.MoveInput;
             Vector3 moveDir = PlayerMoveDirectionResolver.Resolve(m_context, moveInput);
 
-            m_context.MoveDir = moveDir;
-            m_context.TargetMoveSpeed = m_context.IsSprintPressed ? m_moveConfig.SprintSpeed : m_moveConfig.WalkSpeed;
+            m_context.Movement.MoveDir = moveDir;
+            m_context.Movement.TargetMoveSpeed = m_context.Input.IsSprintPressed ? m_moveConfig.SprintSpeed : m_moveConfig.WalkSpeed;
         }
 
         // 根据当前移动档位刷新武器表现
         private void RefreshWeaponVisibility()
         {
-            PlayerStateClipData clipData = m_context.IsSprintPressed
+            PlayerStateClipData clipData = m_context.Input.IsSprintPressed
                 ? m_moveConfig.RunClipData
                 : m_moveConfig.WalkClipData;
 
-            m_context.IsWeaponVisible = clipData.ShowWeapon;
+            m_context.Action.IsWeaponVisible = clipData.ShowWeapon;
         }
     }
 }

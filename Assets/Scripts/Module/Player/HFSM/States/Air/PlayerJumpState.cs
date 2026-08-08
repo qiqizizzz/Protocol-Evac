@@ -30,12 +30,12 @@ namespace Module.Player.HFSM.States.Air
         // 进入跳跃状态并应用空中配置的武器表现
         public override void Enter()
         {
-            m_context.InputBuffer.Consume(PlayerBufferedInputType.Jump);
-            m_context.RequestAnimReplay(PlayerStateId.AirborneJump);
-            m_context.IsWeaponVisible = m_airConfig.JumpBeginClipData.ShowWeapon;
-            Vector3 velocity = m_context.Velocity;
+            m_context.Input.Buffer.Consume(PlayerBufferedInputType.Jump);
+            m_context.Action.RequestAnimReplay(PlayerStateId.AirborneJump);
+            m_context.Action.IsWeaponVisible = m_airConfig.JumpBeginClipData.ShowWeapon;
+            Vector3 velocity = m_context.Movement.Velocity;
             velocity.y = m_airConfig.JumpForce;
-            m_context.Velocity = velocity;
+            m_context.Movement.Velocity = velocity;
         }
     }
 }

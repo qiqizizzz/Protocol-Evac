@@ -68,7 +68,7 @@ namespace Module.Player.HFSM.Animation
         // 消费并执行一次性动画重播请求
         private void ApplyReplayRequest()
         {
-            PlayerStateId? stateId = m_context.ConsumeAnimReplayRequest();
+            PlayerStateId? stateId = m_context.Action.ConsumeAnimReplayRequest();
             if (stateId == PlayerStateId.AirborneJump)
             {
                 m_animator.CrossFadeInFixedTime(S_JumpStateHash, 0.03f, 0, 0f);
@@ -83,7 +83,7 @@ namespace Module.Player.HFSM.Animation
 
             if (stateId == PlayerStateId.GroundedIdle || stateId == PlayerStateId.GroundedMove)
             {
-                float blendDuration = m_context.AnimReplayBlendDuration > 0f ? m_context.AnimReplayBlendDuration : 0.05f;
+                float blendDuration = m_context.Action.AnimReplayBlendDuration > 0f ? m_context.Action.AnimReplayBlendDuration : 0.05f;
                 m_animator.CrossFadeInFixedTime(S_GroundedCommonStateHash, blendDuration, 0, 0f);
                 return;
             }
@@ -100,16 +100,16 @@ namespace Module.Player.HFSM.Animation
         // 根据普攻段数与阶段解析 Animator 状态
         private bool TryGetNormalAttackStateHash(out int fullStateHash)
         {
-            fullStateHash = m_context.NormalAttackPhase switch
+            fullStateHash = m_context.Action.NormalAttackPhase switch
             {
-                PlayerSkillStepPhase.Begin => m_context.NormalAttackIndex switch
+                PlayerSkillStepPhase.Begin => m_context.Action.NormalAttackIndex switch
                 {
                     0 => S_SkillNormalAttack01StateHash,
                     1 => S_SkillNormalAttack02StateHash,
                     2 => S_SkillNormalAttack03StateHash,
                     _ => 0
                 },
-                PlayerSkillStepPhase.Recovery => m_context.NormalAttackIndex switch
+                PlayerSkillStepPhase.Recovery => m_context.Action.NormalAttackIndex switch
                 {
                     0 => S_SkillNormalAttack01RecoveryStateHash,
                     1 => S_SkillNormalAttack02RecoveryStateHash,
@@ -122,7 +122,7 @@ namespace Module.Player.HFSM.Animation
             if (fullStateHash != 0)
                 return true;
 
-            QLog.Error($"播放普攻动画失败：段数 {m_context.NormalAttackIndex}，阶段 {m_context.NormalAttackPhase}");
+            QLog.Error($"播放普攻动画失败：段数 {m_context.Action.NormalAttackIndex}，阶段 {m_context.Action.NormalAttackPhase}");
             return false;
         }
     }

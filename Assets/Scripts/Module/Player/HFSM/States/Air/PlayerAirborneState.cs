@@ -38,22 +38,22 @@ namespace Module.Player.HFSM.States.Air
         {
             if (!CanAirMove())
             {
-                m_context.MoveDir = Vector3.zero;
-                m_context.TargetMoveSpeed = 0f;
+                m_context.Movement.MoveDir = Vector3.zero;
+                m_context.Movement.TargetMoveSpeed = 0f;
                 return;
             }
 
-            m_context.MoveDir = PlayerMoveDirectionResolver.Resolve(m_context, m_context.MoveInput);
-            m_context.TargetMoveSpeed = m_airConfig.AirMoveSpeed;
+            m_context.Movement.MoveDir = PlayerMoveDirectionResolver.Resolve(m_context, m_context.Input.MoveInput);
+            m_context.Movement.TargetMoveSpeed = m_airConfig.AirMoveSpeed;
         }
 
         // 判断玩家当前是否可以进行空中水平移动
         private bool CanAirMove()
         {
             return
-                !m_context.IsInputLocked &&
-                !m_context.IsMovementLocked &&
-                m_context.MoveInput.sqrMagnitude > MOVE_INPUT_THRESHOLD_SQR;
+                !m_context.Input.IsInputLocked &&
+                !m_context.Movement.IsMovementLocked &&
+                m_context.Input.MoveInput.sqrMagnitude > MOVE_INPUT_THRESHOLD_SQR;
         }
     }
 }

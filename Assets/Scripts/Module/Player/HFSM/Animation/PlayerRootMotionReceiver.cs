@@ -52,14 +52,14 @@ namespace Module.Player.HFSM.Animation
             RestoreAnimatorAnchor();
             RestoreRootMotionNodeAnchor();
 
-            if (!m_context.IsRootMotionMoveEnabled)
+            if (!m_context.Action.IsRootMotionMoveEnabled)
                 return;
 
             deltaPosition.y = 0f;
             if (deltaPosition.sqrMagnitude <= 0f)
                 return;
 
-            m_context.AddRootMotionDeltaPosition(deltaPosition);
+            m_context.Action.AddRootMotionDeltaPosition(deltaPosition);
         }
 
         private void LateUpdate()

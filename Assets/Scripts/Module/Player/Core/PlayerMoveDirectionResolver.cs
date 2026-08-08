@@ -17,10 +17,10 @@ namespace Module.Player.Core
         // 根据当前视角模式计算玩家移动方向
         public static Vector3 Resolve(PlayerContext context, Vector2 moveInput)
         {
-            if (context.ViewMode == PlayerViewMode.FirstPerson)
+            if (context.View.ViewMode == PlayerViewMode.FirstPerson)
                 return BuildMoveDirection(context.Transform.forward, context.Transform.right, moveInput);
 
-            Quaternion cameraYawRotation = Quaternion.Euler(0f, context.CameraYaw, 0f);
+            Quaternion cameraYawRotation = Quaternion.Euler(0f, context.View.CameraYaw, 0f);
             Vector3 cameraForward = cameraYawRotation * Vector3.forward;
             Vector3 cameraRight = cameraYawRotation * Vector3.right;
 
@@ -30,10 +30,10 @@ namespace Module.Player.Core
         // 获取当前视角下的水平前方向
         public static Vector3 ResolveForward(PlayerContext context)
         {
-            if (context.ViewMode == PlayerViewMode.FirstPerson)
+            if (context.View.ViewMode == PlayerViewMode.FirstPerson)
                 return FlattenDirection(context.Transform.forward);
 
-            Quaternion cameraYawRotation = Quaternion.Euler(0f, context.CameraYaw, 0f);
+            Quaternion cameraYawRotation = Quaternion.Euler(0f, context.View.CameraYaw, 0f);
             return FlattenDirection(cameraYawRotation * Vector3.forward);
         }
 

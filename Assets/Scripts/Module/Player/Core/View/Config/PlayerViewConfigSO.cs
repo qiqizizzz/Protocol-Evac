@@ -35,6 +35,14 @@ namespace Module.Player.Core.View.Config
         [Tooltip("第三人称相机本地位置")]
         [SerializeField] private Vector3 ThirdPersonCameraLocalPositionValue = new Vector3(0f, 1.45f, -4f);
 
+        [Header("锁定目标")]
+        [Tooltip("按下锁定输入时搜索 Enemy Tag 目标的最大水平距离")]
+        [SerializeField, Min(0f)] private float LockRangeValue = 8f;
+        [Tooltip("锁定目标超过该水平距离时自动解除锁定")]
+        [SerializeField, Min(0f)] private float LockReleaseRangeValue = 12f;
+        [Tooltip("锁定时相机水平朝向目标的最大旋转速度")]
+        [SerializeField, Min(0f)] private float LockCameraYawSpeedValue = 360f;
+
         [Header("垂直视角限制")]
         [Tooltip("最低俯仰角")]
         [SerializeField] private float PitchMinValue = -60f;
@@ -56,6 +64,12 @@ namespace Module.Player.Core.View.Config
         public float ThirdPersonBodyTurnSpeed => ThirdPersonBodyTurnSpeedValue;
 
         public Vector3 ThirdPersonCameraLocalPosition => ThirdPersonCameraLocalPositionValue;
+
+        public float LockRange => LockRangeValue;
+
+        public float LockReleaseRange => LockReleaseRangeValue;
+
+        public float LockCameraYawSpeed => LockCameraYawSpeedValue;
 
         public float PitchMin => PitchMinValue;
 

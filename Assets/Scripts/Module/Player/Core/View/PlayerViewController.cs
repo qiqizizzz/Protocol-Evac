@@ -15,6 +15,8 @@ namespace Module.Player.Core.View
 {
     public sealed class PlayerViewController : BaseController
     {
+        private const string ENEMY_TAG = "Enemy";
+
         private readonly PlayerContext m_context;
         private readonly PlayerViewConfigSO m_viewConfig;
         private readonly Transform m_viewRoot;
@@ -32,9 +34,9 @@ namespace Module.Player.Core.View
         // 初始化玩家视角控制器
         protected override void OnInit()
         {
-            m_context.ViewMode = m_viewConfig.DefaultViewMode;
-            m_context.CameraYaw = m_context.Transform.eulerAngles.y;
-            m_context.CameraPitch = 0f;
+            m_context.View.ViewMode = m_viewConfig.DefaultViewMode;
+            m_context.View.CameraYaw = m_context.Transform.eulerAngles.y;
+            m_context.View.CameraPitch = 0f;
             RefreshCameraTransform();
         }
 
@@ -42,6 +44,8 @@ namespace Module.Player.Core.View
         public override void Tick(float deltaTime)
         {
             SwitchPlayerView();
+            RefreshLockTarget();
+            HandleLockOnToggleRequest();
             UpdateViewAngles(deltaTime);
             RefreshCameraTransform();
         }
@@ -49,35 +53,123 @@ namespace Module.Player.Core.View
         // 处理玩家视角模式切换请求
         private void SwitchPlayerView()
         {
-            if (!m_context.TargetViewMode.HasValue)
+            if (!m_context.View.TargetViewMode.HasValue)
                 return;
 
             //切换视角
-            m_context.ViewMode = m_context.TargetViewMode.Value;
-            m_context.CameraYaw = m_context.Transform.eulerAngles.y;
+            m_context.View.ViewMode = m_context.View.TargetViewMode.Value;
+            m_context.View.CameraYaw = m_context.Transform.eulerAngles.y;
+            if (m_context.View.ViewMode == PlayerViewMode.FirstPerson)
+                m_context.View.ClearLockTarget();
             RefreshCameraTransform();
-            m_context.TargetViewMode = null;//置空
+            m_context.View.TargetViewMode = null;//置空
+        }
+
+        // 刷新锁定目标有效性并处理自动解除锁定
+        private void RefreshLockTarget()
+        {
+            if (!m_context.View.IsLockOn)
+                return;
+
+            if (m_context.View.ViewMode != PlayerViewMode.ThirdPerson || !IsLockTargetValid(m_context.View.LockTarget))
+                m_context.View.ClearLockTarget();
+        }
+
+        // 消费锁定输入并在锁定与解除锁定之间切换
+        private void HandleLockOnToggleRequest()
+        {
+            if (!m_context.Input.ConsumeLockOnToggleRequest())
+                return;
+
+            if (m_context.View.IsLockOn)
+            {
+                m_context.View.ClearLockTarget();
+                return;
+            }
+
+            if (m_context.View.ViewMode != PlayerViewMode.ThirdPerson)
+                return;
+
+            Transform closestEnemyTarget = FindClosestEnemyTarget();
+            if (closestEnemyTarget != null)
+                m_context.View.SetLockTarget(closestEnemyTarget);
+        }
+
+        // 搜索锁定范围内距离玩家最近的 Enemy Tag 目标
+        private Transform FindClosestEnemyTarget()
+        {
+            GameObject[] enemyObjects = GameObject.FindGameObjectsWithTag(ENEMY_TAG);
+            Transform closestTarget = null;
+            float closestSqrDistance = m_viewConfig.LockRange * m_viewConfig.LockRange;
+
+            foreach (GameObject enemyObject in enemyObjects)
+            {
+                float sqrDistance = GetHorizontalSqrDistance(enemyObject.transform.position);
+                if (sqrDistance > closestSqrDistance)
+                    continue;
+
+                closestTarget = enemyObject.transform;
+                closestSqrDistance = sqrDistance;
+            }
+
+            return closestTarget;
+        }
+
+        // 判断当前锁定目标是否仍可继续锁定
+        private bool IsLockTargetValid(Transform lockTarget)
+        {
+            if (lockTarget == null || !lockTarget.gameObject.activeInHierarchy)
+                return false;
+
+            float lockReleaseRangeSqr = m_viewConfig.LockReleaseRange * m_viewConfig.LockReleaseRange;
+            return GetHorizontalSqrDistance(lockTarget.position) <= lockReleaseRangeSqr;
+        }
+
+        // 获取玩家与目标位置的水平距离平方
+        private float GetHorizontalSqrDistance(Vector3 targetPosition)
+        {
+            Vector3 direction = targetPosition - m_context.Transform.position;
+            direction.y = 0f;
+            return direction.sqrMagnitude;
         }
 
         // 根据输入更新视角水平角与俯仰角
         private void UpdateViewAngles(float deltaTime)
         {
-            Vector2 lookInput = m_context.LookInput;
+            Vector2 lookInput = m_context.Input.LookInput;
             
-            float yawSpeed = m_context.ViewMode == PlayerViewMode.FirstPerson
+            float yawSpeed = m_context.View.ViewMode == PlayerViewMode.FirstPerson
                 ? m_viewConfig.FirstPersonYawSpeed
                 : m_viewConfig.ThirdPersonYawSpeed;
-            float pitchSpeed = m_context.ViewMode == PlayerViewMode.FirstPerson
+            float pitchSpeed = m_context.View.ViewMode == PlayerViewMode.FirstPerson
                 ? m_viewConfig.FirstPersonPitchSpeed
                 : m_viewConfig.ThirdPersonPitchSpeed;
 
-            m_context.CameraYaw += lookInput.x * yawSpeed * deltaTime;
-            m_context.CameraPitch -= lookInput.y * pitchSpeed * deltaTime;
-            m_context.CameraPitch = Mathf.Clamp(m_context.CameraPitch, m_viewConfig.PitchMin, m_viewConfig.PitchMax);
+            if (m_context.View.IsLockOn)
+                FollowLockTargetYaw(deltaTime);
+            else
+                m_context.View.CameraYaw += lookInput.x * yawSpeed * deltaTime;
+            m_context.View.CameraPitch -= lookInput.y * pitchSpeed * deltaTime;
+            m_context.View.CameraPitch = Mathf.Clamp(m_context.View.CameraPitch, m_viewConfig.PitchMin, m_viewConfig.PitchMax);
             
             //第一人称模式下使用视角水平角驱动身体朝向
-            if (m_context.ViewMode == PlayerViewMode.FirstPerson)
-                m_context.Transform.rotation = Quaternion.Euler(0f, m_context.CameraYaw, 0f);
+            if (m_context.View.ViewMode == PlayerViewMode.FirstPerson)
+                m_context.Transform.rotation = Quaternion.Euler(0f, m_context.View.CameraYaw, 0f);
+        }
+
+        // 锁定时平滑修正相机水平朝向目标
+        private void FollowLockTargetYaw(float deltaTime)
+        {
+            Vector3 targetDirection = m_context.View.LockTarget.position - m_context.Transform.position;
+            targetDirection.y = 0f;
+            if (targetDirection.sqrMagnitude <= 0.0001f)
+                return;
+
+            float targetYaw = Quaternion.LookRotation(targetDirection.normalized).eulerAngles.y;
+            m_context.View.CameraYaw = Mathf.MoveTowardsAngle(
+                m_context.View.CameraYaw,
+                targetYaw,
+                m_viewConfig.LockCameraYawSpeed * deltaTime);
         }
         
         // 根据当前视角模式刷新相机枢轴与相机本地位置
@@ -85,15 +177,15 @@ namespace Module.Player.Core.View
         {
             m_viewRoot.position = m_context.Transform.position;
 
-            if (m_context.ViewMode == PlayerViewMode.FirstPerson)
+            if (m_context.View.ViewMode == PlayerViewMode.FirstPerson)
             {
-                m_viewRoot.rotation = Quaternion.Euler(0f, m_context.CameraYaw, 0f);
+                m_viewRoot.rotation = Quaternion.Euler(0f, m_context.View.CameraYaw, 0f);
                 m_playerCamera.transform.localPosition = m_viewConfig.FirstPersonCameraLocalPosition;
-                m_playerCamera.transform.localRotation = Quaternion.Euler(m_context.CameraPitch, 0f, 0f);
+                m_playerCamera.transform.localRotation = Quaternion.Euler(m_context.View.CameraPitch, 0f, 0f);
                 return;
             }
 
-            Quaternion viewRotation = Quaternion.Euler(m_context.CameraPitch, m_context.CameraYaw, 0f);
+            Quaternion viewRotation = Quaternion.Euler(m_context.View.CameraPitch, m_context.View.CameraYaw, 0f);
             m_viewRoot.rotation = viewRotation;
             m_playerCamera.transform.localPosition = m_viewConfig.ThirdPersonCameraLocalPosition;
             m_playerCamera.transform.localRotation = Quaternion.identity;

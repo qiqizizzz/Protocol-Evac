@@ -34,13 +34,13 @@ namespace Module.Player.HFSM.Transition.Rules
                     PlayerTransitionPriority.Action, () => CanDodge(context, dodgeConfig), 30),
 
                 new PlayerTransitionRule(PlayerStateId.ActionDodge, PlayerStateId.AirborneFall,
-                    PlayerTransitionPriority.Action, () => context.IsStateFinished && !context.IsGrounded, 20),
+                    PlayerTransitionPriority.Action, () => context.Action.IsStateFinished && !context.Movement.IsGrounded, 20),
 
                 new PlayerTransitionRule(PlayerStateId.ActionDodge, PlayerStateId.GroundedMove,
-                    PlayerTransitionPriority.Action, () => context.IsStateFinished && context.IsGrounded && CanMove(context), 10),
+                    PlayerTransitionPriority.Action, () => context.Action.IsStateFinished && context.Movement.IsGrounded && CanMove(context), 10),
 
                 new PlayerTransitionRule(PlayerStateId.ActionDodge, PlayerStateId.GroundedIdle,
-                    PlayerTransitionPriority.Action, () => context.IsStateFinished && context.IsGrounded)
+                    PlayerTransitionPriority.Action, () => context.Action.IsStateFinished && context.Movement.IsGrounded)
             };
         }
 
@@ -48,18 +48,18 @@ namespace Module.Player.HFSM.Transition.Rules
         private static bool CanDodge(PlayerContext context, PlayerDodgeConfigSO dodgeConfig)
         {
             return
-                !context.IsInputLocked &&
-                !context.IsMovementLocked &&
-                context.IsGrounded &&
-                context.InputBuffer.Has(PlayerBufferedInputType.Dodge, Time.time, dodgeConfig.DodgeBufferTime);
+                !context.Input.IsInputLocked &&
+                !context.Movement.IsMovementLocked &&
+                context.Movement.IsGrounded &&
+                context.Input.Buffer.Has(PlayerBufferedInputType.Dodge, Time.time, dodgeConfig.DodgeBufferTime);
         }
 
         // 判断动作结束后是否应回到地面移动
         private static bool CanMove(PlayerContext context)
         {
             return
-                !context.IsInputLocked &&
-                context.MoveInput.sqrMagnitude > MOVE_INPUT_THRESHOLD_SQR;
+                !context.Input.IsInputLocked &&
+                context.Input.MoveInput.sqrMagnitude > MOVE_INPUT_THRESHOLD_SQR;
         }
     }
 }

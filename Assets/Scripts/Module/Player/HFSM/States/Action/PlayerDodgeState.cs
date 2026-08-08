@@ -36,15 +36,15 @@ namespace Module.Player.HFSM.States.Action
         public override void Enter()
         {
             m_dodgeTimer.Reset();
-            m_context.InputBuffer.Consume(PlayerBufferedInputType.Dodge);
-            m_context.IsStateFinished = false;
-            m_context.IsMovementLocked = true;
-            m_context.IsWeaponVisible = m_dodgeConfig.DodgeClipData.ShowWeapon;
+            m_context.Input.Buffer.Consume(PlayerBufferedInputType.Dodge);
+            m_context.Action.IsStateFinished = false;
+            m_context.Movement.IsMovementLocked = true;
+            m_context.Action.IsWeaponVisible = m_dodgeConfig.DodgeClipData.ShowWeapon;
 
             Vector3 dodgeDirection = ResolveDodgeDirection();
-            m_context.MoveDir = dodgeDirection;
-            m_context.SetForcedMoveVelocity(dodgeDirection * m_dodgeConfig.DodgeSpeed);
-            m_context.RequestAnimReplay(PlayerStateId.ActionDodge);
+            m_context.Movement.MoveDir = dodgeDirection;
+            m_context.Movement.SetForcedMoveVelocity(dodgeDirection * m_dodgeConfig.DodgeSpeed);
+            m_context.Action.RequestAnimReplay(PlayerStateId.ActionDodge);
             
             m_dodgeTimer.Start(m_dodgeConfig.DodgeDuration);
         }
@@ -52,9 +52,9 @@ namespace Module.Player.HFSM.States.Action
         public override void Exit()
         {
             m_dodgeTimer.Reset();
-            m_context.IsStateFinished = false;
-            m_context.IsMovementLocked = false;
-            m_context.ClearForcedMoveVelocity();
+            m_context.Action.IsStateFinished = false;
+            m_context.Movement.IsMovementLocked = false;
+            m_context.Movement.ClearForcedMoveVelocity();
         }
 
         public override void Tick(float deltaTime)
@@ -62,13 +62,13 @@ namespace Module.Player.HFSM.States.Action
             m_dodgeTimer.Tick(deltaTime);
 
             if (m_dodgeTimer.IsFinished)
-                m_context.IsStateFinished = true;
+                m_context.Action.IsStateFinished = true;
         }
 
         // 解析本次闪避方向
         private Vector3 ResolveDodgeDirection()
         {
-            Vector3 inputDirection = PlayerMoveDirectionResolver.Resolve(m_context, m_context.MoveInput);
+            Vector3 inputDirection = PlayerMoveDirectionResolver.Resolve(m_context, m_context.Input.MoveInput);
 
             return inputDirection.sqrMagnitude > m_dodgeConfig.DodgeInputThresholdSqr
                 ? inputDirection.normalized

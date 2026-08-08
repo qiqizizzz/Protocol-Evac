@@ -28,7 +28,7 @@ namespace Module.Player.HFSM.States.Air
         // 进入下落状态并应用空中配置的武器表现
         public override void Enter()
         {
-            m_context.IsWeaponVisible = m_airConfig.FallLoopClipData.ShowWeapon;
+            m_context.Action.IsWeaponVisible = m_airConfig.FallLoopClipData.ShowWeapon;
         }
     }
 }

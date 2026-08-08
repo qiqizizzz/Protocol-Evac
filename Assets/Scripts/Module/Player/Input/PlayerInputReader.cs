@@ -12,6 +12,7 @@ using Module.Player.Input.Buffer;
 using Module.Player.Input.Config;
 using Module.Player.Input.Interpreter;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace Module.Player.Input
 {
@@ -28,6 +29,7 @@ namespace Module.Player.Input
             m_inputActions = new PlayerInputActions();
             m_sprintInterpreter = new PlayerSprintInterpreter();
             m_sprintInterpreter.Init(m_context, inputConfig);
+            RegisterDiscreteInputCallbacks();
             m_inputActions.Player.Enable();
         }
 
@@ -37,6 +39,7 @@ namespace Module.Player.Input
             if (m_inputActions == null)
                 return;
 
+            UnregisterDiscreteInputCallbacks();
             m_inputActions.Player.Disable();
             m_inputActions.Dispose();
         }
@@ -45,33 +48,72 @@ namespace Module.Player.Input
         public void Tick()
         {
             //WASD: 移动
-            m_context.MoveInput = m_inputActions.Player.Move.ReadValue<Vector2>();
+            m_context.Input.MoveInput = m_inputActions.Player.Move.ReadValue<Vector2>();
             //Shift: 短按闪避，长按疾跑
             m_sprintInterpreter.Tick(
                 m_inputActions.Player.Sprint.WasPressedThisFrame(),
                 m_inputActions.Player.Sprint.IsPressed(),
                 m_inputActions.Player.Sprint.WasReleasedThisFrame());
-            //Space: 跳跃
-            RecordBufferedInput(PlayerBufferedInputType.Jump, m_inputActions.Player.Jump.WasPressedThisFrame());
-            //鼠标左键: 普通攻击
-            RecordBufferedInput(PlayerBufferedInputType.NormalAttack, m_inputActions.Player.Attack.WasPressedThisFrame());
             //鼠标移动: 视角
-            m_context.LookInput = m_inputActions.Player.Look.ReadValue<Vector2>();
-            //F1/F3: 切换视角
-            m_context.TargetViewMode = m_inputActions.Player.SwitchToFirstPerson.WasPressedThisFrame()
-                ? PlayerViewMode.FirstPerson
-                : m_inputActions.Player.SwitchToThirdPerson.WasPressedThisFrame()
-                    ? PlayerViewMode.ThirdPerson
-                    : null;
+            m_context.Input.LookInput = m_inputActions.Player.Look.ReadValue<Vector2>();
         }
 
-        // 按条件写入离散输入缓存
-        private void RecordBufferedInput(PlayerBufferedInputType inputType, bool wasPressedThisFrame)
+        // 注册一次性离散输入回调
+        private void RegisterDiscreteInputCallbacks()
         {
-            if (!wasPressedThisFrame)
-                return;
-
-            m_context.InputBuffer.Record(inputType, Time.time);
+            m_inputActions.Player.Jump.performed += OnJump;
+            m_inputActions.Player.Attack.performed += OnAttack;
+            m_inputActions.Player.LockOn.performed += OnLockOn;
+            m_inputActions.Player.SwitchToFirstPerson.performed += OnSwitchToFirstPerson;
+            m_inputActions.Player.SwitchToThirdPerson.performed += OnSwitchToThirdPerson;
         }
+
+        // 解除一次性离散输入回调
+        private void UnregisterDiscreteInputCallbacks()
+        {
+            m_inputActions.Player.Jump.performed -= OnJump;
+            m_inputActions.Player.Attack.performed -= OnAttack;
+            m_inputActions.Player.LockOn.performed -= OnLockOn;
+            m_inputActions.Player.SwitchToFirstPerson.performed -= OnSwitchToFirstPerson;
+            m_inputActions.Player.SwitchToThirdPerson.performed -= OnSwitchToThirdPerson;
+        }
+
+        #region 输入回调
+        // 写入跳跃输入缓存
+        private void OnJump(InputAction.CallbackContext context)
+        {
+            RecordBufferedInput(PlayerBufferedInputType.Jump);
+        }
+
+        // 写入普通攻击输入缓存
+        private void OnAttack(InputAction.CallbackContext context)
+        {
+            RecordBufferedInput(PlayerBufferedInputType.NormalAttack);
+        }
+
+        // 请求切换锁定目标状态
+        private void OnLockOn(InputAction.CallbackContext context)
+        {
+            m_context.Input.RequestLockOnToggle();
+        }
+
+        // 请求切换至第一人称视角
+        private void OnSwitchToFirstPerson(InputAction.CallbackContext context)
+        {
+            m_context.View.TargetViewMode = PlayerViewMode.FirstPerson;
+        }
+
+        // 请求切换至第三人称视角
+        private void OnSwitchToThirdPerson(InputAction.CallbackContext context)
+        {
+            m_context.View.TargetViewMode = PlayerViewMode.ThirdPerson;
+        }
+
+        // 写入一次性操作的输入缓存
+        private void RecordBufferedInput(PlayerBufferedInputType inputType)
+        {
+            m_context.Input.Buffer.Record(inputType, Time.time);
+        }
+        #endregion
     }
 }

@@ -113,9 +113,9 @@ namespace Module.Player.Core
         private void InitCore()
         {
             m_context = new PlayerContext(m_transform);
-            m_context.IsGrounded = m_characterController.isGrounded;
-            if (m_context.IsGrounded)
-                m_context.LastGroundedTime = Time.time;
+            m_context.Movement.IsGrounded = m_characterController.isGrounded;
+            if (m_context.Movement.IsGrounded)
+                m_context.Movement.LastGroundedTime = Time.time;
 
             m_inputReader = new PlayerInputReader();
             m_inputReader.Init(m_context, Settings.InputConfig);

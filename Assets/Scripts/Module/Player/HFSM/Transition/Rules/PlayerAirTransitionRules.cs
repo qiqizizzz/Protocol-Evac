@@ -34,19 +34,19 @@ namespace Module.Player.HFSM.Transition.Rules
                     PlayerTransitionPriority.Air, () => CanGroundedJump(context, airConfig), 10),
 
                 new PlayerTransitionRule(PlayerStateId.Grounded, PlayerStateId.AirborneFall,
-                    PlayerTransitionPriority.Air, () => context.HasGroundedChecked && !context.IsGrounded),
+                    PlayerTransitionPriority.Air, () => context.Movement.HasGroundedChecked && !context.Movement.IsGrounded),
 
                 new PlayerTransitionRule(PlayerStateId.AirborneFall, PlayerStateId.AirborneJump,
                     PlayerTransitionPriority.Air, () => CanCoyoteJump(context, airConfig), 20),
 
                 new PlayerTransitionRule(PlayerStateId.AirborneJump, PlayerStateId.AirborneFall,
-                    PlayerTransitionPriority.Air, () => context.Velocity.y <= 0f),
+                    PlayerTransitionPriority.Air, () => context.Movement.Velocity.y <= 0f),
 
                 new PlayerTransitionRule(PlayerStateId.AirborneFall, PlayerStateId.GroundedMove,
-                    PlayerTransitionPriority.Air, () => context.IsGrounded && CanMove(context), 10),
+                    PlayerTransitionPriority.Air, () => context.Movement.IsGrounded && CanMove(context), 10),
 
                 new PlayerTransitionRule(PlayerStateId.AirborneFall, PlayerStateId.GroundedIdle,
-                    PlayerTransitionPriority.Air, () => context.IsGrounded)
+                    PlayerTransitionPriority.Air, () => context.Movement.IsGrounded)
             };
         }
 
@@ -54,7 +54,7 @@ namespace Module.Player.HFSM.Transition.Rules
         private static bool CanGroundedJump(PlayerContext context, PlayerAirConfigSO airConfig)
         {
             return
-                context.IsGrounded &&
+                context.Movement.IsGrounded &&
                 HasBufferedJump(context, airConfig);
         }
 
@@ -63,9 +63,9 @@ namespace Module.Player.HFSM.Transition.Rules
         {
             float nowTime = Time.time;
             return
-                !context.IsGrounded &&
+                !context.Movement.IsGrounded &&
                 HasBufferedJump(context, airConfig) &&
-                nowTime - context.LastGroundedTime <= airConfig.CoyoteTime;
+                nowTime - context.Movement.LastGroundedTime <= airConfig.CoyoteTime;
         }
 
         // 判断玩家是否存在有效跳跃缓存
@@ -73,17 +73,17 @@ namespace Module.Player.HFSM.Transition.Rules
         {
             float nowTime = Time.time;
             return
-                !context.IsInputLocked &&
-                context.InputBuffer.Has(PlayerBufferedInputType.Jump, nowTime, airConfig.JumpBufferTime);
+                !context.Input.IsInputLocked &&
+                context.Input.Buffer.Has(PlayerBufferedInputType.Jump, nowTime, airConfig.JumpBufferTime);
         }
 
         // 判断玩家落地后是否应直接进入移动状态
         private static bool CanMove(PlayerContext context)
         {
             return
-                !context.IsInputLocked &&
-                !context.IsMovementLocked &&
-                context.MoveInput.sqrMagnitude > MOVE_INPUT_THRESHOLD_SQR;
+                !context.Input.IsInputLocked &&
+                !context.Movement.IsMovementLocked &&
+                context.Input.MoveInput.sqrMagnitude > MOVE_INPUT_THRESHOLD_SQR;
         }
     }
 }

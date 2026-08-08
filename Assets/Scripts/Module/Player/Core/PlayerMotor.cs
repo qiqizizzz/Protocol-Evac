@@ -33,8 +33,8 @@ namespace Module.Player.Core
         //固定帧移动
         public void FixedTick(float fixedDeltaTime)
         {
-            Vector3 velocity = m_context.Velocity;
-            Vector3 rootMotionDeltaPosition = m_context.ConsumeRootMotionDeltaPosition();
+            Vector3 velocity = m_context.Movement.Velocity;
+            Vector3 rootMotionDeltaPosition = m_context.Action.ConsumeRootMotionDeltaPosition();
             if (rootMotionDeltaPosition.sqrMagnitude > 0f)
             {
                 ApplyRootMotionMove(rootMotionDeltaPosition, ref velocity, fixedDeltaTime);
@@ -45,14 +45,14 @@ namespace Module.Player.Core
 
             //水平移动
             Vector3 targetHVelocity = Vector3.zero;
-            if (m_context.HasForcedMoveVelocity)
+            if (m_context.Movement.HasForcedMoveVelocity)
             {
-                Vector3 forcedMoveVelocity = m_context.ForcedMoveVelocity;
+                Vector3 forcedMoveVelocity = m_context.Movement.ForcedMoveVelocity;
                 hVelocity = new Vector3(forcedMoveVelocity.x, 0f, forcedMoveVelocity.z);
             }
-            else if (!m_context.IsMovementLocked)
+            else if (!m_context.Movement.IsMovementLocked)
             {
-                targetHVelocity = m_context.MoveDir.normalized * m_context.TargetMoveSpeed;
+                targetHVelocity = m_context.Movement.MoveDir.normalized * m_context.Movement.TargetMoveSpeed;
 
                 //sqrMagnitude是计算向量长度平方的方法
                 //如果目标速度比当前速度大则使用加速度，否则使用减速度
@@ -70,12 +70,14 @@ namespace Module.Player.Core
             velocity.x = hVelocity.x;
             velocity.z = hVelocity.z;
 
-            if (m_context.ViewMode == PlayerViewMode.ThirdPerson)
+            if (m_context.View.ViewMode == PlayerViewMode.ThirdPerson)
             {
-                if (m_context.HasForcedMoveVelocity)
-                    RotateByDirection(m_context.ForcedMoveVelocity, fixedDeltaTime);
-                else if (!m_context.IsMovementLocked)
-                    RotateByDirection(m_context.MoveDir, fixedDeltaTime);
+                if (m_context.Movement.HasForcedMoveVelocity)
+                    RotateByDirection(m_context.Movement.ForcedMoveVelocity, fixedDeltaTime);
+                else if (m_context.View.IsLockOn)
+                    RotateByDirection(m_context.View.LockTarget.position - m_context.Transform.position, fixedDeltaTime);
+                else if (!m_context.Movement.IsMovementLocked)
+                    RotateByDirection(m_context.Movement.MoveDir, fixedDeltaTime);
             }
             
             //竖直移动
@@ -87,11 +89,11 @@ namespace Module.Player.Core
             m_characterController.Move(velocity * fixedDeltaTime);
 
             //更新状态
-            m_context.Velocity = velocity;
-            m_context.IsGrounded = m_characterController.isGrounded;
-            m_context.HasGroundedChecked = true;
-            if (m_context.IsGrounded)
-                m_context.LastGroundedTime = Time.time;
+            m_context.Movement.Velocity = velocity;
+            m_context.Movement.IsGrounded = m_characterController.isGrounded;
+            m_context.Movement.HasGroundedChecked = true;
+            if (m_context.Movement.IsGrounded)
+                m_context.Movement.LastGroundedTime = Time.time;
         }
 
         // 使用动画根运动驱动本次固定帧位移
@@ -107,11 +109,11 @@ namespace Module.Player.Core
 
             velocity.x = 0f;
             velocity.z = 0f;
-            m_context.Velocity = velocity;
-            m_context.IsGrounded = m_characterController.isGrounded;
-            m_context.HasGroundedChecked = true;
-            if (m_context.IsGrounded)
-                m_context.LastGroundedTime = Time.time;
+            m_context.Movement.Velocity = velocity;
+            m_context.Movement.IsGrounded = m_characterController.isGrounded;
+            m_context.Movement.HasGroundedChecked = true;
+            if (m_context.Movement.IsGrounded)
+                m_context.Movement.LastGroundedTime = Time.time;
         }
 
         // 根据移动方向旋转玩家身体

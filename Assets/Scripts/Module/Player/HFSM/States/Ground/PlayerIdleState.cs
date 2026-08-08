@@ -29,15 +29,15 @@ namespace Module.Player.HFSM.States.Ground
         // 进入待机状态并应用移动配置的武器表现
         public override void Enter()
         {
-            m_context.MoveDir = Vector3.zero;
-            m_context.TargetMoveSpeed = 0f;
-            m_context.IsWeaponVisible = m_moveConfig.IdleClipData.ShowWeapon;
+            m_context.Movement.MoveDir = Vector3.zero;
+            m_context.Movement.TargetMoveSpeed = 0f;
+            m_context.Action.IsWeaponVisible = m_moveConfig.IdleClipData.ShowWeapon;
         }
 
         public override void FixedTick(float fixedDeltaTime)
         {
-            m_context.MoveDir = Vector3.zero;
-            m_context.TargetMoveSpeed = 0f;
+            m_context.Movement.MoveDir = Vector3.zero;
+            m_context.Movement.TargetMoveSpeed = 0f;
         }
     }
 }

@@ -38,9 +38,9 @@ namespace Module.Player.HFSM.Transition.Rules
         private static bool CanMove(PlayerContext context)
         {
             return
-                !context.IsInputLocked &&
-                !context.IsMovementLocked &&
-                context.MoveInput.sqrMagnitude > MOVE_INPUT_THRESHOLD_SQR;
+                !context.Input.IsInputLocked &&
+                !context.Movement.IsMovementLocked &&
+                context.Input.MoveInput.sqrMagnitude > MOVE_INPUT_THRESHOLD_SQR;
         }
     }
 }

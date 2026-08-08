@@ -38,25 +38,25 @@ namespace Module.Player.HFSM.States.Skill
 
         public override void Enter()
         {
-            m_context.InputBuffer.Consume(PlayerBufferedInputType.NormalAttack);
-            m_context.IsStateFinished = false;
-            m_context.IsMovementLocked = m_normalAttackConfig.LockMovement;
+            m_context.Input.Buffer.Consume(PlayerBufferedInputType.NormalAttack);
+            m_context.Action.IsStateFinished = false;
+            m_context.Movement.IsMovementLocked = m_normalAttackConfig.LockMovement;
             m_skillController.Open(PlayerSkillType.NormalAttack);
 
             if (!m_skillController.IsRunning)
-                m_context.IsStateFinished = true;
+                m_context.Action.IsStateFinished = true;
         }
 
         public override void Exit()
         {
             m_skillController.Close();
-            m_context.IsStateFinished = false;
-            m_context.IsMovementLocked = false;
-            m_context.NormalAttackIndex = 0;
-            m_context.NormalAttackPhase = PlayerSkillStepPhase.Begin;
+            m_context.Action.IsStateFinished = false;
+            m_context.Movement.IsMovementLocked = false;
+            m_context.Action.NormalAttackIndex = 0;
+            m_context.Action.NormalAttackPhase = PlayerSkillStepPhase.Begin;
 
-            if (m_context.IsGrounded)
-                m_context.RequestAnimReplay(m_context.MoveInput.sqrMagnitude > MOVE_INPUT_THRESHOLD_SQR
+            if (m_context.Movement.IsGrounded)
+                m_context.Action.RequestAnimReplay(m_context.Input.MoveInput.sqrMagnitude > MOVE_INPUT_THRESHOLD_SQR
                     ? PlayerStateId.GroundedMove
                     : PlayerStateId.GroundedIdle,
                     m_normalAttackConfig.NormalAttackExitBlendDuration);
@@ -66,20 +66,20 @@ namespace Module.Player.HFSM.States.Skill
         {
             if (!m_skillController.IsRunning)
             {
-                m_context.IsStateFinished = true;
+                m_context.Action.IsStateFinished = true;
                 return;
             }
 
             if (CanAdvanceCombo())
                 m_skillController.RequestNextStep();
 
-            m_context.IsStateFinished = m_skillController.IsFinished;
+            m_context.Action.IsStateFinished = m_skillController.IsFinished;
         }
 
         // 判断当前普攻是否允许推进下一段
         private bool CanAdvanceCombo()
         {
-            return m_context.InputBuffer.Has(PlayerBufferedInputType.NormalAttack, Time.time, m_normalAttackConfig.NormalAttackBufferTime);
+            return m_context.Input.Buffer.Has(PlayerBufferedInputType.NormalAttack, Time.time, m_normalAttackConfig.NormalAttackBufferTime);
         }
     }
 }

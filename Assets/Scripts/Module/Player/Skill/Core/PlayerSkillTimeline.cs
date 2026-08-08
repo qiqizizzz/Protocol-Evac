@@ -48,7 +48,7 @@ namespace Module.Player.Skill.Core
             m_currentConfig = config;
             m_currentStepIndex = 0;
             IsRunning = true;
-            context.IsStateFinished = false;
+            context.Action.IsStateFinished = false;
 
             EnterCurrentStepBegin(context);
         }
@@ -81,9 +81,9 @@ namespace Module.Player.Skill.Core
         public void Close(PlayerContext context)
         {
             Reset();
-            context.IsStateFinished = false;
-            context.SetRootMotionMoveEnabled(false);
-            context.IsWeaponVisible = false;
+            context.Action.IsStateFinished = false;
+            context.Action.SetRootMotionMoveEnabled(false);
+            context.Action.IsWeaponVisible = false;
         }
         #endregion
         
@@ -112,14 +112,14 @@ namespace Module.Player.Skill.Core
             CurrentPhase = PlayerSkillStepPhase.Begin;
             m_stepTimer.Reset();
             m_stepTimer.Start(stepData.BeginDuration);
-            context.SetRootMotionMoveEnabled(stepData.BeginUseRootMotion);
-            context.IsWeaponVisible = stepData.ShowWeapon;
+            context.Action.SetRootMotionMoveEnabled(stepData.BeginUseRootMotion);
+            context.Action.IsWeaponVisible = stepData.ShowWeapon;
 
             if (CurrentSkillType == PlayerSkillType.NormalAttack)
             {
-                context.NormalAttackIndex = m_currentStepIndex;
-                context.NormalAttackPhase = PlayerSkillStepPhase.Begin;
-                context.RequestAnimReplay(PlayerStateId.SkillNormalAttack);
+                context.Action.NormalAttackIndex = m_currentStepIndex;
+                context.Action.NormalAttackPhase = PlayerSkillStepPhase.Begin;
+                context.Action.RequestAnimReplay(PlayerStateId.SkillNormalAttack);
             }
         }
 
@@ -132,13 +132,13 @@ namespace Module.Player.Skill.Core
             m_isStepAdvanceBuffered = false;
             m_stepTimer.Reset();
             m_stepTimer.Start(stepData.RecoveryDuration);
-            context.SetRootMotionMoveEnabled(stepData.RecoveryUseRootMotion);
-            context.IsWeaponVisible = stepData.ShowWeapon;
+            context.Action.SetRootMotionMoveEnabled(stepData.RecoveryUseRootMotion);
+            context.Action.IsWeaponVisible = stepData.ShowWeapon;
 
             if (CurrentSkillType == PlayerSkillType.NormalAttack)
             {
-                context.NormalAttackPhase = PlayerSkillStepPhase.Recovery;
-                context.RequestAnimReplay(PlayerStateId.SkillNormalAttack);
+                context.Action.NormalAttackPhase = PlayerSkillStepPhase.Recovery;
+                context.Action.RequestAnimReplay(PlayerStateId.SkillNormalAttack);
             }
         }
 
@@ -180,7 +180,7 @@ namespace Module.Player.Skill.Core
                 return false;
 
             if (CurrentSkillType == PlayerSkillType.NormalAttack)
-                context.InputBuffer.Consume(PlayerBufferedInputType.NormalAttack);
+                context.Input.Buffer.Consume(PlayerBufferedInputType.NormalAttack);
 
             m_currentStepIndex = nextStepIndex;
             EnterCurrentStepBegin(context);
@@ -200,9 +200,9 @@ namespace Module.Player.Skill.Core
             m_isStepAdvanceRequested = false;
             m_isStepAdvanceBuffered = false;
             m_stepTimer.Complete();
-            context.IsStateFinished = true;
-            context.SetRootMotionMoveEnabled(false);
-            context.IsWeaponVisible = false;
+            context.Action.IsStateFinished = true;
+            context.Action.SetRootMotionMoveEnabled(false);
+            context.Action.IsWeaponVisible = false;
         }
 
         private void Reset()

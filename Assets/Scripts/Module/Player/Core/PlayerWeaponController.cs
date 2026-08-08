@@ -34,7 +34,7 @@ namespace Module.Player.Core
         public void Init(PlayerContext context)
         {
             m_context = context;
-            m_lastAttackPhase = context.NormalAttackPhase;
+            m_lastAttackPhase = context.Action.NormalAttackPhase;
             RefreshVisibility();
         }
 
@@ -48,16 +48,16 @@ namespace Module.Player.Core
         // 按玩家运行时意图切换武器根节点
         private void RefreshVisibility()
         {
-            if (gameObject.activeSelf == m_context.IsWeaponVisible)
+            if (gameObject.activeSelf == m_context.Action.IsWeaponVisible)
                 return;
 
-            gameObject.SetActive(m_context.IsWeaponVisible);
+            gameObject.SetActive(m_context.Action.IsWeaponVisible);
         }
 
         // 根据普攻阶段驱动武器内部装饰动画
         private void RefreshAnimation()
         {
-            if (!m_context.IsWeaponVisible)
+            if (!m_context.Action.IsWeaponVisible)
             {
                 m_wasWeaponVisible = false;
                 return;
@@ -66,15 +66,15 @@ namespace Module.Player.Core
             if (!m_wasWeaponVisible)
             {
                 PlayOpenedAnimation();
-                m_lastAttackPhase = m_context.NormalAttackPhase;
+                m_lastAttackPhase = m_context.Action.NormalAttackPhase;
                 m_wasWeaponVisible = true;
                 return;
             }
 
-            if (m_lastAttackPhase == m_context.NormalAttackPhase)
+            if (m_lastAttackPhase == m_context.Action.NormalAttackPhase)
                 return;
 
-            m_lastAttackPhase = m_context.NormalAttackPhase;
+            m_lastAttackPhase = m_context.Action.NormalAttackPhase;
             if (m_lastAttackPhase == PlayerSkillStepPhase.Recovery)
             {
                 PlayRecoveryAnimation();
@@ -102,7 +102,7 @@ namespace Module.Player.Core
         // 根据当前普攻段数解析武器收招状态
         private bool TryGetRecoveryStateHash(out int stateHash)
         {
-            stateHash = m_context.NormalAttackIndex switch
+            stateHash = m_context.Action.NormalAttackIndex switch
             {
                 0 => SWeaponClosing01StateHash,
                 1 => SWeaponClosing02StateHash,
@@ -113,7 +113,7 @@ namespace Module.Player.Core
             if (stateHash != 0)
                 return true;
 
-            QLog.Error($"播放武器收招动画失败：普攻段数 {m_context.NormalAttackIndex}");
+            QLog.Error($"播放武器收招动画失败：普攻段数 {m_context.Action.NormalAttackIndex}");
             return false;
         }
     }

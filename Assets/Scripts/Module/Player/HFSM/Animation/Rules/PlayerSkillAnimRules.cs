@@ -35,14 +35,14 @@ namespace Module.Player.HFSM.Animation.Rules
         private static void ResolveNormalAttack(PlayerContext context, ref PlayerAnimParams animParams)
         {
             animParams.MoveSpeed = GetHorizontalSpeed(context);
-            animParams.VerticalSpeed = context.Velocity.y;
-            animParams.IsGrounded = context.IsGrounded;
+            animParams.VerticalSpeed = context.Movement.Velocity.y;
+            animParams.IsGrounded = context.Movement.IsGrounded;
         }
 
         // 获取玩家水平速度
         private static float GetHorizontalSpeed(PlayerContext context)
         {
-            Vector3 velocity = context.Velocity;
+            Vector3 velocity = context.Movement.Velocity;
             velocity.y = 0f;
             return velocity.magnitude;
         }
