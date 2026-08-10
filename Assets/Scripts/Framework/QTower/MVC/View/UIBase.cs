@@ -6,8 +6,11 @@
  * └──────────────────────────────────┘
  */
 
-using UnityEngine;
+using System;
+using System.Collections.Generic;
 using Framework.QTower.Controller;
+using Framework.QTower.Event;
+using UnityEngine;
 
 namespace Framework.QTower.View
 {
@@ -16,6 +19,7 @@ namespace Framework.QTower.View
         public BaseController Controller { get; internal set; }
         public ViewType ViewType { get; internal set; }
 
+        private readonly Dictionary<string, Action> m_events = new();
         private bool m_isInitialized;
 
         public void Init()
@@ -54,9 +58,34 @@ namespace Framework.QTower.View
             if (!m_isInitialized)
                 return;
 
-            UnsubscribeViewEvents();
+            RemoveViewEvent();
             OnDispose();
             m_isInitialized = false;
+        }
+
+        // 注册视图事件并托管注销操作
+        protected void RegisterEvent<TEvent>(string eventName, Action<TEvent> callback)
+        {
+            EventManager.RegisterEvent(eventName, callback);
+            Action removeEvent = () => EventManager.UnregisterEvent(eventName, callback);
+
+            if (m_events.TryGetValue(eventName, out Action registered))
+            {
+                m_events[eventName] = registered + removeEvent;
+                return;
+            }
+
+            m_events.Add(eventName, removeEvent);
+        }
+
+        // 注销指定视图事件
+        protected void UnregisterEvent(string eventName)
+        {
+            if (!m_events.TryGetValue(eventName, out Action removeEvent))
+                return;
+
+            removeEvent.Invoke();
+            m_events.Remove(eventName);
         }
 
         protected virtual void OnInit()
@@ -75,12 +104,17 @@ namespace Framework.QTower.View
         {
         }
 
-        protected virtual void UnsubscribeViewEvents()
+        protected virtual void OnDispose()
         {
         }
 
-        protected virtual void OnDispose()
+        // 移除全部托管视图事件
+        private void RemoveViewEvent()
         {
+            foreach (Action removeEvent in m_events.Values)
+                removeEvent.Invoke();
+
+            m_events.Clear();
         }
     }
 }

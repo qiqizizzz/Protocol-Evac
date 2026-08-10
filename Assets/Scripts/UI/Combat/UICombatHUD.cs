@@ -7,7 +7,6 @@
  */
 
 using Framework.QTower.Common.Defines;
-using Framework.QTower.Event;
 using Framework.QTower.View;
 using UnityEngine.UI;
 using Utils.Find;
@@ -40,12 +39,7 @@ namespace UI.Combat
 
         protected override void SubscribeViewEvents()
         {
-            EventManager.RegisterEvent<bool>(EventDefines.PlayerLockOnStateChanged, SetLockOn);
-        }
-
-        protected override void UnsubscribeViewEvents()
-        {
-            EventManager.UnregisterEvent<bool>(EventDefines.PlayerLockOnStateChanged, SetLockOn);
+            RegisterEvent<bool>(EventDefines.PlayerLockOnStateChanged, SetLockOn);
         }
     }
 }
