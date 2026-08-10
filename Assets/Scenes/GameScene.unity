@@ -15455,7 +15455,7 @@ PrefabInstance:
     - target: {fileID: 293540643525205174, guid: 8a49fc37f7fcd9542aa05ca3ee21c848,
         type: 3}
       propertyPath: m_Name
-      value: CombatHUD
+      value: UICombatHUD
       objectReference: {fileID: 0}
     - target: {fileID: 2041063905785028379, guid: 8a49fc37f7fcd9542aa05ca3ee21c848,
         type: 3}

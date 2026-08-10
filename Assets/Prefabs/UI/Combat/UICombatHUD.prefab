@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2041063905785028379}
   m_Layer: 5
-  m_Name: CombatHUD
+  m_Name: UICombatHUD
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

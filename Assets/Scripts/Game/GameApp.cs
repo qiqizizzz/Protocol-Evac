@@ -7,6 +7,7 @@
  */
 
 using Framework.QTower;
+using Framework.QTower.Common;
 using Framework.QTower.Controller;
 using Module.Timer;
 

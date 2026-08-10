@@ -8,7 +8,7 @@
 
 using System;
 
-namespace Framework.QTower
+namespace Framework.QTower.Common
 {
     public abstract class Singleton<T> where T : Singleton<T>, new()
     {
