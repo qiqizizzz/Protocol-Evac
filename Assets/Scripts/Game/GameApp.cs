@@ -6,6 +6,7 @@
  * └──────────────────────────────────┘
  */
 
+using Common;
 using Framework.QTower;
 using Framework.QTower.Common;
 using Framework.QTower.Controller;
@@ -23,7 +24,6 @@ namespace Game
         {
             TimeManager = new TimeManager();
             ControllerManager = new ControllerManager();
-            UIManager = new UIManager();
         }
 
         protected override void OnTick(float deltaTime)

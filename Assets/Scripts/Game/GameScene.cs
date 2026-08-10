@@ -35,6 +35,7 @@ namespace Game
             DontDestroyOnLoad(gameObject);
             DontDestroyOnLoad(m_uiRoot.gameObject);
             GameApp.Instance.Init();
+            GameApp.Instance.UIManager.SetRoot(m_uiRoot);
         }
 
         private void Update()

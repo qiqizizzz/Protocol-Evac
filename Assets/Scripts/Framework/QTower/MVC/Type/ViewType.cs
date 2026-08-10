@@ -10,6 +10,7 @@ namespace Framework.QTower
 {
     public enum ViewType
     {
-        None = 0
+        None = 0,
+        UICombatHUD = 1
     }
 }

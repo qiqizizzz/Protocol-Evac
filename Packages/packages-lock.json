@@ -35,7 +35,7 @@
     },
     "com.unity.addressables": {
       "version": "1.22.3",
-      "depth": 2,
+      "depth": 0,
       "source": "registry",
       "dependencies": {
         "com.unity.modules.assetbundle": "1.0.0",
@@ -164,7 +164,7 @@
     },
     "com.unity.scriptablebuildpipeline": {
       "version": "1.21.25",
-      "depth": 3,
+      "depth": 1,
       "source": "registry",
       "dependencies": {},
       "url": "https://packages.unity.com"
