@@ -37,6 +37,9 @@
 |   |   |-- 玩家状态与敌人AI设计方案.md ........ Player HFSM、Skill 与 Enemy AI 主设计
 |   |   `-- 技能系统与编辑器设计方案.md ........ Skill 数据、事件与编辑器工具路线
 |   |
+|   |-- 工具与编辑器/
+|   |   `-- AbilityComposer设计方案.md ......... 通用 Ability Composer 的架构、预览与事件编辑方案
+|   |
 |   |-- 战斗系统/
 |   |   `-- 战斗系统总开发文档.md ............... Combat、Player 与 Enemy 的总开发契约与阶段验收
 |   |
