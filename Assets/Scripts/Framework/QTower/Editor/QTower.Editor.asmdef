@@ -1,12 +1,12 @@
 {
-    "name": "Tools.Editor.AbilityComposer",
-    "rootNamespace": "",
+    "name": "QTower.Editor",
+    "rootNamespace": "Framework.QTower.Editor",
     "references": [
-        "GUID:1e6a16ebd49fdb74fad1843f95457608",
-        "QTower.Editor",
         "QTower"
     ],
-    "includePlatforms": [],
+    "includePlatforms": [
+        "Editor"
+    ],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,

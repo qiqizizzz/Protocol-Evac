@@ -7,12 +7,35 @@
  */
 
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using Utils.log;
 
 namespace Utils.Find
 {
     public static class HierarchyFindTool
     {
+        #region Scene Function
+        // 从当前场景根节点中查找指定节点
+        public static Transform FindSceneRoot(string nodeName)
+        {
+            if (string.IsNullOrEmpty(nodeName))
+            {
+                QLog.Error("查找场景根节点失败：节点名称为空");
+                return null;
+            }
+
+            Scene activeScene = SceneManager.GetActiveScene();
+            foreach (GameObject rootObject in activeScene.GetRootGameObjects())
+            {
+                if (rootObject.name == nodeName)
+                    return rootObject.transform;
+            }
+
+            QLog.Error($"查找场景根节点失败：场景 {activeScene.name} 中未找到 {nodeName}");
+            return null;
+        }
+        #endregion
+
         #region GameObject Extension
         // 从GameObject所在节点下查找子节点
         public static Transform FindChild(this GameObject owner, string path)

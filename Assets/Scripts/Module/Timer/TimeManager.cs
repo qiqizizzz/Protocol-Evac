@@ -1,27 +1,20 @@
 /*
  * ┌──────────────────────────────────┐
- * │  描    述: 计时器系统，负责对外提供全局计时任务调度
- * │  类    名: TimerSystem.cs
+ * │  描    述: 时间管理器，负责对外提供全局计时任务调度
+ * │  类    名: TimeManager.cs
  * │  创    建: By qiqizizzz
  * └──────────────────────────────────┘
  */
 
 using System;
-using Framework.QF;
 
 namespace Module.Timer
 {
-    public class TimerSystem : AbstractSystem
+    public sealed class TimeManager
     {
-        private GameTimer m_gameTimer;
+        private readonly GameTimer m_gameTimer = new();
 
         public int Count => m_gameTimer.Count;
-
-        // 初始化计时器系统
-        protected override void OnInit()
-        {
-            m_gameTimer = new GameTimer();
-        }
 
         // 注册计时任务
         public int Register(float duration, Action callback, bool isLooping = false)
@@ -41,10 +34,16 @@ namespace Module.Timer
             m_gameTimer.ClearAll();
         }
 
-        // 推进计时器系统
+        // 推进计时器
         public void Tick(float deltaTime)
         {
             m_gameTimer.Tick(deltaTime);
+        }
+
+        // 销毁前清理全部计时任务
+        public void Destroy()
+        {
+            ClearAll();
         }
     }
 }

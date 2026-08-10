@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Ability Composer 简洁企业架构",
+    "subtitle": "保留清晰的 View 层，仅对真正需要撤销的事件草稿使用命令模式",
+    "output": "AbilityComposer简洁企业架构.html",
+    "quality_profile": "showcase",
+    "visual_preset": "blueprint",
+    "viewBox": [1380, 650],
+    "views": [
+      { "id": "ui", "label": "界面层", "focus": ["window", "composer-view", "timeline-view", "inspector-view"], "note": "每个 View 只管理自己的 UI、显示状态和用户输入" },
+      { "id": "draft", "label": "草稿编辑", "focus": ["composer-controller", "command-buffer", "timeline-data"], "note": "事件编辑先改内存草稿，可撤销、重做，不改动画资产" },
+      { "id": "preview", "label": "预览", "focus": ["composer-controller", "preview-controller", "preview-scene"], "note": "预览控制器独占临时对象、AnimationMode 和采样根匹配" }
+    ]
+  },
+  "components": [
+    { "id": "window", "type": "frontend", "label": "AbilityComposerWindow", "sublabel": "窗口生命周期与依赖装配", "tag": "不含业务流程", "pos": [40, 272], "size": [200, 76] },
+    { "id": "composer-view", "type": "frontend", "label": "AbilityComposerView", "sublabel": "资源输入、播放控件、状态栏", "pos": [290, 272], "size": [210, 76] },
+    { "id": "timeline-view", "type": "frontend", "label": "AbilityTimelineView", "sublabel": "标尺、缩放、播放头与事件标记", "pos": [290, 82], "size": [210, 76] },
+    { "id": "inspector-view", "type": "frontend", "label": "AbilityEventInspectorView", "sublabel": "P3：事件 Function 与参数", "pos": [290, 462], "size": [210, 76] },
+    { "id": "composer-controller", "type": "backend", "label": "AbilityComposerController", "sublabel": "协调 View、时间轴数据和预览", "tag": "不持有 VisualElement", "pos": [570, 272], "size": [230, 76] },
+    { "id": "command-buffer", "type": "messagebus", "label": "AbilityTimelineCommandBuffer", "sublabel": "只记录 Event 草稿操作", "pos": [870, 82], "size": [230, 76] },
+    { "id": "timeline-data", "type": "database", "label": "AbilityTimelineData", "sublabel": "Clip、帧、事件草稿、选中态", "pos": [1140, 82], "size": [200, 76] },
+    { "id": "preview-controller", "type": "backend", "label": "AbilityPreviewController", "sublabel": "场景、临时克隆、AnimationMode", "pos": [870, 272], "size": [230, 76] },
+    { "id": "preview-scene", "type": "external", "label": "AbilityPreview Scene", "sublabel": "固定环境与临时预览对象", "pos": [1140, 272], "size": [200, 76] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Presentation", "wraps": ["window", "composer-view", "timeline-view", "inspector-view"], "pad": 18 },
+    { "kind": "region", "label": "Application", "wraps": ["composer-controller"], "pad": 18 },
+    { "kind": "region", "label": "Timeline Domain and Preview", "wraps": ["command-buffer", "timeline-data", "preview-controller", "preview-scene"], "pad": 18 }
+  ],
+  "connections": [
+    { "id": "window-composer-view", "from": "window", "to": "composer-view", "variant": "default" },
+    { "id": "composer-view-intent", "from": "composer-view", "to": "composer-controller", "variant": "emphasis" },
+    { "id": "timeline-view-intent", "from": "timeline-view", "to": "composer-controller", "variant": "emphasis", "fromSide": "right", "toSide": "left", "route": "auto" },
+    { "id": "inspector-view-intent", "from": "inspector-view", "to": "composer-controller", "variant": "emphasis", "fromSide": "right", "toSide": "left", "route": "auto" },
+    { "id": "controller-command", "from": "composer-controller", "to": "command-buffer", "variant": "emphasis", "fromSide": "right", "toSide": "left", "route": "auto" },
+    { "id": "command-data", "from": "command-buffer", "to": "timeline-data", "variant": "emphasis" },
+    { "id": "controller-preview", "from": "composer-controller", "to": "preview-controller", "variant": "default" },
+    { "id": "preview-scene", "from": "preview-controller", "to": "preview-scene", "variant": "default" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "View", "items": ["AbilityComposerView 管理顶部、播放和状态栏", "Timeline 与 Inspector 使用独立 View，避免互相膨胀"] },
+    { "dot": "emerald", "title": "命令", "items": ["仅 Add、Move、Remove、Update Animation Event 使用命令", "播放、缩放、聚焦和切帧直接处理，不写入 Undo 栈"] },
+    { "dot": "amber", "title": "保持简单", "items": ["不创建 Reader、Writer、Resolver 等提前抽象", "采样根匹配保留为 AbilityPreviewController 的私有实现"] }
+  ]
+}

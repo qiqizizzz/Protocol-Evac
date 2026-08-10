@@ -140,228 +140,102 @@ Message Options
 
 ## 五、总体架构
 
-采用“命令式分层架构 + 轨道扩展点”。它兼顾首版实现成本、数据安全与后续扩展，也能清楚说明 UI、编辑草稿和 Unity 资产写入之间的边界。
-
-```mermaid
-flowchart LR
-    UI[Presentation<br/>UI Toolkit Views] --> APP[Application<br/>Session + Commands]
-    APP --> DOMAIN[Domain<br/>Timeline Document]
-    APP --> INFRA[Infrastructure<br/>Unity Adapters]
-    INFRA --> ASSET[.anim / FBX Importer]
-    INFRA --> PREVIEW[AnimationMode<br/>临时 Scene 预览]
-    TRACK[Tracks<br/>后续扩展轨道] --> APP
-    TRACK --> UI
-```
-
-### 1. Presentation：只负责界面与输入
+采用模块级 `Data - Controller - View`。它直接对应工具当前的职责，不为了未来需求提前增加 `Reader`、`Resolver` 或通用轨道接口。
 
 ```text
 AbilityComposerWindow
-├─ 组合各个 View，管理窗口生命周期
-├─ 不直接写入 AnimationClip 或 ModelImporter
-└─ 不持有业务规则
+└─ 只负责窗口生命周期与依赖装配
 
-TimelineView
-├─ 绘制刻度、播放头、事件标记
-├─ 将点击、拖拽和缩放转换为意图
-└─ 不直接改变资产
+AbilityComposerData
+└─ 保存预览 Prefab 与 Animation Clip 选择
 
-EventInspectorView
-├─ 显示选中事件字段
-└─ 将字段修改转换为命令
+AbilityComposerView
+├─ 管理资源输入、播放控件与状态栏
+└─ 只发送用户操作意图和显示状态
 
-PreviewToolbarView
-└─ 发送播放、逐帧、创建预览和聚焦 Scene 意图
+AbilityTimelineData
+└─ 保存 Clip、FPS、总帧数、当前帧与播放状态
+
+AbilityTimelineView
+├─ 管理标尺、横向滚动、播放头与后续缩放
+└─ 只发送帧跳转与后续事件编辑意图
+
+AbilityComposerController
+├─ 协调两个 View、时间轴数据与场景预览
+├─ 处理预览创建、返回、聚焦、播放、暂停和逐帧
+└─ 不持有或查询 VisualElement
+
+BaseEditorController
+├─ 位于独立的 QTower.Editor 程序集
+├─ 继承 QTower 的 BaseController，不重复 Init、Destroy 与 Tick 生命周期
+├─ 提供 OnEditorInit、OnEditorDispose、OnSelectionChanged、OnUndoRedo、OnSceneViewGUI 与 OnBeforeReload
+├─ 使用 RegisterEvent 自动记录 View 事件的解绑操作
+└─ 将 UnityEditor 回调转换为 Tick 并在销毁时统一释放
+
+BaseEditorView
+├─ 位于独立的 QTower.Editor 程序集并继承 QTower 的 BaseView
+├─ 提供 OnEditorInit、OnEditorDispose、SubscribeViewEvents 与 UnsubscribeViewEvents
+└─ 统一编辑器 View 的 UI 初始化与事件订阅释放顺序
+
+AbilityPreviewController
+└─ 独占固定预览场景、临时克隆、AnimationMode 与采样根匹配
 ```
 
-### 2. Application：编辑会话与命令流
-
-`AbilityComposerSession` 保存一次打开窗口期间的工作上下文：预览来源、当前 Clip、当前帧、选中事件、内存草稿、脏状态与播放状态。
-
-所有用户编辑均使用命令表达：
+依赖方向固定为：
 
 ```text
-AddAnimationEventCommand
-MoveAnimationEventCommand
-RemoveAnimationEventCommand
-UpdateAnimationEventCommand
+View -> AbilityComposerController -> Data / AbilityPreviewController
+AbilityComposerController -> QTower.Editor / BaseEditorController -> QTower / BaseController
+AbilityComposerWindow -> 仅装配上述对象
 ```
 
-命令只修改内存中的 `TimelineDocument`，并保存操作前后的必要快照。这样拖动事件不会反复改写资产，也为草稿态撤销/重做提供基础。
+### 1. 命令模式的使用边界
 
-撤销分为两层：
+命令模式不是当前播放流程的通用包装。它只在 P3 实现 Animation Event 内存草稿时，放在 `Timeline/Commands/` 中处理以下四种可撤销操作：
 
 ```text
-应用前
-└─ Ability Composer 命令栈撤销 / 重做内存草稿
-
-应用后
-└─ 使用 Unity Undo.RecordObject 记录 .anim 或 ModelImporter 的持久化变更
+添加事件
+移动事件
+删除事件
+修改事件字段
 ```
 
-窗口需要监听 Unity Undo/Redo 回调。在已应用资产发生 Unity Undo/Redo 后，重新从资产读取事件并刷新草稿，避免显示旧数据。
+播放、暂停、逐帧、聚焦、返回旧场景、时间轴滚动和缩放都不进入命令栈。这样命令栈只表达真正需要撤销和重做的编辑内容。
 
-### 3. Domain：可测试的纯编辑数据
+### 2. P3 的最小扩展
 
-`TimelineDocument` 是当前 Clip 的内存编辑快照，而不是新的运行时配置资产。它至少包含：
+P3 新增 `AbilityEventInspectorView`、事件草稿数据和 `AbilityTimelineCommandBuffer`。View 只提交意图，`AbilityComposerController` 创建并执行事件命令，命令只修改 `AbilityTimelineData` 中的内存草稿。用户点击“应用到动画”后才写入资产。
 
-```text
-Clip 标识
-FPS
-总帧数
-AnimationEvent 列表
-当前播放头帧
-当前选中事件标识
-是否存在未应用草稿
-```
+在尚未出现第三种真实轨道前，不抽取 `IAbilityTrack` 或其他通用轨道框架。
 
-首版 Domain 不引用 `UnityEditor`，也不引用 Player 或 Combat 程序集。帧与秒的换算、事件排序、同帧事件稳定顺序、帧范围约束等规则在这一层完成并以 EditMode 测试覆盖。
-
-### 4. Infrastructure：隔离 Unity 专用 API
-
-该层负责将通用草稿与 Unity API 相互转换：
-
-```text
-AnimationEventReader
-├─ 从 AnimationClip 读取 AnimationEvent
-└─ 解析 FBX 内部 Clip 选择
-
-AnimationEventWriter
-├─ .anim：AnimationUtility.SetAnimationEvents
-└─ FBX：ModelImporter.clipAnimations + SaveAndReimport
-
-AnimationPreviewController
-├─ 创建、采样和清理临时预览对象
-├─ 独占 AnimationMode 生命周期
-└─ 刷新和聚焦 SceneView
-
-AnimationAssetResolver
-└─ 解析 AnimationClip、FBX 路径、Importer 与内部 Clip 映射
-```
-
-UI 和 Application 不得直接调用 `AnimationUtility`、`ModelImporter`、`AssetDatabase`、`AnimationMode` 或 `SceneView`。
-
-### 5. Tracks：后续扩展点
-
-首版只有 `AnimationEventTrack`，无需提前实现完整插件框架。待至少出现三类真实轨道后，再抽取统一 `IAbilityTrack` 约定。
-
-候选扩展轨道：
-
-```text
-AnimationEventTrack    首版
-AbilityWindowTrack     命中、无敌、连段等时间窗口
-VfxTrack               特效请求
-AudioTrack             音效请求
-CameraTrack            镜头请求
-```
-
-扩展轨道只向时间轴注册“绘制、命中测试、序列化草稿、生成命令”的能力；不得让某个业务轨道反向依赖通用 Animation Event 资产读写流程。
-
-## 六、代码目录与命令模式
-
-代码按“编辑职责”切片，而不是机械使用 `Core / Application / Infrastructure / Presentation` 顶层目录。这样可以从目录直接定位时间轴、事件、预览和 Unity 资产读写的维护位置，同时仍保留清晰的依赖方向。
+## 六、代码目录
 
 ```text
 Assets/Scripts/Tools/Editor/AbilityComposer/
-├─ Tools.AbilityComposer.Editor.asmdef
+├─ Tools.Editor.AbilityComposer.asmdef
 ├─ AbilityComposerWindow.cs
-├─ AbilityComposerContext.cs
+├─ AbilityComposerData.cs
+│
+├─ Controller/
+│  └─ AbilityComposerController.cs
+│
+├─ View/
+│  └─ AbilityComposerView.cs
 │
 ├─ Timeline/
 │  ├─ AbilityTimelineData.cs
 │  ├─ AbilityTimelineView.cs
-│  ├─ AbilityFrameResolver.cs
-│  └─ Commands/
-│     ├─ IAbilityTimelineCommand.cs
-│     ├─ AbilityTimelineAddEventCommand.cs
-│     ├─ AbilityTimelineMoveEventCommand.cs
-│     ├─ AbilityTimelineRemoveEventCommand.cs
-│     ├─ AbilityTimelineUpdateEventCommand.cs
-│     └─ AbilityTimelineCommandBuffer.cs
-│
-├─ Event/
-│  ├─ AbilityAnimationEventData.cs
-│  ├─ AnimationEventReader.cs
-│  ├─ AnimationEventWriter.cs
-│  ├─ AnimationEventFunctionResolver.cs
-│  └─ AbilityEventInspectorView.cs
+│  └─ Commands/                       P3 新增
 │
 ├─ Preview/
-│  ├─ AbilityPreviewController.cs
-│  └─ AbilityPreviewData.cs
-│
-├─ Animation/
-│  ├─ AnimationClipResolver.cs
-│  └─ AnimationClipData.cs
+│  └─ AbilityPreviewController.cs
 │
 └─ UI/
-   ├─ AbilityComposerToolbarView.cs
    ├─ Uxml/AbilityComposerWindow.uxml
    └─ Uss/AbilityComposerWindow.uss
-
-Assets/Tests/Editor/Tools/AbilityComposer/
-├─ AbilityTimelineDataTests.cs
-└─ AbilityTimelineCommandBufferTests.cs
 ```
 
-### 1. 命令模式的职责
-
-命令模式限定在 `Timeline/Commands/`。每一个草稿编辑操作都实现 `IAbilityTimelineCommand`，并明确提供执行与撤销行为：
-
-```text
-IAbilityTimelineCommand
-├─ Execute(AbilityTimelineData)
-└─ Undo(AbilityTimelineData)
-
-AbilityTimelineCommandBuffer
-├─ Execute(command)
-├─ Undo()
-└─ Redo()
-```
-
-首版命令覆盖添加事件、移动事件、删除事件和更新事件字段。`AbilityComposerController` 是唯一允许创建并提交这些命令的协调者；`AbilityTimelineView` 和 `AbilityEventInspectorView` 只发送用户意图，不能直接修改 `AbilityTimelineData`。
-
-```text
-Timeline View 拖拽事件
-  -> AbilityComposerController 创建 MoveEventCommand
-  -> AbilityTimelineCommandBuffer.Execute
-  -> AbilityTimelineData 发生内存变化
-  -> Preview Controller 重新采样
-  -> UI 局部刷新
-```
-
-### 2. 草稿命令与资产持久化分离
-
-`IAbilityTimelineCommand` 只作用于内存草稿，因此拖拽中不会触发资源导入或磁盘写入。用户点击“应用到动画”后，才由 `AnimationEventWriter` 把当前 `AbilityTimelineData` 写入 `.anim` 或目标 FBX Importer。
-
-```text
-未应用草稿
-└─ AbilityTimelineCommandBuffer 负责 Undo / Redo
-
-已应用资产
-└─ AnimationEventWriter 使用 Unity Undo.RecordObject 后写入资产
-```
-
-这是两套不同生命周期的撤销机制：前者保证时间轴交互顺滑，后者保证 Unity Project 资产可被原生 Undo/Redo 恢复。二者不能合并为一个命令栈。
-
-### 3. 依赖规则
-
-```text
-UI View
-  -> AbilityComposerController
-  -> Timeline Command / Timeline Data
-  -> AnimationEventReader / Writer、AbilityPreviewController
-  -> UnityEditor API
-```
-
-禁止的依赖：
-
-```text
-UI View -> AssetDatabase / ModelImporter / AnimationMode
-Timeline Command -> AnimationEventWriter
-AnimationEventWriter -> UI View
-Preview Controller -> Player / Combat 运行时模块
-```
+`AbilityComposerWindow` 不实现播放、场景或时间轴业务。`AbilityComposerController` 不操作 `VisualElement`。`AbilityPreviewController` 不依赖 Player、Combat 或其他运行时模块。
 
 ## 七、Scene 预览生命周期
 
@@ -369,7 +243,7 @@ Preview Controller -> Player / Combat 运行时模块
 
 ```text
 用户指定预览对象或 Prefab
-  -> AnimationPreviewController 创建 __AbilityComposerPreview 根节点
+  -> AbilityPreviewController 创建 __AbilityComposerPreview 根节点
   -> 实例化完整克隆，设置 HideFlags.DontSave
   -> AnimationMode.StartAnimationMode
   -> AnimationMode.SampleAnimationClip(临时克隆, 当前 Clip, 当前时间)
@@ -393,7 +267,7 @@ Preview Controller -> Player / Combat 运行时模块
 
 ```text
 添加 / 删除 / 拖拽 / 修改参数
-  -> 只修改 TimelineDocument
+  -> 只修改 AbilityTimelineData 中的事件草稿
   -> 标记为“未应用”
   -> 立即刷新 Scene 预览和时间轴
 
@@ -414,7 +288,7 @@ Preview Controller -> Player / Combat 运行时模块
 └─ 通过 ModelImporter 的目标 Clip 配置写入 events，再 SaveAndReimport
 ```
 
-FBX 可能包含多个内部 Clip。Writer 必须按照 Clip 名称与 Importer 配置精确匹配，不允许写入“第一个 Clip”作为兜底。找不到对应配置时应在窗口中展示明确错误，不写入任何数据。
+FBX 可能包含多个内部 Clip。应用流程必须按照 Clip 名称与 Importer 配置精确匹配，不允许写入“第一个 Clip”作为兜底。找不到对应配置时应在窗口中展示明确错误，不写入任何数据。
 
 ### 3. 数据安全边界
 

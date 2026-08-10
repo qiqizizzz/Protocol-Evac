@@ -1,34 +1,45 @@
 /*
  * ┌──────────────────────────────────┐
- * │  描    述: 游戏总入口，负责初始化架构并驱动全局系统
+ * │  描    述: 游戏应用组合根，负责装配并驱动全局模块
  * │  类    名: GameApp.cs
  * │  创    建: By qiqizizzz
  * └──────────────────────────────────┘
  */
 
-using Framework.QF;
+using Framework.QTower;
+using Framework.QTower.Controller;
 using Module.Timer;
-using UnityEngine;
 
 namespace Game
 {
-    public class GameApp : MonoBehaviour, IController
+    public sealed class GameApp : Singleton<GameApp>
     {
-        #region 生命周期
-        private void Awake()
+        public TimeManager TimeManager { get; private set; }
+        public ControllerManager ControllerManager { get; private set; }
+        public UIManager UIManager { get; private set; }
+
+        protected override void OnInit()
         {
-            GameArchitecture.InitArchitecture();
+            TimeManager = new TimeManager();
+            ControllerManager = new ControllerManager();
+            UIManager = new UIManager();
         }
 
-        private void Update()
+        protected override void OnTick(float deltaTime)
         {
-            this.GetSystem<TimerSystem>().Tick(Time.deltaTime);
+            TimeManager.Tick(deltaTime);
+            ControllerManager.Tick(deltaTime);
         }
-        #endregion
-        
-        public IArchitecture GetArchitecture()
+
+        protected override void OnDestroy()
         {
-            return GameArchitecture.Interface;
+            UIManager.Destroy();
+            ControllerManager.Destroy();
+            TimeManager.Destroy();
+
+            UIManager = null;
+            ControllerManager = null;
+            TimeManager = null;
         }
     }
 }

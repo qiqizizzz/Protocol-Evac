@@ -9,6 +9,7 @@
 using System;
 using System.Collections.Generic;
 using Framework.QTower.Event;
+using Framework.QTower.View;
 
 namespace Framework.QTower.Controller
 {
@@ -29,20 +30,20 @@ namespace Framework.QTower.Controller
         }
 
         #region 生命周期
-        // 初始化派生控制器
         protected virtual void OnInit()
         {
         }
-        
-        public virtual void Tick(float deltaTime) { }
 
-        // 销毁派生控制器持有的运行资源
+        public virtual void Tick(float deltaTime)
+        {
+            
+        }
+
         protected virtual void OnDestroy()
         {
         }
         #endregion
 
-        // 注册当前控制器监听的模块事件
         public void RegisterEvent<TEvent>(string eventName, Action<TEvent> callback)
         {
             EventManager.RegisterEvent(eventName, callback);
@@ -57,7 +58,6 @@ namespace Framework.QTower.Controller
             m_events.Add(eventName, removeEvent);
         }
 
-        // 移除当前控制器监听的模块事件
         public void UnregisterEvent(string eventName)
         {
             if (!m_events.TryGetValue(eventName, out Action removeEvent))
@@ -67,12 +67,22 @@ namespace Framework.QTower.Controller
             m_events.Remove(eventName);
         }
 
-        // 初始化模块事件
         protected virtual void RegisterModuleEvent()
         {
         }
 
-        // 移除模块事件
+        public virtual void OnViewLoaded(UIBase view)
+        {
+        }
+
+        public virtual void OnViewOpened(UIBase view)
+        {
+        }
+
+        public virtual void OnViewClosed(UIBase view)
+        {
+        }
+
         private void RemoveModuleEvent()
         {
             foreach (Action removeEvent in m_events.Values)

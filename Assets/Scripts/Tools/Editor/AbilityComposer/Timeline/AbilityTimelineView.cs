@@ -7,19 +7,19 @@
  */
 
 using System;
-using Tools.Editor.AbilityComposer.Preview;
+using Framework.QTower.Editor.View;
 using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace Tools.Editor.AbilityComposer.Timeline
 {
-    public sealed class AbilityTimelineView
+    public sealed class AbilityTimelineView : UIBaseEditor
     {
         private const float TIMELINE_PIXELS_PER_FRAME = 12f;
         private const float MIN_TIMELINE_WIDTH = 620f;
         private const int MAJOR_TICK_FRAME_INTERVAL = 5;
 
-        private AbilityPreviewData m_previewData;
+        private AbilityTimelineData m_timelineData;
         private ScrollView m_scrollView;
         private VisualElement m_timelineContent;
         private VisualElement m_timelinePlayhead;
@@ -28,34 +28,43 @@ namespace Tools.Editor.AbilityComposer.Timeline
 
         public event Action<int> OnFrameRequested;
 
-        // 初始化时间轴的 UI 元素与鼠标交互
-        public void Initialize(ScrollView scrollView, VisualElement timelineContent)
+        // 注入时间轴视图需要的 UI 元素
+        public AbilityTimelineView(ScrollView scrollView, VisualElement timelineContent)
         {
             m_scrollView = scrollView;
             m_timelineContent = timelineContent;
+        }
+
+        // 初始化时间轴的 UI 元素
+        protected override void OnEditorInit()
+        {
             m_scrollView.mode = ScrollViewMode.Horizontal;
             m_scrollView.horizontalScrollerVisibility = ScrollerVisibility.Auto;
             m_scrollView.verticalScrollerVisibility = ScrollerVisibility.Hidden;
+        }
+
+        protected override void SubscribeViewEvents()
+        {
             m_timelineContent.RegisterCallback<PointerDownEvent>(BeginPlayheadDrag);
             m_timelineContent.RegisterCallback<PointerMoveEvent>(UpdatePlayheadDrag);
             m_timelineContent.RegisterCallback<PointerUpEvent>(EndPlayheadDrag);
             m_timelineContent.RegisterCallback<PointerCaptureOutEvent>(CancelPlayheadDrag);
         }
 
-        // 重建当前动画片段对应的刻度、轨道和播放头
-        public void SetPreviewData(AbilityPreviewData previewData)
+        // 设置当前时间轴数据并重建刻度、轨道和播放头
+        public void SetTimelineData(AbilityTimelineData timelineData)
         {
-            m_previewData = previewData;
+            m_timelineData = timelineData;
             BuildTimeline();
         }
 
         // 刷新播放头到当前帧的统一像素坐标
         public void RefreshCurrentFrame()
         {
-            if (m_timelinePlayhead == null || m_previewData == null)
+            if (m_timelinePlayhead == null || m_timelineData == null)
                 return;
 
-            m_timelinePlayhead.style.left = m_previewData.CurrentFrame * TIMELINE_PIXELS_PER_FRAME;
+            m_timelinePlayhead.style.left = m_timelineData.CurrentFrame * TIMELINE_PIXELS_PER_FRAME;
         }
 
         // 将指定帧滚动到当前可见区域
@@ -70,12 +79,8 @@ namespace Tools.Editor.AbilityComposer.Timeline
                 m_scrollView.scrollOffset = new Vector2(framePosition - viewportWidth + TIMELINE_PIXELS_PER_FRAME * 2f, 0f);
         }
 
-        // 解除重建窗口前注册的 UI 回调
-        public void Dispose()
+        protected override void UnsubscribeViewEvents()
         {
-            if (m_timelineContent == null)
-                return;
-
             if (m_isDraggingPlayhead)
                 m_timelineContent.ReleasePointer(m_draggingPointerId);
 
@@ -91,14 +96,14 @@ namespace Tools.Editor.AbilityComposer.Timeline
         {
             m_timelineContent.Clear();
             m_timelinePlayhead = null;
-            if (m_previewData == null || !m_previewData.HasClip)
+            if (m_timelineData == null || !m_timelineData.HasClip)
             {
                 m_timelineContent.style.width = MIN_TIMELINE_WIDTH;
                 CreateEmptyState();
                 return;
             }
 
-            float timelineWidth = Mathf.Max(MIN_TIMELINE_WIDTH, m_previewData.LastFrame * TIMELINE_PIXELS_PER_FRAME + 1f);
+            float timelineWidth = Mathf.Max(MIN_TIMELINE_WIDTH, m_timelineData.LastFrame * TIMELINE_PIXELS_PER_FRAME + 1f);
             m_timelineContent.style.width = timelineWidth;
             CreateTimelineTrack();
             CreateTimelineRuler(timelineWidth);
@@ -134,7 +139,7 @@ namespace Tools.Editor.AbilityComposer.Timeline
             ruler.AddToClassList("ac-timeline-ruler");
             ruler.style.width = timelineWidth;
 
-            for (int frame = 0; frame <= m_previewData.LastFrame; frame++)
+            for (int frame = 0; frame <= m_timelineData.LastFrame; frame++)
             {
                 float framePosition = frame * TIMELINE_PIXELS_PER_FRAME;
                 VisualElement tick = new VisualElement();
@@ -169,7 +174,7 @@ namespace Tools.Editor.AbilityComposer.Timeline
         // 开始拖动播放头并请求跳转到鼠标所在帧
         private void BeginPlayheadDrag(PointerDownEvent pointerEvent)
         {
-            if (m_previewData == null || !m_previewData.HasClip || pointerEvent.button != 0)
+            if (m_timelineData == null || !m_timelineData.HasClip || pointerEvent.button != 0)
                 return;
 
             m_isDraggingPlayhead = true;
@@ -215,7 +220,7 @@ namespace Tools.Editor.AbilityComposer.Timeline
             Vector2 panelPosition = new Vector2(pointerPosition.x, pointerPosition.y);
             float localPositionX = m_timelineContent.WorldToLocal(panelPosition).x;
             int targetFrame = Mathf.RoundToInt(localPositionX / TIMELINE_PIXELS_PER_FRAME);
-            OnFrameRequested?.Invoke(Mathf.Clamp(targetFrame, 0, m_previewData.LastFrame));
+            OnFrameRequested?.Invoke(Mathf.Clamp(targetFrame, 0, m_timelineData.LastFrame));
         }
     }
 }
