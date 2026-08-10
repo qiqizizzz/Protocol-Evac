@@ -24,6 +24,7 @@ namespace Game
         {
             TimeManager = new TimeManager();
             ControllerManager = new ControllerManager();
+            UIManager = new UIManager();
         }
 
         protected override void OnTick(float deltaTime)
