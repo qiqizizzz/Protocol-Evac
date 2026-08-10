@@ -20,6 +20,7 @@ namespace Tools.Editor.AbilityComposer.Preview
         private const string PREVIEW_SCENE_PATH = "Assets/Scenes/Tools/AbilityPreview.unity";
 
         private GameObject m_previewInstance;
+        private GameObject m_animationSampleRoot;
         private readonly List<string> m_previousScenePaths = new List<string>();
         private string m_previousActiveScenePath;
         private Scene m_previewScene;
@@ -55,6 +56,7 @@ namespace Tools.Editor.AbilityComposer.Preview
             m_previewInstance.name = previewSource.name;
             SetPreviewInstanceHideFlags(m_previewInstance);
             SceneManager.MoveGameObjectToScene(m_previewInstance, m_previewScene);
+            m_animationSampleRoot = ResolveAnimationSampleRoot(animationClip);
 
             ClosePreviousScenes();
 
@@ -106,7 +108,7 @@ namespace Tools.Editor.AbilityComposer.Preview
                 return;
 
             float sampleTime = Mathf.Clamp(time, 0f, animationClip.length);
-            AnimationMode.SampleAnimationClip(m_previewInstance, animationClip, sampleTime);
+            AnimationMode.SampleAnimationClip(m_animationSampleRoot, animationClip, sampleTime);
             SceneView.RepaintAll();
         }
 
@@ -232,10 +234,58 @@ namespace Tools.Editor.AbilityComposer.Preview
         // 销毁当前预览场景中的角色克隆
         private void ClearPreviewObject()
         {
+            m_animationSampleRoot = null;
             if (m_previewInstance != null)
                 Object.DestroyImmediate(m_previewInstance);
 
             m_previewInstance = null;
+        }
+
+        // 根据动画曲线绑定路径选择最匹配的预览子层级作为采样根
+        private GameObject ResolveAnimationSampleRoot(AnimationClip animationClip)
+        {
+            EditorCurveBinding[] curveBindings = AnimationUtility.GetCurveBindings(animationClip);
+            Transform[] sampleRootCandidates = m_previewInstance.GetComponentsInChildren<Transform>(true);
+            Transform sampleRoot = m_previewInstance.transform;
+            int bestMatchCount = -1;
+
+            for (int candidateIndex = 0; candidateIndex < sampleRootCandidates.Length; candidateIndex++)
+            {
+                Transform candidate = sampleRootCandidates[candidateIndex];
+                int matchCount = CalculateBindingMatchCount(candidate, curveBindings);
+                if (matchCount <= bestMatchCount)
+                    continue;
+
+                sampleRoot = candidate;
+                bestMatchCount = matchCount;
+            }
+
+            if (bestMatchCount == 0)
+                QLog.Warning($"动画预览未找到与 Clip 路径匹配的层级，将使用 Prefab 根节点采样：{animationClip.name}");
+
+            return sampleRoot.gameObject;
+        }
+
+        // 计算候选层级能够解析的动画曲线数量
+        private int CalculateBindingMatchCount(Transform sampleRoot, EditorCurveBinding[] curveBindings)
+        {
+            int matchCount = 0;
+            for (int bindingIndex = 0; bindingIndex < curveBindings.Length; bindingIndex++)
+            {
+                string bindingPath = curveBindings[bindingIndex].path;
+                if (string.IsNullOrEmpty(bindingPath))
+                {
+                    if (sampleRoot == m_previewInstance.transform)
+                        matchCount++;
+
+                    continue;
+                }
+
+                if (sampleRoot.Find(bindingPath) != null)
+                    matchCount++;
+            }
+
+            return matchCount;
         }
 
         // 标记整个预览层级为编辑器临时对象，避免写入 AbilityPreview 场景资源
