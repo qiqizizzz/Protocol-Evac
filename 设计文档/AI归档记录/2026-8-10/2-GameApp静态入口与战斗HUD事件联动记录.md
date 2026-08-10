@@ -115,3 +115,11 @@ A*：服务 Enemy 的 Chase / Search / Patrol，并保持在 IPathAgent 后端
 ## 九、工作区注意事项
 
 工作区可能包含用户正在调整的文件。后续继续时不得回滚、覆盖或精简用户已有的 `ResManager`、QTower 基础框架和 UI 结构；先读取实际文件与 Git 状态，再做局部修改。
+
+## 十、Ability Composer 后续参考资料
+
+后续继续开发技能编辑器与 `Ability Composer` 时，可参考以下视频的技能系统架构设计展示：
+
+[UNITY 开发记录 动作游戏技能系统架构设计展示](https://www.bilibili.com/video/BV1tZum63Enj/?share_source=copy_web&vd_source=131b4639f6fe5e279b7fc45afaaea252)
+
+该链接仅作为后续调研和设计参考，不代表其中的架构已经引入本项目。继续实现前，仍以本项目的 `Data - Controller - View` 边界、现有 `Ability Composer` 设计文档和已验证代码事实为准。
