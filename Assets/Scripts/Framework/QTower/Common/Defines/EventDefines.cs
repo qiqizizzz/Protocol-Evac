@@ -1,17 +1,16 @@
 ﻿/*
  * ┌──────────────────────────────────┐
- * │  描    述:                       
- * │  类    名: UICombatHUD.cs       
+ * │  描    述: 全局事件定义/跨模块                      
+ * │  类    名: EventDefines.cs       
  * │  创    建: By qiqizizzz
  * └──────────────────────────────────┘
  */
 
-using Framework.QTower.View;
-
-namespace UI.Combat
+namespace Framework.QTower.Common.Defines
 {
-    public class UICombatHUD : UIBase
+    public static class EventDefines
     {
-        
+        //xx模块
+        //public const string OpenGameView = "OpenGameView";
     }
 }
