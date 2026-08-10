@@ -16,9 +16,9 @@ namespace Game
 {
     public sealed class GameApp : Singleton<GameApp>
     {
-        public TimeManager TimeManager { get; private set; }
-        public ControllerManager ControllerManager { get; private set; }
-        public UIManager UIManager { get; private set; }
+        public static TimeManager TimeManager { get; private set; }
+        public static ControllerManager ControllerManager { get; private set; }
+        public static UIManager UIManager { get; private set; }
 
         protected override void OnInit()
         {

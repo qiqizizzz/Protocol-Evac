@@ -6,7 +6,9 @@
  * └──────────────────────────────────┘
  */
 
+using Framework.QTower.Common.Defines;
 using Framework.QTower.Controller;
+using Framework.QTower.Event;
 using Module.Player.Context;
 using Module.Player.Core.View.Config;
 using UnityEngine;
@@ -60,7 +62,7 @@ namespace Module.Player.Core.View
             m_context.View.ViewMode = m_context.View.TargetViewMode.Value;
             m_context.View.CameraYaw = m_context.Transform.eulerAngles.y;
             if (m_context.View.ViewMode == PlayerViewMode.FirstPerson)
-                m_context.View.ClearLockTarget();
+                ClearLockTarget();
             RefreshCameraTransform();
             m_context.View.TargetViewMode = null;//置空
         }
@@ -72,7 +74,7 @@ namespace Module.Player.Core.View
                 return;
 
             if (m_context.View.ViewMode != PlayerViewMode.ThirdPerson || !IsLockTargetValid(m_context.View.LockTarget))
-                m_context.View.ClearLockTarget();
+                ClearLockTarget();
         }
 
         // 消费锁定输入并在锁定与解除锁定之间切换
@@ -83,7 +85,7 @@ namespace Module.Player.Core.View
 
             if (m_context.View.IsLockOn)
             {
-                m_context.View.ClearLockTarget();
+                ClearLockTarget();
                 return;
             }
 
@@ -92,7 +94,24 @@ namespace Module.Player.Core.View
 
             Transform closestEnemyTarget = FindClosestEnemyTarget(m_viewConfig.LockRange);
             if (closestEnemyTarget != null)
-                m_context.View.SetLockTarget(closestEnemyTarget);
+                SetLockTarget(closestEnemyTarget);
+        }
+
+        // 设置锁定目标并通知全局 UI
+        private void SetLockTarget(Transform target)
+        {
+            m_context.View.SetLockTarget(target);
+            EventManager.PublishEvent(EventDefines.PlayerLockOnStateChanged, true);
+        }
+
+        // 清空锁定目标并通知全局 UI
+        private void ClearLockTarget()
+        {
+            if (!m_context.View.IsLockOn)
+                return;
+
+            m_context.View.ClearLockTarget();
+            EventManager.PublishEvent(EventDefines.PlayerLockOnStateChanged, false);
         }
 
         // 搜索指定范围内距离玩家最近的 Enemy Tag 目标

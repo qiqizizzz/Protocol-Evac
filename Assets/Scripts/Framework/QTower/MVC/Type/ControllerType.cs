@@ -10,6 +10,7 @@ namespace Framework.QTower
 {
     public enum ControllerType
     {
-        None = 0
+        None = 0,
+        Game = 1
     }
 }

@@ -6,6 +6,7 @@
  * └──────────────────────────────────┘
  */
 
+using Framework.QTower;
 using UnityEngine;
 using Utils.Find;
 
@@ -35,7 +36,15 @@ namespace Game
             DontDestroyOnLoad(gameObject);
             DontDestroyOnLoad(m_uiRoot.gameObject);
             GameApp.Instance.Init();
-            GameApp.Instance.UIManager.SetRoot(m_uiRoot);
+            GameApp.UIManager.SetRoot(m_uiRoot);
+        }
+
+        private void Start()
+        {
+            if (S_instance != this)
+                return;
+
+            RegisterModules();
         }
 
         private void Update()
@@ -53,6 +62,12 @@ namespace Game
 
             GameApp.Instance.Destroy();
             S_instance = null;
+        }
+
+        // 注册游戏场景模块
+        private void RegisterModules()
+        {
+            GameApp.ControllerManager.Register(ControllerType.Game, new GameController());
         }
     }
 }

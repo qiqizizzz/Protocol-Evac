@@ -10,7 +10,6 @@ namespace Framework.QTower.Common.Defines
 {
     public static class EventDefines
     {
-        //xx模块
-        //public const string OpenGameView = "OpenGameView";
+        public const string PlayerLockOnStateChanged = "PlayerLockOnStateChanged";
     }
 }
