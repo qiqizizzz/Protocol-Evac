@@ -29,6 +29,7 @@ namespace Tools.Editor.AbilityComposer.Preview
         public bool HasPreview => m_previewInstance != null
                                   && m_previewInstance.scene.IsValid()
                                   && m_previewInstance.scene.isLoaded;
+        public GameObject AnimationEventReceiver => m_animationSampleRoot;
 
         /// <summary>
         /// 创建临时克隆并采样动画首帧

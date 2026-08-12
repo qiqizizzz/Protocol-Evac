@@ -10,6 +10,7 @@ using Framework.QTower.Editor.Controller;
 using Tools.Editor.AbilityComposer.Center.Event;
 using Tools.Editor.AbilityComposer.Center.Timeline;
 using Tools.Editor.AbilityComposer.Preview;
+using Tools.Editor.AbilityComposer.Right.Event;
 using UnityEngine;
 using Utils.log;
 
@@ -112,6 +113,7 @@ namespace Tools.Editor.AbilityComposer
             m_composerData.SetPreviewSource(previewPrefab);
             m_timelineData.StopPlayback();
             m_previewController.ReturnToPreviousScene();
+            ClearEventFunctionChoices();
             RefreshView();
         }
 
@@ -119,6 +121,7 @@ namespace Tools.Editor.AbilityComposer
         private void HandleAnimationClipChanged(AnimationClip animationClip)
         {
             m_previewController.ReturnToPreviousScene();
+            ClearEventFunctionChoices();
             m_composerData.SetAnimationClip(animationClip);
             m_timelineData.SetAnimationClip(animationClip);
             m_timelineView.SetTimelineData(m_timelineData);
@@ -141,6 +144,7 @@ namespace Tools.Editor.AbilityComposer
             }
 
             m_previewController.CreatePreview(m_composerData.PreviewSource, m_timelineData.Clip);
+            RefreshEventFunctionChoices();
             SampleCurrentFrame(false);
             RefreshView();
         }
@@ -162,6 +166,7 @@ namespace Tools.Editor.AbilityComposer
         {
             m_timelineData.StopPlayback();
             m_previewController.ReturnToPreviousScene();
+            ClearEventFunctionChoices();
             RefreshView();
         }
 
@@ -319,6 +324,19 @@ namespace Tools.Editor.AbilityComposer
             m_timelineView.RefreshCurrentFrame();
             if (refreshEventMarkers)
                 m_timelineView.RefreshEventMarkers();
+        }
+
+        // 根据当前临时预览对象刷新可选的 Animation Event Function
+        private void RefreshEventFunctionChoices()
+        {
+            m_composerView.SetEventFunctionChoices(
+                AbilityEventFunctionResolver.Resolve(m_previewController.AnimationEventReceiver));
+        }
+
+        // 清空已销毁预览对象对应的 Function 候选
+        private void ClearEventFunctionChoices()
+        {
+            m_composerView.SetEventFunctionChoices(System.Array.Empty<string>());
         }
     }
 }

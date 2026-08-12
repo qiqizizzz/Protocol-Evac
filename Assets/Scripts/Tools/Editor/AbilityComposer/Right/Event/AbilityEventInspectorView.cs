@@ -17,6 +17,8 @@ namespace Tools.Editor.AbilityComposer.Right.Event
 {
     public sealed class AbilityEventInspectorView : UIBaseEditor
     {
+        private const string SELECT_FUNCTION_CHOICE = "选择 Function";
+
         private static readonly List<string> S_CategoryChoices = new List<string>
         {
             nameof(AbilityEventCategory.Default),
@@ -29,8 +31,10 @@ namespace Tools.Editor.AbilityComposer.Right.Event
         private DropdownField m_categoryField;
         private Label m_frameValueLabel;
         private Label m_timeValueLabel;
+        private DropdownField m_functionChoicesField;
         private TextField m_functionField;
         private Label m_emptyStateLabel;
+        private readonly List<string> m_functionChoices = new List<string>();
 
         public event Action<AbilityEventCategory> OnCategoryChanged;
         public event Action<string> OnFunctionNameChanged;
@@ -51,15 +55,31 @@ namespace Tools.Editor.AbilityComposer.Right.Event
             m_categoryField.AddToClassList("ac-inspector-field");
             m_frameValueLabel = CreateReadOnlyValue("Frame");
             m_timeValueLabel = CreateReadOnlyValue("Time");
-            m_functionField = new TextField("Function");
+            m_functionChoices.Add(SELECT_FUNCTION_CHOICE);
+            m_functionChoicesField = new DropdownField("Function", m_functionChoices, 0);
+            m_functionChoicesField.AddToClassList("ac-inspector-field");
+            m_functionField = new TextField("Custom Function");
             m_functionField.isDelayed = true;
             m_functionField.AddToClassList("ac-inspector-field");
             m_rootVisualElement.Add(m_emptyStateLabel);
             m_rootVisualElement.Add(m_categoryField);
             m_rootVisualElement.Add(m_frameValueLabel);
             m_rootVisualElement.Add(m_timeValueLabel);
+            m_rootVisualElement.Add(m_functionChoicesField);
             m_rootVisualElement.Add(m_functionField);
             SetInspectorVisible(false);
+        }
+
+        // 更新预览对象可接收的 Animation Event Function 候选
+        public void SetFunctionChoices(IReadOnlyList<string> functionChoices)
+        {
+            m_functionChoices.Clear();
+            m_functionChoices.Add(SELECT_FUNCTION_CHOICE);
+            for (int choiceIndex = 0; choiceIndex < functionChoices.Count; choiceIndex++)
+                m_functionChoices.Add(functionChoices[choiceIndex]);
+
+            m_functionChoicesField.choices = m_functionChoices;
+            m_functionChoicesField.SetValueWithoutNotify(SELECT_FUNCTION_CHOICE);
         }
 
         // 刷新选中事件的 Inspector 字段
@@ -74,18 +94,24 @@ namespace Tools.Editor.AbilityComposer.Right.Event
             m_categoryField.SetValueWithoutNotify(selectedEvent.Category.ToString());
             m_frameValueLabel.text = $"Frame  {selectedEvent.Frame}";
             m_timeValueLabel.text = $"Time  {selectedEvent.Frame / timelineData.FrameRate:0.###}";
+            string selectedFunction = m_functionChoices.Contains(selectedEvent.FunctionName)
+                ? selectedEvent.FunctionName
+                : SELECT_FUNCTION_CHOICE;
+            m_functionChoicesField.SetValueWithoutNotify(selectedFunction);
             m_functionField.SetValueWithoutNotify(selectedEvent.FunctionName);
         }
 
         protected override void SubscribeViewEvents()
         {
             m_categoryField.RegisterValueChangedCallback(HandleCategoryChanged);
+            m_functionChoicesField.RegisterValueChangedCallback(HandleFunctionChoiceChanged);
             m_functionField.RegisterValueChangedCallback(HandleFunctionNameChanged);
         }
 
         protected override void UnsubscribeViewEvents()
         {
             m_categoryField.UnregisterValueChangedCallback(HandleCategoryChanged);
+            m_functionChoicesField.UnregisterValueChangedCallback(HandleFunctionChoiceChanged);
             m_functionField.UnregisterValueChangedCallback(HandleFunctionNameChanged);
         }
 
@@ -104,6 +130,7 @@ namespace Tools.Editor.AbilityComposer.Right.Event
             m_categoryField.style.display = hasSelectedEvent ? DisplayStyle.Flex : DisplayStyle.None;
             m_frameValueLabel.style.display = hasSelectedEvent ? DisplayStyle.Flex : DisplayStyle.None;
             m_timeValueLabel.style.display = hasSelectedEvent ? DisplayStyle.Flex : DisplayStyle.None;
+            m_functionChoicesField.style.display = hasSelectedEvent ? DisplayStyle.Flex : DisplayStyle.None;
             m_functionField.style.display = hasSelectedEvent ? DisplayStyle.Flex : DisplayStyle.None;
         }
 
@@ -112,6 +139,13 @@ namespace Tools.Editor.AbilityComposer.Right.Event
         {
             if (Enum.TryParse(changeEvent.newValue, out AbilityEventCategory category))
                 OnCategoryChanged?.Invoke(category);
+        }
+
+        // 将 Function 下拉框选择写回当前事件草稿
+        private void HandleFunctionChoiceChanged(ChangeEvent<string> changeEvent)
+        {
+            if (changeEvent.newValue != SELECT_FUNCTION_CHOICE)
+                OnFunctionNameChanged?.Invoke(changeEvent.newValue);
         }
 
         // 转发 Function 文本编辑结果

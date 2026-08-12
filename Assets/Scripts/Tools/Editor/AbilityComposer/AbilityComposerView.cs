@@ -114,6 +114,12 @@ namespace Tools.Editor.AbilityComposer
             m_rightView.Refresh(timelineData);
         }
 
+        // 更新右侧 Event Inspector 的 Function 下拉候选
+        public void SetEventFunctionChoices(IReadOnlyList<string> functionChoices)
+        {
+            m_rightView.SetEventFunctionChoices(functionChoices);
+        }
+
         protected override void SubscribeViewEvents()
         {
             if (!m_isControlsReady)

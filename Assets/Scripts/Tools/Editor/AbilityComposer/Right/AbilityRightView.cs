@@ -7,6 +7,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 using Framework.QTower.Editor.View;
 using Tools.Editor.AbilityComposer.Center.Event;
 using Tools.Editor.AbilityComposer.Center.Timeline;
@@ -53,6 +54,15 @@ namespace Tools.Editor.AbilityComposer.Right
                 return;
 
             m_eventInspectorView.Refresh(timelineData);
+        }
+
+        // 更新右侧 Event Inspector 的 Function 下拉候选
+        public void SetEventFunctionChoices(IReadOnlyList<string> functionChoices)
+        {
+            if (!m_isControlsReady)
+                return;
+
+            m_eventInspectorView.SetFunctionChoices(functionChoices);
         }
 
         protected override void SubscribeViewEvents()
