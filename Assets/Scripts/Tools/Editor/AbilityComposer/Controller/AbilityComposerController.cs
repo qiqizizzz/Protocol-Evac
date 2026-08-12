@@ -92,6 +92,15 @@ namespace Tools.Editor.AbilityComposer.Controller
                 callback => m_composerView.OnJumpLastFrameRequested -= callback, JumpToLastFrame);
             RegisterEvent<int>(callback => m_timelineView.OnFrameRequested += callback,
                 callback => m_timelineView.OnFrameRequested -= callback, HandleTimelineFrameRequested);
+            RegisterEvent<float>(callback => m_composerView.OnTimelineZoomChanged += callback,
+                callback => m_composerView.OnTimelineZoomChanged -= callback, HandleTimelineZoomChanged);
+        }
+
+        // 更新时间轴显示缩放
+        private void HandleTimelineZoomChanged(float pixelsPerFrame)
+        {
+            m_timelineView.SetPixelsPerFrame(pixelsPerFrame);
+            RefreshView();
         }
 
         // 更新预览来源并销毁旧的临时克隆
@@ -221,14 +230,12 @@ namespace Tools.Editor.AbilityComposer.Controller
                 return;
 
             m_playbackElapsedTime += deltaTime;
-            int targetFrame = m_playbackStartFrame + Mathf.FloorToInt(m_playbackElapsedTime * m_timelineData.FrameRate);
-            if (targetFrame >= m_timelineData.LastFrame)
-            {
-                SetCurrentFrame(m_timelineData.LastFrame, false);
-                m_timelineData.StopPlayback();
-                RefreshView();
+            int frameCount = m_timelineData.LastFrame + 1;
+            if (frameCount <= 1 || m_timelineData.FrameRate <= 0f)
                 return;
-            }
+
+            int elapsedFrames = Mathf.FloorToInt(m_playbackElapsedTime * m_timelineData.FrameRate);
+            int targetFrame = (m_playbackStartFrame + elapsedFrames) % frameCount;
 
             if (targetFrame != m_timelineData.CurrentFrame)
                 SetCurrentFrame(targetFrame, false, false);
@@ -261,7 +268,7 @@ namespace Tools.Editor.AbilityComposer.Controller
         // 刷新主视图文字、按钮状态与时间轴播放头
         private void RefreshView()
         {
-            m_composerView.Refresh(m_timelineData, m_previewController.HasPreview);
+            m_composerView.Refresh(m_timelineData, m_previewController.HasPreview, m_timelineView.PixelsPerFrame);
             m_timelineView.RefreshCurrentFrame();
         }
     }

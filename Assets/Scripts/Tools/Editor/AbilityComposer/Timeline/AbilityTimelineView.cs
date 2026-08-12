@@ -15,7 +15,9 @@ namespace Tools.Editor.AbilityComposer.Timeline
 {
     public sealed class AbilityTimelineView : UIBaseEditor
     {
-        private const float TIMELINE_PIXELS_PER_FRAME = 12f;
+        private const float MIN_PIXELS_PER_FRAME = 4f;
+        private const float MAX_PIXELS_PER_FRAME = 48f;
+        private const float DEFAULT_PIXELS_PER_FRAME = 12f;
         private const float MIN_TIMELINE_WIDTH = 620f;
         private const int MAJOR_TICK_FRAME_INTERVAL = 5;
 
@@ -23,10 +25,13 @@ namespace Tools.Editor.AbilityComposer.Timeline
         private ScrollView m_scrollView;
         private VisualElement m_timelineContent;
         private VisualElement m_timelinePlayhead;
+        private float m_pixelsPerFrame = DEFAULT_PIXELS_PER_FRAME;
         private bool m_isDraggingPlayhead;
         private int m_draggingPointerId;
 
         public event Action<int> OnFrameRequested;
+
+        public float PixelsPerFrame => m_pixelsPerFrame;
 
         // 注入时间轴视图需要的 UI 元素
         public AbilityTimelineView(ScrollView scrollView, VisualElement timelineContent)
@@ -41,6 +46,7 @@ namespace Tools.Editor.AbilityComposer.Timeline
             m_scrollView.mode = ScrollViewMode.Horizontal;
             m_scrollView.horizontalScrollerVisibility = ScrollerVisibility.Auto;
             m_scrollView.verticalScrollerVisibility = ScrollerVisibility.Hidden;
+            m_timelineContent.RegisterCallback<WheelEvent>(HandleTimelineWheel);
         }
 
         protected override void SubscribeViewEvents()
@@ -64,19 +70,25 @@ namespace Tools.Editor.AbilityComposer.Timeline
             if (m_timelinePlayhead == null || m_timelineData == null)
                 return;
 
-            m_timelinePlayhead.style.left = m_timelineData.CurrentFrame * TIMELINE_PIXELS_PER_FRAME;
+            m_timelinePlayhead.style.left = FrameToPixel(m_timelineData.CurrentFrame);
+        }
+
+        // 设置时间轴显示缩放并保持当前帧位置
+        public void SetPixelsPerFrame(float pixelsPerFrame)
+        {
+            SetPixelsPerFrame(pixelsPerFrame, null);
         }
 
         // 将指定帧滚动到当前可见区域
         public void ScrollFrameIntoView(int frame)
         {
-            float framePosition = frame * TIMELINE_PIXELS_PER_FRAME;
+            float framePosition = FrameToPixel(frame);
             float viewportWidth = m_scrollView.contentViewport.resolvedStyle.width;
             float scrollPosition = m_scrollView.scrollOffset.x;
             if (framePosition < scrollPosition)
                 m_scrollView.scrollOffset = new Vector2(framePosition, 0f);
-            else if (framePosition > scrollPosition + viewportWidth - TIMELINE_PIXELS_PER_FRAME)
-                m_scrollView.scrollOffset = new Vector2(framePosition - viewportWidth + TIMELINE_PIXELS_PER_FRAME * 2f, 0f);
+            else if (framePosition > scrollPosition + viewportWidth - m_pixelsPerFrame)
+                m_scrollView.scrollOffset = new Vector2(framePosition - viewportWidth + m_pixelsPerFrame * 2f, 0f);
         }
 
         protected override void UnsubscribeViewEvents()
@@ -88,6 +100,7 @@ namespace Tools.Editor.AbilityComposer.Timeline
             m_timelineContent.UnregisterCallback<PointerMoveEvent>(UpdatePlayheadDrag);
             m_timelineContent.UnregisterCallback<PointerUpEvent>(EndPlayheadDrag);
             m_timelineContent.UnregisterCallback<PointerCaptureOutEvent>(CancelPlayheadDrag);
+            m_timelineContent.UnregisterCallback<WheelEvent>(HandleTimelineWheel);
             m_isDraggingPlayhead = false;
         }
 
@@ -103,7 +116,7 @@ namespace Tools.Editor.AbilityComposer.Timeline
                 return;
             }
 
-            float timelineWidth = Mathf.Max(MIN_TIMELINE_WIDTH, m_timelineData.LastFrame * TIMELINE_PIXELS_PER_FRAME + 1f);
+            float timelineWidth = CalculateTimelineWidth();
             m_timelineContent.style.width = timelineWidth;
             CreateTimelineTrack();
             CreateTimelineRuler(timelineWidth);
@@ -141,7 +154,7 @@ namespace Tools.Editor.AbilityComposer.Timeline
 
             for (int frame = 0; frame <= m_timelineData.LastFrame; frame++)
             {
-                float framePosition = frame * TIMELINE_PIXELS_PER_FRAME;
+                float framePosition = FrameToPixel(frame);
                 VisualElement tick = new VisualElement();
                 tick.AddToClassList(frame % MAJOR_TICK_FRAME_INTERVAL == 0 ? "ac-ruler-tick-major" : "ac-ruler-tick");
                 tick.style.left = framePosition;
@@ -219,8 +232,74 @@ namespace Tools.Editor.AbilityComposer.Timeline
         {
             Vector2 panelPosition = new Vector2(pointerPosition.x, pointerPosition.y);
             float localPositionX = m_timelineContent.WorldToLocal(panelPosition).x;
-            int targetFrame = Mathf.RoundToInt(localPositionX / TIMELINE_PIXELS_PER_FRAME);
+            int targetFrame = PixelToFrame(localPositionX);
             OnFrameRequested?.Invoke(Mathf.Clamp(targetFrame, 0, m_timelineData.LastFrame));
+        }
+
+        // 使用 Ctrl 加滚轮调整时间轴缩放，并以鼠标位置为锚点
+        private void HandleTimelineWheel(WheelEvent wheelEvent)
+        {
+            if (!wheelEvent.ctrlKey || m_timelineData == null || !m_timelineData.HasClip)
+                return;
+
+            float viewportX = m_scrollView.contentViewport.WorldToLocal(wheelEvent.mousePosition).x;
+            float localX = m_timelineContent.WorldToLocal(wheelEvent.mousePosition).x;
+            float anchorFrame = localX / m_pixelsPerFrame;
+            float zoomFactor = wheelEvent.delta.y < 0f ? 1.15f : 1f / 1.15f;
+            SetPixelsPerFrame(m_pixelsPerFrame * zoomFactor, new ZoomAnchor(anchorFrame, viewportX));
+            wheelEvent.StopPropagation();
+        }
+
+        // 应用缩放比例并重建时间轴布局
+        private void SetPixelsPerFrame(float pixelsPerFrame, ZoomAnchor? anchor)
+        {
+            float clampedPixelsPerFrame = Mathf.Clamp(pixelsPerFrame, MIN_PIXELS_PER_FRAME, MAX_PIXELS_PER_FRAME);
+            if (Mathf.Approximately(clampedPixelsPerFrame, m_pixelsPerFrame))
+                return;
+
+            m_pixelsPerFrame = clampedPixelsPerFrame;
+            float targetScrollX = anchor.HasValue
+                ? anchor.Value.Frame * m_pixelsPerFrame - anchor.Value.ViewportX
+                : m_scrollView.scrollOffset.x;
+            BuildTimeline();
+            m_scrollView.schedule.Execute(() =>
+            {
+                float maxScrollX = Mathf.Max(0f, m_timelineContent.resolvedStyle.width - m_scrollView.contentViewport.resolvedStyle.width);
+                m_scrollView.scrollOffset = new Vector2(Mathf.Clamp(targetScrollX, 0f, maxScrollX), 0f);
+            });
+        }
+
+        // 计算当前缩放比例下的时间轴宽度
+        private float CalculateTimelineWidth()
+        {
+            if (m_timelineData == null || !m_timelineData.HasClip)
+                return MIN_TIMELINE_WIDTH;
+
+            return Mathf.Max(MIN_TIMELINE_WIDTH, FrameToPixel(m_timelineData.LastFrame) + 1f);
+        }
+
+        // 将帧号换算为时间轴像素位置
+        private float FrameToPixel(int frame)
+        {
+            return frame * m_pixelsPerFrame;
+        }
+
+        // 将时间轴像素位置换算为最近帧号
+        private int PixelToFrame(float pixel)
+        {
+            return Mathf.RoundToInt(pixel / m_pixelsPerFrame);
+        }
+
+        private readonly struct ZoomAnchor
+        {
+            public readonly float Frame;
+            public readonly float ViewportX;
+
+            public ZoomAnchor(float frame, float viewportX)
+            {
+                Frame = frame;
+                ViewportX = viewportX;
+            }
         }
     }
 }

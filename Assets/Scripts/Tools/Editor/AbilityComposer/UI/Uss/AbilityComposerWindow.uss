@@ -348,3 +348,9 @@
 .ac-status-spacer {
     flex-grow: 1;
 }
+
+.ac-zoom-slider {
+    width: 150px;
+    margin-left: 4px;
+    margin-right: 8px;
+}
