@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using Framework.QTower.Editor.View;
 using Tools.Editor.AbilityComposer.Center;
+using Tools.Editor.AbilityComposer.Center.Event;
 using Tools.Editor.AbilityComposer.Center.Timeline;
 using Tools.Editor.AbilityComposer.Left;
 using Tools.Editor.AbilityComposer.Right;
@@ -51,6 +52,10 @@ namespace Tools.Editor.AbilityComposer
         public event Action OnNextFrameRequested;
         public event Action OnJumpLastFrameRequested;
         public event Action<int> OnCurrentFrameChanged;
+        public event Action OnAddEventRequested;
+        public event Action OnDeleteSelectedEventRequested;
+        public event Action<AbilityEventCategory> OnEventCategoryChanged;
+        public event Action<string> OnEventFunctionNameChanged;
 
         // 注入主视图需要的根节点与工作上下文
         public AbilityComposerView(VisualElement rootVisualElement, AbilityComposerData composerData)
@@ -106,6 +111,7 @@ namespace Tools.Editor.AbilityComposer
         {
             m_returnPreviousSceneButton.SetEnabled(hasPreview);
             m_leftView.Refresh(timelineData, hasPreview);
+            m_rightView.Refresh(timelineData);
         }
 
         protected override void SubscribeViewEvents()
@@ -124,6 +130,10 @@ namespace Tools.Editor.AbilityComposer
             m_leftView.OnNextFrameRequested += RequestNextFrame;
             m_leftView.OnJumpLastFrameRequested += RequestJumpLastFrame;
             m_leftView.OnCurrentFrameChanged += RequestCurrentFrameChanged;
+            m_leftView.OnAddEventRequested += RequestAddEvent;
+            m_leftView.OnDeleteSelectedEventRequested += RequestDeleteSelectedEvent;
+            m_rightView.OnEventCategoryChanged += RequestEventCategoryChanged;
+            m_rightView.OnEventFunctionNameChanged += RequestEventFunctionNameChanged;
         }
 
         protected override void UnsubscribeViewEvents()
@@ -142,6 +152,10 @@ namespace Tools.Editor.AbilityComposer
             m_leftView.OnNextFrameRequested -= RequestNextFrame;
             m_leftView.OnJumpLastFrameRequested -= RequestJumpLastFrame;
             m_leftView.OnCurrentFrameChanged -= RequestCurrentFrameChanged;
+            m_leftView.OnAddEventRequested -= RequestAddEvent;
+            m_leftView.OnDeleteSelectedEventRequested -= RequestDeleteSelectedEvent;
+            m_rightView.OnEventCategoryChanged -= RequestEventCategoryChanged;
+            m_rightView.OnEventFunctionNameChanged -= RequestEventFunctionNameChanged;
             m_isControlsReady = false;
         }
 
@@ -256,6 +270,18 @@ namespace Tools.Editor.AbilityComposer
         {
             OnCurrentFrameChanged?.Invoke(frame);
         }
+
+        // 转发添加事件请求
+        private void RequestAddEvent() => OnAddEventRequested?.Invoke();
+
+        // 转发删除选中事件请求
+        private void RequestDeleteSelectedEvent() => OnDeleteSelectedEventRequested?.Invoke();
+
+        // 转发事件分类编辑请求
+        private void RequestEventCategoryChanged(AbilityEventCategory category) => OnEventCategoryChanged?.Invoke(category);
+
+        // 转发事件 Function 编辑请求
+        private void RequestEventFunctionNameChanged(string functionName) => OnEventFunctionNameChanged?.Invoke(functionName);
 
         // 为窗口文字应用 MiSans，避免中文回退到系统粗体字体
         private void ApplyMiSansFont(VisualElement rootVisualElement)

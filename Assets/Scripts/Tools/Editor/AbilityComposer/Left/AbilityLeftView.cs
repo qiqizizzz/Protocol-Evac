@@ -10,6 +10,7 @@ using System;
 using Framework.QTower.Editor.View;
 using Tools.Editor.AbilityComposer.Center.Timeline;
 using UnityEngine.UIElements;
+using Utils.log;
 
 namespace Tools.Editor.AbilityComposer.Left
 {
@@ -24,6 +25,8 @@ namespace Tools.Editor.AbilityComposer.Left
         private Label m_playToggleLabel;
         private TextField m_currentFrameField;
         private Label m_lastFrameLabel;
+        private Button m_addEventButton;
+        private Button m_deleteEventButton;
         private bool m_isControlsReady;
 
         public event Action OnJumpFirstFrameRequested;
@@ -32,6 +35,8 @@ namespace Tools.Editor.AbilityComposer.Left
         public event Action OnNextFrameRequested;
         public event Action OnJumpLastFrameRequested;
         public event Action<int> OnCurrentFrameChanged;
+        public event Action OnAddEventRequested;
+        public event Action OnDeleteSelectedEventRequested;
 
         // 注入左侧区域根节点
         public AbilityLeftView(VisualElement rootVisualElement)
@@ -50,9 +55,14 @@ namespace Tools.Editor.AbilityComposer.Left
             m_playToggleLabel = m_rootVisualElement.Q<Label>("play-toggle-label");
             m_currentFrameField = m_rootVisualElement.Q<TextField>("preview-current-frame-field");
             m_lastFrameLabel = m_rootVisualElement.Q<Label>("preview-last-frame-label");
+            m_addEventButton = m_rootVisualElement.Q<Button>("add-event-button");
+            m_deleteEventButton = m_rootVisualElement.Q<Button>("delete-event-button");
             m_isControlsReady = m_jumpFirstFrameButton != null && m_previousFrameButton != null
                 && m_playToggleButton != null && m_nextFrameButton != null && m_jumpLastFrameButton != null
-                && m_playToggleLabel != null && m_currentFrameField != null && m_lastFrameLabel != null;
+                && m_playToggleLabel != null && m_currentFrameField != null && m_lastFrameLabel != null
+                && m_addEventButton != null && m_deleteEventButton != null;
+            if (!m_isControlsReady)
+                QLog.Error("配置 Ability Composer 左侧视图失败：缺少必要的 UXML 控件");
         }
 
         // 使用当前数据刷新播放状态
@@ -64,6 +74,8 @@ namespace Tools.Editor.AbilityComposer.Left
             m_previousFrameButton.SetEnabled(hasAnimationClip);
             m_nextFrameButton.SetEnabled(hasAnimationClip);
             m_jumpLastFrameButton.SetEnabled(hasAnimationClip);
+            m_addEventButton.SetEnabled(hasAnimationClip);
+            m_deleteEventButton.SetEnabled(timelineData.SelectedEvent != null);
 
             if (!hasAnimationClip)
             {
@@ -89,6 +101,8 @@ namespace Tools.Editor.AbilityComposer.Left
             m_playToggleButton.clicked += RequestPlaybackToggle;
             m_nextFrameButton.clicked += RequestNextFrame;
             m_jumpLastFrameButton.clicked += RequestJumpLastFrame;
+            m_addEventButton.clicked += RequestAddEvent;
+            m_deleteEventButton.clicked += RequestDeleteSelectedEvent;
         }
 
         protected override void UnsubscribeViewEvents()
@@ -102,6 +116,8 @@ namespace Tools.Editor.AbilityComposer.Left
             m_playToggleButton.clicked -= RequestPlaybackToggle;
             m_nextFrameButton.clicked -= RequestNextFrame;
             m_jumpLastFrameButton.clicked -= RequestJumpLastFrame;
+            m_addEventButton.clicked -= RequestAddEvent;
+            m_deleteEventButton.clicked -= RequestDeleteSelectedEvent;
             m_isControlsReady = false;
         }
 
@@ -126,5 +142,11 @@ namespace Tools.Editor.AbilityComposer.Left
 
         // 请求跳转到最后一帧
         private void RequestJumpLastFrame() => OnJumpLastFrameRequested?.Invoke();
+
+        // 请求在当前帧添加事件
+        private void RequestAddEvent() => OnAddEventRequested?.Invoke();
+
+        // 请求删除选中的事件
+        private void RequestDeleteSelectedEvent() => OnDeleteSelectedEventRequested?.Invoke();
     }
 }

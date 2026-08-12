@@ -7,6 +7,7 @@
  */
 
 using Framework.QTower.Editor.Controller;
+using Tools.Editor.AbilityComposer.Center.Event;
 using Tools.Editor.AbilityComposer.Center.Timeline;
 using Tools.Editor.AbilityComposer.Preview;
 using UnityEngine;
@@ -93,6 +94,16 @@ namespace Tools.Editor.AbilityComposer
                 callback => m_timelineView.OnFrameRequested -= callback, HandleTimelineFrameRequested);
             RegisterEvent<int>(callback => m_composerView.OnCurrentFrameChanged += callback,
                 callback => m_composerView.OnCurrentFrameChanged -= callback, HandleCurrentFrameChanged);
+            RegisterEvent(callback => m_composerView.OnAddEventRequested += callback,
+                callback => m_composerView.OnAddEventRequested -= callback, AddEvent);
+            RegisterEvent(callback => m_composerView.OnDeleteSelectedEventRequested += callback,
+                callback => m_composerView.OnDeleteSelectedEventRequested -= callback, DeleteSelectedEvent);
+            RegisterEvent<AbilityEventCategory>(callback => m_composerView.OnEventCategoryChanged += callback,
+                callback => m_composerView.OnEventCategoryChanged -= callback, HandleEventCategoryChanged);
+            RegisterEvent<string>(callback => m_composerView.OnEventFunctionNameChanged += callback,
+                callback => m_composerView.OnEventFunctionNameChanged -= callback, HandleEventFunctionNameChanged);
+            RegisterEvent<string>(callback => m_timelineView.OnEventSelected += callback,
+                callback => m_timelineView.OnEventSelected -= callback, HandleEventSelected);
         }
 
         // 更新预览来源并销毁旧的临时克隆
@@ -178,6 +189,44 @@ namespace Tools.Editor.AbilityComposer
             SetCurrentFrame(frame, true);
         }
 
+        // 在当前帧创建空动画事件草稿
+        private void AddEvent()
+        {
+            if (!m_timelineData.HasClip)
+                return;
+
+            m_timelineData.AddEvent(m_timelineData.CurrentFrame);
+            RefreshView();
+        }
+
+        // 删除当前选中的动画事件草稿
+        private void DeleteSelectedEvent()
+        {
+            m_timelineData.DeleteSelectedEvent();
+            RefreshView();
+        }
+
+        // 选中时间轴上的事件标记
+        private void HandleEventSelected(string eventId)
+        {
+            m_timelineData.SelectEvent(eventId);
+            RefreshView();
+        }
+
+        // 更新选中事件的分类颜色
+        private void HandleEventCategoryChanged(AbilityEventCategory category)
+        {
+            m_timelineData.SetSelectedEventCategory(category);
+            RefreshView();
+        }
+
+        // 更新选中事件的 Function 名称
+        private void HandleEventFunctionNameChanged(string functionName)
+        {
+            m_timelineData.SetSelectedEventFunctionName(functionName);
+            RefreshView();
+        }
+
         // 切换预览动画的播放与暂停状态
         private void TogglePlayback()
         {
@@ -250,7 +299,7 @@ namespace Tools.Editor.AbilityComposer
 
             m_timelineData.SetCurrentFrame(frame);
             SampleCurrentFrame(scrollIntoView);
-            RefreshView();
+            RefreshView(!m_timelineData.IsPlaying);
         }
 
         // 采样当前帧并按需将播放头滚动到可视范围
@@ -264,10 +313,12 @@ namespace Tools.Editor.AbilityComposer
         }
 
         // 刷新主视图文字、按钮状态与时间轴播放头
-        private void RefreshView()
+        private void RefreshView(bool refreshEventMarkers = true)
         {
             m_composerView.Refresh(m_timelineData, m_previewController.HasPreview);
             m_timelineView.RefreshCurrentFrame();
+            if (refreshEventMarkers)
+                m_timelineView.RefreshEventMarkers();
         }
     }
 }

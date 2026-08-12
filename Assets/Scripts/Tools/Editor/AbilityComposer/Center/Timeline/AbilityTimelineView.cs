@@ -7,6 +7,7 @@
  */
 
 using System;
+using Tools.Editor.AbilityComposer.Center.Event;
 using Framework.QTower.Editor.View;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -30,6 +31,7 @@ namespace Tools.Editor.AbilityComposer.Center.Timeline
         private int m_draggingPointerId;
 
         public event Action<int> OnFrameRequested;
+        public event Action<string> OnEventSelected;
 
         // 注入时间轴视图需要的 UI 元素
         public AbilityTimelineView(ScrollView scrollView, VisualElement timelineContent)
@@ -69,6 +71,12 @@ namespace Tools.Editor.AbilityComposer.Center.Timeline
                 return;
 
             m_timelinePlayhead.style.left = FrameToPixel(m_timelineData.CurrentFrame);
+        }
+
+        // 刷新事件标记外观
+        public void RefreshEventMarkers()
+        {
+            BuildTimeline();
         }
 
         // 将指定帧滚动到当前可见区域
@@ -112,6 +120,7 @@ namespace Tools.Editor.AbilityComposer.Center.Timeline
             m_timelineContent.style.width = timelineWidth;
             CreateTimelineTrack();
             CreateTimelineRuler(timelineWidth);
+            CreateEventMarkers();
             CreateTimelinePlayhead();
         }
 
@@ -171,6 +180,24 @@ namespace Tools.Editor.AbilityComposer.Center.Timeline
             m_timelinePlayhead.AddToClassList("ac-timeline-playhead");
             m_timelineContent.Add(m_timelinePlayhead);
             RefreshCurrentFrame();
+        }
+
+        // 创建按分类显示颜色的动画事件标记
+        private void CreateEventMarkers()
+        {
+            foreach (AbilityEventDraft eventDraft in m_timelineData.EventDraftValues)
+            {
+                Button eventMarker = new Button();
+                eventMarker.name = eventDraft.Id;
+                eventMarker.AddToClassList("ac-timeline-event-marker");
+                eventMarker.AddToClassList($"ac-event-{eventDraft.Category.ToString().ToLowerInvariant()}");
+                if (m_timelineData.SelectedEvent == eventDraft)
+                    eventMarker.AddToClassList("ac-timeline-event-marker-selected");
+
+                eventMarker.style.left = FrameToPixel(eventDraft.Frame) - 5f;
+                eventMarker.clicked += () => OnEventSelected?.Invoke(eventDraft.Id);
+                m_timelineContent.Add(eventMarker);
+            }
         }
 
         // 开始拖动播放头并请求跳转到鼠标所在帧
