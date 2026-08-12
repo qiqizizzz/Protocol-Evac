@@ -6,10 +6,8 @@
  * └─────────────────────────────────────────────────────────────┘
  */
 
-using Tools.Editor.AbilityComposer.Controller;
 using Tools.Editor.AbilityComposer.Preview;
-using Tools.Editor.AbilityComposer.Timeline;
-using Tools.Editor.AbilityComposer.View;
+using Tools.Editor.AbilityComposer.Center.Timeline;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;

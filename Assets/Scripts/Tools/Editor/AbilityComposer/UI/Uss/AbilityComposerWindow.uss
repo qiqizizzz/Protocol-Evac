@@ -97,9 +97,39 @@
 }
 
 .ac-frame-counter {
+    flex-direction: row;
+    align-items: center;
+    flex-shrink: 0;
+    margin-left: 8px;
+    padding-left: 8px;
     color: rgb(210, 210, 210);
     font-size: 11px;
     -unity-font-style: normal;
+}
+
+.ac-frame-input {
+    width: 30px;
+    min-width: 30px;
+    height: 22px;
+    margin-top: 0;
+    margin-bottom: 0;
+    padding-left: 3px;
+    padding-right: 3px;
+    color: rgb(210, 210, 210);
+    font-size: 11px;
+    -unity-font-style: normal;
+}
+
+.ac-frame-separator,
+.ac-frame-total {
+    color: rgb(210, 210, 210);
+    font-size: 11px;
+    -unity-font-style: normal;
+}
+
+.ac-frame-separator {
+    margin-left: 0;
+    margin-right: 0;
 }
 
 .ac-button {
@@ -143,22 +173,27 @@
 
 .ac-transport-row {
     flex-direction: row;
-    height: 36px;
+    height: 28px;
     align-items: center;
-    justify-content: center;
-    width: 100%;
-    margin-top: 16px;
+    justify-content: flex-start;
+    flex-grow: 0;
+    flex-shrink: 0;
 }
 
 .ac-transport-button {
-    width: 30px;
-    min-width: 30px;
-    height: 30px;
-    margin-left: 4px;
-    margin-right: 4px;
+    width: 20px;
+    min-width: 20px;
+    height: 20px;
+    margin-left: 2px;
+    margin-right: 2px;
     align-items: center;
     justify-content: center;
     -unity-font-style: normal;
+}
+
+.ac-transport-row .ac-transport-button {
+    margin-left: 0;
+    margin-right: 0;
 }
 
 .ac-transport-button > .ac-button-label {
@@ -169,6 +204,13 @@
 
 .ac-panel-spacer {
     flex-grow: 1;
+}
+
+.ac-module-divider {
+    height: 1px;
+    flex-shrink: 0;
+    margin-top: 12px;
+    background-color: rgb(30, 30, 30);
 }
 
 .ac-timeline-workspace,

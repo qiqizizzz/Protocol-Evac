@@ -7,13 +7,12 @@
  */
 
 using Framework.QTower.Editor.Controller;
+using Tools.Editor.AbilityComposer.Center.Timeline;
 using Tools.Editor.AbilityComposer.Preview;
-using Tools.Editor.AbilityComposer.Timeline;
-using Tools.Editor.AbilityComposer.View;
 using UnityEngine;
 using Utils.log;
 
-namespace Tools.Editor.AbilityComposer.Controller
+namespace Tools.Editor.AbilityComposer
 {
     public sealed class AbilityComposerController : BaseEditorController
     {
@@ -92,6 +91,8 @@ namespace Tools.Editor.AbilityComposer.Controller
                 callback => m_composerView.OnJumpLastFrameRequested -= callback, JumpToLastFrame);
             RegisterEvent<int>(callback => m_timelineView.OnFrameRequested += callback,
                 callback => m_timelineView.OnFrameRequested -= callback, HandleTimelineFrameRequested);
+            RegisterEvent<int>(callback => m_composerView.OnCurrentFrameChanged += callback,
+                callback => m_composerView.OnCurrentFrameChanged -= callback, HandleCurrentFrameChanged);
         }
 
         // 更新预览来源并销毁旧的临时克隆
@@ -169,6 +170,12 @@ namespace Tools.Editor.AbilityComposer.Controller
         private void HandleTimelineFrameRequested(int frame)
         {
             SetCurrentFrame(frame, false);
+        }
+
+        // 响应帧输入框并跳转到指定帧
+        private void HandleCurrentFrameChanged(int frame)
+        {
+            SetCurrentFrame(frame, true);
         }
 
         // 切换预览动画的播放与暂停状态

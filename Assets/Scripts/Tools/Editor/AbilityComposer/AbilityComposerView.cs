@@ -8,9 +8,11 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Framework.QTower.Editor.View;
-using Tools.Editor.AbilityComposer.Timeline;
+using Tools.Editor.AbilityComposer.Center;
+using Tools.Editor.AbilityComposer.Center.Timeline;
+using Tools.Editor.AbilityComposer.Left;
+using Tools.Editor.AbilityComposer.Right;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
@@ -18,7 +20,7 @@ using UnityEngine.UIElements;
 using Utils.log;
 using UiFontAsset = UnityEngine.TextCore.Text.FontAsset;
 
-namespace Tools.Editor.AbilityComposer.View
+namespace Tools.Editor.AbilityComposer
 {
     public sealed class AbilityComposerView : UIBaseEditor
     {
@@ -28,20 +30,14 @@ namespace Tools.Editor.AbilityComposer.View
 
         private ObjectField m_previewSourceField;
         private ObjectField m_animationClipField;
-        private ScrollView m_timelineScrollView;
-        private VisualElement m_timelineContent;
         private Button m_returnPreviousSceneButton;
         private Button m_createPreviewButton;
         private Button m_focusPreviewButton;
-        private Button m_jumpFirstFrameButton;
-        private Button m_previousFrameButton;
-        private Button m_playToggleButton;
-        private Button m_nextFrameButton;
-        private Button m_jumpLastFrameButton;
-        private Label m_playToggleLabel;
-        private Label m_frameCounterLabel;
         private VisualElement m_rootVisualElement;
         private AbilityComposerData m_composerData;
+        private AbilityLeftView m_leftView;
+        private AbilityCenterView m_centerView;
+        private AbilityRightView m_rightView;
         private bool m_isControlsReady;
 
         public event Action<GameObject> OnPreviewSourceChanged;
@@ -54,6 +50,7 @@ namespace Tools.Editor.AbilityComposer.View
         public event Action OnPlaybackToggled;
         public event Action OnNextFrameRequested;
         public event Action OnJumpLastFrameRequested;
+        public event Action<int> OnCurrentFrameChanged;
 
         // 注入主视图需要的根节点与工作上下文
         public AbilityComposerView(VisualElement rootVisualElement, AbilityComposerData composerData)
@@ -87,6 +84,12 @@ namespace Tools.Editor.AbilityComposer.View
             if (!FindControls(m_rootVisualElement))
                 return;
 
+            m_leftView = new AbilityLeftView(m_rootVisualElement.Q<VisualElement>("preview-control-panel"));
+            m_centerView = new AbilityCenterView(m_rootVisualElement.Q<VisualElement>("timeline-panel"));
+            m_rightView = new AbilityRightView(m_rootVisualElement.Q<VisualElement>("event-inspector-panel"));
+            m_leftView.Init();
+            m_centerView.Init();
+            m_rightView.Init();
             ConfigureResourceFields(m_composerData);
             ApplyMiSansFont(m_rootVisualElement);
             m_isControlsReady = true;
@@ -95,35 +98,14 @@ namespace Tools.Editor.AbilityComposer.View
         // 返回时间轴内容容器，供独立时间轴视图装配
         public bool TryGetTimelineElements(out ScrollView timelineScrollView, out VisualElement timelineContent)
         {
-            timelineScrollView = m_timelineScrollView;
-            timelineContent = m_timelineContent;
-            if (timelineScrollView != null && timelineContent != null)
-                return true;
-
-            QLog.Error("配置 Ability Composer 时间轴失败：缺少必要的 UXML 控件");
-            return false;
+            return m_centerView.TryGetTimelineElements(out timelineScrollView, out timelineContent);
         }
 
         // 使用当前数据刷新播放控件与状态文字
         public void Refresh(AbilityTimelineData timelineData, bool hasPreview)
         {
-            bool hasAnimationClip = timelineData.HasClip;
             m_returnPreviousSceneButton.SetEnabled(hasPreview);
-            m_playToggleButton.SetEnabled(hasAnimationClip);
-            m_jumpFirstFrameButton.SetEnabled(hasAnimationClip);
-            m_previousFrameButton.SetEnabled(hasAnimationClip);
-            m_nextFrameButton.SetEnabled(hasAnimationClip);
-            m_jumpLastFrameButton.SetEnabled(hasAnimationClip);
-
-            if (!hasAnimationClip)
-            {
-                m_frameCounterLabel.text = "-- / --";
-                m_playToggleLabel.text = "▶";
-                return;
-            }
-
-            m_frameCounterLabel.text = $"{timelineData.CurrentFrame} / {timelineData.LastFrame}";
-            m_playToggleLabel.text = timelineData.IsPlaying ? "Ⅱ" : "▶";
+            m_leftView.Refresh(timelineData, hasPreview);
         }
 
         protected override void SubscribeViewEvents()
@@ -136,11 +118,12 @@ namespace Tools.Editor.AbilityComposer.View
             m_returnPreviousSceneButton.clicked += RequestReturnPreviousScene;
             m_createPreviewButton.clicked += RequestCreatePreview;
             m_focusPreviewButton.clicked += RequestFocusPreview;
-            m_jumpFirstFrameButton.clicked += RequestJumpFirstFrame;
-            m_previousFrameButton.clicked += RequestPreviousFrame;
-            m_playToggleButton.clicked += RequestPlaybackToggle;
-            m_nextFrameButton.clicked += RequestNextFrame;
-            m_jumpLastFrameButton.clicked += RequestJumpLastFrame;
+            m_leftView.OnJumpFirstFrameRequested += RequestJumpFirstFrame;
+            m_leftView.OnPreviousFrameRequested += RequestPreviousFrame;
+            m_leftView.OnPlaybackToggled += RequestPlaybackToggle;
+            m_leftView.OnNextFrameRequested += RequestNextFrame;
+            m_leftView.OnJumpLastFrameRequested += RequestJumpLastFrame;
+            m_leftView.OnCurrentFrameChanged += RequestCurrentFrameChanged;
         }
 
         protected override void UnsubscribeViewEvents()
@@ -153,12 +136,20 @@ namespace Tools.Editor.AbilityComposer.View
             m_returnPreviousSceneButton.clicked -= RequestReturnPreviousScene;
             m_createPreviewButton.clicked -= RequestCreatePreview;
             m_focusPreviewButton.clicked -= RequestFocusPreview;
-            m_jumpFirstFrameButton.clicked -= RequestJumpFirstFrame;
-            m_previousFrameButton.clicked -= RequestPreviousFrame;
-            m_playToggleButton.clicked -= RequestPlaybackToggle;
-            m_nextFrameButton.clicked -= RequestNextFrame;
-            m_jumpLastFrameButton.clicked -= RequestJumpLastFrame;
+            m_leftView.OnJumpFirstFrameRequested -= RequestJumpFirstFrame;
+            m_leftView.OnPreviousFrameRequested -= RequestPreviousFrame;
+            m_leftView.OnPlaybackToggled -= RequestPlaybackToggle;
+            m_leftView.OnNextFrameRequested -= RequestNextFrame;
+            m_leftView.OnJumpLastFrameRequested -= RequestJumpLastFrame;
+            m_leftView.OnCurrentFrameChanged -= RequestCurrentFrameChanged;
             m_isControlsReady = false;
+        }
+
+        protected override void OnEditorDispose()
+        {
+            m_leftView?.Destroy();
+            m_centerView?.Destroy();
+            m_rightView?.Destroy();
         }
 
         // 查找 UXML 中的主视图控件
@@ -166,23 +157,12 @@ namespace Tools.Editor.AbilityComposer.View
         {
             m_previewSourceField = rootVisualElement.Q<ObjectField>("preview-source-field");
             m_animationClipField = rootVisualElement.Q<ObjectField>("animation-clip-field");
-            m_timelineScrollView = rootVisualElement.Q<ScrollView>("timeline-scroll-view");
-            m_timelineContent = rootVisualElement.Q<VisualElement>("timeline-content");
             m_returnPreviousSceneButton = rootVisualElement.Q<Button>("return-previous-scene-button");
             m_createPreviewButton = rootVisualElement.Q<Button>("create-preview-button");
             m_focusPreviewButton = rootVisualElement.Q<Button>("focus-preview-button");
-            m_jumpFirstFrameButton = rootVisualElement.Q<Button>("jump-first-frame-button");
-            m_previousFrameButton = rootVisualElement.Q<Button>("previous-frame-button");
-            m_playToggleButton = rootVisualElement.Q<Button>("play-toggle-button");
-            m_nextFrameButton = rootVisualElement.Q<Button>("next-frame-button");
-            m_jumpLastFrameButton = rootVisualElement.Q<Button>("jump-last-frame-button");
-            m_playToggleLabel = rootVisualElement.Q<Label>("play-toggle-label");
-            m_frameCounterLabel = rootVisualElement.Q<Label>("preview-frame-counter");
 
             if (m_previewSourceField == null || m_animationClipField == null || m_returnPreviousSceneButton == null
-                || m_createPreviewButton == null || m_focusPreviewButton == null || m_jumpFirstFrameButton == null
-                || m_previousFrameButton == null || m_playToggleButton == null || m_nextFrameButton == null
-                || m_jumpLastFrameButton == null || m_playToggleLabel == null || m_frameCounterLabel == null)
+                || m_createPreviewButton == null || m_focusPreviewButton == null)
             {
                 QLog.Error("配置 Ability Composer 主视图失败：缺少必要的 UXML 控件");
                 return false;
@@ -269,6 +249,12 @@ namespace Tools.Editor.AbilityComposer.View
         private void RequestJumpLastFrame()
         {
             OnJumpLastFrameRequested?.Invoke();
+        }
+
+        // 转发左侧帧输入请求
+        private void RequestCurrentFrameChanged(int frame)
+        {
+            OnCurrentFrameChanged?.Invoke(frame);
         }
 
         // 为窗口文字应用 MiSans，避免中文回退到系统粗体字体

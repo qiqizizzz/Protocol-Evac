@@ -8,7 +8,7 @@
 
 using UnityEngine;
 
-namespace Tools.Editor.AbilityComposer.Timeline
+namespace Tools.Editor.AbilityComposer.Center.Timeline
 {
     public sealed class AbilityTimelineData
     {

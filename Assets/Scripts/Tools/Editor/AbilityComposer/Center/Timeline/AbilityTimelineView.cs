@@ -11,7 +11,7 @@ using Framework.QTower.Editor.View;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace Tools.Editor.AbilityComposer.Timeline
+namespace Tools.Editor.AbilityComposer.Center.Timeline
 {
     public sealed class AbilityTimelineView : UIBaseEditor
     {
