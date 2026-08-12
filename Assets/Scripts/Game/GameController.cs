@@ -6,7 +6,9 @@
  * └──────────────────────────────────┘
  */
 
+using Cysharp.Threading.Tasks;
 using Framework.QTower;
+using Framework.QTower.Common.Defines;
 using Framework.QTower.Controller;
 using UI.Combat;
 
@@ -14,12 +16,22 @@ namespace Game
 {
     public sealed class GameController : BaseController
     {
+
+        // 注册游戏场景默认 HUD
+        public GameController()
+        {
+            GameApp.UIManager.Register<UICombatHUD>(new UIData
+            {
+                Address = UIDefines.UICombatHUD,
+                Parent = GameApp.UIManager.UIRoot,
+                Controller = this,
+                SortingOrder = 0
+            });
+        }
+
         protected override void OnInit()
         {
-            if (!GameApp.UIManager.Register<UICombatHUD>(ViewType.UICombatHUD, this))
-                return;
-
-            GameApp.UIManager.OpenAsync(ViewType.UICombatHUD, null);
+            GameApp.UIManager.Open<UICombatHUD>().Forget();
         }
 
         protected override void OnDestroy()

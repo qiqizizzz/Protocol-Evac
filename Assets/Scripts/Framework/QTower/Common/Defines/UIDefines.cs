@@ -1,16 +1,15 @@
 /*
  * ┌──────────────────────────────────┐
- * │  描    述: UI 视图类型标识
- * │  类    名: ViewType.cs
+ * │  描    述: UI Addressables 地址定义
+ * │  类    名: UIDefines.cs
  * │  创    建: By qiqizizzz
  * └──────────────────────────────────┘
  */
 
-namespace Framework.QTower
+namespace Framework.QTower.Common.Defines
 {
-    public enum ViewType
+    public static class UIDefines
     {
-        None = 0,
-        UICombatHUD = 1
+        public const string UICombatHUD = "UICombatHUD";
     }
 }

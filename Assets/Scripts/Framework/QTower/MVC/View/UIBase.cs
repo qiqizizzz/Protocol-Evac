@@ -17,11 +17,11 @@ namespace Framework.QTower.View
     public abstract class UIBase : MonoBehaviour
     {
         public BaseController Controller { get; internal set; }
-        public ViewType ViewType { get; internal set; }
 
         private readonly Dictionary<string, Action> m_events = new();
         private bool m_isInitialized;
 
+        #region 生命周期
         public void Init()
         {
             if (m_isInitialized)
@@ -38,19 +38,15 @@ namespace Framework.QTower.View
             OnOpen(args);
         }
 
-        public void Close(params object[] args)
+        public void Hide()
         {
-            OnClose(args);
             SetVisible(false);
         }
 
-        // 设置面板显示状态
-        public void SetVisible(bool isVisible)
+        public void Close(params object[] args)
         {
-            if (gameObject.activeSelf == isVisible)
-                return;
-
-            gameObject.SetActive(isVisible);
+            OnClose(args);
+            Hide();
         }
 
         private void OnDestroy()
@@ -62,8 +58,16 @@ namespace Framework.QTower.View
             OnDispose();
             m_isInitialized = false;
         }
+        #endregion
 
-        // 注册视图事件并托管注销操作
+        private void SetVisible(bool isVisible)
+        {
+            if (gameObject.activeSelf == isVisible)
+                return;
+
+            gameObject.SetActive(isVisible);
+        }
+
         protected void RegisterEvent<TEvent>(string eventName, Action<TEvent> callback)
         {
             EventManager.RegisterEvent(eventName, callback);
@@ -78,7 +82,6 @@ namespace Framework.QTower.View
             m_events.Add(eventName, removeEvent);
         }
 
-        // 注销指定视图事件
         protected void UnregisterEvent(string eventName)
         {
             if (!m_events.TryGetValue(eventName, out Action removeEvent))

@@ -1,26 +1,21 @@
 /*
  * ┌──────────────────────────────────┐
- * │  描    述: UI 注册数据，保存视图类型与所属控制器
+ * │  描    述: UI 注册数据，保存资源地址、父节点、控制器与排序信息
  * │  类    名: UIData.cs
  * │  创    建: By qiqizizzz
  * └──────────────────────────────────┘
  */
 
-using System;
 using Framework.QTower.Controller;
+using UnityEngine;
 
 namespace Framework.QTower
 {
     public sealed class UIData
     {
-        public Type ViewClass { get; }
-        public BaseController Controller { get; }
-
-        // 创建 UI 注册数据
-        public UIData(Type viewClass, BaseController controller)
-        {
-            ViewClass = viewClass;
-            Controller = controller;
-        }
+        public string Address { get; set; }
+        public Transform Parent { get; set; }
+        public BaseController Controller { get; set; }
+        public int SortingOrder { get; set; }
     }
 }
