@@ -31,8 +31,6 @@ namespace Tools.Editor.AbilityComposer.Timeline
 
         public event Action<int> OnFrameRequested;
 
-        public float PixelsPerFrame => m_pixelsPerFrame;
-
         // 注入时间轴视图需要的 UI 元素
         public AbilityTimelineView(ScrollView scrollView, VisualElement timelineContent)
         {
@@ -71,12 +69,6 @@ namespace Tools.Editor.AbilityComposer.Timeline
                 return;
 
             m_timelinePlayhead.style.left = FrameToPixel(m_timelineData.CurrentFrame);
-        }
-
-        // 设置时间轴显示缩放并保持当前帧位置
-        public void SetPixelsPerFrame(float pixelsPerFrame)
-        {
-            SetPixelsPerFrame(pixelsPerFrame, null);
         }
 
         // 将指定帧滚动到当前可见区域
@@ -139,9 +131,6 @@ namespace Tools.Editor.AbilityComposer.Timeline
         {
             VisualElement track = new VisualElement();
             track.AddToClassList("ac-timeline-track");
-            Label trackLabel = new Label("Animation Events");
-            trackLabel.AddToClassList("ac-timeline-track-label");
-            track.Add(trackLabel);
             m_timelineContent.Add(track);
         }
 

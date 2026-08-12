@@ -66,9 +66,6 @@
 
         <ui:VisualElement name="bottom-status-bar" class="ac-status-bar">
             <ui:Label text="逐帧吸附" class="ac-status-item ac-status-enabled" />
-            <ui:Label name="timeline-zoom-label" text="缩放 12 px/帧" class="ac-status-item" />
-            <ui:Slider name="timeline-zoom-slider" low-value="4" high-value="48" value="12" class="ac-zoom-slider" />
-            <ui:Label name="current-frame-status" text="当前帧 --" class="ac-status-item" />
             <ui:VisualElement class="ac-status-spacer" />
             <ui:Label text="草稿状态：尚未加载动画" class="ac-status-item" />
             <ui:Button class="ac-button ac-button-apply">

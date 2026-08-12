@@ -42,9 +42,6 @@ namespace Tools.Editor.AbilityComposer.View
         private Label m_frameCounterLabel;
         private Label m_frameRateLabel;
         private Label m_currentTimeLabel;
-        private Label m_currentFrameStatusLabel;
-        private Slider m_timelineZoomSlider;
-        private Label m_timelineZoomLabel;
         private VisualElement m_rootVisualElement;
         private AbilityComposerData m_composerData;
         private bool m_isControlsReady;
@@ -59,7 +56,6 @@ namespace Tools.Editor.AbilityComposer.View
         public event Action OnPlaybackToggled;
         public event Action OnNextFrameRequested;
         public event Action OnJumpLastFrameRequested;
-        public event Action<float> OnTimelineZoomChanged;
 
         // 注入主视图需要的根节点与工作上下文
         public AbilityComposerView(VisualElement rootVisualElement, AbilityComposerData composerData)
@@ -111,7 +107,7 @@ namespace Tools.Editor.AbilityComposer.View
         }
 
         // 使用当前数据刷新播放控件与状态文字
-        public void Refresh(AbilityTimelineData timelineData, bool hasPreview, float pixelsPerFrame)
+        public void Refresh(AbilityTimelineData timelineData, bool hasPreview)
         {
             bool hasAnimationClip = timelineData.HasClip;
             m_returnPreviousSceneButton.SetEnabled(hasPreview);
@@ -120,16 +116,12 @@ namespace Tools.Editor.AbilityComposer.View
             m_previousFrameButton.SetEnabled(hasAnimationClip);
             m_nextFrameButton.SetEnabled(hasAnimationClip);
             m_jumpLastFrameButton.SetEnabled(hasAnimationClip);
-            m_timelineZoomSlider.SetEnabled(hasAnimationClip);
-            m_timelineZoomSlider.SetValueWithoutNotify(pixelsPerFrame);
-            m_timelineZoomLabel.text = $"缩放 {pixelsPerFrame:0.#} px/帧";
 
             if (!hasAnimationClip)
             {
                 m_frameCounterLabel.text = "-- / --";
                 m_frameRateLabel.text = "--";
                 m_currentTimeLabel.text = "--:--";
-                m_currentFrameStatusLabel.text = "当前帧 --";
                 m_playToggleLabel.text = "▶";
                 return;
             }
@@ -137,7 +129,6 @@ namespace Tools.Editor.AbilityComposer.View
             m_frameCounterLabel.text = $"{timelineData.CurrentFrame} / {timelineData.LastFrame}";
             m_frameRateLabel.text = $"{timelineData.FrameRate:0.##}";
             m_currentTimeLabel.text = $"{timelineData.CurrentTime:0.000}s";
-            m_currentFrameStatusLabel.text = $"当前帧 {timelineData.CurrentFrame}";
             m_playToggleLabel.text = timelineData.IsPlaying ? "Ⅱ" : "▶";
         }
 
@@ -156,7 +147,6 @@ namespace Tools.Editor.AbilityComposer.View
             m_playToggleButton.clicked += RequestPlaybackToggle;
             m_nextFrameButton.clicked += RequestNextFrame;
             m_jumpLastFrameButton.clicked += RequestJumpLastFrame;
-            m_timelineZoomSlider.RegisterValueChangedCallback(HandleTimelineZoomChanged);
         }
 
         protected override void UnsubscribeViewEvents()
@@ -174,7 +164,6 @@ namespace Tools.Editor.AbilityComposer.View
             m_playToggleButton.clicked -= RequestPlaybackToggle;
             m_nextFrameButton.clicked -= RequestNextFrame;
             m_jumpLastFrameButton.clicked -= RequestJumpLastFrame;
-            m_timelineZoomSlider.UnregisterValueChangedCallback(HandleTimelineZoomChanged);
             m_isControlsReady = false;
         }
 
@@ -197,28 +186,18 @@ namespace Tools.Editor.AbilityComposer.View
             m_frameCounterLabel = rootVisualElement.Q<Label>("preview-frame-counter");
             m_frameRateLabel = rootVisualElement.Q<Label>("preview-frame-rate");
             m_currentTimeLabel = rootVisualElement.Q<Label>("preview-current-time");
-            m_currentFrameStatusLabel = rootVisualElement.Q<Label>("current-frame-status");
-            m_timelineZoomSlider = rootVisualElement.Q<Slider>("timeline-zoom-slider");
-            m_timelineZoomLabel = rootVisualElement.Q<Label>("timeline-zoom-label");
 
             if (m_previewSourceField == null || m_animationClipField == null || m_returnPreviousSceneButton == null
                 || m_createPreviewButton == null || m_focusPreviewButton == null || m_jumpFirstFrameButton == null
                 || m_previousFrameButton == null || m_playToggleButton == null || m_nextFrameButton == null
                 || m_jumpLastFrameButton == null || m_playToggleLabel == null || m_frameCounterLabel == null
-                || m_frameRateLabel == null || m_currentTimeLabel == null || m_currentFrameStatusLabel == null
-                || m_timelineZoomSlider == null || m_timelineZoomLabel == null)
+                || m_frameRateLabel == null || m_currentTimeLabel == null)
             {
                 QLog.Error("配置 Ability Composer 主视图失败：缺少必要的 UXML 控件");
                 return false;
             }
 
             return true;
-        }
-
-        // 将缩放滑块变更转换为时间轴缩放意图
-        private void HandleTimelineZoomChanged(ChangeEvent<float> changeEvent)
-        {
-            OnTimelineZoomChanged?.Invoke(changeEvent.newValue);
         }
 
         // 设置资源输入控件的类型、提示与初始值
