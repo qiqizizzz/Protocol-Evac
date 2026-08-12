@@ -83,11 +83,11 @@ public class PlayerController : MonoBehaviour
 | ---------------- | ------------------------ | --------------------------------- |
 | 普通类           | PascalCase               | `PlayerController`, `GameManager` |
 | 接口             | `I` + PascalCase         | `IDamageable`, `IInteractable`    |
-| 抽象类           | `Base` + PascalCase 前缀 | `BaseCharacter`, `BasePlayerState` |
+| 抽象类           | PascalCase + `Base` 后缀 | `CharacterBase`, `PlayerStateBase` |
 | ScriptableObject | PascalCase + `SO` 后缀   | `ItemDataSO`, `GameConfigSO`      |
 | 枚举             | PascalCase               | `DamageType`, `GameState`         |
 
-抽象类的 `Base` 固定放在类型语义之前，例如 `BasePlayerState`。ScriptableObject 只要求以 `SO` 结尾；作为配置资产时优先使用 `ConfigSO`，例如 `PlayerStateConfigSO`，不因为抽象或继承关系额外强制改成 `BaseSO`。既有命名不在此规则落地时批量重命名；新建类型和后续触及的同族类型必须遵守。
+抽象类的 `Base` 固定放在类型语义之后，例如 `PlayerStateBase`、`UIBase`。ScriptableObject 只要求以 `SO` 结尾；作为配置资产时优先使用 `ConfigSO`，例如 `PlayerStateConfigSO`，不因为抽象或继承关系额外强制改成 `BaseSO`。既有命名不在此规则落地时批量重命名；新建类型和后续触及的同族类型必须遵守。
 
 ### 架构职责后缀
 
