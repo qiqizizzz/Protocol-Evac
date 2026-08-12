@@ -28,7 +28,8 @@
 }
 
 .ac-object-field {
-    width: 290px;
+    width: 160px;
+    min-width: 120px;
     flex-grow: 0;
     flex-shrink: 0;
     margin-right: 8px;
@@ -72,10 +73,12 @@
     min-width: 420px;
     min-height: 0;
     margin-right: 8px;
-    padding-top: 12px;
-    padding-right: 14px;
-    padding-bottom: 12px;
-    padding-left: 14px;
+    padding-top: 0;
+    padding-right: 0;
+    padding-bottom: 0;
+    padding-left: 0;
+    background-color: rgb(56, 56, 56);
+    border-width: 0;
 }
 
 .ac-inspector-panel {
@@ -85,12 +88,6 @@
     padding-right: 12px;
     padding-bottom: 12px;
     padding-left: 12px;
-}
-
-.ac-section-title {
-    color: rgb(210, 210, 210);
-    font-size: 11px;
-    -unity-font-style: normal;
 }
 
 .ac-preview-header {
@@ -170,38 +167,8 @@
     -unity-text-align: middle-center;
 }
 
-.ac-preview-stat-group {
-    margin-top: 20px;
-    padding-top: 10px;
-    padding-bottom: 10px;
-    border-top-width: 1px;
-    border-bottom-width: 1px;
-    border-top-color: rgb(70, 70, 70);
-    border-bottom-color: rgb(70, 70, 70);
-}
-
-.ac-stat-label {
-    margin-top: 4px;
-    color: rgb(170, 170, 170);
-    font-size: 10px;
-    -unity-font-style: normal;
-}
-
-.ac-stat-value {
-    margin-top: 1px;
-    color: rgb(210, 210, 210);
-    font-size: 13px;
-    -unity-font-style: normal;
-}
-
 .ac-panel-spacer {
     flex-grow: 1;
-}
-
-.ac-timeline-header {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
 }
 
 .ac-timeline-workspace,
@@ -211,29 +178,21 @@
 }
 
 .ac-timeline-workspace {
-    margin-top: 8px;
     flex-direction: column;
 }
 
 .ac-timeline-scroll-view {
     flex-grow: 1;
     min-height: 0;
-    background-color: rgb(48, 48, 48);
-    border-top-width: 1px;
-    border-right-width: 1px;
-    border-bottom-width: 1px;
-    border-left-width: 1px;
-    border-top-color: rgb(35, 35, 35);
-    border-right-color: rgb(35, 35, 35);
-    border-bottom-color: rgb(35, 35, 35);
-    border-left-color: rgb(35, 35, 35);
+    background-color: rgb(56, 56, 56);
+    border-width: 0;
 }
 
 .ac-timeline-content {
     position: relative;
     min-height: 360px;
     flex-shrink: 0;
-    background-color: rgb(48, 48, 48);
+    background-color: rgb(56, 56, 56);
 }
 
 .ac-timeline-ruler {
@@ -241,7 +200,7 @@
     top: 0;
     left: 0;
     height: 42px;
-    background-color: rgb(49, 49, 49);
+    background-color: rgb(56, 56, 56);
     border-bottom-width: 1px;
     border-bottom-color: rgb(87, 87, 87);
 }
@@ -282,7 +241,7 @@
     right: 0;
     bottom: 0;
     left: 0;
-    background-color: rgb(52, 52, 52);
+    background-color: rgb(56, 56, 56);
 }
 
 .ac-timeline-playhead {

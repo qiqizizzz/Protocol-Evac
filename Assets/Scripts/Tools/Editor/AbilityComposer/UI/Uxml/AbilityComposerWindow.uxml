@@ -22,7 +22,6 @@
         <ui:VisualElement name="content-layout" class="ac-content-layout">
             <ui:VisualElement name="preview-control-panel" class="ac-panel ac-preview-panel">
                 <ui:VisualElement class="ac-preview-header">
-                    <ui:Label text="PREVIEW" class="ac-section-title" />
                     <ui:Label name="preview-frame-counter" text="-- / --" class="ac-frame-counter" />
                 </ui:VisualElement>
                 <ui:VisualElement class="ac-transport-row">
@@ -31,12 +30,6 @@
                     <ui:Button name="play-toggle-button" tooltip="播放或暂停" class="ac-transport-button ac-play-button"><ui:Label name="play-toggle-label" text="▶" class="ac-button-label" /></ui:Button>
                     <ui:Button name="next-frame-button" tooltip="下一帧" class="ac-transport-button"><ui:Label text="&gt;" class="ac-button-label" /></ui:Button>
                     <ui:Button name="jump-last-frame-button" tooltip="跳到最后一帧" class="ac-transport-button"><ui:Label text="&gt;|" class="ac-button-label" /></ui:Button>
-                </ui:VisualElement>
-                <ui:VisualElement class="ac-preview-stat-group">
-                    <ui:Label text="FPS" class="ac-stat-label" />
-                    <ui:Label name="preview-frame-rate" text="--" class="ac-stat-value" />
-                    <ui:Label text="Time" class="ac-stat-label" />
-                    <ui:Label name="preview-current-time" text="--:--" class="ac-stat-value" />
                 </ui:VisualElement>
                 <ui:VisualElement class="ac-panel-spacer" />
                 <ui:Button name="add-event-button" class="ac-button ac-button-primary">
@@ -48,9 +41,6 @@
             </ui:VisualElement>
 
             <ui:VisualElement name="timeline-panel" class="ac-panel ac-timeline-panel">
-                <ui:VisualElement class="ac-timeline-header">
-                    <ui:Label text="TIMELINE" class="ac-section-title" />
-                </ui:VisualElement>
                 <ui:VisualElement name="timeline-workspace" class="ac-timeline-workspace">
                     <ui:ScrollView name="timeline-scroll-view" class="ac-timeline-scroll-view">
                         <ui:VisualElement name="timeline-content" class="ac-timeline-content" />

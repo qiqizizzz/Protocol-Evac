@@ -40,8 +40,6 @@ namespace Tools.Editor.AbilityComposer.View
         private Button m_jumpLastFrameButton;
         private Label m_playToggleLabel;
         private Label m_frameCounterLabel;
-        private Label m_frameRateLabel;
-        private Label m_currentTimeLabel;
         private VisualElement m_rootVisualElement;
         private AbilityComposerData m_composerData;
         private bool m_isControlsReady;
@@ -120,15 +118,11 @@ namespace Tools.Editor.AbilityComposer.View
             if (!hasAnimationClip)
             {
                 m_frameCounterLabel.text = "-- / --";
-                m_frameRateLabel.text = "--";
-                m_currentTimeLabel.text = "--:--";
                 m_playToggleLabel.text = "▶";
                 return;
             }
 
             m_frameCounterLabel.text = $"{timelineData.CurrentFrame} / {timelineData.LastFrame}";
-            m_frameRateLabel.text = $"{timelineData.FrameRate:0.##}";
-            m_currentTimeLabel.text = $"{timelineData.CurrentTime:0.000}s";
             m_playToggleLabel.text = timelineData.IsPlaying ? "Ⅱ" : "▶";
         }
 
@@ -184,14 +178,11 @@ namespace Tools.Editor.AbilityComposer.View
             m_jumpLastFrameButton = rootVisualElement.Q<Button>("jump-last-frame-button");
             m_playToggleLabel = rootVisualElement.Q<Label>("play-toggle-label");
             m_frameCounterLabel = rootVisualElement.Q<Label>("preview-frame-counter");
-            m_frameRateLabel = rootVisualElement.Q<Label>("preview-frame-rate");
-            m_currentTimeLabel = rootVisualElement.Q<Label>("preview-current-time");
 
             if (m_previewSourceField == null || m_animationClipField == null || m_returnPreviousSceneButton == null
                 || m_createPreviewButton == null || m_focusPreviewButton == null || m_jumpFirstFrameButton == null
                 || m_previousFrameButton == null || m_playToggleButton == null || m_nextFrameButton == null
-                || m_jumpLastFrameButton == null || m_playToggleLabel == null || m_frameCounterLabel == null
-                || m_frameRateLabel == null || m_currentTimeLabel == null)
+                || m_jumpLastFrameButton == null || m_playToggleLabel == null || m_frameCounterLabel == null)
             {
                 QLog.Error("配置 Ability Composer 主视图失败：缺少必要的 UXML 控件");
                 return false;
