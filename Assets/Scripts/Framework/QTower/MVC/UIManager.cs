@@ -8,11 +8,12 @@
 
 using System;
 using System.Collections.Generic;
+using Common.Res;
+using Cysharp.Threading.Tasks;
 using Framework.QTower.Controller;
 using Framework.QTower.View;
 using UnityEngine;
 using Utils.log;
-using ResManager = global::Common.ResManager;
 
 namespace Framework.QTower
 {
@@ -128,10 +129,7 @@ namespace Framework.QTower
             }
 
             m_loadingViews.Add(viewType);
-            ResManager.InstantiateAsync(
-                viewType.ToString(),
-                viewObject => HandleViewLoaded(viewType, viewData, viewObject, args),
-                m_uiRoot);
+            LoadAndOpenViewAsync(viewType, viewData, args).Forget();
         }
 
         // 关闭指定 UI，但保留实例以便后续复用
@@ -214,13 +212,22 @@ namespace Framework.QTower
             callbacks.Add(onCompleted);
         }
 
+        // 异步加载 UI 实例并完成打开流程
+        private async UniTask LoadAndOpenViewAsync(ViewType viewType, UIData viewData, object[] args)
+        {
+            GameObject viewObject = await ResManager.InstantiateAsync(viewType.ToString(), m_uiRoot);
+            HandleViewLoaded(viewType, viewData, viewObject, args);
+        }
+
         // 完成 UI 实例加载并注入 View 上下文
         private void HandleViewLoaded(ViewType viewType, UIData viewData, GameObject viewObject, object[] args)
         {
             m_loadingViews.Remove(viewType);
             if (m_isDestroyed)
             {
-                ResManager.UnLoadInstance(viewObject);
+                if (viewObject != null)
+                    ResManager.UnLoadInstance(viewObject);
+
                 return;
             }
 

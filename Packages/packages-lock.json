@@ -22,6 +22,13 @@
       },
       "hash": "d75c4dac2e449bc19b5313ce741bd496fca7c123"
     },
+    "com.cysharp.unitask": {
+      "version": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "ceac8d6946b1125fe782cd171fbcb245b567dbf9"
+    },
     "com.ivanmurzak.unity.mcp": {
       "version": "0.83.1",
       "depth": 0,

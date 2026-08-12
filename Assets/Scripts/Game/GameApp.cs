@@ -7,6 +7,7 @@
  */
 
 using Common;
+using Common.Res;
 using Framework.QTower;
 using Framework.QTower.Common;
 using Framework.QTower.Controller;
@@ -38,6 +39,7 @@ namespace Game
             UIManager.Destroy();
             ControllerManager.Destroy();
             TimeManager.Destroy();
+            ResManager.Destroy();
 
             UIManager = null;
             ControllerManager = null;

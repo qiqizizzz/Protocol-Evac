@@ -1,9 +1,10 @@
 {
   "dependencies": {
     "com.candidumgames.unitymmdtools": "https://github.com/qiqizizzz/Fork_UnityMMDTools.git",
-    "com.unity.addressables": "1.22.3",
     "com.codewriter.triinspector": "https://github.com/codewriter-packages/Tri-Inspector.git#d75c4dac2e449bc19b5313ce741bd496fca7c123",
+    "com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
     "com.ivanmurzak.unity.mcp": "0.83.1",
+    "com.unity.addressables": "1.22.3",
     "com.unity.collab-proxy": "2.12.4",
     "com.unity.ide.rider": "3.0.36",
     "com.unity.inputsystem": "1.14.2",
