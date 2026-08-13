@@ -55,11 +55,7 @@ namespace Module.Player.HFSM.States.Skill
             m_context.Action.NormalAttackIndex = 0;
             m_context.Action.NormalAttackPhase = PlayerSkillStepPhase.Begin;
 
-            if (m_context.Movement.IsGrounded)
-                m_context.Action.RequestAnimReplay(m_context.Input.MoveInput.sqrMagnitude > MOVE_INPUT_THRESHOLD_SQR
-                    ? PlayerStateId.GroundedMove
-                    : PlayerStateId.GroundedIdle,
-                    m_normalAttackConfig.NormalAttackExitBlendDuration);
+            // 地面攻击的收尾由 Animator 的 attackXX_end -> Standchange -> Grounded_Locomotion 过渡负责
         }
 
         public override void Tick(float deltaTime)
