@@ -8,6 +8,7 @@
 
 using System.Collections.Generic;
 using Framework.QTower.Editor.Controller;
+using Module.Player.Window;
 using Tools.Editor.AbilityComposer.Center.Event;
 using Tools.Editor.AbilityComposer.Center.Timeline;
 using Tools.Editor.AbilityComposer.Preview;
@@ -44,6 +45,7 @@ namespace Tools.Editor.AbilityComposer
             m_timelineData = new AbilityTimelineData();
             m_timelineData.SetAnimationClip(m_composerData.SelectedAnimationClip);
             LoadAnimationEvents();
+            LoadWindowTrack();
             RefreshEventFunctionChoices();
             m_timelineView.SetTimelineData(m_timelineData);
             RefreshView();
@@ -79,6 +81,10 @@ namespace Tools.Editor.AbilityComposer
                 callback => m_composerView.OnAnimationClipChanged += callback,
                 callback => m_composerView.OnAnimationClipChanged -= callback,
                 HandleAnimationClipChanged);
+            RegisterEvent<AbilityWindowTrackSO>(
+                callback => m_composerView.OnWindowTrackChanged += callback,
+                callback => m_composerView.OnWindowTrackChanged -= callback,
+                HandleWindowTrackChanged);
             RegisterEvent(callback => m_composerView.OnCreatePreviewRequested += callback,
                 callback => m_composerView.OnCreatePreviewRequested -= callback, CreatePreview);
             RegisterEvent(callback => m_composerView.OnFocusPreviewRequested += callback,
@@ -103,6 +109,10 @@ namespace Tools.Editor.AbilityComposer
                 callback => m_composerView.OnAddEventRequested -= callback, AddEvent);
             RegisterEvent(callback => m_composerView.OnDeleteSelectedEventRequested += callback,
                 callback => m_composerView.OnDeleteSelectedEventRequested -= callback, DeleteSelectedEvent);
+            RegisterEvent(callback => m_composerView.OnAddWindowRequested += callback,
+                callback => m_composerView.OnAddWindowRequested -= callback, AddWindow);
+            RegisterEvent(callback => m_composerView.OnDeleteSelectedWindowRequested += callback,
+                callback => m_composerView.OnDeleteSelectedWindowRequested -= callback, DeleteSelectedWindow);
             RegisterEvent<AbilityEventCategory>(callback => m_composerView.OnEventCategoryChanged += callback,
                 callback => m_composerView.OnEventCategoryChanged -= callback, HandleEventCategoryChanged);
             RegisterEvent<string>(callback => m_composerView.OnEventReceiverTypeNameChanged += callback,
@@ -111,8 +121,16 @@ namespace Tools.Editor.AbilityComposer
                 callback => m_composerView.OnEventFunctionNameChanged -= callback, HandleEventFunctionNameChanged);
             RegisterEvent<string>(callback => m_timelineView.OnEventSelected += callback,
                 callback => m_timelineView.OnEventSelected -= callback, HandleEventSelected);
+            RegisterEvent<string>(callback => m_timelineView.OnWindowSelected += callback,
+                callback => m_timelineView.OnWindowSelected -= callback, HandleWindowSelected);
             RegisterEvent<AbilityTimelineView.EventMoveRequest>(callback => m_timelineView.OnEventMoved += callback,
                 callback => m_timelineView.OnEventMoved -= callback, HandleEventMoved);
+            RegisterEvent<AbilityWindowType>(callback => m_composerView.OnWindowTypeChanged += callback,
+                callback => m_composerView.OnWindowTypeChanged -= callback, HandleWindowTypeChanged);
+            RegisterEvent<int, int>(callback => m_composerView.OnWindowFramesChanged += callback,
+                callback => m_composerView.OnWindowFramesChanged -= callback, HandleWindowFramesChanged);
+            RegisterEvent<float>(callback => m_composerView.OnWindowDamageChanged += callback,
+                callback => m_composerView.OnWindowDamageChanged -= callback, HandleWindowDamageChanged);
             RegisterEvent(callback => m_composerView.OnApplyAnimationRequested += callback,
                 callback => m_composerView.OnApplyAnimationRequested -= callback, ApplyAnimationEvents);
             RegisterEvent(callback => m_composerView.OnRestoreDraftRequested += callback,
@@ -137,8 +155,17 @@ namespace Tools.Editor.AbilityComposer
             m_composerData.SetAnimationClip(animationClip);
             m_timelineData.SetAnimationClip(animationClip);
             LoadAnimationEvents();
+            LoadWindowTrack();
             RefreshEventFunctionChoices();
             m_timelineView.SetTimelineData(m_timelineData);
+            RefreshView();
+        }
+
+        // 切换当前编辑的通用窗口轨道资产
+        private void HandleWindowTrackChanged(AbilityWindowTrackSO windowTrack)
+        {
+            m_composerData.SetWindowTrack(windowTrack);
+            LoadWindowTrack();
             RefreshView();
         }
 
@@ -237,6 +264,56 @@ namespace Tools.Editor.AbilityComposer
         private void HandleEventMoved(AbilityTimelineView.EventMoveRequest request)
         {
             m_timelineData.SetEventFrame(request.EventId, request.Frame);
+            RefreshView();
+        }
+
+        // 在当前帧创建一条通用窗口草稿
+        private void AddWindow()
+        {
+            if (!m_timelineData.HasClip)
+                return;
+
+            m_timelineData.AddWindow(m_timelineData.CurrentFrame);
+            SaveWindowTrack();
+            RefreshView();
+        }
+
+        // 删除当前选中的窗口草稿
+        private void DeleteSelectedWindow()
+        {
+            m_timelineData.DeleteSelectedWindow();
+            SaveWindowTrack();
+            RefreshView();
+        }
+
+        // 选中时间轴上的窗口区间
+        private void HandleWindowSelected(string windowId)
+        {
+            m_timelineData.SelectWindow(windowId);
+            RefreshView();
+        }
+
+        // 更新选中窗口的业务类型
+        private void HandleWindowTypeChanged(AbilityWindowType type)
+        {
+            m_timelineData.SetSelectedWindowType(type);
+            SaveWindowTrack();
+            RefreshView();
+        }
+
+        // 更新选中窗口的帧范围
+        private void HandleWindowFramesChanged(int startFrame, int endFrame)
+        {
+            m_timelineData.SetSelectedWindowFrames(startFrame, endFrame);
+            SaveWindowTrack();
+            RefreshView();
+        }
+
+        // 更新选中命中窗口的伤害参数
+        private void HandleWindowDamageChanged(float damage)
+        {
+            m_timelineData.SetSelectedWindowDamage(damage);
+            SaveWindowTrack();
             RefreshView();
         }
 
@@ -446,7 +523,7 @@ namespace Tools.Editor.AbilityComposer
         // 刷新主视图文字、按钮状态与时间轴播放头
         private void RefreshView(bool refreshEventMarkers = true)
         {
-            m_composerView.Refresh(m_timelineData, m_previewController.HasPreview);
+            m_composerView.Refresh(m_timelineData, m_previewController.HasPreview, true);
             m_timelineView.RefreshCurrentFrame();
             if (refreshEventMarkers)
                 m_timelineView.RefreshEventMarkers();
@@ -467,5 +544,55 @@ namespace Tools.Editor.AbilityComposer
         {
             m_composerView.SetEventFunctionChoices(new Dictionary<string, List<string>>());
         }
+
+        // 从选中的窗口轨道资产加载草稿到时间轴
+        private void LoadWindowTrack()
+        {
+            m_timelineData.ClearWindows();
+            AbilityWindowTrackSO windowTrack = m_composerData.SelectedWindowTrack;
+            if (windowTrack == null || !m_timelineData.HasClip)
+                return;
+
+            if (windowTrack.AnimationClip != null && windowTrack.AnimationClip != m_timelineData.Clip)
+            {
+                QLog.Error("窗口轨道绑定的 Animation Clip 与当前时间轴动画不一致");
+                return;
+            }
+
+            foreach (AbilityWindowData windowData in windowTrack.Windows)
+            {
+                int startFrame = Mathf.RoundToInt(windowData.StartNormalizedTime * m_timelineData.LastFrame);
+                int endFrame = Mathf.RoundToInt(windowData.EndNormalizedTime * m_timelineData.LastFrame);
+                m_timelineData.AddWindow(windowData.Type, startFrame, endFrame, windowData.Damage);
+            }
+
+            m_timelineData.ClearWindowSelection();
+        }
+
+        // 将时间轴窗口草稿写回选中的窗口轨道资产
+        private void SaveWindowTrack()
+        {
+            AbilityWindowTrackSO windowTrack = m_composerData.SelectedWindowTrack;
+            if (windowTrack == null || !m_timelineData.HasClip)
+                return;
+
+            List<AbilityWindowData> windowValues = new List<AbilityWindowData>();
+            foreach (AbilityWindowDraft windowDraft in m_timelineData.WindowDraftValues)
+            {
+                float startNormalizedTime = m_timelineData.LastFrame > 0
+                    ? windowDraft.StartFrame / (float)m_timelineData.LastFrame
+                    : 0f;
+                float endNormalizedTime = m_timelineData.LastFrame > 0
+                    ? windowDraft.EndFrame / (float)m_timelineData.LastFrame
+                    : 0f;
+                windowValues.Add(new AbilityWindowData(windowDraft.Type, startNormalizedTime, endNormalizedTime, windowDraft.Damage));
+            }
+
+            Undo.RecordObject(windowTrack, "编辑 Ability 窗口轨道");
+            windowTrack.SetAnimationClip(m_timelineData.Clip);
+            windowTrack.SetWindows(windowValues);
+            EditorUtility.SetDirty(windowTrack);
+        }
+
     }
 }

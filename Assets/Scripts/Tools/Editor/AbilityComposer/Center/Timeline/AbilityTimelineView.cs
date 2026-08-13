@@ -7,6 +7,7 @@
  */
 
 using System;
+using Module.Player.Window;
 using Tools.Editor.AbilityComposer.Center.Event;
 using Framework.QTower.Editor.View;
 using UnityEngine;
@@ -37,6 +38,7 @@ namespace Tools.Editor.AbilityComposer.Center.Timeline
         public event Action<int> OnFrameRequested;
         public event Action<string> OnEventSelected;
         public event Action<EventMoveRequest> OnEventMoved;
+        public event Action<string> OnWindowSelected;
 
         public readonly struct EventMoveRequest
         {
@@ -143,6 +145,8 @@ namespace Tools.Editor.AbilityComposer.Center.Timeline
             CreateTimelineTrack();
             CreateTimelineRuler(timelineWidth);
             CreateEventMarkers();
+            CreateWindowTrackDivider();
+            CreateWindowMarkers();
             CreateTimelinePlayhead();
         }
 
@@ -222,6 +226,43 @@ namespace Tools.Editor.AbilityComposer.Center.Timeline
                     TrickleDown.TrickleDown);
                 m_timelineContent.Add(eventMarker);
             }
+        }
+
+        // 创建事件轨道与窗口轨道之间的分隔线
+        private void CreateWindowTrackDivider()
+        {
+            VisualElement divider = new VisualElement();
+            divider.AddToClassList("ac-timeline-window-divider");
+            m_timelineContent.Add(divider);
+        }
+
+        // 创建按窗口类型显示颜色的时间区间标记
+        private void CreateWindowMarkers()
+        {
+            foreach (AbilityWindowDraft windowDraft in m_timelineData.WindowDraftValues)
+            {
+                Button windowMarker = new Button();
+                windowMarker.name = windowDraft.Id;
+                windowMarker.AddToClassList("ac-timeline-window-marker");
+                windowMarker.AddToClassList(windowDraft.Type == AbilityWindowType.Hit ? "ac-window-hit" : "ac-window-invincible");
+                if (m_timelineData.SelectedWindow == windowDraft)
+                    windowMarker.AddToClassList("ac-timeline-window-marker-selected");
+
+                windowMarker.style.left = FrameToPixel(windowDraft.StartFrame);
+                windowMarker.style.width = Mathf.Max(m_pixelsPerFrame, FrameToPixel(windowDraft.EndFrame) - FrameToPixel(windowDraft.StartFrame) + m_pixelsPerFrame);
+                windowMarker.RegisterCallback<PointerDownEvent>(pointerEvent => SelectWindow(windowDraft, pointerEvent), TrickleDown.TrickleDown);
+                m_timelineContent.Add(windowMarker);
+            }
+        }
+
+        // 选中窗口并阻止事件冒泡到播放头
+        private void SelectWindow(AbilityWindowDraft windowDraft, PointerDownEvent pointerEvent)
+        {
+            if (pointerEvent.button != 0)
+                return;
+
+            OnWindowSelected?.Invoke(windowDraft.Id);
+            pointerEvent.StopPropagation();
         }
 
         // 开始拖动动画事件并阻止事件冒泡到播放头

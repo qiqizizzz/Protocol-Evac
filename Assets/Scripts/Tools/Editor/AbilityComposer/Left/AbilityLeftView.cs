@@ -27,6 +27,8 @@ namespace Tools.Editor.AbilityComposer.Left
         private Label m_lastFrameLabel;
         private Button m_addEventButton;
         private Button m_deleteEventButton;
+        private Button m_addWindowButton;
+        private Button m_deleteWindowButton;
         private bool m_isControlsReady;
 
         public event Action OnJumpFirstFrameRequested;
@@ -37,6 +39,8 @@ namespace Tools.Editor.AbilityComposer.Left
         public event Action<int> OnCurrentFrameChanged;
         public event Action OnAddEventRequested;
         public event Action OnDeleteSelectedEventRequested;
+        public event Action OnAddWindowRequested;
+        public event Action OnDeleteSelectedWindowRequested;
 
         // 注入左侧区域根节点
         public AbilityLeftView(VisualElement rootVisualElement)
@@ -57,16 +61,19 @@ namespace Tools.Editor.AbilityComposer.Left
             m_lastFrameLabel = m_rootVisualElement.Q<Label>("preview-last-frame-label");
             m_addEventButton = m_rootVisualElement.Q<Button>("add-event-button");
             m_deleteEventButton = m_rootVisualElement.Q<Button>("delete-event-button");
+            m_addWindowButton = m_rootVisualElement.Q<Button>("add-window-button");
+            m_deleteWindowButton = m_rootVisualElement.Q<Button>("delete-window-button");
             m_isControlsReady = m_jumpFirstFrameButton != null && m_previousFrameButton != null
                 && m_playToggleButton != null && m_nextFrameButton != null && m_jumpLastFrameButton != null
                 && m_playToggleLabel != null && m_currentFrameField != null && m_lastFrameLabel != null
-                && m_addEventButton != null && m_deleteEventButton != null;
+                && m_addEventButton != null && m_deleteEventButton != null
+                && m_addWindowButton != null && m_deleteWindowButton != null;
             if (!m_isControlsReady)
                 QLog.Error("配置 Ability Composer 左侧视图失败：缺少必要的 UXML 控件");
         }
 
         // 使用当前数据刷新播放状态
-        public void Refresh(AbilityTimelineData timelineData, bool hasPreview)
+        public void Refresh(AbilityTimelineData timelineData, bool hasPreview, bool canEditWindows)
         {
             bool hasAnimationClip = timelineData.HasClip;
             m_playToggleButton.SetEnabled(hasAnimationClip);
@@ -76,6 +83,8 @@ namespace Tools.Editor.AbilityComposer.Left
             m_jumpLastFrameButton.SetEnabled(hasAnimationClip);
             m_addEventButton.SetEnabled(hasAnimationClip);
             m_deleteEventButton.SetEnabled(timelineData.SelectedEvent != null);
+            m_addWindowButton.SetEnabled(hasAnimationClip && canEditWindows);
+            m_deleteWindowButton.SetEnabled(canEditWindows && timelineData.SelectedWindow != null);
 
             if (!hasAnimationClip)
             {
@@ -103,6 +112,8 @@ namespace Tools.Editor.AbilityComposer.Left
             m_jumpLastFrameButton.clicked += RequestJumpLastFrame;
             m_addEventButton.clicked += RequestAddEvent;
             m_deleteEventButton.clicked += RequestDeleteSelectedEvent;
+            m_addWindowButton.clicked += RequestAddWindow;
+            m_deleteWindowButton.clicked += RequestDeleteSelectedWindow;
         }
 
         protected override void UnsubscribeViewEvents()
@@ -118,6 +129,8 @@ namespace Tools.Editor.AbilityComposer.Left
             m_jumpLastFrameButton.clicked -= RequestJumpLastFrame;
             m_addEventButton.clicked -= RequestAddEvent;
             m_deleteEventButton.clicked -= RequestDeleteSelectedEvent;
+            m_addWindowButton.clicked -= RequestAddWindow;
+            m_deleteWindowButton.clicked -= RequestDeleteSelectedWindow;
             m_isControlsReady = false;
         }
 
@@ -148,5 +161,11 @@ namespace Tools.Editor.AbilityComposer.Left
 
         // 请求删除选中的事件
         private void RequestDeleteSelectedEvent() => OnDeleteSelectedEventRequested?.Invoke();
+
+        // 请求在当前帧创建通用窗口
+        private void RequestAddWindow() => OnAddWindowRequested?.Invoke();
+
+        // 请求删除当前选中的窗口
+        private void RequestDeleteSelectedWindow() => OnDeleteSelectedWindowRequested?.Invoke();
     }
 }

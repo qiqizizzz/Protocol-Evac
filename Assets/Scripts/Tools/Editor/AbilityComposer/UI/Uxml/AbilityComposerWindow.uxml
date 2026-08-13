@@ -4,6 +4,7 @@
             <ui:VisualElement class="ac-context-inputs">
                 <uie:ObjectField name="preview-source-field" label="" class="ac-object-field" />
                 <uie:ObjectField name="animation-clip-field" label="" class="ac-object-field" />
+                <uie:ObjectField name="window-track-field" label="窗口轨道" class="ac-window-track-field" />
             </ui:VisualElement>
             <ui:VisualElement class="ac-context-spacer" />
             <ui:VisualElement class="ac-context-actions">
@@ -45,12 +46,11 @@
                     </ui:Button>
                 </ui:VisualElement>
                 <ui:VisualElement class="ac-module-divider ac-hit-window-divider" />
-                <ui:Label text="命中窗口" class="ac-side-section-title" />
                 <ui:VisualElement class="ac-hit-window-action-row">
-                    <ui:Button name="add-hit-window-button" enabled="false" class="ac-button ac-hit-window-action-button">
-                        <ui:Label text="＋ 添加命中窗口" class="ac-button-label ac-muted-button-label" />
+                    <ui:Button name="add-window-button" class="ac-button ac-hit-window-action-button">
+                        <ui:Label text="＋ 添加窗口" class="ac-button-label ac-muted-button-label" />
                     </ui:Button>
-                    <ui:Button name="delete-hit-window-button" enabled="false" class="ac-button ac-hit-window-action-button ac-hit-window-action-button-last">
+                    <ui:Button name="delete-window-button" class="ac-button ac-hit-window-action-button ac-hit-window-action-button-last">
                         <ui:Label text="删除选中窗口" class="ac-button-label ac-muted-button-label" />
                     </ui:Button>
                 </ui:VisualElement>

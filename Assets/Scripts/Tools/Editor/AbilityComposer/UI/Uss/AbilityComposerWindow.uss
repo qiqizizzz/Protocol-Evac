@@ -35,6 +35,14 @@
     margin-right: 8px;
 }
 
+.ac-window-track-field {
+    width: 190px;
+    min-width: 150px;
+    flex-grow: 0;
+    flex-shrink: 0;
+    margin-right: 8px;
+}
+
 .ac-content-layout {
     flex-grow: 1;
     min-height: 0;
@@ -225,16 +233,9 @@
     margin-top: 10px;
 }
 
-.ac-side-section-title {
-    margin-top: 8px;
-    color: rgb(185, 185, 185);
-    font-size: 11px;
-    -unity-font-style: normal;
-}
-
 .ac-hit-window-action-row {
     flex-direction: row;
-    margin-top: 5px;
+    margin-top: 8px;
 }
 
 .ac-hit-window-action-button {
@@ -362,6 +363,15 @@
     background-color: rgb(56, 56, 56);
 }
 
+.ac-timeline-window-divider {
+    position: absolute;
+    top: 110px;
+    right: 0;
+    left: 0;
+    height: 1px;
+    background-color: rgb(30, 30, 30);
+}
+
 .ac-timeline-playhead {
     position: absolute;
     top: 0;
@@ -423,6 +433,35 @@
 
 .ac-timeline-event-marker-selected.ac-event-audio {
     border-color: rgb(245, 222, 105);
+}
+
+.ac-timeline-window-marker {
+    position: absolute;
+    top: 118px;
+    min-width: 8px;
+    height: 16px;
+    min-height: 16px;
+    margin: 0;
+    padding: 0;
+    border-width: 1px;
+    border-color: rgb(30, 30, 30);
+}
+
+.ac-timeline-window-marker:hover {
+    border-color: rgb(220, 220, 220);
+}
+
+.ac-timeline-window-marker-selected {
+    border-width: 2px;
+    border-color: rgb(245, 245, 245);
+}
+
+.ac-window-hit {
+    background-color: rgb(191, 88, 54);
+}
+
+.ac-window-invincible {
+    background-color: rgb(61, 145, 189);
 }
 
 .ac-timeline-empty-state {

@@ -4,6 +4,8 @@
 
 `Ability Composer` 是项目内的通用动画能力编排工具。它不是 Player、Combat 或单一技能系统的附属 Inspector，而是一个独立的 Unity EditorWindow：先解决任意动画片段的 Scene 逐帧预览与 `Animation Event` 编辑，再按实际需求扩展时间窗口、特效、音效与能力数据轨道。
 
+当前已落地第一条通用窗口轨道。窗口草稿与 `Animation Event` 分离，具有类型、开始帧、结束帧和类型参数；首批类型为“命中窗口”和“无敌帧窗口”。窗口持久化于中立的 `AbilityWindowTrackSO`，Composer 与 Player 以后都只依赖这份运行时无关的数据资产，避免通用编辑器与业务程序集形成循环依赖。
+
 工具入口与代码位置：
 
 ```text
@@ -61,7 +63,7 @@ Composer
 不创建运行时 Ability 系统
 不引入节点图、Graph 或 Flow
 不读取或写入 PlayerSkillConfigSO
-不实现 HitWindow、无敌帧、VFX、Audio 等业务轨道
+不在首版直接实现 Player/Combat 专用运行时轨道；通用窗口轨道可承载 Hit、Invincible 等类型，但必须通过业务配置适配层接入保存
 不在拖动事件过程中反复重导 FBX
 不修改原场景角色、FBX 骨骼、关键帧或 Clip 设置
 ```

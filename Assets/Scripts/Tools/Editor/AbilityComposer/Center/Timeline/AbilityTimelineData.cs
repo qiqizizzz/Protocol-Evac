@@ -1,14 +1,14 @@
 /*
  * ┌─────────────────────────────────────────────────────────────┐
- * │  描    述: Ability 时间轴数据，保存动画帧与播放状态
+ * │  描    述: Ability 时间轴数据，保存动画帧、事件草稿与通用窗口草稿
  * │  类    名: AbilityTimelineData.cs
  * │  创    建: By qiqizizzz
  * └─────────────────────────────────────────────────────────────┘
  */
 
 using System.Collections.Generic;
+using Module.Player.Window;
 using Tools.Editor.AbilityComposer.Center.Event;
-using UnityEditor;
 using UnityEngine;
 
 namespace Tools.Editor.AbilityComposer.Center.Timeline
@@ -16,6 +16,7 @@ namespace Tools.Editor.AbilityComposer.Center.Timeline
     public sealed class AbilityTimelineData
     {
         private readonly List<AbilityEventDraft> m_eventDraftValues = new List<AbilityEventDraft>();
+        private readonly List<AbilityWindowDraft> m_windowDraftValues = new List<AbilityWindowDraft>();
 
         public AnimationClip Clip { get; private set; }
         public float FrameRate { get; private set; }
@@ -23,7 +24,9 @@ namespace Tools.Editor.AbilityComposer.Center.Timeline
         public int CurrentFrame { get; private set; }
         public bool IsPlaying { get; private set; }
         public IReadOnlyList<AbilityEventDraft> EventDraftValues => m_eventDraftValues;
+        public IReadOnlyList<AbilityWindowDraft> WindowDraftValues => m_windowDraftValues;
         public AbilityEventDraft SelectedEvent { get; private set; }
+        public AbilityWindowDraft SelectedWindow { get; private set; }
         public bool HasClip => Clip != null;
         public int LastFrame => Mathf.Max(FrameCount - 1, 0);
         public float CurrentTime => FrameRate > 0f ? CurrentFrame / FrameRate : 0f;
@@ -37,7 +40,9 @@ namespace Tools.Editor.AbilityComposer.Center.Timeline
             CurrentFrame = 0;
             IsPlaying = false;
             m_eventDraftValues.Clear();
+            m_windowDraftValues.Clear();
             SelectedEvent = null;
+            SelectedWindow = null;
         }
 
         // 从 AnimationClip 的事件数据重建内存草稿
@@ -82,6 +87,7 @@ namespace Tools.Editor.AbilityComposer.Center.Timeline
             AbilityEventDraft eventDraft = new AbilityEventDraft(Mathf.Clamp(frame, 0, LastFrame));
             m_eventDraftValues.Add(eventDraft);
             SelectedEvent = eventDraft;
+            SelectedWindow = null;
             return eventDraft;
         }
 
@@ -99,6 +105,7 @@ namespace Tools.Editor.AbilityComposer.Center.Timeline
         public void SelectEvent(string eventId)
         {
             SelectedEvent = m_eventDraftValues.Find(eventDraft => eventDraft.Id == eventId);
+            SelectedWindow = null;
         }
 
         // 更新选中事件的编辑器分类
@@ -136,6 +143,86 @@ namespace Tools.Editor.AbilityComposer.Center.Timeline
                 return;
 
             SelectedEvent.SetFunctionName(functionName);
+        }
+
+        // 在当前帧创建默认长度并选中的通用窗口
+        public AbilityWindowDraft AddWindow(int frame)
+        {
+            int startFrame = Mathf.Clamp(frame, 0, LastFrame);
+            return AddWindow(AbilityWindowType.Hit, startFrame, Mathf.Clamp(startFrame + 1, 0, LastFrame), 1f);
+        }
+
+        // 从外部能力数据加载一条窗口草稿
+        public AbilityWindowDraft AddWindow(AbilityWindowType type, int startFrame, int endFrame, float damage)
+        {
+            int clampedStartFrame = Mathf.Clamp(startFrame, 0, LastFrame);
+            int clampedEndFrame = Mathf.Clamp(endFrame, clampedStartFrame, LastFrame);
+            AbilityWindowDraft windowDraft = new AbilityWindowDraft(clampedStartFrame, clampedEndFrame);
+            windowDraft.SetType(type);
+            windowDraft.SetDamage(Mathf.Max(0f, damage));
+            m_windowDraftValues.Add(windowDraft);
+            SelectedEvent = null;
+            SelectedWindow = windowDraft;
+            return windowDraft;
+        }
+
+        // 清空当前动画片段关联的窗口草稿
+        public void ClearWindows()
+        {
+            m_windowDraftValues.Clear();
+            SelectedWindow = null;
+        }
+
+        // 取消当前窗口选中状态
+        public void ClearWindowSelection()
+        {
+            SelectedWindow = null;
+        }
+
+        // 删除当前选中的窗口草稿
+        public void DeleteSelectedWindow()
+        {
+            if (SelectedWindow == null)
+                return;
+
+            m_windowDraftValues.Remove(SelectedWindow);
+            SelectedWindow = null;
+        }
+
+        // 按唯一标识选中指定窗口草稿
+        public void SelectWindow(string windowId)
+        {
+            SelectedWindow = m_windowDraftValues.Find(windowDraft => windowDraft.Id == windowId);
+            SelectedEvent = null;
+        }
+
+        // 更新选中窗口的业务类型
+        public void SetSelectedWindowType(AbilityWindowType type)
+        {
+            if (SelectedWindow == null)
+                return;
+
+            SelectedWindow.SetType(type);
+        }
+
+        // 更新选中窗口的左右边界
+        public void SetSelectedWindowFrames(int startFrame, int endFrame)
+        {
+            if (SelectedWindow == null)
+                return;
+
+            int clampedStartFrame = Mathf.Clamp(startFrame, 0, LastFrame);
+            int clampedEndFrame = Mathf.Clamp(endFrame, clampedStartFrame, LastFrame);
+            SelectedWindow.SetFrames(clampedStartFrame, clampedEndFrame);
+        }
+
+        // 更新选中命中窗口的伤害参数
+        public void SetSelectedWindowDamage(float damage)
+        {
+            if (SelectedWindow == null)
+                return;
+
+            SelectedWindow.SetDamage(Mathf.Max(0f, damage));
         }
     }
 }

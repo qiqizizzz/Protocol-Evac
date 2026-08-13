@@ -69,6 +69,14 @@ namespace Framework.QTower.Editor.Controller
             m_editorEvents.Add(() => unregisterEvent(callback));
         }
 
+        // 注册双参数 View 事件并统一记录反注册操作
+        protected void RegisterEvent<TFirstEvent, TSecondEvent>(Action<Action<TFirstEvent, TSecondEvent>> registerEvent,
+            Action<Action<TFirstEvent, TSecondEvent>> unregisterEvent, Action<TFirstEvent, TSecondEvent> callback)
+        {
+            registerEvent(callback);
+            m_editorEvents.Add(() => unregisterEvent(callback));
+        }
+
         private void SubscribeEditorCallbacks()
         {
             EditorApplication.update += UpdateEditorTick;

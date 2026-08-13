@@ -9,9 +9,11 @@
 using System;
 using System.Collections.Generic;
 using Framework.QTower.Editor.View;
+using Module.Player.Window;
 using Tools.Editor.AbilityComposer.Center.Event;
 using Tools.Editor.AbilityComposer.Center.Timeline;
 using Tools.Editor.AbilityComposer.Right.Event;
+using Tools.Editor.AbilityComposer.Right.Window;
 using UnityEngine.UIElements;
 using Utils.log;
 
@@ -21,11 +23,15 @@ namespace Tools.Editor.AbilityComposer.Right
     {
         private readonly VisualElement m_rootVisualElement;
         private AbilityEventInspectorView m_eventInspectorView;
+        private AbilityWindowInspectorView m_windowInspectorView;
         private bool m_isControlsReady;
 
         public event Action<AbilityEventCategory> OnEventCategoryChanged;
         public event Action<string> OnEventReceiverTypeNameChanged;
         public event Action<string> OnEventFunctionNameChanged;
+        public event Action<AbilityWindowType> OnWindowTypeChanged;
+        public event Action<int, int> OnWindowFramesChanged;
+        public event Action<float> OnWindowDamageChanged;
 
         // 注入右侧区域根节点
         public AbilityRightView(VisualElement rootVisualElement)
@@ -33,7 +39,7 @@ namespace Tools.Editor.AbilityComposer.Right
             m_rootVisualElement = rootVisualElement;
         }
 
-        // 创建右侧 Event Inspector 页面
+        // 创建右侧事件和窗口检查器页面
         protected override void OnEditorInit()
         {
             VisualElement workspace = m_rootVisualElement.Q<VisualElement>("event-inspector-workspace");
@@ -44,7 +50,9 @@ namespace Tools.Editor.AbilityComposer.Right
             }
 
             m_eventInspectorView = new AbilityEventInspectorView(workspace);
+            m_windowInspectorView = new AbilityWindowInspectorView(workspace);
             m_eventInspectorView.Init();
+            m_windowInspectorView.Init();
             m_isControlsReady = true;
         }
 
@@ -55,6 +63,7 @@ namespace Tools.Editor.AbilityComposer.Right
                 return;
 
             m_eventInspectorView.Refresh(timelineData);
+            m_windowInspectorView.Refresh(timelineData);
         }
 
         // 更新右侧 Event Inspector 的 Function 下拉候选
@@ -74,6 +83,9 @@ namespace Tools.Editor.AbilityComposer.Right
             m_eventInspectorView.OnCategoryChanged += RequestEventCategoryChanged;
             m_eventInspectorView.OnReceiverTypeNameChanged += RequestEventReceiverTypeNameChanged;
             m_eventInspectorView.OnFunctionNameChanged += RequestEventFunctionNameChanged;
+            m_windowInspectorView.OnTypeChanged += RequestWindowTypeChanged;
+            m_windowInspectorView.OnFramesChanged += RequestWindowFramesChanged;
+            m_windowInspectorView.OnDamageChanged += RequestWindowDamageChanged;
         }
 
         protected override void UnsubscribeViewEvents()
@@ -84,6 +96,9 @@ namespace Tools.Editor.AbilityComposer.Right
             m_eventInspectorView.OnCategoryChanged -= RequestEventCategoryChanged;
             m_eventInspectorView.OnReceiverTypeNameChanged -= RequestEventReceiverTypeNameChanged;
             m_eventInspectorView.OnFunctionNameChanged -= RequestEventFunctionNameChanged;
+            m_windowInspectorView.OnTypeChanged -= RequestWindowTypeChanged;
+            m_windowInspectorView.OnFramesChanged -= RequestWindowFramesChanged;
+            m_windowInspectorView.OnDamageChanged -= RequestWindowDamageChanged;
             m_isControlsReady = false;
         }
 
@@ -91,6 +106,9 @@ namespace Tools.Editor.AbilityComposer.Right
         {
             if (m_eventInspectorView != null)
                 m_eventInspectorView.Destroy();
+
+            if (m_windowInspectorView != null)
+                m_windowInspectorView.Destroy();
         }
 
         // 转发事件分类编辑请求
@@ -101,5 +119,14 @@ namespace Tools.Editor.AbilityComposer.Right
 
         // 转发事件 Function 编辑请求
         private void RequestEventFunctionNameChanged(string functionName) => OnEventFunctionNameChanged?.Invoke(functionName);
+
+        // 转发窗口类型编辑请求
+        private void RequestWindowTypeChanged(AbilityWindowType type) => OnWindowTypeChanged?.Invoke(type);
+
+        // 转发窗口帧范围编辑请求
+        private void RequestWindowFramesChanged(int startFrame, int endFrame) => OnWindowFramesChanged?.Invoke(startFrame, endFrame);
+
+        // 转发窗口伤害编辑请求
+        private void RequestWindowDamageChanged(float damage) => OnWindowDamageChanged?.Invoke(damage);
     }
 }
