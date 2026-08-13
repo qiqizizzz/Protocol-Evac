@@ -136,7 +136,7 @@ namespace Module.Player.Core
             m_inputReader.Init(m_context, Settings.InputConfig);
 
             m_motor = new PlayerMotor();
-            m_motor.Init(m_characterController, m_context, Settings.MoveConfig, Settings.ViewConfig);
+            m_motor.Init(m_characterController, m_context, Settings.MoveConfig, Settings.ViewConfig, Settings.AirConfig);
 
             m_weaponController.Init(m_context);
 

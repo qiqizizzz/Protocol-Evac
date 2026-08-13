@@ -24,6 +24,9 @@ namespace Module.Player.HFSM.Config.Air
         [Tooltip("玩家起跳时写入的竖直速度")]
         [SerializeField, Min(0f)] private float JumpForceValue = 6f;
 
+        [Tooltip("玩家下落阶段的重力倍率")]
+        [SerializeField, Min(1f)] private float FallGravityMultiplierValue = 2f;
+
         [Header("空中移动")]
         [Tooltip("玩家空中水平移动速度")]
         [SerializeField, Min(0f)] private float AirMoveSpeedValue = 4f;
@@ -35,6 +38,8 @@ namespace Module.Player.HFSM.Config.Air
         [SerializeField, Min(0f)] private float CoyoteTimeValue = 0.1f;
 
         public float JumpForce => JumpForceValue;
+
+        public float FallGravityMultiplier => FallGravityMultiplierValue;
 
         public float AirMoveSpeed => AirMoveSpeedValue;
 

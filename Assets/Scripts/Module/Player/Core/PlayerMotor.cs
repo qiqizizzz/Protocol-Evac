@@ -9,6 +9,7 @@
 using Module.Player.Context;
 using Module.Player.Core.View;
 using Module.Player.Core.View.Config;
+using Module.Player.HFSM.Config.Air;
 using Module.Player.HFSM.Config.Move;
 using UnityEngine;
 
@@ -20,14 +21,16 @@ namespace Module.Player.Core
         private PlayerContext m_context;
         private PlayerMoveConfigSO m_moveConfig;
         private PlayerViewConfigSO m_viewConfig;
+        private PlayerAirConfigSO m_airConfig;
         
         // 初始化玩家移动执行器
-        public void Init(CharacterController characterController, PlayerContext context, PlayerMoveConfigSO moveConfig, PlayerViewConfigSO viewConfig)
+        public void Init(CharacterController characterController, PlayerContext context, PlayerMoveConfigSO moveConfig, PlayerViewConfigSO viewConfig, PlayerAirConfigSO airConfig)
         {
             m_characterController = characterController;
             m_context = context;
             m_moveConfig = moveConfig;
             m_viewConfig = viewConfig;
+            m_airConfig = airConfig;
         }
 
         //固定帧移动
@@ -84,7 +87,7 @@ namespace Module.Player.Core
             if (m_characterController.isGrounded && velocity.y < 0f)
                 velocity.y = -2f; // 保持角色贴地，避免浮空
             else
-                velocity.y += Physics.gravity.y * fixedDeltaTime;
+                velocity.y += GetVerticalGravity(velocity.y) * fixedDeltaTime;
 
             m_characterController.Move(velocity * fixedDeltaTime);
 
@@ -102,7 +105,7 @@ namespace Module.Player.Core
             if (m_characterController.isGrounded && velocity.y < 0f)
                 velocity.y = -2f;
             else
-                velocity.y += Physics.gravity.y * fixedDeltaTime;
+                velocity.y += GetVerticalGravity(velocity.y) * fixedDeltaTime;
 
             rootMotionDeltaPosition.y = velocity.y * fixedDeltaTime;
             m_characterController.Move(rootMotionDeltaPosition);
@@ -114,6 +117,15 @@ namespace Module.Player.Core
             m_context.Movement.HasGroundedChecked = true;
             if (m_context.Movement.IsGrounded)
                 m_context.Movement.LastGroundedTime = Time.time;
+        }
+
+        // 根据当前竖直速度计算本帧使用的重力
+        private float GetVerticalGravity(float verticalVelocity)
+        {
+            if (verticalVelocity < 0f)
+                return Physics.gravity.y * m_airConfig.FallGravityMultiplier;
+
+            return Physics.gravity.y;
         }
 
         // 根据移动方向旋转玩家身体

@@ -32,6 +32,7 @@ MonoBehaviour:
     ComboOpenNormalizedTimeValue: 0.35
     ComboCloseNormalizedTimeValue: 0.75
   JumpForceValue: 6
+  FallGravityMultiplierValue: 2
   AirMoveSpeedValue: 4
   JumpBufferTimeValue: 0.12
   CoyoteTimeValue: 0.1

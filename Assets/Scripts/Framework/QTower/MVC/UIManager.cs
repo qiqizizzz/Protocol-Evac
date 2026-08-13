@@ -172,7 +172,7 @@ namespace Framework.QTower
                 if (m_viewCache.TryGetValue(viewClass, out UIBase view))
                 {
                     m_viewCache.Remove(viewClass);
-                    ResManager.UnLoadInstance(view.gameObject);
+                    ReleaseViewInstance(view);
                 }
 
                 m_viewDatas.Remove(viewClass);
@@ -183,10 +183,23 @@ namespace Framework.QTower
         {
             m_isDestroyed = true;
             foreach (UIBase view in m_viewCache.Values)
-                ResManager.UnLoadInstance(view.gameObject);
+                ReleaseViewInstance(view);
 
             m_viewCache.Clear();
             m_viewDatas.Clear();
+        }
+
+        // 释放仍然有效的 UI 实例，跳过已被 Unity 外部销毁的对象
+        private void ReleaseViewInstance(UIBase view)
+        {
+            if (view == null)
+                return;
+
+            GameObject viewObject = view.gameObject;
+            if (viewObject == null)
+                return;
+
+            ResManager.UnLoadInstance(viewObject);
         }
 
         public void SetRoot(Transform uiRoot)
