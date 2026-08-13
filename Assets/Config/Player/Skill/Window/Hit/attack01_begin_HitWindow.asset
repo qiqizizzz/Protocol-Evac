@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   AnimationClipValue: {fileID: 7400000, guid: 1a6e3009131c65047b78d5bad21045be, type: 2}
   WindowValues:
-  - IdValue: f1e76d1b8877461481f1cd9e45450c67
+  - IdValue: c4350e694fbc4bccaa0ac09f3110a4e3
     StartNormalizedTimeValue: 0.15789473
     EndNormalizedTimeValue: 0.2631579
     DamageValue: 5

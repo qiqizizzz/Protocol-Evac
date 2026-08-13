@@ -16,27 +16,31 @@ MonoBehaviour:
   - StateClipValue: {fileID: 7400000, guid: 2b076702264687e409e65d3fd1b331fd, type: 2}
     StateDurationValue: 2.6666667
     ShowWeaponValue: 0
-    UseComboWindowValue: 1
-    ComboOpenNormalizedTimeValue: 0.35
-    ComboCloseNormalizedTimeValue: 0.75
+    UseComboWindowValue: 0
+    ComboWindowTrackValue: {fileID: 0}
+    LegacyComboOpenNormalizedTimeValue: 0.35
+    LegacyComboCloseNormalizedTimeValue: 0.75
   - StateClipValue: {fileID: 7400000, guid: 1082f854c11dd254c8ceba52832a64e1, type: 2}
     StateDurationValue: 1.2666668
     ShowWeaponValue: 0
-    UseComboWindowValue: 1
-    ComboOpenNormalizedTimeValue: 0.2
-    ComboCloseNormalizedTimeValue: 0.75
+    UseComboWindowValue: 0
+    ComboWindowTrackValue: {fileID: 0}
+    LegacyComboOpenNormalizedTimeValue: 0.2
+    LegacyComboCloseNormalizedTimeValue: 0.75
   - StateClipValue: {fileID: 7400000, guid: ad4be21143036ae4cb675597e556fea5, type: 2}
     StateDurationValue: 0.73333335
     ShowWeaponValue: 0
     UseComboWindowValue: 0
-    ComboOpenNormalizedTimeValue: 0.35
-    ComboCloseNormalizedTimeValue: 0.75
+    ComboWindowTrackValue: {fileID: 0}
+    LegacyComboOpenNormalizedTimeValue: 0.35
+    LegacyComboCloseNormalizedTimeValue: 0.75
   - StateClipValue: {fileID: 7400000, guid: 9d94137ff3465574c9ee69485b262a1a, type: 2}
     StateDurationValue: 0.53333336
     ShowWeaponValue: 0
     UseComboWindowValue: 0
-    ComboOpenNormalizedTimeValue: 0.35
-    ComboCloseNormalizedTimeValue: 0.75
+    ComboWindowTrackValue: {fileID: 0}
+    LegacyComboOpenNormalizedTimeValue: 0.35
+    LegacyComboCloseNormalizedTimeValue: 0.75
   WalkStopClipPairValue:
     LeftClipValue: {fileID: 7400000, guid: 8fc41e4a71e483547bfc81103efe3259, type: 2}
     LeftDurationValue: 3.1000001

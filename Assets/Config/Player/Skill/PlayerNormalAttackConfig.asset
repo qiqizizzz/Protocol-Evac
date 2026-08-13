@@ -25,11 +25,13 @@ MonoBehaviour:
     RecoveryCanEndEarlyValue: 1
     ShowWeaponValue: 1
     UseStepAdvanceWindowValue: 1
-    StepAdvanceWindowTrackValue: {fileID: 11400000, guid: 44b74a3ebdd64f688aebc671cf4f90b1, type: 2}
+    StepAdvanceWindowTrackValue: {fileID: 11400000, guid: 44b74a3ebdd64f688aebc671cf4f90b1,
+      type: 2}
     StepAdvanceOpenNormalizedTimeValue: 0.4
     StepAdvanceCloseNormalizedTimeValue: 0.75
     UseHitWindowValue: 1
-    BeginHitWindowTrackValue: {fileID: 11400000, guid: 5430f6000baf40fba757348e7d649fd7, type: 2}
+    BeginHitWindowTrackValue: {fileID: 11400000, guid: 5430f6000baf40fba757348e7d649fd7,
+      type: 2}
     HitOpenNormalizedTimeValue: 0.02
     HitCloseNormalizedTimeValue: 0.18
     DamageValue: 10
@@ -45,11 +47,13 @@ MonoBehaviour:
     RecoveryCanEndEarlyValue: 1
     ShowWeaponValue: 1
     UseStepAdvanceWindowValue: 1
-    StepAdvanceWindowTrackValue: {fileID: 11400000, guid: 6226949e7e2146ef8fb16a686c26ceef, type: 2}
+    StepAdvanceWindowTrackValue: {fileID: 11400000, guid: 6226949e7e2146ef8fb16a686c26ceef,
+      type: 2}
     StepAdvanceOpenNormalizedTimeValue: 0.3
     StepAdvanceCloseNormalizedTimeValue: 0.751
     UseHitWindowValue: 1
-    BeginHitWindowTrackValue: {fileID: 11400000, guid: 6c4e7924b63044d5bea4e67992dddf1f, type: 2}
+    BeginHitWindowTrackValue: {fileID: 11400000, guid: 6c4e7924b63044d5bea4e67992dddf1f,
+      type: 2}
     HitOpenNormalizedTimeValue: 0.2
     HitCloseNormalizedTimeValue: 0.35
     DamageValue: 15
@@ -65,10 +69,12 @@ MonoBehaviour:
     RecoveryCanEndEarlyValue: 1
     ShowWeaponValue: 1
     UseStepAdvanceWindowValue: 0
+    StepAdvanceWindowTrackValue: {fileID: 0}
     StepAdvanceOpenNormalizedTimeValue: 0.35
     StepAdvanceCloseNormalizedTimeValue: 0.75
     UseHitWindowValue: 1
-    BeginHitWindowTrackValue: {fileID: 11400000, guid: 2d53ddcafff44d24b634002946f4195a, type: 2}
+    BeginHitWindowTrackValue: {fileID: 11400000, guid: 2d53ddcafff44d24b634002946f4195a,
+      type: 2}
     HitOpenNormalizedTimeValue: 0
     HitCloseNormalizedTimeValue: 0
     DamageValue: 0
