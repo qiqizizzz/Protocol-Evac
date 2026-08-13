@@ -580,3 +580,113 @@
 .ac-status-spacer {
     flex-grow: 1;
 }
+
+/* 响应式布局：保持时间轴帧比例，优先压缩左右工具栏 */
+.ac-layout-normal .ac-preview-panel {
+    width: 220px;
+    min-width: 220px;
+}
+
+.ac-layout-normal .ac-inspector-panel {
+    width: 360px;
+    min-width: 360px;
+}
+
+.ac-layout-normal .ac-timeline-panel {
+    min-width: 420px;
+}
+
+.ac-layout-compact .ac-content-layout {
+    padding-left: 6px;
+    padding-right: 6px;
+}
+
+.ac-layout-compact .ac-preview-panel {
+    width: 190px;
+    min-width: 190px;
+    margin-right: 6px;
+    padding-left: 8px;
+    padding-right: 8px;
+}
+
+.ac-layout-compact .ac-inspector-panel {
+    width: 300px;
+    min-width: 300px;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.ac-layout-compact .ac-timeline-panel {
+    min-width: 360px;
+    margin-right: 6px;
+}
+
+.ac-layout-compact .ac-object-field {
+    width: 140px;
+    min-width: 100px;
+}
+
+.ac-layout-compact .ac-inspector-field .unity-base-field__label {
+    width: 100px;
+    min-width: 100px;
+}
+
+.ac-layout-narrow .ac-context-bar {
+    padding-left: 8px;
+    padding-right: 8px;
+}
+
+.ac-layout-narrow .ac-content-layout {
+    padding-left: 4px;
+    padding-right: 4px;
+}
+
+.ac-layout-narrow .ac-preview-panel {
+    width: 164px;
+    min-width: 164px;
+    margin-right: 4px;
+    padding-left: 6px;
+    padding-right: 6px;
+}
+
+.ac-layout-narrow .ac-inspector-panel {
+    width: 260px;
+    min-width: 260px;
+    padding-left: 8px;
+    padding-right: 8px;
+}
+
+.ac-layout-narrow .ac-timeline-panel {
+    min-width: 300px;
+    margin-right: 4px;
+}
+
+.ac-layout-narrow .ac-object-field {
+    width: 120px;
+    min-width: 88px;
+    margin-right: 4px;
+}
+
+.ac-layout-narrow .ac-context-actions .ac-button-label {
+    font-size: 10px;
+}
+
+.ac-layout-narrow .ac-inspector-field .unity-base-field__label {
+    width: 82px;
+    min-width: 82px;
+}
+
+.ac-layout-narrow .ac-inspector-tab-button {
+    min-width: 68px;
+    padding-left: 4px;
+}
+
+.ac-layout-narrow .ac-event-action-button,
+.ac-layout-narrow .ac-hit-window-action-button {
+    min-height: 22px;
+}
+
+.ac-layout-narrow .ac-event-action-button .ac-button-label,
+.ac-layout-narrow .ac-hit-window-action-button .ac-button-label {
+    font-size: 9px;
+}

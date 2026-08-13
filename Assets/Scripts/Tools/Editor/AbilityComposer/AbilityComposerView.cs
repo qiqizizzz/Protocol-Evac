@@ -29,6 +29,11 @@ namespace Tools.Editor.AbilityComposer
         private const string WINDOW_UXML_PATH = "Assets/Scripts/Tools/Editor/AbilityComposer/UI/Uxml/AbilityComposerWindow.uxml";
         private const string WINDOW_USS_PATH = "Assets/Scripts/Tools/Editor/AbilityComposer/UI/Uss/AbilityComposerWindow.uss";
         private const string MI_SANS_FONT_ASSET_PATH = "Assets/Fonts/miSans/MiSans-Regular-UI Toolkit.asset";
+        private const float COMPACT_LAYOUT_WIDTH = 1200f;
+        private const float NARROW_LAYOUT_WIDTH = 900f;
+        private const string NORMAL_LAYOUT_CLASS = "ac-layout-normal";
+        private const string COMPACT_LAYOUT_CLASS = "ac-layout-compact";
+        private const string NARROW_LAYOUT_CLASS = "ac-layout-narrow";
 
         private ObjectField m_previewSourceField;
         private ObjectField m_animationClipField;
@@ -113,7 +118,9 @@ namespace Tools.Editor.AbilityComposer
             m_rightView.Init();
             ConfigureResourceFields(m_composerData);
             ApplyMiSansFont(m_rootVisualElement);
+            m_rootVisualElement.RegisterCallback<GeometryChangedEvent>(HandleRootGeometryChanged);
             m_isControlsReady = true;
+            ApplyLayoutMode(m_rootVisualElement.resolvedStyle.width);
         }
 
         // 返回时间轴内容容器，供独立时间轴视图装配
@@ -211,9 +218,33 @@ namespace Tools.Editor.AbilityComposer
 
         protected override void OnEditorDispose()
         {
+            m_rootVisualElement?.UnregisterCallback<GeometryChangedEvent>(HandleRootGeometryChanged);
             m_leftView?.Destroy();
             m_centerView?.Destroy();
             m_rightView?.Destroy();
+        }
+
+        // 根据窗口宽度切换 Ability Composer 的响应式布局档位
+        private void HandleRootGeometryChanged(GeometryChangedEvent geometryChangedEvent)
+        {
+            ApplyLayoutMode(geometryChangedEvent.newRect.width);
+        }
+
+        // 将当前宽度映射为正常、紧凑或窄屏布局类
+        private void ApplyLayoutMode(float width)
+        {
+            if (width <= 0f)
+                return;
+
+            m_rootVisualElement.RemoveFromClassList(NORMAL_LAYOUT_CLASS);
+            m_rootVisualElement.RemoveFromClassList(COMPACT_LAYOUT_CLASS);
+            m_rootVisualElement.RemoveFromClassList(NARROW_LAYOUT_CLASS);
+            if (width < NARROW_LAYOUT_WIDTH)
+                m_rootVisualElement.AddToClassList(NARROW_LAYOUT_CLASS);
+            else if (width < COMPACT_LAYOUT_WIDTH)
+                m_rootVisualElement.AddToClassList(COMPACT_LAYOUT_CLASS);
+            else
+                m_rootVisualElement.AddToClassList(NORMAL_LAYOUT_CLASS);
         }
 
         // 查找 UXML 中的主视图控件
