@@ -92,16 +92,13 @@ namespace Tools.Editor.AbilityComposer.Right.Window
         {
             m_windowTrackField.SetValueWithoutNotify(timelineData.WindowTrack);
             AbilityWindowDraft selectedWindow = timelineData.SelectedWindow;
-            bool isVisible = timelineData.HasClip;
+            bool isVisible = selectedWindow != null;
             SetInspectorVisible(isVisible);
             if (!isVisible)
                 return;
 
-            bool hasSelectedWindow = selectedWindow != null;
-            SetWindowFieldsEnabled(hasSelectedWindow);
-            m_saveWindowButton.SetEnabled(hasSelectedWindow);
-            if (!hasSelectedWindow)
-                return;
+            SetWindowFieldsEnabled(true);
+            m_saveWindowButton.SetEnabled(true);
 
             m_typeField.SetValueWithoutNotify(GetTypeChoice(selectedWindow.Type));
             m_startFrameField.SetValueWithoutNotify(selectedWindow.StartFrame);

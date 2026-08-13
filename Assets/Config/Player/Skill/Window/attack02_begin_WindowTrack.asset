@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b3d39ebbf5910b5478d702ebd112a825, type: 3}
+  m_Name: attack02_begin_WindowTrack
+  m_EditorClassIdentifier: 
+  AnimationClipValue: {fileID: 7400000, guid: 5cb2d1ad2743927489afad103d857b6b, type: 2}
+  WindowValues:
+  - IdValue: f3021f06be5945c6afa1f4917b6d151e
+    TypeValue: 0
+    StartNormalizedTimeValue: 0.13636364
+    EndNormalizedTimeValue: 0.20454545
+    DamageValue: 1
+  - IdValue: b28df800069b4691872da9f380ca1629
+    TypeValue: 0
+    StartNormalizedTimeValue: 0.27272728
+    EndNormalizedTimeValue: 0.3181818
+    DamageValue: 1
+  - IdValue: ee3af50d1ba647a7a2c7b3bd418ce656
+    TypeValue: 0
+    StartNormalizedTimeValue: 0.3409091
+    EndNormalizedTimeValue: 0.38636363
+    DamageValue: 20

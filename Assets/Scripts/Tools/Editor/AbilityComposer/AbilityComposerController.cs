@@ -45,6 +45,7 @@ namespace Tools.Editor.AbilityComposer
         {
             m_timelineData = new AbilityTimelineData();
             m_timelineData.SetAnimationClip(m_composerData.SelectedAnimationClip);
+            m_composerData.SetWindowTrack(FindWindowTrack(m_composerData.SelectedAnimationClip));
             LoadAnimationEvents();
             LoadWindowTrack();
             RefreshEventFunctionChoices();
@@ -164,6 +165,7 @@ namespace Tools.Editor.AbilityComposer
             m_previewController.ReturnToPreviousScene();
             ClearEventFunctionChoices();
             m_composerData.SetAnimationClip(animationClip);
+            m_composerData.SetWindowTrack(FindWindowTrack(animationClip));
             m_timelineData.SetAnimationClip(animationClip);
             LoadAnimationEvents();
             LoadWindowTrack();
@@ -644,6 +646,24 @@ namespace Tools.Editor.AbilityComposer
             }
 
             m_timelineData.ClearWindowSelection();
+        }
+
+        // 查找当前动画唯一绑定的窗口轨道资产
+        private AbilityWindowTrackSO FindWindowTrack(AnimationClip animationClip)
+        {
+            if (animationClip == null)
+                return null;
+
+            string[] windowTrackGuids = AssetDatabase.FindAssets("t:AbilityWindowTrackSO");
+            foreach (string windowTrackGuid in windowTrackGuids)
+            {
+                string assetPath = AssetDatabase.GUIDToAssetPath(windowTrackGuid);
+                AbilityWindowTrackSO windowTrack = AssetDatabase.LoadAssetAtPath<AbilityWindowTrackSO>(assetPath);
+                if (windowTrack.AnimationClip == animationClip)
+                    return windowTrack;
+            }
+
+            return null;
         }
 
         // 将时间轴窗口草稿写回选中的窗口轨道资产
