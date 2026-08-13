@@ -15,12 +15,12 @@ namespace Tools.Editor.AbilityComposer.Right.Event
 {
     public static class AbilityEventFunctionResolver
     {
-        // 从动画采样根节点及其子层级收集 Unity Animation Event 可调用的方法名
-        public static List<string> Resolve(GameObject animationEventReceiver)
+        // 从动画采样根节点及其子层级按接收组件类型收集合法方法
+        public static Dictionary<string, List<string>> Resolve(GameObject animationEventReceiver)
         {
-            List<string> functionNames = new List<string>();
+            Dictionary<string, List<string>> functionGroups = new Dictionary<string, List<string>>();
             if (animationEventReceiver == null)
-                return functionNames;
+                return functionGroups;
 
             MonoBehaviour[] receivers = animationEventReceiver.GetComponentsInChildren<MonoBehaviour>(true);
             for (int receiverIndex = 0; receiverIndex < receivers.Length; receiverIndex++)
@@ -30,6 +30,13 @@ namespace Tools.Editor.AbilityComposer.Right.Event
                     continue;
 
                 MethodInfo[] methods = receiver.GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public);
+                string receiverTypeName = receiver.GetType().Name;
+                if (!functionGroups.TryGetValue(receiverTypeName, out List<string> functionNames))
+                {
+                    functionNames = new List<string>();
+                    functionGroups.Add(receiverTypeName, functionNames);
+                }
+
                 for (int methodIndex = 0; methodIndex < methods.Length; methodIndex++)
                 {
                     MethodInfo method = methods[methodIndex];
@@ -38,10 +45,15 @@ namespace Tools.Editor.AbilityComposer.Right.Event
 
                     functionNames.Add(method.Name);
                 }
+
+                if (functionNames.Count == 0)
+                    functionGroups.Remove(receiverTypeName);
             }
 
-            functionNames.Sort(StringComparer.Ordinal);
-            return functionNames;
+            foreach (List<string> functionNames in functionGroups.Values)
+                functionNames.Sort(StringComparer.Ordinal);
+
+            return functionGroups;
         }
 
         // 判断方法是否符合 Unity Animation Event 的调用签名

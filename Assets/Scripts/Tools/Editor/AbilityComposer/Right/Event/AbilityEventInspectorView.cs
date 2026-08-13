@@ -17,6 +17,7 @@ namespace Tools.Editor.AbilityComposer.Right.Event
 {
     public sealed class AbilityEventInspectorView : UIBaseEditor
     {
+        private const string SELECT_RECEIVER_CHOICE = "选择接收类";
         private const string SELECT_FUNCTION_CHOICE = "选择 Function";
 
         private static readonly List<string> S_CategoryChoices = new List<string>
@@ -28,12 +29,13 @@ namespace Tools.Editor.AbilityComposer.Right.Event
         };
 
         private readonly VisualElement m_rootVisualElement;
+        private Label m_titleLabel;
         private DropdownField m_categoryField;
-        private Label m_frameValueLabel;
-        private Label m_timeValueLabel;
+        private DropdownField m_receiverChoicesField;
         private DropdownField m_functionChoicesField;
         private TextField m_functionField;
-        private Label m_emptyStateLabel;
+        private readonly Dictionary<string, List<string>> m_functionGroups = new Dictionary<string, List<string>>();
+        private readonly List<string> m_receiverChoices = new List<string>();
         private readonly List<string> m_functionChoices = new List<string>();
 
         public event Action<AbilityEventCategory> OnCategoryChanged;
@@ -49,34 +51,53 @@ namespace Tools.Editor.AbilityComposer.Right.Event
         protected override void OnEditorInit()
         {
             m_rootVisualElement.Clear();
-            m_emptyStateLabel = new Label("选择时间轴事件后，在此处编辑事件");
-            m_emptyStateLabel.AddToClassList("ac-inspector-empty-state");
+            m_titleLabel = new Label("事件检查器");
+            m_titleLabel.AddToClassList("ac-section-title");
             m_categoryField = new DropdownField("Category", S_CategoryChoices, 0);
             m_categoryField.AddToClassList("ac-inspector-field");
-            m_frameValueLabel = CreateReadOnlyValue("Frame");
-            m_timeValueLabel = CreateReadOnlyValue("Time");
+            m_receiverChoices.Add(SELECT_RECEIVER_CHOICE);
+            m_receiverChoicesField = new DropdownField("接收类", m_receiverChoices, 0);
+            m_receiverChoicesField.AddToClassList("ac-inspector-field");
             m_functionChoices.Add(SELECT_FUNCTION_CHOICE);
             m_functionChoicesField = new DropdownField("Function", m_functionChoices, 0);
             m_functionChoicesField.AddToClassList("ac-inspector-field");
             m_functionField = new TextField("Custom Function");
             m_functionField.isDelayed = true;
             m_functionField.AddToClassList("ac-inspector-field");
-            m_rootVisualElement.Add(m_emptyStateLabel);
+            m_rootVisualElement.Add(m_titleLabel);
             m_rootVisualElement.Add(m_categoryField);
-            m_rootVisualElement.Add(m_frameValueLabel);
-            m_rootVisualElement.Add(m_timeValueLabel);
+            m_rootVisualElement.Add(m_receiverChoicesField);
             m_rootVisualElement.Add(m_functionChoicesField);
             m_rootVisualElement.Add(m_functionField);
             SetInspectorVisible(false);
         }
 
         // 更新预览对象可接收的 Animation Event Function 候选
-        public void SetFunctionChoices(IReadOnlyList<string> functionChoices)
+        public void SetFunctionChoices(IReadOnlyDictionary<string, List<string>> functionGroups)
+        {
+            m_functionGroups.Clear();
+            foreach (KeyValuePair<string, List<string>> functionGroup in functionGroups)
+                m_functionGroups.Add(functionGroup.Key, new List<string>(functionGroup.Value));
+
+            m_receiverChoices.Clear();
+            m_receiverChoices.Add(SELECT_RECEIVER_CHOICE);
+            List<string> receiverNames = new List<string>(m_functionGroups.Keys);
+            receiverNames.Sort(StringComparer.Ordinal);
+            foreach (string receiverName in receiverNames)
+                m_receiverChoices.Add(receiverName);
+
+            m_receiverChoicesField.choices = m_receiverChoices;
+            m_receiverChoicesField.SetValueWithoutNotify(SELECT_RECEIVER_CHOICE);
+            RefreshFunctionChoices(SELECT_RECEIVER_CHOICE);
+        }
+
+        // 更新当前接收类对应的 Animation Event Function 候选
+        private void RefreshFunctionChoices(string receiverName)
         {
             m_functionChoices.Clear();
             m_functionChoices.Add(SELECT_FUNCTION_CHOICE);
-            for (int choiceIndex = 0; choiceIndex < functionChoices.Count; choiceIndex++)
-                m_functionChoices.Add(functionChoices[choiceIndex]);
+            if (m_functionGroups.TryGetValue(receiverName, out List<string> functionChoices))
+                m_functionChoices.AddRange(functionChoices);
 
             m_functionChoicesField.choices = m_functionChoices;
             m_functionChoicesField.SetValueWithoutNotify(SELECT_FUNCTION_CHOICE);
@@ -92,8 +113,9 @@ namespace Tools.Editor.AbilityComposer.Right.Event
                 return;
 
             m_categoryField.SetValueWithoutNotify(selectedEvent.Category.ToString());
-            m_frameValueLabel.text = $"Frame  {selectedEvent.Frame}";
-            m_timeValueLabel.text = $"Time  {selectedEvent.Frame / timelineData.FrameRate:0.###}";
+            string selectedReceiver = FindReceiverForFunction(selectedEvent.FunctionName);
+            m_receiverChoicesField.SetValueWithoutNotify(selectedReceiver);
+            RefreshFunctionChoices(selectedReceiver);
             string selectedFunction = m_functionChoices.Contains(selectedEvent.FunctionName)
                 ? selectedEvent.FunctionName
                 : SELECT_FUNCTION_CHOICE;
@@ -104,6 +126,7 @@ namespace Tools.Editor.AbilityComposer.Right.Event
         protected override void SubscribeViewEvents()
         {
             m_categoryField.RegisterValueChangedCallback(HandleCategoryChanged);
+            m_receiverChoicesField.RegisterValueChangedCallback(HandleReceiverChoiceChanged);
             m_functionChoicesField.RegisterValueChangedCallback(HandleFunctionChoiceChanged);
             m_functionField.RegisterValueChangedCallback(HandleFunctionNameChanged);
         }
@@ -111,27 +134,31 @@ namespace Tools.Editor.AbilityComposer.Right.Event
         protected override void UnsubscribeViewEvents()
         {
             m_categoryField.UnregisterValueChangedCallback(HandleCategoryChanged);
+            m_receiverChoicesField.UnregisterValueChangedCallback(HandleReceiverChoiceChanged);
             m_functionChoicesField.UnregisterValueChangedCallback(HandleFunctionChoiceChanged);
             m_functionField.UnregisterValueChangedCallback(HandleFunctionNameChanged);
         }
 
-        // 创建只读显示字段
-        private Label CreateReadOnlyValue(string label)
-        {
-            Label valueLabel = new Label(label);
-            valueLabel.AddToClassList("ac-inspector-readonly-value");
-            return valueLabel;
-        }
-
-        // 切换空状态和编辑字段显示
+        // 切换事件编辑字段显示
         private void SetInspectorVisible(bool hasSelectedEvent)
         {
-            m_emptyStateLabel.style.display = hasSelectedEvent ? DisplayStyle.None : DisplayStyle.Flex;
+            m_titleLabel.style.display = hasSelectedEvent ? DisplayStyle.Flex : DisplayStyle.None;
             m_categoryField.style.display = hasSelectedEvent ? DisplayStyle.Flex : DisplayStyle.None;
-            m_frameValueLabel.style.display = hasSelectedEvent ? DisplayStyle.Flex : DisplayStyle.None;
-            m_timeValueLabel.style.display = hasSelectedEvent ? DisplayStyle.Flex : DisplayStyle.None;
+            m_receiverChoicesField.style.display = hasSelectedEvent ? DisplayStyle.Flex : DisplayStyle.None;
             m_functionChoicesField.style.display = hasSelectedEvent ? DisplayStyle.Flex : DisplayStyle.None;
             m_functionField.style.display = hasSelectedEvent ? DisplayStyle.Flex : DisplayStyle.None;
+        }
+
+        // 根据 Function 名称查找当前事件所属的接收类
+        private string FindReceiverForFunction(string functionName)
+        {
+            foreach (KeyValuePair<string, List<string>> functionGroup in m_functionGroups)
+            {
+                if (functionGroup.Value.Contains(functionName))
+                    return functionGroup.Key;
+            }
+
+            return SELECT_RECEIVER_CHOICE;
         }
 
         // 转换分类下拉框的选择结果
@@ -139,6 +166,12 @@ namespace Tools.Editor.AbilityComposer.Right.Event
         {
             if (Enum.TryParse(changeEvent.newValue, out AbilityEventCategory category))
                 OnCategoryChanged?.Invoke(category);
+        }
+
+        // 切换接收类并刷新对应的 Function 候选
+        private void HandleReceiverChoiceChanged(ChangeEvent<string> changeEvent)
+        {
+            RefreshFunctionChoices(changeEvent.newValue);
         }
 
         // 将 Function 下拉框选择写回当前事件草稿

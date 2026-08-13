@@ -115,7 +115,7 @@ namespace Tools.Editor.AbilityComposer
         }
 
         // 更新右侧 Event Inspector 的 Function 下拉候选
-        public void SetEventFunctionChoices(IReadOnlyList<string> functionChoices)
+        public void SetEventFunctionChoices(IReadOnlyDictionary<string, List<string>> functionChoices)
         {
             m_rightView.SetEventFunctionChoices(functionChoices);
         }

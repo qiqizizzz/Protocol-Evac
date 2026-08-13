@@ -32,7 +32,7 @@ namespace Tools.Editor.AbilityComposer.Right
             m_rootVisualElement = rootVisualElement;
         }
 
-        // 创建右侧默认 Event Inspector 页面
+        // 创建右侧 Event Inspector 页面
         protected override void OnEditorInit()
         {
             VisualElement workspace = m_rootVisualElement.Q<VisualElement>("event-inspector-workspace");
@@ -57,7 +57,7 @@ namespace Tools.Editor.AbilityComposer.Right
         }
 
         // 更新右侧 Event Inspector 的 Function 下拉候选
-        public void SetEventFunctionChoices(IReadOnlyList<string> functionChoices)
+        public void SetEventFunctionChoices(IReadOnlyDictionary<string, List<string>> functionChoices)
         {
             if (!m_isControlsReady)
                 return;

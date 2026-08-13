@@ -256,6 +256,12 @@
     -unity-font-style: normal;
 }
 
+.ac-inspector-field .unity-base-field__label {
+    width: 145px;
+    min-width: 145px;
+    flex-shrink: 0;
+}
+
 .ac-inspector-readonly-value {
     min-height: 18px;
 }
@@ -372,6 +378,22 @@
 
 .ac-event-audio {
     background-color: rgb(216, 190, 67);
+}
+
+.ac-timeline-event-marker-selected.ac-event-default {
+    border-color: rgb(245, 245, 245);
+}
+
+.ac-timeline-event-marker-selected.ac-event-gameplay {
+    border-color: rgb(245, 167, 83);
+}
+
+.ac-timeline-event-marker-selected.ac-event-vfx {
+    border-color: rgb(103, 220, 224);
+}
+
+.ac-timeline-event-marker-selected.ac-event-audio {
+    border-color: rgb(245, 222, 105);
 }
 
 .ac-timeline-empty-state {

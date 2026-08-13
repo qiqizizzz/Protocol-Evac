@@ -6,6 +6,7 @@
  * └─────────────────────────────────────────────────────────────┘
  */
 
+using System.Collections.Generic;
 using Framework.QTower.Editor.Controller;
 using Tools.Editor.AbilityComposer.Center.Event;
 using Tools.Editor.AbilityComposer.Center.Timeline;
@@ -336,7 +337,7 @@ namespace Tools.Editor.AbilityComposer
         // 清空已销毁预览对象对应的 Function 候选
         private void ClearEventFunctionChoices()
         {
-            m_composerView.SetEventFunctionChoices(System.Array.Empty<string>());
+            m_composerView.SetEventFunctionChoices(new Dictionary<string, List<string>>());
         }
     }
 }

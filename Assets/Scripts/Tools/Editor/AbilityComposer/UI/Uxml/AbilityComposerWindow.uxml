@@ -56,12 +56,6 @@
             </ui:VisualElement>
 
             <ui:VisualElement name="event-inspector-panel" class="ac-panel ac-inspector-panel">
-                <ui:Label text="EVENT INSPECTOR" class="ac-section-title" />
-                <ui:VisualElement name="inspector-tab-bar" class="ac-inspector-tab-bar">
-                    <ui:Button name="event-inspector-tab-button" class="ac-inspector-tab-button">
-                        <ui:Label text="Event" class="ac-button-label" />
-                    </ui:Button>
-                </ui:VisualElement>
                 <ui:VisualElement name="event-inspector-workspace" class="ac-inspector-workspace" />
             </ui:VisualElement>
         </ui:VisualElement>
