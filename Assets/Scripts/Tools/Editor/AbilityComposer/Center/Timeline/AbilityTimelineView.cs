@@ -30,9 +30,25 @@ namespace Tools.Editor.AbilityComposer.Center.Timeline
         private float m_pixelsPerFrame = DEFAULT_PIXELS_PER_FRAME;
         private bool m_isDraggingPlayhead;
         private int m_draggingPointerId;
+        private AbilityEventDraft m_draggingEvent;
+        private int m_draggingEventPointerId;
+        private int m_draggingEventFrame;
 
         public event Action<int> OnFrameRequested;
         public event Action<string> OnEventSelected;
+        public event Action<EventMoveRequest> OnEventMoved;
+
+        public readonly struct EventMoveRequest
+        {
+            public readonly string EventId;
+            public readonly int Frame;
+
+            public EventMoveRequest(string eventId, int frame)
+            {
+                EventId = eventId;
+                Frame = frame;
+            }
+        }
 
         // 注入时间轴视图需要的 UI 元素
         public AbilityTimelineView(ScrollView scrollView, VisualElement timelineContent)
@@ -56,6 +72,8 @@ namespace Tools.Editor.AbilityComposer.Center.Timeline
             m_timelineContent.RegisterCallback<PointerMoveEvent>(UpdatePlayheadDrag);
             m_timelineContent.RegisterCallback<PointerUpEvent>(EndPlayheadDrag);
             m_timelineContent.RegisterCallback<PointerCaptureOutEvent>(CancelPlayheadDrag);
+            m_timelineContent.RegisterCallback<PointerMoveEvent>(UpdateDraggedEvent, TrickleDown.TrickleDown);
+            m_timelineContent.RegisterCallback<PointerUpEvent>(EndDraggedEvent, TrickleDown.TrickleDown);
         }
 
         // 设置当前时间轴数据并重建刻度、轨道和播放头
@@ -101,8 +119,11 @@ namespace Tools.Editor.AbilityComposer.Center.Timeline
             m_timelineContent.UnregisterCallback<PointerMoveEvent>(UpdatePlayheadDrag);
             m_timelineContent.UnregisterCallback<PointerUpEvent>(EndPlayheadDrag);
             m_timelineContent.UnregisterCallback<PointerCaptureOutEvent>(CancelPlayheadDrag);
+            m_timelineContent.UnregisterCallback<PointerMoveEvent>(UpdateDraggedEvent, TrickleDown.TrickleDown);
+            m_timelineContent.UnregisterCallback<PointerUpEvent>(EndDraggedEvent, TrickleDown.TrickleDown);
             m_timelineContent.UnregisterCallback<WheelEvent>(HandleTimelineWheel);
             m_isDraggingPlayhead = false;
+            m_draggingEvent = null;
         }
 
         // 根据动画帧数据构建时间轴内容
@@ -197,8 +218,53 @@ namespace Tools.Editor.AbilityComposer.Center.Timeline
 
                 eventMarker.style.left = FrameToPixel(eventDraft.Frame) - 5f;
                 eventMarker.clicked += () => OnEventSelected?.Invoke(eventDraft.Id);
+                eventMarker.RegisterCallback<PointerDownEvent>(pointerEvent => BeginEventDrag(eventMarker, eventDraft, pointerEvent),
+                    TrickleDown.TrickleDown);
                 m_timelineContent.Add(eventMarker);
             }
+        }
+
+        // 开始拖动动画事件并阻止事件冒泡到播放头
+        private void BeginEventDrag(Button eventMarker, AbilityEventDraft eventDraft, PointerDownEvent pointerEvent)
+        {
+            if (m_timelineData == null || !m_timelineData.HasClip || pointerEvent.button != 0)
+                return;
+
+            m_draggingEvent = eventDraft;
+            m_draggingEventPointerId = pointerEvent.pointerId;
+            m_draggingEventFrame = eventDraft.Frame;
+            eventMarker.CapturePointer(m_draggingEventPointerId);
+            OnEventSelected?.Invoke(eventDraft.Id);
+            pointerEvent.StopPropagation();
+        }
+
+        // 按鼠标位置实时更新当前拖动事件所在帧
+        private void UpdateDraggedEvent(PointerMoveEvent pointerEvent)
+        {
+            if (m_draggingEvent == null || pointerEvent.pointerId != m_draggingEventPointerId)
+                return;
+
+            int targetFrame = GetFrameFromPointerPosition(pointerEvent.position);
+            m_draggingEventFrame = targetFrame;
+            Button eventMarker = m_timelineContent.Q<Button>(m_draggingEvent.Id);
+            if (eventMarker != null)
+                eventMarker.style.left = FrameToPixel(targetFrame) - 5f;
+            pointerEvent.StopPropagation();
+        }
+
+        // 结束当前事件拖动并提交新的帧位置
+        private void EndDraggedEvent(PointerUpEvent pointerEvent)
+        {
+            if (m_draggingEvent == null || pointerEvent.pointerId != m_draggingEventPointerId)
+                return;
+
+            Button eventMarker = m_timelineContent.Q<Button>(m_draggingEvent.Id);
+            if (eventMarker != null && eventMarker.HasPointerCapture(m_draggingEventPointerId))
+                eventMarker.ReleasePointer(m_draggingEventPointerId);
+
+            OnEventMoved?.Invoke(new EventMoveRequest(m_draggingEvent.Id, m_draggingEventFrame));
+            m_draggingEvent = null;
+            pointerEvent.StopPropagation();
         }
 
         // 开始拖动播放头并请求跳转到鼠标所在帧
@@ -247,10 +313,16 @@ namespace Tools.Editor.AbilityComposer.Center.Timeline
         // 将鼠标位置换算为最近的有效动画帧并通知窗口
         private void RequestFrameFromPointerPosition(Vector3 pointerPosition)
         {
+            int targetFrame = GetFrameFromPointerPosition(pointerPosition);
+            OnFrameRequested?.Invoke(Mathf.Clamp(targetFrame, 0, m_timelineData.LastFrame));
+        }
+
+        // 将屏幕坐标转换为时间轴帧号
+        private int GetFrameFromPointerPosition(Vector3 pointerPosition)
+        {
             Vector2 panelPosition = new Vector2(pointerPosition.x, pointerPosition.y);
             float localPositionX = m_timelineContent.WorldToLocal(panelPosition).x;
-            int targetFrame = PixelToFrame(localPositionX);
-            OnFrameRequested?.Invoke(Mathf.Clamp(targetFrame, 0, m_timelineData.LastFrame));
+            return Mathf.Clamp(PixelToFrame(localPositionX), 0, m_timelineData.LastFrame);
         }
 
         // 使用 Ctrl 加滚轮调整时间轴缩放，并以鼠标位置为锚点

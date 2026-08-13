@@ -111,6 +111,8 @@ namespace Tools.Editor.AbilityComposer
                 callback => m_composerView.OnEventFunctionNameChanged -= callback, HandleEventFunctionNameChanged);
             RegisterEvent<string>(callback => m_timelineView.OnEventSelected += callback,
                 callback => m_timelineView.OnEventSelected -= callback, HandleEventSelected);
+            RegisterEvent<AbilityTimelineView.EventMoveRequest>(callback => m_timelineView.OnEventMoved += callback,
+                callback => m_timelineView.OnEventMoved -= callback, HandleEventMoved);
             RegisterEvent(callback => m_composerView.OnApplyAnimationRequested += callback,
                 callback => m_composerView.OnApplyAnimationRequested -= callback, ApplyAnimationEvents);
             RegisterEvent(callback => m_composerView.OnRestoreDraftRequested += callback,
@@ -228,6 +230,13 @@ namespace Tools.Editor.AbilityComposer
         private void HandleEventSelected(string eventId)
         {
             m_timelineData.SelectEvent(eventId);
+            RefreshView();
+        }
+
+        // 刷新拖动后的动画事件位置
+        private void HandleEventMoved(AbilityTimelineView.EventMoveRequest request)
+        {
+            m_timelineData.SetEventFrame(request.EventId, request.Frame);
             RefreshView();
         }
 

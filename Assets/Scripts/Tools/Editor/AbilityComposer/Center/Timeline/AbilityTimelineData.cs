@@ -110,6 +110,16 @@ namespace Tools.Editor.AbilityComposer.Center.Timeline
             SelectedEvent.SetCategory(category);
         }
 
+        // 更新指定事件所在帧
+        public void SetEventFrame(string eventId, int frame)
+        {
+            AbilityEventDraft eventDraft = m_eventDraftValues.Find(item => item.Id == eventId);
+            if (eventDraft == null)
+                return;
+
+            eventDraft.SetFrame(Mathf.Clamp(frame, 0, LastFrame));
+        }
+
         // 更新选中事件的接收类名称
         public void SetSelectedEventReceiverTypeName(string receiverTypeName)
         {
