@@ -7,6 +7,8 @@
  */
 
 using System;
+using System.Reflection;
+using Module.Ability.Window;
 using Module.Ability.Window.Hit;
 using Module.Ability.Window.StepAdvance;
 using TriInspector;
@@ -19,8 +21,7 @@ namespace Module.Player.Skill.Data
     [DeclareFoldoutGroup("BeginAnimation", Title = "攻击阶段", Expanded = true)]
     [DeclareFoldoutGroup("RecoveryAnimation", Title = "收招阶段", Expanded = true)]
     [DeclareFoldoutGroup("StepSettings", Title = "段落设置", Expanded = true)]
-    [DeclareFoldoutGroup("StepAdvanceWindow", Title = "段落推进窗口", Expanded = true)]
-    [DeclareFoldoutGroup("HitWindow", Title = "命中窗口", Expanded = true)]
+    [DeclareFoldoutGroup("WindowSettings", Title = "窗口", Expanded = true)]
     public sealed class PlayerSkillStepData
     {
         [Group("BeginAnimation")]
@@ -71,12 +72,26 @@ namespace Module.Player.Skill.Data
         [Tooltip("播放该技能段落的攻击与收招动画时是否显示武器")]
         [SerializeField] private bool ShowWeaponValue;
 
-        [Group("StepAdvanceWindow")]
+        [Group("WindowSettings")]
+        [PropertyOrder(-100)]
+        [Button("打开技能编辑器")]
+        // 打开 Ability Composer 编辑窗口
+        private void OpenSkillEditor()
+        {
+            AbilityComposerOpenRequest.SetAnimationClip(BeginAnimationClipValue);
+#if UNITY_EDITOR
+            Type editorApplicationType = Type.GetType("UnityEditor.EditorApplication, UnityEditor");
+            MethodInfo executeMenuItemMethod = editorApplicationType?.GetMethod("ExecuteMenuItem", BindingFlags.Public | BindingFlags.Static);
+            executeMenuItemMethod?.Invoke(null, new object[] { "工具/Ability/Ability Composer" });
+#endif
+        }
+
+        [Group("WindowSettings")]
         [LabelText("启用连招窗口")]
         [Tooltip("是否启用下一段推进窗口")]
         [SerializeField] private bool UseStepAdvanceWindowValue;
 
-        [Group("StepAdvanceWindow")]
+        [Group("WindowSettings")]
         [ShowIf(nameof(UseStepAdvanceWindowValue))]
         [LabelText("连招窗口配置")]
         [Tooltip("当前技能段对应的阶段推进窗口轨道")]
@@ -88,12 +103,12 @@ namespace Module.Player.Skill.Data
         [HideInInspector]
         [SerializeField] private float StepAdvanceCloseNormalizedTimeValue = 0.75f;
 
-        [Group("HitWindow")]
+        [Group("WindowSettings")]
         [LabelText("启用命中窗口")]
         [Tooltip("是否启用命中窗口")]
         [SerializeField] private bool UseHitWindowValue;
 
-        [Group("HitWindow")]
+        [Group("WindowSettings")]
         [ShowIf(nameof(UseHitWindowValue))]
         [LabelText("命中窗口配置")]
         [Tooltip("当前攻击阶段对应的命中窗口轨道")]

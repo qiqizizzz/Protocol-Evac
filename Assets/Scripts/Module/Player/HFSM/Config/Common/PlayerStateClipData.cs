@@ -7,14 +7,18 @@
  */
 
 using System;
+using System.Reflection;
+using Module.Ability.Window;
+using Module.Ability.Window.StepAdvance;
 using TriInspector;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Module.Player.HFSM.Config.Common
 {
     [Serializable]
     [DeclareFoldoutGroup("Animation", Title = "动画与段落", Expanded = true)]
-    [DeclareFoldoutGroup("ComboWindow", Title = "连段窗口", Expanded = true)]
+    [DeclareFoldoutGroup("WindowSettings", Title = "窗口", Expanded = true)]
     public sealed class PlayerStateClipData
     {
         [Group("Animation")]
@@ -32,22 +36,39 @@ namespace Module.Player.HFSM.Config.Common
         [Tooltip("播放该动画段落时是否显示武器")]
         [SerializeField] private bool ShowWeaponValue;
 
-        [Group("ComboWindow")]
+        [Group("WindowSettings")]
+        [PropertyOrder(-100)]
+        [Button("打开技能编辑器")]
+        // 打开 Ability Composer 编辑窗口
+        private void OpenSkillEditor()
+        {
+            AbilityComposerOpenRequest.SetAnimationClip(StateClipValue);
+#if UNITY_EDITOR
+            Type editorApplicationType = Type.GetType("UnityEditor.EditorApplication, UnityEditor");
+            MethodInfo executeMenuItemMethod = editorApplicationType?.GetMethod("ExecuteMenuItem", BindingFlags.Public | BindingFlags.Static);
+            executeMenuItemMethod?.Invoke(null, new object[] { "工具/Ability/Ability Composer" });
+#endif
+        }
+
+        [Group("WindowSettings")]
         [LabelText("启用连段窗口")]
         [Tooltip("是否启用连段窗口")]
         [SerializeField] private bool UseComboWindowValue;
 
-        [Group("ComboWindow")]
+        [Group("WindowSettings")]
         [ShowIf(nameof(UseComboWindowValue))]
-        [LabelText("开始时间")]
-        [Tooltip("连段窗口开始时间（归一化）")]
-        [SerializeField, Range(0f, 1f)] private float ComboOpenNormalizedTimeValue = 0.35f;
+        [LabelText("连招窗口配置")]
+        [Tooltip("当前动画段对应的阶段推进窗口轨道")]
+        [SerializeField] private AbilityStepAdvanceWindowTrackSO ComboWindowTrackValue;
 
-        [Group("ComboWindow")]
-        [ShowIf(nameof(UseComboWindowValue))]
-        [LabelText("结束时间")]
-        [Tooltip("连段窗口结束时间（归一化）")]
-        [SerializeField, Range(0f, 1f)] private float ComboCloseNormalizedTimeValue = 0.75f;
+        // 旧时间字段仅用于兼容已经存在的移动配置资产
+        [HideInInspector]
+        [FormerlySerializedAs("ComboOpenNormalizedTimeValue")]
+        [SerializeField, Range(0f, 1f)] private float LegacyComboOpenNormalizedTimeValue = 0.35f;
+
+        [HideInInspector]
+        [FormerlySerializedAs("ComboCloseNormalizedTimeValue")]
+        [SerializeField, Range(0f, 1f)] private float LegacyComboCloseNormalizedTimeValue = 0.75f;
 
         public AnimationClip StateClip => StateClipValue;
 
@@ -57,9 +78,11 @@ namespace Module.Player.HFSM.Config.Common
 
         public bool UseComboWindow => UseComboWindowValue;
 
-        public float ComboOpenNormalizedTime => ComboOpenNormalizedTimeValue;
+        public AbilityStepAdvanceWindowTrackSO ComboWindowTrack => ComboWindowTrackValue;
 
-        public float ComboCloseNormalizedTime => ComboCloseNormalizedTimeValue;
+        public float ComboOpenNormalizedTime => LegacyComboOpenNormalizedTimeValue;
+
+        public float ComboCloseNormalizedTime => LegacyComboCloseNormalizedTimeValue;
 
         // 从动画片段同步状态持续时间
         public bool SyncDurationFromClip()
@@ -74,14 +97,22 @@ namespace Module.Player.HFSM.Config.Common
         // 尝试读取连段窗口
         public bool TryGetComboWindow(out float comboOpenNormalizedTime, out float comboCloseNormalizedTime)
         {
-            comboOpenNormalizedTime = ComboOpenNormalizedTimeValue;
-            comboCloseNormalizedTime = ComboCloseNormalizedTimeValue;
+            comboOpenNormalizedTime = 0f;
+            comboCloseNormalizedTime = 0f;
 
             if (!UseComboWindowValue)
                 return false;
 
-            comboOpenNormalizedTime = Mathf.Clamp01(comboOpenNormalizedTime);
-            comboCloseNormalizedTime = Mathf.Clamp01(comboCloseNormalizedTime);
+            if (ComboWindowTrackValue != null && ComboWindowTrackValue.Windows.Count > 0)
+            {
+                AbilityStepAdvanceWindowData window = ComboWindowTrackValue.Windows[0];
+                comboOpenNormalizedTime = window.StartNormalizedTime;
+                comboCloseNormalizedTime = window.EndNormalizedTime;
+                return true;
+            }
+
+            comboOpenNormalizedTime = Mathf.Clamp01(LegacyComboOpenNormalizedTimeValue);
+            comboCloseNormalizedTime = Mathf.Clamp01(LegacyComboCloseNormalizedTimeValue);
             if (comboCloseNormalizedTime < comboOpenNormalizedTime)
                 comboCloseNormalizedTime = comboOpenNormalizedTime;
 

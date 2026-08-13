@@ -8,6 +8,7 @@
 
 using Tools.Editor.AbilityComposer.Preview;
 using Tools.Editor.AbilityComposer.Center.Timeline;
+using Module.Ability.Window;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -31,13 +32,24 @@ namespace Tools.Editor.AbilityComposer
         private static void OpenWindow()
         {
             AbilityComposerWindow window = GetWindow<AbilityComposerWindow>();
+            AnimationClip requestedAnimationClip = AbilityComposerOpenRequest.ConsumeAnimationClip();
             window.titleContent = new GUIContent(WINDOW_TITLE);
             window.minSize = new Vector2(1024f, 640f);
             window.Show();
+
+            if (requestedAnimationClip != null)
+            {
+                window.ComposerData.SetAnimationClip(requestedAnimationClip);
+                window.RebuildComposer();
+            }
         }
 
         private void CreateGUI()
         {
+            AnimationClip requestedAnimationClip = AbilityComposerOpenRequest.ConsumeAnimationClip();
+            if (requestedAnimationClip != null)
+                ComposerData.SetAnimationClip(requestedAnimationClip);
+
             DisposeModules(false);
             rootVisualElement.Clear();
             m_composerView = new AbilityComposerView(rootVisualElement, ComposerData);
@@ -57,6 +69,12 @@ namespace Tools.Editor.AbilityComposer
         private void OnDisable()
         {
             DisposeModules(true);
+        }
+
+        // 使用新的动画片段重建 Composer 内容
+        private void RebuildComposer()
+        {
+            CreateGUI();
         }
 
         // 释放已装配模块，并按需要退出临时预览场景
