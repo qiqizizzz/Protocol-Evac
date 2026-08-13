@@ -39,6 +39,7 @@ namespace Tools.Editor.AbilityComposer.Right.Event
         private readonly List<string> m_functionChoices = new List<string>();
 
         public event Action<AbilityEventCategory> OnCategoryChanged;
+        public event Action<string> OnReceiverTypeNameChanged;
         public event Action<string> OnFunctionNameChanged;
 
         // 注入 Event Inspector 页面容器
@@ -75,6 +76,8 @@ namespace Tools.Editor.AbilityComposer.Right.Event
         // 更新预览对象可接收的 Animation Event Function 候选
         public void SetFunctionChoices(IReadOnlyDictionary<string, List<string>> functionGroups)
         {
+            string previousReceiver = m_receiverChoicesField == null ? SELECT_RECEIVER_CHOICE : m_receiverChoicesField.value;
+            string previousFunction = m_functionChoicesField == null ? SELECT_FUNCTION_CHOICE : m_functionChoicesField.value;
             m_functionGroups.Clear();
             foreach (KeyValuePair<string, List<string>> functionGroup in functionGroups)
                 m_functionGroups.Add(functionGroup.Key, new List<string>(functionGroup.Value));
@@ -87,8 +90,13 @@ namespace Tools.Editor.AbilityComposer.Right.Event
                 m_receiverChoices.Add(receiverName);
 
             m_receiverChoicesField.choices = m_receiverChoices;
-            m_receiverChoicesField.SetValueWithoutNotify(SELECT_RECEIVER_CHOICE);
-            RefreshFunctionChoices(SELECT_RECEIVER_CHOICE);
+            string restoredReceiver = m_functionGroups.ContainsKey(previousReceiver)
+                ? previousReceiver
+                : SELECT_RECEIVER_CHOICE;
+            m_receiverChoicesField.SetValueWithoutNotify(restoredReceiver);
+            RefreshFunctionChoices(restoredReceiver);
+            if (m_functionChoices.Contains(previousFunction))
+                m_functionChoicesField.SetValueWithoutNotify(previousFunction);
         }
 
         // 更新当前接收类对应的 Animation Event Function 候选
@@ -113,7 +121,11 @@ namespace Tools.Editor.AbilityComposer.Right.Event
                 return;
 
             m_categoryField.SetValueWithoutNotify(selectedEvent.Category.ToString());
-            string selectedReceiver = FindReceiverForFunction(selectedEvent.FunctionName);
+            string selectedReceiver = !string.IsNullOrEmpty(selectedEvent.ReceiverTypeName)
+                && m_functionGroups.ContainsKey(selectedEvent.ReceiverTypeName)
+                && m_functionGroups[selectedEvent.ReceiverTypeName].Contains(selectedEvent.FunctionName)
+                ? selectedEvent.ReceiverTypeName
+                : FindReceiverForFunction(selectedEvent.FunctionName);
             m_receiverChoicesField.SetValueWithoutNotify(selectedReceiver);
             RefreshFunctionChoices(selectedReceiver);
             string selectedFunction = m_functionChoices.Contains(selectedEvent.FunctionName)
@@ -172,6 +184,7 @@ namespace Tools.Editor.AbilityComposer.Right.Event
         private void HandleReceiverChoiceChanged(ChangeEvent<string> changeEvent)
         {
             RefreshFunctionChoices(changeEvent.newValue);
+            OnReceiverTypeNameChanged?.Invoke(changeEvent.newValue == SELECT_RECEIVER_CHOICE ? string.Empty : changeEvent.newValue);
         }
 
         // 将 Function 下拉框选择写回当前事件草稿

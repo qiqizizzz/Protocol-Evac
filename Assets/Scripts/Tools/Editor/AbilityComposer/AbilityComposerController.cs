@@ -44,6 +44,7 @@ namespace Tools.Editor.AbilityComposer
             m_timelineData = new AbilityTimelineData();
             m_timelineData.SetAnimationClip(m_composerData.SelectedAnimationClip);
             LoadAnimationEvents();
+            RefreshEventFunctionChoices();
             m_timelineView.SetTimelineData(m_timelineData);
             RefreshView();
         }
@@ -104,6 +105,8 @@ namespace Tools.Editor.AbilityComposer
                 callback => m_composerView.OnDeleteSelectedEventRequested -= callback, DeleteSelectedEvent);
             RegisterEvent<AbilityEventCategory>(callback => m_composerView.OnEventCategoryChanged += callback,
                 callback => m_composerView.OnEventCategoryChanged -= callback, HandleEventCategoryChanged);
+            RegisterEvent<string>(callback => m_composerView.OnEventReceiverTypeNameChanged += callback,
+                callback => m_composerView.OnEventReceiverTypeNameChanged -= callback, HandleEventReceiverTypeNameChanged);
             RegisterEvent<string>(callback => m_composerView.OnEventFunctionNameChanged += callback,
                 callback => m_composerView.OnEventFunctionNameChanged -= callback, HandleEventFunctionNameChanged);
             RegisterEvent<string>(callback => m_timelineView.OnEventSelected += callback,
@@ -120,7 +123,7 @@ namespace Tools.Editor.AbilityComposer
             m_composerData.SetPreviewSource(previewPrefab);
             m_timelineData.StopPlayback();
             m_previewController.ReturnToPreviousScene();
-            ClearEventFunctionChoices();
+            RefreshEventFunctionChoices();
             RefreshView();
         }
 
@@ -132,6 +135,7 @@ namespace Tools.Editor.AbilityComposer
             m_composerData.SetAnimationClip(animationClip);
             m_timelineData.SetAnimationClip(animationClip);
             LoadAnimationEvents();
+            RefreshEventFunctionChoices();
             m_timelineView.SetTimelineData(m_timelineData);
             RefreshView();
         }
@@ -231,6 +235,13 @@ namespace Tools.Editor.AbilityComposer
         private void HandleEventCategoryChanged(AbilityEventCategory category)
         {
             m_timelineData.SetSelectedEventCategory(category);
+            RefreshView();
+        }
+
+        // 更新选中事件的接收类名称
+        private void HandleEventReceiverTypeNameChanged(string receiverTypeName)
+        {
+            m_timelineData.SetSelectedEventReceiverTypeName(receiverTypeName);
             RefreshView();
         }
 

@@ -110,6 +110,15 @@ namespace Tools.Editor.AbilityComposer.Center.Timeline
             SelectedEvent.SetCategory(category);
         }
 
+        // 更新选中事件的接收类名称
+        public void SetSelectedEventReceiverTypeName(string receiverTypeName)
+        {
+            if (SelectedEvent == null)
+                return;
+
+            SelectedEvent.SetReceiverTypeName(receiverTypeName);
+        }
+
         // 更新选中事件的 Function 名称
         public void SetSelectedEventFunctionName(string functionName)
         {

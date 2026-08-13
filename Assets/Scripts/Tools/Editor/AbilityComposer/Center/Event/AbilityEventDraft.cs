@@ -15,6 +15,7 @@ namespace Tools.Editor.AbilityComposer.Center.Event
         public string Id { get; }
         public int Frame { get; private set; }
         public AbilityEventCategory Category { get; private set; }
+        public string ReceiverTypeName { get; private set; }
         public string FunctionName { get; private set; }
 
         // 在指定帧创建默认分类的空事件草稿
@@ -23,6 +24,7 @@ namespace Tools.Editor.AbilityComposer.Center.Event
             Id = Guid.NewGuid().ToString("N");
             Frame = frame;
             Category = AbilityEventCategory.Default;
+            ReceiverTypeName = string.Empty;
             FunctionName = string.Empty;
         }
 
@@ -36,6 +38,12 @@ namespace Tools.Editor.AbilityComposer.Center.Event
         public void SetCategory(AbilityEventCategory category)
         {
             Category = category;
+        }
+
+        // 更新事件接收类名称
+        public void SetReceiverTypeName(string receiverTypeName)
+        {
+            ReceiverTypeName = receiverTypeName;
         }
 
         // 更新 Unity Animation Event 的 Function 名称

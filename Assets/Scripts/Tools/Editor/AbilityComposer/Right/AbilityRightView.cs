@@ -24,6 +24,7 @@ namespace Tools.Editor.AbilityComposer.Right
         private bool m_isControlsReady;
 
         public event Action<AbilityEventCategory> OnEventCategoryChanged;
+        public event Action<string> OnEventReceiverTypeNameChanged;
         public event Action<string> OnEventFunctionNameChanged;
 
         // 注入右侧区域根节点
@@ -71,6 +72,7 @@ namespace Tools.Editor.AbilityComposer.Right
                 return;
 
             m_eventInspectorView.OnCategoryChanged += RequestEventCategoryChanged;
+            m_eventInspectorView.OnReceiverTypeNameChanged += RequestEventReceiverTypeNameChanged;
             m_eventInspectorView.OnFunctionNameChanged += RequestEventFunctionNameChanged;
         }
 
@@ -80,6 +82,7 @@ namespace Tools.Editor.AbilityComposer.Right
                 return;
 
             m_eventInspectorView.OnCategoryChanged -= RequestEventCategoryChanged;
+            m_eventInspectorView.OnReceiverTypeNameChanged -= RequestEventReceiverTypeNameChanged;
             m_eventInspectorView.OnFunctionNameChanged -= RequestEventFunctionNameChanged;
             m_isControlsReady = false;
         }
@@ -92,6 +95,9 @@ namespace Tools.Editor.AbilityComposer.Right
 
         // 转发事件分类编辑请求
         private void RequestEventCategoryChanged(AbilityEventCategory category) => OnEventCategoryChanged?.Invoke(category);
+
+        // 转发事件接收类编辑请求
+        private void RequestEventReceiverTypeNameChanged(string receiverTypeName) => OnEventReceiverTypeNameChanged?.Invoke(receiverTypeName);
 
         // 转发事件 Function 编辑请求
         private void RequestEventFunctionNameChanged(string functionName) => OnEventFunctionNameChanged?.Invoke(functionName);

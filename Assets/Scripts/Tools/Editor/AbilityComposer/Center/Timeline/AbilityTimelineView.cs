@@ -20,6 +20,7 @@ namespace Tools.Editor.AbilityComposer.Center.Timeline
         private const float MAX_PIXELS_PER_FRAME = 48f;
         private const float DEFAULT_PIXELS_PER_FRAME = 12f;
         private const float MIN_TIMELINE_WIDTH = 620f;
+        private const float TIMELINE_LEFT_PADDING = 8f;
         private const int MAJOR_TICK_FRAME_INTERVAL = 5;
 
         private AbilityTimelineData m_timelineData;
@@ -163,7 +164,7 @@ namespace Tools.Editor.AbilityComposer.Center.Timeline
 
                 Label frameLabel = new Label(frame.ToString());
                 frameLabel.AddToClassList("ac-ruler-frame-label");
-                frameLabel.style.left = frame == 0 ? 0f : framePosition - 12f;
+                frameLabel.style.left = frame == 0 ? TIMELINE_LEFT_PADDING : framePosition - 12f;
                 if (frame == 0)
                     frameLabel.AddToClassList("ac-ruler-frame-label-first");
 
@@ -260,7 +261,7 @@ namespace Tools.Editor.AbilityComposer.Center.Timeline
 
             float viewportX = m_scrollView.contentViewport.WorldToLocal(wheelEvent.mousePosition).x;
             float localX = m_timelineContent.WorldToLocal(wheelEvent.mousePosition).x;
-            float anchorFrame = localX / m_pixelsPerFrame;
+            float anchorFrame = PixelToFrame(localX);
             float zoomFactor = wheelEvent.delta.y < 0f ? 1.15f : 1f / 1.15f;
             SetPixelsPerFrame(m_pixelsPerFrame * zoomFactor, new ZoomAnchor(anchorFrame, viewportX));
             wheelEvent.StopPropagation();
@@ -275,7 +276,7 @@ namespace Tools.Editor.AbilityComposer.Center.Timeline
 
             m_pixelsPerFrame = clampedPixelsPerFrame;
             float targetScrollX = anchor.HasValue
-                ? anchor.Value.Frame * m_pixelsPerFrame - anchor.Value.ViewportX
+                ? FrameToPixel(anchor.Value.Frame) - anchor.Value.ViewportX
                 : m_scrollView.scrollOffset.x;
             BuildTimeline();
             m_scrollView.schedule.Execute(() =>
@@ -297,13 +298,19 @@ namespace Tools.Editor.AbilityComposer.Center.Timeline
         // 将帧号换算为时间轴像素位置
         private float FrameToPixel(int frame)
         {
-            return frame * m_pixelsPerFrame;
+            return FrameToPixel((float)frame);
+        }
+
+        // 将浮点帧位置换算为时间轴像素位置
+        private float FrameToPixel(float frame)
+        {
+            return TIMELINE_LEFT_PADDING + frame * m_pixelsPerFrame;
         }
 
         // 将时间轴像素位置换算为最近帧号
         private int PixelToFrame(float pixel)
         {
-            return Mathf.RoundToInt(pixel / m_pixelsPerFrame);
+            return Mathf.RoundToInt((pixel - TIMELINE_LEFT_PADDING) / m_pixelsPerFrame);
         }
 
         private readonly struct ZoomAnchor
