@@ -36,7 +36,6 @@
                     </ui:VisualElement>
                 </ui:VisualElement>
                 <ui:VisualElement class="ac-module-divider" />
-                <ui:VisualElement class="ac-panel-spacer" />
                 <ui:VisualElement class="ac-event-action-row">
                     <ui:Button name="add-event-button" class="ac-button ac-event-action-button">
                         <ui:Label text="＋ 添加事件" class="ac-button-label ac-muted-button-label" />
@@ -45,6 +44,17 @@
                         <ui:Label text="删除选中事件" class="ac-button-label ac-muted-button-label" />
                     </ui:Button>
                 </ui:VisualElement>
+                <ui:VisualElement class="ac-module-divider ac-hit-window-divider" />
+                <ui:Label text="命中窗口" class="ac-side-section-title" />
+                <ui:VisualElement class="ac-hit-window-action-row">
+                    <ui:Button name="add-hit-window-button" enabled="false" class="ac-button ac-hit-window-action-button">
+                        <ui:Label text="＋ 添加命中窗口" class="ac-button-label ac-muted-button-label" />
+                    </ui:Button>
+                    <ui:Button name="delete-hit-window-button" enabled="false" class="ac-button ac-hit-window-action-button ac-hit-window-action-button-last">
+                        <ui:Label text="删除选中窗口" class="ac-button-label ac-muted-button-label" />
+                    </ui:Button>
+                </ui:VisualElement>
+                <ui:VisualElement class="ac-panel-spacer" />
             </ui:VisualElement>
 
             <ui:VisualElement name="timeline-panel" class="ac-panel ac-timeline-panel">
