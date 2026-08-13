@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2f5c964c29422f04990bcb369003ea6e, type: 3}
+  m_Name: attack02_begin_StepAdvanceWindow
+  m_EditorClassIdentifier: 
+  AnimationClipValue: {fileID: 7400000, guid: 5cb2d1ad2743927489afad103d857b6b, type: 2}
+  WindowValues:
+  - IdValue: 6226949e7e2146ef8fb16a686c26ceef
+    StartNormalizedTimeValue: 0.3
+    EndNormalizedTimeValue: 0.751

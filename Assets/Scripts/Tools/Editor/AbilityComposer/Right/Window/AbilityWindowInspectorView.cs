@@ -9,7 +9,7 @@
 using System;
 using System.Collections.Generic;
 using Framework.QTower.Editor.View;
-using Module.Player.Window;
+using Module.Ability.Window.Hit;
 using Tools.Editor.AbilityComposer.Center.Timeline;
 using UnityEditor.UIElements;
 using UnityEngine;
@@ -22,7 +22,7 @@ namespace Tools.Editor.AbilityComposer.Right.Window
         private static readonly List<string> S_TypeChoices = new List<string>
         {
             "命中窗口",
-            "无敌帧窗口"
+            "技能推进窗口"
         };
 
         private readonly VisualElement m_rootVisualElement;
@@ -34,8 +34,8 @@ namespace Tools.Editor.AbilityComposer.Right.Window
         private FloatField m_damageField;
         private Button m_saveWindowButton;
 
-        public event Action<AbilityWindowTrackSO> OnWindowTrackChanged;
-        public event Action<AbilityWindowType> OnTypeChanged;
+        public event Action<AbilityHitWindowTrackSO> OnWindowTrackChanged;
+        public event Action<AbilityWindowDraftType> OnTypeChanged;
         public event Action<int, int> OnFramesChanged;
         public event Action<float> OnDamageChanged;
         public event Action OnSaveWindowRequested;
@@ -52,7 +52,7 @@ namespace Tools.Editor.AbilityComposer.Right.Window
             m_titleLabel = new Label("窗口检查器");
             m_titleLabel.AddToClassList("ac-section-title");
             m_windowTrackField = new ObjectField("窗口轨道");
-            m_windowTrackField.objectType = typeof(AbilityWindowTrackSO);
+            m_windowTrackField.objectType = typeof(AbilityHitWindowTrackSO);
             m_windowTrackField.allowSceneObjects = false;
             m_windowTrackField.AddToClassList("ac-inspector-field");
             m_typeField = new DropdownField("类型", S_TypeChoices, 0);
@@ -90,7 +90,7 @@ namespace Tools.Editor.AbilityComposer.Right.Window
         // 刷新选中窗口的检查器字段
         public void Refresh(AbilityTimelineData timelineData)
         {
-            m_windowTrackField.SetValueWithoutNotify(timelineData.WindowTrack);
+            m_windowTrackField.SetValueWithoutNotify(timelineData.HitWindowTrack);
             AbilityWindowDraft selectedWindow = timelineData.SelectedWindow;
             bool isVisible = selectedWindow != null;
             SetInspectorVisible(isVisible);
@@ -104,7 +104,7 @@ namespace Tools.Editor.AbilityComposer.Right.Window
             m_startFrameField.SetValueWithoutNotify(selectedWindow.StartFrame);
             m_endFrameField.SetValueWithoutNotify(selectedWindow.EndFrame);
             m_damageField.SetValueWithoutNotify(selectedWindow.Damage);
-            m_damageField.style.display = selectedWindow.Type == AbilityWindowType.Hit ? DisplayStyle.Flex : DisplayStyle.None;
+            m_damageField.style.display = selectedWindow.Type == AbilityWindowDraftType.Hit ? DisplayStyle.Flex : DisplayStyle.None;
         }
 
         protected override void SubscribeViewEvents()
@@ -152,13 +152,13 @@ namespace Tools.Editor.AbilityComposer.Right.Window
         // 切换当前编辑的窗口轨道资产
         private void HandleWindowTrackChanged(ChangeEvent<UnityEngine.Object> changeEvent)
         {
-            OnWindowTrackChanged?.Invoke(changeEvent.newValue as AbilityWindowTrackSO);
+            OnWindowTrackChanged?.Invoke(changeEvent.newValue as AbilityHitWindowTrackSO);
         }
 
         // 转换窗口类型下拉框的选择结果
         private void HandleTypeChanged(ChangeEvent<string> changeEvent)
         {
-            OnTypeChanged?.Invoke(changeEvent.newValue == "无敌帧窗口" ? AbilityWindowType.Invincible : AbilityWindowType.Hit);
+            OnTypeChanged?.Invoke(changeEvent.newValue == "技能推进窗口" ? AbilityWindowDraftType.StepAdvance : AbilityWindowDraftType.Hit);
         }
 
         // 提交窗口帧范围编辑
@@ -180,9 +180,9 @@ namespace Tools.Editor.AbilityComposer.Right.Window
         }
 
         // 将枚举类型转换为下拉选项文字
-        private string GetTypeChoice(AbilityWindowType type)
+        private string GetTypeChoice(AbilityWindowDraftType type)
         {
-            return type == AbilityWindowType.Invincible ? "无敌帧窗口" : "命中窗口";
+            return type == AbilityWindowDraftType.StepAdvance ? "技能推进窗口" : "命中窗口";
         }
     }
 }

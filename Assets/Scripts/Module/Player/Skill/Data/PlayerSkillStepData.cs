@@ -7,6 +7,8 @@
  */
 
 using System;
+using Module.Ability.Window.Hit;
+using Module.Ability.Window.StepAdvance;
 using TriInspector;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -70,22 +72,20 @@ namespace Module.Player.Skill.Data
         [SerializeField] private bool ShowWeaponValue;
 
         [Group("StepAdvanceWindow")]
-        [LabelText("启用推进窗口")]
+        [LabelText("启用连招窗口")]
         [Tooltip("是否启用下一段推进窗口")]
         [SerializeField] private bool UseStepAdvanceWindowValue;
 
         [Group("StepAdvanceWindow")]
         [ShowIf(nameof(UseStepAdvanceWindowValue))]
-        [LabelText("开始时间")]
-        [Tooltip("下一段推进窗口开始时间（归一化）")]
-        [Slider(0f, 1f)]
+        [LabelText("连招窗口配置")]
+        [Tooltip("当前技能段对应的阶段推进窗口轨道")]
+        [SerializeField] private AbilityStepAdvanceWindowTrackSO StepAdvanceWindowTrackValue;
+
+        [HideInInspector]
         [SerializeField] private float StepAdvanceOpenNormalizedTimeValue = 0.35f;
 
-        [Group("StepAdvanceWindow")]
-        [ShowIf(nameof(UseStepAdvanceWindowValue))]
-        [LabelText("结束时间")]
-        [Tooltip("下一段推进窗口结束时间（归一化）")]
-        [Slider(0f, 1f)]
+        [HideInInspector]
         [SerializeField] private float StepAdvanceCloseNormalizedTimeValue = 0.75f;
 
         [Group("HitWindow")]
@@ -95,25 +95,24 @@ namespace Module.Player.Skill.Data
 
         [Group("HitWindow")]
         [ShowIf(nameof(UseHitWindowValue))]
-        [LabelText("开始时间")]
-        [Tooltip("命中窗口开始时间（归一化）")]
-        [Slider(0f, 1f)]
+        [LabelText("命中窗口配置")]
+        [Tooltip("当前攻击阶段对应的命中窗口轨道")]
+        [SerializeField] private AbilityHitWindowTrackSO BeginHitWindowTrackValue;
+
+        [HideInInspector]
         [SerializeField] private float HitOpenNormalizedTimeValue;
 
-        [Group("HitWindow")]
-        [ShowIf(nameof(UseHitWindowValue))]
-        [LabelText("结束时间")]
-        [Tooltip("命中窗口结束时间（归一化）")]
-        [Slider(0f, 1f)]
+        [HideInInspector]
         [SerializeField] private float HitCloseNormalizedTimeValue;
 
-        [Group("HitWindow")]
-        [ShowIf(nameof(UseHitWindowValue))]
-        [LabelText("伤害")]
-        [Tooltip("该段技能造成的伤害")]
+        [HideInInspector]
         [SerializeField] private float DamageValue;
 
         public AnimationClip BeginAnimationClip => BeginAnimationClipValue;
+
+        public AbilityHitWindowTrackSO BeginHitWindowTrack => BeginHitWindowTrackValue;
+
+        public AbilityStepAdvanceWindowTrackSO StepAdvanceWindowTrack => StepAdvanceWindowTrackValue;
 
         public float BeginDuration => BeginDurationValue;
 
@@ -161,36 +160,37 @@ namespace Module.Player.Skill.Data
         // 尝试读取下一段推进窗口
         public bool TryGetStepAdvanceWindow(out float openNormalizedTime, out float closeNormalizedTime)
         {
-            openNormalizedTime = StepAdvanceOpenNormalizedTimeValue;
-            closeNormalizedTime = StepAdvanceCloseNormalizedTimeValue;
+            openNormalizedTime = 0f;
+            closeNormalizedTime = 0f;
 
             if (!UseStepAdvanceWindowValue)
                 return false;
 
-            NormalizeWindow(ref openNormalizedTime, ref closeNormalizedTime);
+            if (StepAdvanceWindowTrackValue == null || StepAdvanceWindowTrackValue.Windows.Count == 0)
+                return false;
+
+            AbilityStepAdvanceWindowData window = StepAdvanceWindowTrackValue.Windows[0];
+            openNormalizedTime = window.StartNormalizedTime;
+            closeNormalizedTime = window.EndNormalizedTime;
             return true;
         }
 
         // 尝试读取命中窗口
         public bool TryGetHitWindow(out float openNormalizedTime, out float closeNormalizedTime)
         {
-            openNormalizedTime = HitOpenNormalizedTimeValue;
-            closeNormalizedTime = HitCloseNormalizedTimeValue;
+            openNormalizedTime = 0f;
+            closeNormalizedTime = 0f;
 
             if (!UseHitWindowValue)
                 return false;
 
-            NormalizeWindow(ref openNormalizedTime, ref closeNormalizedTime);
-            return true;
-        }
+            if (BeginHitWindowTrackValue == null || BeginHitWindowTrackValue.Windows.Count == 0)
+                return false;
 
-        // 约束归一化窗口并保证结束时间不早于开始时间
-        private void NormalizeWindow(ref float openNormalizedTime, ref float closeNormalizedTime)
-        {
-            openNormalizedTime = Mathf.Clamp01(openNormalizedTime);
-            closeNormalizedTime = Mathf.Clamp01(closeNormalizedTime);
-            if (closeNormalizedTime < openNormalizedTime)
-                closeNormalizedTime = openNormalizedTime;
+            AbilityHitWindowData window = BeginHitWindowTrackValue.Windows[0];
+            openNormalizedTime = window.StartNormalizedTime;
+            closeNormalizedTime = window.EndNormalizedTime;
+            return true;
         }
 
     }

@@ -9,7 +9,8 @@
         "GUID:324caed91501a9c47a04ebfd87b68794",
         "GUID:47b93ceb36104063b4d385403b21ee9b",
         "GUID:408ec2388a195ca4080faf4f9d45545b",
-        "Player.Window"
+        "Player.Window",
+        "Ability.Window"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

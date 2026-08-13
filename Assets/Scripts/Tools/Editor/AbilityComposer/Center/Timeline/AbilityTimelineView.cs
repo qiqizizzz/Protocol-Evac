@@ -7,7 +7,7 @@
  */
 
 using System;
-using Module.Player.Window;
+using System.Collections.Generic;
 using Tools.Editor.AbilityComposer.Center.Event;
 using Framework.QTower.Editor.View;
 using UnityEngine;
@@ -23,6 +23,10 @@ namespace Tools.Editor.AbilityComposer.Center.Timeline
         private const float MIN_TIMELINE_WIDTH = 620f;
         private const float TIMELINE_LEFT_PADDING = 8f;
         private const int MAJOR_TICK_FRAME_INTERVAL = 5;
+        private const float WINDOW_TRACK_START = 87f;
+        private const float WINDOW_TRACK_HEIGHT = 40f;
+        private const float COLLAPSED_WINDOW_TRACK_HEIGHT = 4f;
+        private const float WINDOW_TRACK_GAP = 2f;
 
         private AbilityTimelineData m_timelineData;
         private ScrollView m_scrollView;
@@ -179,8 +183,32 @@ namespace Tools.Editor.AbilityComposer.Center.Timeline
             CreateTimelineRuler(timelineWidth);
             CreateEventMarkers();
             CreateWindowTrackDivider();
-            CreateWindowMarkers();
+            float hitWindowHeight = m_timelineData.IsHitWindowTrackEnabled
+                ? WINDOW_TRACK_HEIGHT
+                : COLLAPSED_WINDOW_TRACK_HEIGHT;
+            float stepAdvanceWindowTop = WINDOW_TRACK_START + hitWindowHeight + WINDOW_TRACK_GAP;
+            float stepAdvanceWindowHeight = m_timelineData.IsStepAdvanceWindowTrackEnabled
+                ? WINDOW_TRACK_HEIGHT
+                : COLLAPSED_WINDOW_TRACK_HEIGHT;
+            CreateWindowTrackBackground(WINDOW_TRACK_START, hitWindowHeight, "ac-window-hit-track");
+            CreateWindowTrackBackground(stepAdvanceWindowTop, stepAdvanceWindowHeight, "ac-window-step-advance-track");
+            CreateWindowMarkers(m_timelineData.HitWindowDraftValues, WINDOW_TRACK_START,
+                hitWindowHeight, "命中窗口", "ac-window-hit", m_timelineData.IsHitWindowTrackEnabled);
+            CreateWindowMarkers(m_timelineData.StepAdvanceWindowDraftValues, stepAdvanceWindowTop,
+                stepAdvanceWindowHeight, "技能推进", "ac-window-step-advance", m_timelineData.IsStepAdvanceWindowTrackEnabled);
             CreateTimelinePlayhead();
+        }
+
+        // 创建窗口轨道底色，使折叠后仍保留可识别的细线
+        private void CreateWindowTrackBackground(float top, float height, string colorClass)
+        {
+            VisualElement track = new VisualElement();
+            track.AddToClassList("ac-timeline-window-track-background");
+            track.AddToClassList(colorClass);
+            track.style.top = top;
+            track.style.height = height;
+            track.style.minHeight = height;
+            m_timelineContent.Add(track);
         }
 
         // 创建未选择动画时的时间轴提示
@@ -273,14 +301,15 @@ namespace Tools.Editor.AbilityComposer.Center.Timeline
         }
 
         // 创建按窗口类型显示颜色的时间区间标记
-        private void CreateWindowMarkers()
+        private void CreateWindowMarkers(IReadOnlyList<AbilityWindowDraft> windowDrafts, float top, float height,
+            string labelText, string colorClass, bool isExpanded)
         {
-            foreach (AbilityWindowDraft windowDraft in m_timelineData.WindowDraftValues)
+            foreach (AbilityWindowDraft windowDraft in windowDrafts)
             {
                 Button windowMarker = new Button();
                 windowMarker.name = windowDraft.Id;
                 windowMarker.AddToClassList("ac-timeline-window-marker");
-                windowMarker.AddToClassList(windowDraft.Type == AbilityWindowType.Hit ? "ac-window-hit" : "ac-window-invincible");
+                windowMarker.AddToClassList(colorClass);
                 if (m_timelineData.SelectedWindow == windowDraft)
                 {
                     windowMarker.AddToClassList("ac-timeline-window-marker-selected");
@@ -289,8 +318,12 @@ namespace Tools.Editor.AbilityComposer.Center.Timeline
 
                 windowMarker.style.left = FrameToPixel(windowDraft.StartFrame);
                 windowMarker.style.width = Mathf.Max(m_pixelsPerFrame, FrameToPixel(windowDraft.EndFrame) - FrameToPixel(windowDraft.StartFrame) + m_pixelsPerFrame);
-                Label windowLabel = new Label(windowDraft.Type == AbilityWindowType.Hit ? "命中窗口" : "无敌帧窗口");
+                windowMarker.style.top = top;
+                windowMarker.style.height = height;
+                windowMarker.style.minHeight = height;
+                Label windowLabel = new Label(labelText);
                 windowLabel.AddToClassList("ac-timeline-window-label");
+                windowLabel.style.display = isExpanded ? DisplayStyle.Flex : DisplayStyle.None;
                 windowMarker.Add(windowLabel);
                 windowMarker.RegisterCallback<PointerDownEvent>(pointerEvent => BeginWindowDrag(windowMarker, windowDraft, pointerEvent), TrickleDown.TrickleDown);
                 m_timelineContent.Add(windowMarker);

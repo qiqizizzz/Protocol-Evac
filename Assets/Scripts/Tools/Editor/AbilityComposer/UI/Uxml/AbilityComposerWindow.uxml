@@ -53,6 +53,16 @@
                         <ui:Label text="删除选中窗口" class="ac-button-label ac-muted-button-label" />
                     </ui:Button>
                 </ui:VisualElement>
+                <ui:VisualElement class="ac-window-track-toggle-row">
+                    <ui:VisualElement class="ac-window-track-toggle-cell">
+                        <ui:Button name="hit-window-track-toggle" class="ac-window-track-toggle-button" />
+                        <ui:Label text="Hit" class="ac-window-track-toggle-label" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="ac-window-track-toggle-cell ac-window-track-toggle-cell-last">
+                        <ui:Button name="step-advance-window-track-toggle" class="ac-window-track-toggle-button" />
+                        <ui:Label text="Step" class="ac-window-track-toggle-label" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
                 <ui:VisualElement class="ac-panel-spacer" />
             </ui:VisualElement>
 

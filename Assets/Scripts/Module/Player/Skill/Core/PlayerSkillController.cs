@@ -9,6 +9,7 @@
 using System.Collections.Generic;
 using Framework.QTower.Controller;
 using Module.Combat.Hitbox;
+using Module.Ability.Window.Hit;
 using Module.Player.Context;
 using Module.Player.Skill;
 using Module.Player.Skill.Data;
@@ -28,7 +29,7 @@ namespace Module.Player.Skill.Core
         private readonly PlayerSkillTimeline m_timeline;
 
         private int m_hitWindowStepIndex;
-        private bool m_isHitWindowOpen;
+        private string m_activeHitWindowId;
         private Vector2 m_previousMoveInput;
         private bool m_wasSprintActive;
 
@@ -165,38 +166,59 @@ namespace Module.Player.Skill.Core
             }
 
             PlayerSkillStepData stepData = m_timeline.CurrentStep;
-            if (!stepData.TryGetHitWindow(out float openNormalizedTime, out float closeNormalizedTime))
+            if (!stepData.UseHitWindow)
+            {
+                CloseHitWindow();
+                return;
+            }
+
+            AbilityHitWindowTrackSO windowTrack = stepData.BeginHitWindowTrack;
+            if (windowTrack == null)
             {
                 CloseHitWindow();
                 return;
             }
 
             float normalizedTime = m_timeline.NormalizedTime;
-            bool isInHitWindow = normalizedTime >= openNormalizedTime && normalizedTime <= closeNormalizedTime;
-            if (!isInHitWindow)
+            AbilityHitWindowData activeWindow = FindActiveHitWindow(windowTrack, normalizedTime);
+            if (activeWindow == null)
             {
                 CloseHitWindow();
                 return;
             }
 
-            if (m_isHitWindowOpen && m_hitWindowStepIndex == m_timeline.CurrentStepIndex)
+            if (m_hitWindowStepIndex == m_timeline.CurrentStepIndex && m_activeHitWindowId == activeWindow.Id)
                 return;
 
             CloseHitWindow();
-            m_combatHitbox.Open(stepData.Damage, m_damageSource);
-            m_isHitWindowOpen = true;
+            m_combatHitbox.Open(activeWindow.Damage, m_damageSource);
             m_hitWindowStepIndex = m_timeline.CurrentStepIndex;
+            m_activeHitWindowId = activeWindow.Id;
+        }
+
+        // 查找当前时间命中的第一条 Hit 窗口
+        private AbilityHitWindowData FindActiveHitWindow(AbilityHitWindowTrackSO windowTrack, float normalizedTime)
+        {
+            IReadOnlyList<AbilityHitWindowData> windows = windowTrack.Windows;
+            for (int windowIndex = 0; windowIndex < windows.Count; windowIndex++)
+            {
+                AbilityHitWindowData window = windows[windowIndex];
+                if (normalizedTime >= window.StartNormalizedTime && normalizedTime <= window.EndNormalizedTime)
+                    return window;
+            }
+
+            return null;
         }
 
         // 关闭当前命中窗口并重置段落记录
         private void CloseHitWindow()
         {
-            if (!m_isHitWindowOpen)
+            if (m_hitWindowStepIndex < 0)
                 return;
 
             m_combatHitbox.Close();
-            m_isHitWindowOpen = false;
             m_hitWindowStepIndex = -1;
+            m_activeHitWindowId = null;
         }
     }
 }

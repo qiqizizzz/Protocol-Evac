@@ -7,7 +7,8 @@
  */
 
 using System;
-using Module.Player.Window;
+using Module.Ability.Window.Hit;
+using Module.Ability.Window.StepAdvance;
 using UnityEngine;
 
 namespace Tools.Editor.AbilityComposer
@@ -17,11 +18,13 @@ namespace Tools.Editor.AbilityComposer
     {
         [SerializeField] private GameObject PreviewPrefab;
         [SerializeField] private AnimationClip AnimationClip;
-        [SerializeField] private AbilityWindowTrackSO WindowTrack;
+        [SerializeField] private AbilityHitWindowTrackSO HitWindowTrack;
+        [SerializeField] private AbilityStepAdvanceWindowTrackSO StepAdvanceWindowTrack;
 
         public GameObject PreviewSource => PreviewPrefab;
         public AnimationClip SelectedAnimationClip => AnimationClip;
-        public AbilityWindowTrackSO SelectedWindowTrack => WindowTrack;
+        public AbilityHitWindowTrackSO SelectedHitWindowTrack => HitWindowTrack;
+        public AbilityStepAdvanceWindowTrackSO SelectedStepAdvanceWindowTrack => StepAdvanceWindowTrack;
 
         // 更新当前选择的预览 Prefab
         public void SetPreviewSource(GameObject previewPrefab)
@@ -36,9 +39,10 @@ namespace Tools.Editor.AbilityComposer
         }
 
         // 更新当前编辑的窗口轨道资产
-        public void SetWindowTrack(AbilityWindowTrackSO windowTrack)
+        public void SetWindowTracks(AbilityHitWindowTrackSO hitWindowTrack, AbilityStepAdvanceWindowTrackSO stepAdvanceWindowTrack)
         {
-            WindowTrack = windowTrack;
+            HitWindowTrack = hitWindowTrack;
+            StepAdvanceWindowTrack = stepAdvanceWindowTrack;
         }
 
     }

@@ -1,20 +1,25 @@
 /*
  * ┌─────────────────────────────────────────────────────────────┐
- * │  描    述: Ability 时间轴窗口内存草稿，保存窗口类型、帧范围与类型参数
+ * │  描    述: Ability 时间轴窗口内存草稿，承载独立窗口轨道的编辑数据
  * │  类    名: AbilityWindowDraft.cs
  * │  创    建: By qiqizizzz
  * └─────────────────────────────────────────────────────────────┘
  */
 
 using System;
-using Module.Player.Window;
 
 namespace Tools.Editor.AbilityComposer.Center.Timeline
 {
+    public enum AbilityWindowDraftType
+    {
+        Hit,
+        StepAdvance
+    }
+
     public sealed class AbilityWindowDraft
     {
-        public string Id { get; }
-        public AbilityWindowType Type { get; private set; }
+        public string Id { get; private set; }
+        public AbilityWindowDraftType Type { get; private set; }
         public int StartFrame { get; private set; }
         public int EndFrame { get; private set; }
         public float Damage { get; private set; }
@@ -23,16 +28,23 @@ namespace Tools.Editor.AbilityComposer.Center.Timeline
         public AbilityWindowDraft(int startFrame, int endFrame)
         {
             Id = Guid.NewGuid().ToString("N");
-            Type = AbilityWindowType.Hit;
+            Type = AbilityWindowDraftType.Hit;
             StartFrame = startFrame;
             EndFrame = endFrame;
             Damage = 1f;
         }
 
-        // 更新窗口的业务类型
-        public void SetType(AbilityWindowType type)
+        // 切换窗口所属的独立轨道类型
+        public void SetType(AbilityWindowDraftType type)
         {
             Type = type;
+        }
+
+        // 恢复已保存窗口的稳定标识
+        public void SetId(string id)
+        {
+            if (!string.IsNullOrEmpty(id))
+                Id = id;
         }
 
         // 更新窗口左右边界

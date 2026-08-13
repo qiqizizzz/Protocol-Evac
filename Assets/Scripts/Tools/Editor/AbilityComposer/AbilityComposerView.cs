@@ -9,7 +9,7 @@
 using System;
 using System.Collections.Generic;
 using Framework.QTower.Editor.View;
-using Module.Player.Window;
+using Module.Ability.Window.Hit;
 using Tools.Editor.AbilityComposer.Center;
 using Tools.Editor.AbilityComposer.Center.Event;
 using Tools.Editor.AbilityComposer.Center.Timeline;
@@ -51,7 +51,7 @@ namespace Tools.Editor.AbilityComposer
 
         public event Action<GameObject> OnPreviewSourceChanged;
         public event Action<AnimationClip> OnAnimationClipChanged;
-        public event Action<AbilityWindowTrackSO> OnWindowTrackChanged;
+        public event Action<AbilityHitWindowTrackSO> OnWindowTrackChanged;
         public event Action OnCreatePreviewRequested;
         public event Action OnFocusPreviewRequested;
         public event Action OnReturnPreviousSceneRequested;
@@ -65,10 +65,12 @@ namespace Tools.Editor.AbilityComposer
         public event Action OnDeleteSelectedEventRequested;
         public event Action OnAddWindowRequested;
         public event Action OnDeleteSelectedWindowRequested;
+        public event Action<bool> OnHitWindowTrackToggled;
+        public event Action<bool> OnStepAdvanceWindowTrackToggled;
         public event Action<AbilityEventCategory> OnEventCategoryChanged;
         public event Action<string> OnEventReceiverTypeNameChanged;
         public event Action<string> OnEventFunctionNameChanged;
-        public event Action<AbilityWindowType> OnWindowTypeChanged;
+        public event Action<AbilityWindowDraftType> OnWindowTypeChanged;
         public event Action<int, int> OnWindowFramesChanged;
         public event Action<float> OnWindowDamageChanged;
         public event Action OnSaveWindowRequested;
@@ -167,6 +169,8 @@ namespace Tools.Editor.AbilityComposer
             m_leftView.OnDeleteSelectedEventRequested += RequestDeleteSelectedEvent;
             m_leftView.OnAddWindowRequested += RequestAddWindow;
             m_leftView.OnDeleteSelectedWindowRequested += RequestDeleteSelectedWindow;
+            m_leftView.OnHitWindowTrackToggled += RequestHitWindowTrackToggled;
+            m_leftView.OnStepAdvanceWindowTrackToggled += RequestStepAdvanceWindowTrackToggled;
             m_rightView.OnEventCategoryChanged += RequestEventCategoryChanged;
             m_rightView.OnEventReceiverTypeNameChanged += RequestEventReceiverTypeNameChanged;
             m_rightView.OnEventFunctionNameChanged += RequestEventFunctionNameChanged;
@@ -202,6 +206,8 @@ namespace Tools.Editor.AbilityComposer
             m_leftView.OnDeleteSelectedEventRequested -= RequestDeleteSelectedEvent;
             m_leftView.OnAddWindowRequested -= RequestAddWindow;
             m_leftView.OnDeleteSelectedWindowRequested -= RequestDeleteSelectedWindow;
+            m_leftView.OnHitWindowTrackToggled -= RequestHitWindowTrackToggled;
+            m_leftView.OnStepAdvanceWindowTrackToggled -= RequestStepAdvanceWindowTrackToggled;
             m_rightView.OnEventCategoryChanged -= RequestEventCategoryChanged;
             m_rightView.OnEventReceiverTypeNameChanged -= RequestEventReceiverTypeNameChanged;
             m_rightView.OnEventFunctionNameChanged -= RequestEventFunctionNameChanged;
@@ -373,6 +379,12 @@ namespace Tools.Editor.AbilityComposer
         // 转发删除选中窗口请求
         private void RequestDeleteSelectedWindow() => OnDeleteSelectedWindowRequested?.Invoke();
 
+        // 转发命中窗口轨道开关请求
+        private void RequestHitWindowTrackToggled(bool isEnabled) => OnHitWindowTrackToggled?.Invoke(isEnabled);
+
+        // 转发技能推进窗口轨道开关请求
+        private void RequestStepAdvanceWindowTrackToggled(bool isEnabled) => OnStepAdvanceWindowTrackToggled?.Invoke(isEnabled);
+
         // 转发事件分类编辑请求
         private void RequestEventCategoryChanged(AbilityEventCategory category) => OnEventCategoryChanged?.Invoke(category);
 
@@ -383,10 +395,10 @@ namespace Tools.Editor.AbilityComposer
         private void RequestEventFunctionNameChanged(string functionName) => OnEventFunctionNameChanged?.Invoke(functionName);
 
         // 转发窗口类型编辑请求
-        private void RequestWindowTypeChanged(AbilityWindowType type) => OnWindowTypeChanged?.Invoke(type);
+        private void RequestWindowTypeChanged(AbilityWindowDraftType type) => OnWindowTypeChanged?.Invoke(type);
 
         // 转发窗口轨道切换请求
-        private void RequestWindowTrackChanged(AbilityWindowTrackSO windowTrack) => OnWindowTrackChanged?.Invoke(windowTrack);
+        private void RequestWindowTrackChanged(AbilityHitWindowTrackSO windowTrack) => OnWindowTrackChanged?.Invoke(windowTrack);
 
         // 转发窗口帧范围编辑请求
         private void RequestWindowFramesChanged(int startFrame, int endFrame) => OnWindowFramesChanged?.Invoke(startFrame, endFrame);

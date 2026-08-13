@@ -29,6 +29,8 @@ namespace Tools.Editor.AbilityComposer.Left
         private Button m_deleteEventButton;
         private Button m_addWindowButton;
         private Button m_deleteWindowButton;
+        private Button m_hitWindowTrackToggle;
+        private Button m_stepAdvanceWindowTrackToggle;
         private bool m_isControlsReady;
 
         public event Action OnJumpFirstFrameRequested;
@@ -41,6 +43,8 @@ namespace Tools.Editor.AbilityComposer.Left
         public event Action OnDeleteSelectedEventRequested;
         public event Action OnAddWindowRequested;
         public event Action OnDeleteSelectedWindowRequested;
+        public event Action<bool> OnHitWindowTrackToggled;
+        public event Action<bool> OnStepAdvanceWindowTrackToggled;
 
         // 注入左侧区域根节点
         public AbilityLeftView(VisualElement rootVisualElement)
@@ -63,11 +67,15 @@ namespace Tools.Editor.AbilityComposer.Left
             m_deleteEventButton = m_rootVisualElement.Q<Button>("delete-event-button");
             m_addWindowButton = m_rootVisualElement.Q<Button>("add-window-button");
             m_deleteWindowButton = m_rootVisualElement.Q<Button>("delete-window-button");
+            m_hitWindowTrackToggle = m_rootVisualElement.Q<Button>("hit-window-track-toggle");
+            m_stepAdvanceWindowTrackToggle = m_rootVisualElement.Q<Button>("step-advance-window-track-toggle");
             m_isControlsReady = m_jumpFirstFrameButton != null && m_previousFrameButton != null
                 && m_playToggleButton != null && m_nextFrameButton != null && m_jumpLastFrameButton != null
                 && m_playToggleLabel != null && m_currentFrameField != null && m_lastFrameLabel != null
                 && m_addEventButton != null && m_deleteEventButton != null
                 && m_addWindowButton != null && m_deleteWindowButton != null;
+                
+            m_isControlsReady = m_isControlsReady && m_hitWindowTrackToggle != null && m_stepAdvanceWindowTrackToggle != null;
             if (!m_isControlsReady)
                 QLog.Error("配置 Ability Composer 左侧视图失败：缺少必要的 UXML 控件");
         }
@@ -85,6 +93,8 @@ namespace Tools.Editor.AbilityComposer.Left
             m_deleteEventButton.SetEnabled(timelineData.SelectedEvent != null);
             m_addWindowButton.SetEnabled(hasAnimationClip && canEditWindows);
             m_deleteWindowButton.SetEnabled(canEditWindows && timelineData.SelectedWindow != null);
+            m_hitWindowTrackToggle.text = timelineData.IsHitWindowTrackEnabled ? "[x]" : "[ ]";
+            m_stepAdvanceWindowTrackToggle.text = timelineData.IsStepAdvanceWindowTrackEnabled ? "[x]" : "[ ]";
 
             if (!hasAnimationClip)
             {
@@ -114,6 +124,8 @@ namespace Tools.Editor.AbilityComposer.Left
             m_deleteEventButton.clicked += RequestDeleteSelectedEvent;
             m_addWindowButton.clicked += RequestAddWindow;
             m_deleteWindowButton.clicked += RequestDeleteSelectedWindow;
+            m_hitWindowTrackToggle.clicked += RequestHitWindowTrackToggle;
+            m_stepAdvanceWindowTrackToggle.clicked += RequestStepAdvanceWindowTrackToggle;
         }
 
         protected override void UnsubscribeViewEvents()
@@ -131,6 +143,8 @@ namespace Tools.Editor.AbilityComposer.Left
             m_deleteEventButton.clicked -= RequestDeleteSelectedEvent;
             m_addWindowButton.clicked -= RequestAddWindow;
             m_deleteWindowButton.clicked -= RequestDeleteSelectedWindow;
+            m_hitWindowTrackToggle.clicked -= RequestHitWindowTrackToggle;
+            m_stepAdvanceWindowTrackToggle.clicked -= RequestStepAdvanceWindowTrackToggle;
             m_isControlsReady = false;
         }
 
@@ -167,5 +181,11 @@ namespace Tools.Editor.AbilityComposer.Left
 
         // 请求删除当前选中的窗口
         private void RequestDeleteSelectedWindow() => OnDeleteSelectedWindowRequested?.Invoke();
+
+        // 请求切换命中窗口轨道显示状态
+        private void RequestHitWindowTrackToggle() => OnHitWindowTrackToggled?.Invoke(!m_hitWindowTrackToggle.text.StartsWith("[x]"));
+
+        // 请求切换技能推进窗口轨道显示状态
+        private void RequestStepAdvanceWindowTrackToggle() => OnStepAdvanceWindowTrackToggled?.Invoke(!m_stepAdvanceWindowTrackToggle.text.StartsWith("[x]"));
     }
 }
