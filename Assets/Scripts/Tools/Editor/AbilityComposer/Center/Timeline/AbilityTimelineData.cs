@@ -8,6 +8,7 @@
 
 using System.Collections.Generic;
 using Tools.Editor.AbilityComposer.Center.Event;
+using UnityEditor;
 using UnityEngine;
 
 namespace Tools.Editor.AbilityComposer.Center.Timeline
@@ -36,6 +37,21 @@ namespace Tools.Editor.AbilityComposer.Center.Timeline
             CurrentFrame = 0;
             IsPlaying = false;
             m_eventDraftValues.Clear();
+            SelectedEvent = null;
+        }
+
+        // 从 AnimationClip 的事件数据重建内存草稿
+        public void LoadAnimationEvents(IReadOnlyList<AnimationEvent> animationEvents)
+        {
+            m_eventDraftValues.Clear();
+            SelectedEvent = null;
+            for (int eventIndex = 0; eventIndex < animationEvents.Count; eventIndex++)
+            {
+                AnimationEvent animationEvent = animationEvents[eventIndex];
+                AbilityEventDraft eventDraft = AddEvent(Mathf.RoundToInt(animationEvent.time * FrameRate));
+                eventDraft.SetFunctionName(animationEvent.functionName);
+            }
+
             SelectedEvent = null;
         }
 

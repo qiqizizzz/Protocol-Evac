@@ -12,6 +12,7 @@ using Tools.Editor.AbilityComposer.Center.Event;
 using Tools.Editor.AbilityComposer.Center.Timeline;
 using Tools.Editor.AbilityComposer.Preview;
 using Tools.Editor.AbilityComposer.Right.Event;
+using UnityEditor;
 using UnityEngine;
 using Utils.log;
 
@@ -42,6 +43,7 @@ namespace Tools.Editor.AbilityComposer
         {
             m_timelineData = new AbilityTimelineData();
             m_timelineData.SetAnimationClip(m_composerData.SelectedAnimationClip);
+            LoadAnimationEvents();
             m_timelineView.SetTimelineData(m_timelineData);
             RefreshView();
         }
@@ -106,6 +108,10 @@ namespace Tools.Editor.AbilityComposer
                 callback => m_composerView.OnEventFunctionNameChanged -= callback, HandleEventFunctionNameChanged);
             RegisterEvent<string>(callback => m_timelineView.OnEventSelected += callback,
                 callback => m_timelineView.OnEventSelected -= callback, HandleEventSelected);
+            RegisterEvent(callback => m_composerView.OnApplyAnimationRequested += callback,
+                callback => m_composerView.OnApplyAnimationRequested -= callback, ApplyAnimationEvents);
+            RegisterEvent(callback => m_composerView.OnRestoreDraftRequested += callback,
+                callback => m_composerView.OnRestoreDraftRequested -= callback, RestoreAnimationEvents);
         }
 
         // 更新预览来源并销毁旧的临时克隆
@@ -125,6 +131,7 @@ namespace Tools.Editor.AbilityComposer
             ClearEventFunctionChoices();
             m_composerData.SetAnimationClip(animationClip);
             m_timelineData.SetAnimationClip(animationClip);
+            LoadAnimationEvents();
             m_timelineView.SetTimelineData(m_timelineData);
             RefreshView();
         }
@@ -201,6 +208,7 @@ namespace Tools.Editor.AbilityComposer
             if (!m_timelineData.HasClip)
                 return;
 
+            RefreshEventFunctionChoices();
             m_timelineData.AddEvent(m_timelineData.CurrentFrame);
             RefreshView();
         }
@@ -231,6 +239,103 @@ namespace Tools.Editor.AbilityComposer
         {
             m_timelineData.SetSelectedEventFunctionName(functionName);
             RefreshView();
+        }
+
+        // 将当前内存事件草稿写入独立 AnimationClip 资源
+        private void ApplyAnimationEvents()
+        {
+            AnimationClip animationClip = m_timelineData.Clip;
+            if (animationClip == null)
+                return;
+
+            string assetPath = AssetDatabase.GetAssetPath(animationClip);
+            AnimationEvent[] animationEvents = CreateAnimationEvents();
+            if (assetPath.EndsWith(".anim", System.StringComparison.OrdinalIgnoreCase))
+            {
+                Undo.RecordObject(animationClip, "应用 Ability Animation Events");
+                AnimationUtility.SetAnimationEvents(animationClip, animationEvents);
+                EditorUtility.SetDirty(animationClip);
+                AssetDatabase.SaveAssets();
+                return;
+            }
+
+            ModelImporter modelImporter = AssetImporter.GetAtPath(assetPath) as ModelImporter;
+            if (modelImporter == null)
+            {
+                QLog.Error("当前 Animation Clip 不属于可写入的 .anim 或 ModelImporter 资源");
+                return;
+            }
+
+            ModelImporterClipAnimation[] clipAnimations = modelImporter.clipAnimations;
+            if (clipAnimations == null || clipAnimations.Length == 0)
+                clipAnimations = modelImporter.defaultClipAnimations;
+
+            int clipIndex = System.Array.FindIndex(clipAnimations, clip => clip.name == animationClip.name);
+            if (clipIndex < 0)
+            {
+                QLog.Error($"ModelImporter 中未找到目标动画 Clip：{animationClip.name}");
+                return;
+            }
+
+            clipAnimations[clipIndex].events = animationEvents;
+            modelImporter.clipAnimations = clipAnimations;
+            AssetDatabase.WriteImportSettingsIfDirty(assetPath);
+            modelImporter.SaveAndReimport();
+        }
+
+        // 将内存事件草稿转换为 Unity AnimationEvent 数据
+        private AnimationEvent[] CreateAnimationEvents()
+        {
+            AnimationEvent[] animationEvents = new AnimationEvent[m_timelineData.EventDraftValues.Count];
+            for (int eventIndex = 0; eventIndex < m_timelineData.EventDraftValues.Count; eventIndex++)
+            {
+                AbilityEventDraft eventDraft = m_timelineData.EventDraftValues[eventIndex];
+                animationEvents[eventIndex] = new AnimationEvent
+                {
+                    time = m_timelineData.FrameRate > 0f ? eventDraft.Frame / m_timelineData.FrameRate : 0f,
+                    functionName = eventDraft.FunctionName
+                };
+            }
+
+            return animationEvents;
+        }
+
+        // 从当前 AnimationClip 重新读取事件草稿
+        private void RestoreAnimationEvents()
+        {
+            AnimationClip animationClip = m_timelineData.Clip;
+            if (animationClip == null)
+                return;
+
+            m_timelineData.SetAnimationClip(animationClip);
+            LoadAnimationEvents();
+            RefreshView();
+        }
+
+        // 从当前 AnimationClip 读取已保存的 Animation Events
+        private void LoadAnimationEvents()
+        {
+            if (m_timelineData.Clip == null)
+                return;
+
+            string assetPath = AssetDatabase.GetAssetPath(m_timelineData.Clip);
+            if (assetPath.EndsWith(".anim", System.StringComparison.OrdinalIgnoreCase))
+            {
+                m_timelineData.LoadAnimationEvents(AnimationUtility.GetAnimationEvents(m_timelineData.Clip));
+                return;
+            }
+
+            ModelImporter modelImporter = AssetImporter.GetAtPath(assetPath) as ModelImporter;
+            if (modelImporter == null)
+                return;
+
+            ModelImporterClipAnimation[] clipAnimations = modelImporter.clipAnimations;
+            if (clipAnimations == null || clipAnimations.Length == 0)
+                clipAnimations = modelImporter.defaultClipAnimations;
+
+            int clipIndex = System.Array.FindIndex(clipAnimations, clip => clip.name == m_timelineData.Clip.name);
+            if (clipIndex >= 0)
+                m_timelineData.LoadAnimationEvents(clipAnimations[clipIndex].events);
         }
 
         // 切换预览动画的播放与暂停状态
@@ -330,8 +435,11 @@ namespace Tools.Editor.AbilityComposer
         // 根据当前临时预览对象刷新可选的 Animation Event Function
         private void RefreshEventFunctionChoices()
         {
+            GameObject animationEventReceiver = m_previewController.HasPreview
+                ? m_previewController.AnimationEventReceiver
+                : m_composerData.PreviewSource;
             m_composerView.SetEventFunctionChoices(
-                AbilityEventFunctionResolver.Resolve(m_previewController.AnimationEventReceiver));
+                AbilityEventFunctionResolver.Resolve(animationEventReceiver));
         }
 
         // 清空已销毁预览对象对应的 Function 候选

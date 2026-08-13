@@ -34,6 +34,8 @@ namespace Tools.Editor.AbilityComposer
         private Button m_returnPreviousSceneButton;
         private Button m_createPreviewButton;
         private Button m_focusPreviewButton;
+        private Button m_applyAnimationButton;
+        private Button m_restoreDraftButton;
         private VisualElement m_rootVisualElement;
         private AbilityComposerData m_composerData;
         private AbilityLeftView m_leftView;
@@ -56,6 +58,8 @@ namespace Tools.Editor.AbilityComposer
         public event Action OnDeleteSelectedEventRequested;
         public event Action<AbilityEventCategory> OnEventCategoryChanged;
         public event Action<string> OnEventFunctionNameChanged;
+        public event Action OnApplyAnimationRequested;
+        public event Action OnRestoreDraftRequested;
 
         // 注入主视图需要的根节点与工作上下文
         public AbilityComposerView(VisualElement rootVisualElement, AbilityComposerData composerData)
@@ -110,6 +114,7 @@ namespace Tools.Editor.AbilityComposer
         public void Refresh(AbilityTimelineData timelineData, bool hasPreview)
         {
             m_returnPreviousSceneButton.SetEnabled(hasPreview);
+            m_applyAnimationButton.SetEnabled(timelineData.HasClip);
             m_leftView.Refresh(timelineData, hasPreview);
             m_rightView.Refresh(timelineData);
         }
@@ -130,6 +135,8 @@ namespace Tools.Editor.AbilityComposer
             m_returnPreviousSceneButton.clicked += RequestReturnPreviousScene;
             m_createPreviewButton.clicked += RequestCreatePreview;
             m_focusPreviewButton.clicked += RequestFocusPreview;
+            m_applyAnimationButton.clicked += RequestApplyAnimation;
+            m_restoreDraftButton.clicked += RequestRestoreDraft;
             m_leftView.OnJumpFirstFrameRequested += RequestJumpFirstFrame;
             m_leftView.OnPreviousFrameRequested += RequestPreviousFrame;
             m_leftView.OnPlaybackToggled += RequestPlaybackToggle;
@@ -152,6 +159,8 @@ namespace Tools.Editor.AbilityComposer
             m_returnPreviousSceneButton.clicked -= RequestReturnPreviousScene;
             m_createPreviewButton.clicked -= RequestCreatePreview;
             m_focusPreviewButton.clicked -= RequestFocusPreview;
+            m_applyAnimationButton.clicked -= RequestApplyAnimation;
+            m_restoreDraftButton.clicked -= RequestRestoreDraft;
             m_leftView.OnJumpFirstFrameRequested -= RequestJumpFirstFrame;
             m_leftView.OnPreviousFrameRequested -= RequestPreviousFrame;
             m_leftView.OnPlaybackToggled -= RequestPlaybackToggle;
@@ -180,9 +189,12 @@ namespace Tools.Editor.AbilityComposer
             m_returnPreviousSceneButton = rootVisualElement.Q<Button>("return-previous-scene-button");
             m_createPreviewButton = rootVisualElement.Q<Button>("create-preview-button");
             m_focusPreviewButton = rootVisualElement.Q<Button>("focus-preview-button");
+            m_applyAnimationButton = rootVisualElement.Q<Button>("apply-animation-button");
+            m_restoreDraftButton = rootVisualElement.Q<Button>("restore-draft-button");
 
             if (m_previewSourceField == null || m_animationClipField == null || m_returnPreviousSceneButton == null
-                || m_createPreviewButton == null || m_focusPreviewButton == null)
+                || m_createPreviewButton == null || m_focusPreviewButton == null || m_applyAnimationButton == null
+                || m_restoreDraftButton == null)
             {
                 QLog.Error("配置 Ability Composer 主视图失败：缺少必要的 UXML 控件");
                 return false;
@@ -239,6 +251,18 @@ namespace Tools.Editor.AbilityComposer
         private void RequestFocusPreview()
         {
             OnFocusPreviewRequested?.Invoke();
+        }
+
+        // 请求将当前事件草稿应用到动画资源
+        private void RequestApplyAnimation()
+        {
+            OnApplyAnimationRequested?.Invoke();
+        }
+
+        // 请求还原当前动画资源中的事件草稿
+        private void RequestRestoreDraft()
+        {
+            OnRestoreDraftRequested?.Invoke();
         }
 
         // 请求跳转到第一帧

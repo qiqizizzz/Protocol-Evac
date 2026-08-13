@@ -61,13 +61,11 @@
         </ui:VisualElement>
 
         <ui:VisualElement name="bottom-status-bar" class="ac-status-bar">
-            <ui:Label text="逐帧吸附" class="ac-status-item ac-status-enabled" />
             <ui:VisualElement class="ac-status-spacer" />
-            <ui:Label text="草稿状态：尚未加载动画" class="ac-status-item" />
-            <ui:Button class="ac-button ac-button-apply">
+            <ui:Button name="apply-animation-button" class="ac-button ac-button-apply">
                 <ui:Label text="应用到动画" class="ac-button-label ac-muted-button-label" />
             </ui:Button>
-            <ui:Button class="ac-button ac-button-secondary">
+            <ui:Button name="restore-draft-button" class="ac-button ac-button-secondary">
                 <ui:Label text="还原草稿" class="ac-button-label ac-muted-button-label" />
             </ui:Button>
         </ui:VisualElement>
