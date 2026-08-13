@@ -34,11 +34,18 @@ namespace Tools.Editor.AbilityComposer.Center.Timeline
         private AbilityEventDraft m_draggingEvent;
         private int m_draggingEventPointerId;
         private int m_draggingEventFrame;
+        private AbilityWindowDraft m_draggingWindow;
+        private int m_draggingWindowPointerId;
+        private WindowDragMode m_windowDragMode;
+        private int m_draggingWindowStartFrame;
+        private int m_draggingWindowEndFrame;
+        private int m_draggingWindowPointerFrame;
 
         public event Action<int> OnFrameRequested;
         public event Action<string> OnEventSelected;
         public event Action<EventMoveRequest> OnEventMoved;
         public event Action<string> OnWindowSelected;
+        public event Action<WindowFrameRangeRequest> OnWindowFrameRangeChanged;
 
         public readonly struct EventMoveRequest
         {
@@ -50,6 +57,27 @@ namespace Tools.Editor.AbilityComposer.Center.Timeline
                 EventId = eventId;
                 Frame = frame;
             }
+        }
+
+        public readonly struct WindowFrameRangeRequest
+        {
+            public readonly string WindowId;
+            public readonly int StartFrame;
+            public readonly int EndFrame;
+
+            public WindowFrameRangeRequest(string windowId, int startFrame, int endFrame)
+            {
+                WindowId = windowId;
+                StartFrame = startFrame;
+                EndFrame = endFrame;
+            }
+        }
+
+        private enum WindowDragMode
+        {
+            Move,
+            ResizeStart,
+            ResizeEnd
         }
 
         // 注入时间轴视图需要的 UI 元素
@@ -76,6 +104,8 @@ namespace Tools.Editor.AbilityComposer.Center.Timeline
             m_timelineContent.RegisterCallback<PointerCaptureOutEvent>(CancelPlayheadDrag);
             m_timelineContent.RegisterCallback<PointerMoveEvent>(UpdateDraggedEvent, TrickleDown.TrickleDown);
             m_timelineContent.RegisterCallback<PointerUpEvent>(EndDraggedEvent, TrickleDown.TrickleDown);
+            m_timelineContent.RegisterCallback<PointerMoveEvent>(UpdateDraggedWindow, TrickleDown.TrickleDown);
+            m_timelineContent.RegisterCallback<PointerUpEvent>(EndDraggedWindow, TrickleDown.TrickleDown);
         }
 
         // 设置当前时间轴数据并重建刻度、轨道和播放头
@@ -123,9 +153,12 @@ namespace Tools.Editor.AbilityComposer.Center.Timeline
             m_timelineContent.UnregisterCallback<PointerCaptureOutEvent>(CancelPlayheadDrag);
             m_timelineContent.UnregisterCallback<PointerMoveEvent>(UpdateDraggedEvent, TrickleDown.TrickleDown);
             m_timelineContent.UnregisterCallback<PointerUpEvent>(EndDraggedEvent, TrickleDown.TrickleDown);
+            m_timelineContent.UnregisterCallback<PointerMoveEvent>(UpdateDraggedWindow, TrickleDown.TrickleDown);
+            m_timelineContent.UnregisterCallback<PointerUpEvent>(EndDraggedWindow, TrickleDown.TrickleDown);
             m_timelineContent.UnregisterCallback<WheelEvent>(HandleTimelineWheel);
             m_isDraggingPlayhead = false;
             m_draggingEvent = null;
+            m_draggingWindow = null;
         }
 
         // 根据动画帧数据构建时间轴内容
@@ -218,7 +251,10 @@ namespace Tools.Editor.AbilityComposer.Center.Timeline
                 eventMarker.AddToClassList("ac-timeline-event-marker");
                 eventMarker.AddToClassList($"ac-event-{eventDraft.Category.ToString().ToLowerInvariant()}");
                 if (m_timelineData.SelectedEvent == eventDraft)
+                {
                     eventMarker.AddToClassList("ac-timeline-event-marker-selected");
+                    ApplySelectedInnerBorder(eventMarker);
+                }
 
                 eventMarker.style.left = FrameToPixel(eventDraft.Frame) - 5f;
                 eventMarker.clicked += () => OnEventSelected?.Invoke(eventDraft.Id);
@@ -246,23 +282,125 @@ namespace Tools.Editor.AbilityComposer.Center.Timeline
                 windowMarker.AddToClassList("ac-timeline-window-marker");
                 windowMarker.AddToClassList(windowDraft.Type == AbilityWindowType.Hit ? "ac-window-hit" : "ac-window-invincible");
                 if (m_timelineData.SelectedWindow == windowDraft)
+                {
                     windowMarker.AddToClassList("ac-timeline-window-marker-selected");
+                    ApplySelectedInnerBorder(windowMarker);
+                }
 
                 windowMarker.style.left = FrameToPixel(windowDraft.StartFrame);
                 windowMarker.style.width = Mathf.Max(m_pixelsPerFrame, FrameToPixel(windowDraft.EndFrame) - FrameToPixel(windowDraft.StartFrame) + m_pixelsPerFrame);
-                windowMarker.RegisterCallback<PointerDownEvent>(pointerEvent => SelectWindow(windowDraft, pointerEvent), TrickleDown.TrickleDown);
+                Label windowLabel = new Label(windowDraft.Type == AbilityWindowType.Hit ? "命中窗口" : "无敌帧窗口");
+                windowLabel.AddToClassList("ac-timeline-window-label");
+                windowMarker.Add(windowLabel);
+                windowMarker.RegisterCallback<PointerDownEvent>(pointerEvent => BeginWindowDrag(windowMarker, windowDraft, pointerEvent), TrickleDown.TrickleDown);
                 m_timelineContent.Add(windowMarker);
             }
         }
 
-        // 选中窗口并阻止事件冒泡到播放头
-        private void SelectWindow(AbilityWindowDraft windowDraft, PointerDownEvent pointerEvent)
+        // 开始移动或调整窗口边界并阻止事件冒泡到播放头
+        private void BeginWindowDrag(Button windowMarker, AbilityWindowDraft windowDraft, PointerDownEvent pointerEvent)
         {
-            if (pointerEvent.button != 0)
+            if (pointerEvent.button != 0 || m_timelineData == null || !m_timelineData.HasClip)
                 return;
 
+            float localPointerX = windowMarker.WorldToLocal(pointerEvent.position).x;
+            float markerWidth = windowMarker.resolvedStyle.width;
+            m_draggingWindow = windowDraft;
+            m_draggingWindowPointerId = pointerEvent.pointerId;
+            m_draggingWindowStartFrame = windowDraft.StartFrame;
+            m_draggingWindowEndFrame = windowDraft.EndFrame;
+            m_draggingWindowPointerFrame = GetFrameFromPointerPosition(pointerEvent.position);
+            m_windowDragMode = localPointerX <= 7f
+                ? WindowDragMode.ResizeStart
+                : localPointerX >= markerWidth - 7f
+                    ? WindowDragMode.ResizeEnd
+                    : WindowDragMode.Move;
+            windowMarker.CapturePointer(m_draggingWindowPointerId);
             OnWindowSelected?.Invoke(windowDraft.Id);
             pointerEvent.StopPropagation();
+        }
+
+        // 根据鼠标位置实时预览窗口平移或缩放结果
+        private void UpdateDraggedWindow(PointerMoveEvent pointerEvent)
+        {
+            if (m_draggingWindow == null || pointerEvent.pointerId != m_draggingWindowPointerId)
+                return;
+
+            int pointerFrame = GetFrameFromPointerPosition(pointerEvent.position);
+            int startFrame = m_draggingWindowStartFrame;
+            int endFrame = m_draggingWindowEndFrame;
+            if (m_windowDragMode == WindowDragMode.ResizeStart)
+            {
+                startFrame = Mathf.Clamp(pointerFrame, 0, endFrame);
+            }
+            else if (m_windowDragMode == WindowDragMode.ResizeEnd)
+            {
+                endFrame = Mathf.Clamp(pointerFrame, startFrame, m_timelineData.LastFrame);
+            }
+            else
+            {
+                int windowLength = endFrame - startFrame;
+                int frameOffset = pointerFrame - m_draggingWindowPointerFrame;
+                startFrame = Mathf.Clamp(m_draggingWindowStartFrame + frameOffset, 0, m_timelineData.LastFrame - windowLength);
+                endFrame = startFrame + windowLength;
+            }
+
+            UpdateWindowMarker(m_draggingWindow.Id, startFrame, endFrame);
+            pointerEvent.StopPropagation();
+        }
+
+        // 结束当前窗口拖动并提交吸附后的帧范围
+        private void EndDraggedWindow(PointerUpEvent pointerEvent)
+        {
+            if (m_draggingWindow == null || pointerEvent.pointerId != m_draggingWindowPointerId)
+                return;
+
+            int pointerFrame = GetFrameFromPointerPosition(pointerEvent.position);
+            int startFrame = m_draggingWindowStartFrame;
+            int endFrame = m_draggingWindowEndFrame;
+            if (m_windowDragMode == WindowDragMode.ResizeStart)
+                startFrame = Mathf.Clamp(pointerFrame, 0, endFrame);
+            else if (m_windowDragMode == WindowDragMode.ResizeEnd)
+                endFrame = Mathf.Clamp(pointerFrame, startFrame, m_timelineData.LastFrame);
+            else
+            {
+                int windowLength = endFrame - startFrame;
+                int frameOffset = pointerFrame - m_draggingWindowPointerFrame;
+                startFrame = Mathf.Clamp(m_draggingWindowStartFrame + frameOffset, 0, m_timelineData.LastFrame - windowLength);
+                endFrame = startFrame + windowLength;
+            }
+
+            Button windowMarker = m_timelineContent.Q<Button>(m_draggingWindow.Id);
+            if (windowMarker != null && windowMarker.HasPointerCapture(m_draggingWindowPointerId))
+                windowMarker.ReleasePointer(m_draggingWindowPointerId);
+
+            OnWindowFrameRangeChanged?.Invoke(new WindowFrameRangeRequest(m_draggingWindow.Id, startFrame, endFrame));
+            m_draggingWindow = null;
+            pointerEvent.StopPropagation();
+        }
+
+        // 按帧范围更新当前窗口条的预览位置和宽度
+        private void UpdateWindowMarker(string windowId, int startFrame, int endFrame)
+        {
+            Button windowMarker = m_timelineContent.Q<Button>(windowId);
+            if (windowMarker == null)
+                return;
+
+            windowMarker.style.left = FrameToPixel(startFrame);
+            windowMarker.style.width = Mathf.Max(m_pixelsPerFrame, FrameToPixel(endFrame) - FrameToPixel(startFrame) + m_pixelsPerFrame);
+        }
+
+        // 为选中标记设置不受 Button 悬停样式覆盖的白色内边框
+        private void ApplySelectedInnerBorder(VisualElement marker)
+        {
+            marker.style.borderTopWidth = 2f;
+            marker.style.borderRightWidth = 2f;
+            marker.style.borderBottomWidth = 2f;
+            marker.style.borderLeftWidth = 2f;
+            marker.style.borderTopColor = Color.white;
+            marker.style.borderRightColor = Color.white;
+            marker.style.borderBottomColor = Color.white;
+            marker.style.borderLeftColor = Color.white;
         }
 
         // 开始拖动动画事件并阻止事件冒泡到播放头
@@ -311,7 +449,8 @@ namespace Tools.Editor.AbilityComposer.Center.Timeline
         // 开始拖动播放头并请求跳转到鼠标所在帧
         private void BeginPlayheadDrag(PointerDownEvent pointerEvent)
         {
-            if (m_timelineData == null || !m_timelineData.HasClip || pointerEvent.button != 0)
+            if (m_timelineData == null || !m_timelineData.HasClip || pointerEvent.button != 0
+                || m_draggingEvent != null || m_draggingWindow != null)
                 return;
 
             m_isDraggingPlayhead = true;

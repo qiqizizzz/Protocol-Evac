@@ -34,6 +34,7 @@ namespace Tools.Editor.AbilityComposer.Right.Event
         private DropdownField m_receiverChoicesField;
         private DropdownField m_functionChoicesField;
         private TextField m_functionField;
+        private Button m_saveEventButton;
         private readonly Dictionary<string, List<string>> m_functionGroups = new Dictionary<string, List<string>>();
         private readonly List<string> m_receiverChoices = new List<string>();
         private readonly List<string> m_functionChoices = new List<string>();
@@ -41,6 +42,7 @@ namespace Tools.Editor.AbilityComposer.Right.Event
         public event Action<AbilityEventCategory> OnCategoryChanged;
         public event Action<string> OnReceiverTypeNameChanged;
         public event Action<string> OnFunctionNameChanged;
+        public event Action OnSaveEventRequested;
 
         // 注入 Event Inspector 页面容器
         public AbilityEventInspectorView(VisualElement rootVisualElement)
@@ -51,7 +53,6 @@ namespace Tools.Editor.AbilityComposer.Right.Event
         // 创建 Event Inspector 控件
         protected override void OnEditorInit()
         {
-            m_rootVisualElement.Clear();
             m_titleLabel = new Label("事件检查器");
             m_titleLabel.AddToClassList("ac-section-title");
             m_categoryField = new DropdownField("Category", S_CategoryChoices, 0);
@@ -65,11 +66,22 @@ namespace Tools.Editor.AbilityComposer.Right.Event
             m_functionField = new TextField("Custom Function");
             m_functionField.isDelayed = true;
             m_functionField.AddToClassList("ac-inspector-field");
+            VisualElement saveRow = new VisualElement();
+            saveRow.AddToClassList("ac-inspector-save-row");
+            m_saveEventButton = new Button();
+            m_saveEventButton.AddToClassList("ac-button");
+            m_saveEventButton.AddToClassList("ac-inspector-save-button");
+            Label saveButtonLabel = new Label("保存事件");
+            saveButtonLabel.AddToClassList("ac-button-label");
+            saveButtonLabel.AddToClassList("ac-muted-button-label");
+            m_saveEventButton.Add(saveButtonLabel);
+            saveRow.Add(m_saveEventButton);
             m_rootVisualElement.Add(m_titleLabel);
             m_rootVisualElement.Add(m_categoryField);
             m_rootVisualElement.Add(m_receiverChoicesField);
             m_rootVisualElement.Add(m_functionChoicesField);
             m_rootVisualElement.Add(m_functionField);
+            m_rootVisualElement.Add(saveRow);
             SetInspectorVisible(false);
         }
 
@@ -141,6 +153,7 @@ namespace Tools.Editor.AbilityComposer.Right.Event
             m_receiverChoicesField.RegisterValueChangedCallback(HandleReceiverChoiceChanged);
             m_functionChoicesField.RegisterValueChangedCallback(HandleFunctionChoiceChanged);
             m_functionField.RegisterValueChangedCallback(HandleFunctionNameChanged);
+            m_saveEventButton.clicked += RequestSaveEvent;
         }
 
         protected override void UnsubscribeViewEvents()
@@ -149,6 +162,7 @@ namespace Tools.Editor.AbilityComposer.Right.Event
             m_receiverChoicesField.UnregisterValueChangedCallback(HandleReceiverChoiceChanged);
             m_functionChoicesField.UnregisterValueChangedCallback(HandleFunctionChoiceChanged);
             m_functionField.UnregisterValueChangedCallback(HandleFunctionNameChanged);
+            m_saveEventButton.clicked -= RequestSaveEvent;
         }
 
         // 切换事件编辑字段显示
@@ -159,6 +173,7 @@ namespace Tools.Editor.AbilityComposer.Right.Event
             m_receiverChoicesField.style.display = hasSelectedEvent ? DisplayStyle.Flex : DisplayStyle.None;
             m_functionChoicesField.style.display = hasSelectedEvent ? DisplayStyle.Flex : DisplayStyle.None;
             m_functionField.style.display = hasSelectedEvent ? DisplayStyle.Flex : DisplayStyle.None;
+            m_saveEventButton.parent.style.display = hasSelectedEvent ? DisplayStyle.Flex : DisplayStyle.None;
         }
 
         // 根据 Function 名称查找当前事件所属的接收类
@@ -198,6 +213,12 @@ namespace Tools.Editor.AbilityComposer.Right.Event
         private void HandleFunctionNameChanged(ChangeEvent<string> changeEvent)
         {
             OnFunctionNameChanged?.Invoke(changeEvent.newValue);
+        }
+
+        // 请求将当前事件草稿写入动画资源
+        private void RequestSaveEvent()
+        {
+            OnSaveEventRequested?.Invoke();
         }
     }
 }

@@ -35,14 +35,6 @@
     margin-right: 8px;
 }
 
-.ac-window-track-field {
-    width: 190px;
-    min-width: 150px;
-    flex-grow: 0;
-    flex-shrink: 0;
-    margin-right: 8px;
-}
-
 .ac-content-layout {
     flex-grow: 1;
     min-height: 0;
@@ -166,8 +158,12 @@
 .ac-button-secondary {
 }
 
-.ac-button-apply {
-    min-width: 104px;
+.ac-bottom-save-button,
+.ac-bottom-undo-button {
+    min-width: 66px;
+    min-height: 26px;
+    margin-left: 4px;
+    margin-right: 0;
 }
 
 .ac-transport-row {
@@ -258,14 +254,86 @@
 
 .ac-inspector-tab-bar {
     flex-direction: row;
-    margin-top: 12px;
+    min-height: 28px;
+    margin-top: -20px;
+    margin-right: -12px;
     margin-bottom: 10px;
+    margin-left: -12px;
+    padding-left: 0;
+    align-items: flex-end;
+    background-color: rgb(48, 48, 48);
     border-bottom-width: 1px;
-    border-bottom-color: rgb(78, 78, 78);
+    border-bottom-color: rgb(30, 30, 30);
 }
 
 .ac-inspector-tab-button {
-    min-width: 54px;
+    height: 26px;
+    min-width: 78px;
+    margin-left: 0;
+    margin-right: 2px;
+    padding-right: 2px;
+    padding-left: 6px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    border-width: 1px;
+    border-color: rgb(30, 30, 30);
+    background-color: rgb(48, 48, 48);
+}
+
+.ac-inspector-tab-button-selected {
+    background-color: rgb(56, 56, 56);
+    border-bottom-width: 0;
+}
+
+.ac-inspector-tab-label {
+    margin-right: 6px;
+    color: rgb(220, 220, 220);
+    font-size: 11px;
+    -unity-font-style: normal;
+}
+
+.ac-inspector-tab-marker-event,
+.ac-inspector-tab-marker-window {
+    margin-right: 5px;
+    font-size: 10px;
+    -unity-font-style: normal;
+}
+
+.ac-inspector-tab-marker-event {
+    color: rgb(220, 220, 220);
+}
+
+.ac-inspector-tab-marker-window {
+    color: rgb(191, 88, 54);
+}
+
+.ac-inspector-tab-close-button {
+    width: 16px;
+    min-width: 16px;
+    height: 18px;
+    min-height: 18px;
+    margin-left: 0;
+    margin-right: 0;
+    padding: 0;
+    color: rgb(175, 175, 175);
+    font-size: 14px;
+    -unity-font-style: normal;
+}
+
+.ac-inspector-tab-content {
+    flex-grow: 1;
+    min-height: 0;
+}
+
+.ac-inspector-save-row {
+    flex-direction: row;
+    justify-content: flex-end;
+    margin-top: 12px;
+}
+
+.ac-inspector-save-button {
+    min-width: 64px;
     min-height: 24px;
     margin-left: 0;
     margin-right: 0;
@@ -365,7 +433,7 @@
 
 .ac-timeline-window-divider {
     position: absolute;
-    top: 110px;
+    top: 86px;
     right: 0;
     left: 0;
     height: 1px;
@@ -389,18 +457,14 @@
     min-height: 10px;
     margin: 0;
     padding: 0;
-    border-width: 1px;
-    border-color: rgb(30, 30, 30);
+    border-width: 0;
     rotate: 45deg;
 }
 
-.ac-timeline-event-marker:hover {
-    border-color: rgb(210, 210, 210);
-}
-
 .ac-timeline-event-marker-selected {
-    border-width: 2px;
-    border-color: rgb(70, 150, 220);
+    outline-width: 2px;
+    outline-color: rgb(245, 245, 245);
+    outline-offset: -2px;
 }
 
 .ac-event-default {
@@ -424,36 +488,41 @@
 }
 
 .ac-timeline-event-marker-selected.ac-event-gameplay {
-    border-color: rgb(245, 167, 83);
+    border-color: rgb(245, 245, 245);
 }
 
 .ac-timeline-event-marker-selected.ac-event-vfx {
-    border-color: rgb(103, 220, 224);
+    border-color: rgb(245, 245, 245);
 }
 
 .ac-timeline-event-marker-selected.ac-event-audio {
-    border-color: rgb(245, 222, 105);
+    border-color: rgb(245, 245, 245);
 }
 
 .ac-timeline-window-marker {
     position: absolute;
-    top: 118px;
-    min-width: 8px;
-    height: 16px;
-    min-height: 16px;
+    top: 87px;
+    min-width: 32px;
+    height: 40px;
+    min-height: 40px;
     margin: 0;
-    padding: 0;
-    border-width: 1px;
-    border-color: rgb(30, 30, 30);
-}
-
-.ac-timeline-window-marker:hover {
-    border-color: rgb(220, 220, 220);
+    padding-left: 6px;
+    padding-right: 6px;
+    border-width: 0;
+    justify-content: center;
+    -unity-text-align: middle-left;
 }
 
 .ac-timeline-window-marker-selected {
     border-width: 2px;
     border-color: rgb(245, 245, 245);
+}
+
+.ac-timeline-window-label {
+    color: rgb(235, 235, 235);
+    font-size: 10px;
+    -unity-font-style: normal;
+    -unity-text-align: middle-left;
 }
 
 .ac-window-hit {

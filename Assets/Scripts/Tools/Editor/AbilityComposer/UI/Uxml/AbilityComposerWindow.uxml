@@ -4,7 +4,6 @@
             <ui:VisualElement class="ac-context-inputs">
                 <uie:ObjectField name="preview-source-field" label="" class="ac-object-field" />
                 <uie:ObjectField name="animation-clip-field" label="" class="ac-object-field" />
-                <uie:ObjectField name="window-track-field" label="窗口轨道" class="ac-window-track-field" />
             </ui:VisualElement>
             <ui:VisualElement class="ac-context-spacer" />
             <ui:VisualElement class="ac-context-actions">
@@ -72,11 +71,11 @@
 
         <ui:VisualElement name="bottom-status-bar" class="ac-status-bar">
             <ui:VisualElement class="ac-status-spacer" />
-            <ui:Button name="apply-animation-button" class="ac-button ac-button-apply">
-                <ui:Label text="应用到动画" class="ac-button-label ac-muted-button-label" />
+            <ui:Button name="save-all-button" class="ac-button ac-bottom-save-button">
+                <ui:Label text="一键保存" class="ac-button-label ac-muted-button-label" />
             </ui:Button>
-            <ui:Button name="restore-draft-button" class="ac-button ac-button-secondary">
-                <ui:Label text="还原草稿" class="ac-button-label ac-muted-button-label" />
+            <ui:Button name="undo-last-save-button" class="ac-button ac-button-secondary ac-bottom-undo-button">
+                <ui:Label text="撤销" class="ac-button-label ac-muted-button-label" />
             </ui:Button>
         </ui:VisualElement>
     </ui:VisualElement>

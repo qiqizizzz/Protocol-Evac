@@ -28,6 +28,7 @@ namespace Tools.Editor.AbilityComposer
         private AbilityPreviewController m_previewController;
         private float m_playbackElapsedTime;
         private int m_playbackStartFrame;
+        private int m_lastSaveUndoGroup = -1;
 
         // 注入当前窗口的时间轴、预览与视图依赖
         public AbilityComposerController(AbilityComposerData composerData, AbilityComposerView composerView,
@@ -123,6 +124,8 @@ namespace Tools.Editor.AbilityComposer
                 callback => m_timelineView.OnEventSelected -= callback, HandleEventSelected);
             RegisterEvent<string>(callback => m_timelineView.OnWindowSelected += callback,
                 callback => m_timelineView.OnWindowSelected -= callback, HandleWindowSelected);
+            RegisterEvent<AbilityTimelineView.WindowFrameRangeRequest>(callback => m_timelineView.OnWindowFrameRangeChanged += callback,
+                callback => m_timelineView.OnWindowFrameRangeChanged -= callback, HandleWindowFrameRangeChanged);
             RegisterEvent<AbilityTimelineView.EventMoveRequest>(callback => m_timelineView.OnEventMoved += callback,
                 callback => m_timelineView.OnEventMoved -= callback, HandleEventMoved);
             RegisterEvent<AbilityWindowType>(callback => m_composerView.OnWindowTypeChanged += callback,
@@ -131,10 +134,18 @@ namespace Tools.Editor.AbilityComposer
                 callback => m_composerView.OnWindowFramesChanged -= callback, HandleWindowFramesChanged);
             RegisterEvent<float>(callback => m_composerView.OnWindowDamageChanged += callback,
                 callback => m_composerView.OnWindowDamageChanged -= callback, HandleWindowDamageChanged);
-            RegisterEvent(callback => m_composerView.OnApplyAnimationRequested += callback,
-                callback => m_composerView.OnApplyAnimationRequested -= callback, ApplyAnimationEvents);
-            RegisterEvent(callback => m_composerView.OnRestoreDraftRequested += callback,
-                callback => m_composerView.OnRestoreDraftRequested -= callback, RestoreAnimationEvents);
+            RegisterEvent(callback => m_composerView.OnSaveWindowRequested += callback,
+                callback => m_composerView.OnSaveWindowRequested -= callback, SaveWindowTrack);
+            RegisterEvent(callback => m_composerView.OnSaveEventRequested += callback,
+                callback => m_composerView.OnSaveEventRequested -= callback, ApplyAnimationEvents);
+            RegisterEvent(callback => m_composerView.OnCloseEventInspectorRequested += callback,
+                callback => m_composerView.OnCloseEventInspectorRequested -= callback, CloseEventInspector);
+            RegisterEvent(callback => m_composerView.OnCloseWindowInspectorRequested += callback,
+                callback => m_composerView.OnCloseWindowInspectorRequested -= callback, CloseWindowInspector);
+            RegisterEvent(callback => m_composerView.OnSaveAllRequested += callback,
+                callback => m_composerView.OnSaveAllRequested -= callback, SaveAll);
+            RegisterEvent(callback => m_composerView.OnUndoLastSaveRequested += callback,
+                callback => m_composerView.OnUndoLastSaveRequested -= callback, UndoLastSave);
         }
 
         // 更新预览来源并销毁旧的临时克隆
@@ -274,7 +285,6 @@ namespace Tools.Editor.AbilityComposer
                 return;
 
             m_timelineData.AddWindow(m_timelineData.CurrentFrame);
-            SaveWindowTrack();
             RefreshView();
         }
 
@@ -282,7 +292,6 @@ namespace Tools.Editor.AbilityComposer
         private void DeleteSelectedWindow()
         {
             m_timelineData.DeleteSelectedWindow();
-            SaveWindowTrack();
             RefreshView();
         }
 
@@ -293,11 +302,32 @@ namespace Tools.Editor.AbilityComposer
             RefreshView();
         }
 
+        // 关闭事件检查器并取消事件选中
+        private void CloseEventInspector()
+        {
+            m_timelineData.ClearEventSelection();
+            RefreshView();
+        }
+
+        // 关闭窗口检查器并取消窗口选中
+        private void CloseWindowInspector()
+        {
+            m_timelineData.ClearWindowSelection();
+            RefreshView();
+        }
+
+        // 提交时间轴拖动后的窗口帧范围
+        private void HandleWindowFrameRangeChanged(AbilityTimelineView.WindowFrameRangeRequest request)
+        {
+            m_timelineData.SelectWindow(request.WindowId);
+            m_timelineData.SetSelectedWindowFrames(request.StartFrame, request.EndFrame);
+            RefreshView();
+        }
+
         // 更新选中窗口的业务类型
         private void HandleWindowTypeChanged(AbilityWindowType type)
         {
             m_timelineData.SetSelectedWindowType(type);
-            SaveWindowTrack();
             RefreshView();
         }
 
@@ -305,7 +335,6 @@ namespace Tools.Editor.AbilityComposer
         private void HandleWindowFramesChanged(int startFrame, int endFrame)
         {
             m_timelineData.SetSelectedWindowFrames(startFrame, endFrame);
-            SaveWindowTrack();
             RefreshView();
         }
 
@@ -313,7 +342,6 @@ namespace Tools.Editor.AbilityComposer
         private void HandleWindowDamageChanged(float damage)
         {
             m_timelineData.SetSelectedWindowDamage(damage);
-            SaveWindowTrack();
             RefreshView();
         }
 
@@ -341,26 +369,39 @@ namespace Tools.Editor.AbilityComposer
         // 将当前内存事件草稿写入独立 AnimationClip 资源
         private void ApplyAnimationEvents()
         {
+            ApplyAnimationEvents(true);
+            RefreshView();
+        }
+
+        // 将当前事件草稿写入动画资源，并按需创建独立 Undo 组
+        private bool ApplyAnimationEvents(bool createUndoGroup)
+        {
             AnimationClip animationClip = m_timelineData.Clip;
             if (animationClip == null)
-                return;
+                return false;
 
             string assetPath = AssetDatabase.GetAssetPath(animationClip);
             AnimationEvent[] animationEvents = CreateAnimationEvents();
             if (assetPath.EndsWith(".anim", System.StringComparison.OrdinalIgnoreCase))
             {
-                Undo.RecordObject(animationClip, "应用 Ability Animation Events");
+                if (createUndoGroup)
+                    BeginSaveUndoGroup("保存 Ability Animation Events");
+
+                Undo.RecordObject(animationClip, "保存 Ability Animation Events");
                 AnimationUtility.SetAnimationEvents(animationClip, animationEvents);
                 EditorUtility.SetDirty(animationClip);
                 AssetDatabase.SaveAssets();
-                return;
+                if (createUndoGroup)
+                    CompleteSaveUndoGroup();
+
+                return true;
             }
 
             ModelImporter modelImporter = AssetImporter.GetAtPath(assetPath) as ModelImporter;
             if (modelImporter == null)
             {
                 QLog.Error("当前 Animation Clip 不属于可写入的 .anim 或 ModelImporter 资源");
-                return;
+                return false;
             }
 
             ModelImporterClipAnimation[] clipAnimations = modelImporter.clipAnimations;
@@ -371,13 +412,48 @@ namespace Tools.Editor.AbilityComposer
             if (clipIndex < 0)
             {
                 QLog.Error($"ModelImporter 中未找到目标动画 Clip：{animationClip.name}");
-                return;
+                return false;
             }
 
+            if (createUndoGroup)
+                BeginSaveUndoGroup("保存 Ability Animation Events");
+
+            Undo.RecordObject(modelImporter, "保存 Ability Animation Events");
             clipAnimations[clipIndex].events = animationEvents;
             modelImporter.clipAnimations = clipAnimations;
             AssetDatabase.WriteImportSettingsIfDirty(assetPath);
             modelImporter.SaveAndReimport();
+            if (createUndoGroup)
+                CompleteSaveUndoGroup();
+
+            return true;
+        }
+
+        // 一次提交当前事件和窗口两类草稿
+        private void SaveAll()
+        {
+            BeginSaveUndoGroup("一键保存 Ability Composer");
+            bool savedEvents = ApplyAnimationEvents(false);
+            bool savedWindows = SaveWindowTrack(false);
+            if (savedEvents || savedWindows)
+                CompleteSaveUndoGroup();
+            else
+                m_lastSaveUndoGroup = -1;
+
+            RefreshView();
+        }
+
+        // 仅撤销 Composer 最近一次保存并重载资产草稿
+        private void UndoLastSave()
+        {
+            if (m_lastSaveUndoGroup < 0)
+                return;
+
+            Undo.RevertAllDownToGroup(m_lastSaveUndoGroup);
+            m_lastSaveUndoGroup = -1;
+            RestoreAnimationEvents();
+            LoadWindowTrack();
+            RefreshView();
         }
 
         // 将内存事件草稿转换为 Unity AnimationEvent 数据
@@ -523,7 +599,7 @@ namespace Tools.Editor.AbilityComposer
         // 刷新主视图文字、按钮状态与时间轴播放头
         private void RefreshView(bool refreshEventMarkers = true)
         {
-            m_composerView.Refresh(m_timelineData, m_previewController.HasPreview, true);
+            m_composerView.Refresh(m_timelineData, m_previewController.HasPreview, true, m_lastSaveUndoGroup >= 0);
             m_timelineView.RefreshCurrentFrame();
             if (refreshEventMarkers)
                 m_timelineView.RefreshEventMarkers();
@@ -550,6 +626,7 @@ namespace Tools.Editor.AbilityComposer
         {
             m_timelineData.ClearWindows();
             AbilityWindowTrackSO windowTrack = m_composerData.SelectedWindowTrack;
+            m_timelineData.SetWindowTrack(windowTrack);
             if (windowTrack == null || !m_timelineData.HasClip)
                 return;
 
@@ -572,9 +649,23 @@ namespace Tools.Editor.AbilityComposer
         // 将时间轴窗口草稿写回选中的窗口轨道资产
         private void SaveWindowTrack()
         {
+            SaveWindowTrack(true);
+            RefreshView();
+        }
+
+        // 将当前窗口草稿写回窗口轨道资产，并按需创建独立 Undo 组
+        private bool SaveWindowTrack(bool createUndoGroup)
+        {
             AbilityWindowTrackSO windowTrack = m_composerData.SelectedWindowTrack;
-            if (windowTrack == null || !m_timelineData.HasClip)
-                return;
+            if (!m_timelineData.HasClip)
+                return false;
+
+            if (windowTrack == null)
+            {
+                windowTrack = CreateWindowTrack();
+                if (windowTrack == null)
+                    return false;
+            }
 
             List<AbilityWindowData> windowValues = new List<AbilityWindowData>();
             foreach (AbilityWindowDraft windowDraft in m_timelineData.WindowDraftValues)
@@ -588,10 +679,51 @@ namespace Tools.Editor.AbilityComposer
                 windowValues.Add(new AbilityWindowData(windowDraft.Type, startNormalizedTime, endNormalizedTime, windowDraft.Damage));
             }
 
-            Undo.RecordObject(windowTrack, "编辑 Ability 窗口轨道");
+            if (createUndoGroup)
+                BeginSaveUndoGroup("保存 Ability 窗口轨道");
+
+            Undo.RecordObject(windowTrack, "保存 Ability 窗口轨道");
             windowTrack.SetAnimationClip(m_timelineData.Clip);
             windowTrack.SetWindows(windowValues);
             EditorUtility.SetDirty(windowTrack);
+            AssetDatabase.SaveAssets();
+            if (createUndoGroup)
+                CompleteSaveUndoGroup();
+
+            return true;
+        }
+
+        // 让用户指定路径创建当前动画专属的窗口轨道资产
+        private AbilityWindowTrackSO CreateWindowTrack()
+        {
+            string defaultName = $"{m_timelineData.Clip.name}_WindowTrack.asset";
+            string assetPath = EditorUtility.SaveFilePanelInProject("新建 Ability 窗口轨道", defaultName, "asset", "选择窗口轨道的保存位置");
+            if (string.IsNullOrEmpty(assetPath))
+                return null;
+
+            AbilityWindowTrackSO windowTrack = ScriptableObject.CreateInstance<AbilityWindowTrackSO>();
+            AssetDatabase.CreateAsset(windowTrack, assetPath);
+            AssetDatabase.SaveAssets();
+            m_composerData.SetWindowTrack(windowTrack);
+            m_timelineData.SetWindowTrack(windowTrack);
+            return windowTrack;
+        }
+
+        // 创建可被底部撤销按钮定位的一次保存 Undo 组
+        private void BeginSaveUndoGroup(string undoName)
+        {
+            if (m_lastSaveUndoGroup >= 0)
+                Undo.CollapseUndoOperations(m_lastSaveUndoGroup);
+
+            Undo.IncrementCurrentGroup();
+            m_lastSaveUndoGroup = Undo.GetCurrentGroup();
+            Undo.SetCurrentGroupName(undoName);
+        }
+
+        // 关闭当前保存 Undo 组，限制底部撤销只回退该组
+        private void CompleteSaveUndoGroup()
+        {
+            Undo.CollapseUndoOperations(m_lastSaveUndoGroup);
         }
 
     }

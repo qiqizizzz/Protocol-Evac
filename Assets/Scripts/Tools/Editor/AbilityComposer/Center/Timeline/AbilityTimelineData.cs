@@ -27,6 +27,8 @@ namespace Tools.Editor.AbilityComposer.Center.Timeline
         public IReadOnlyList<AbilityWindowDraft> WindowDraftValues => m_windowDraftValues;
         public AbilityEventDraft SelectedEvent { get; private set; }
         public AbilityWindowDraft SelectedWindow { get; private set; }
+        public AbilityWindowTrackSO WindowTrack { get; private set; }
+        public bool IsWindowInspectorActive { get; private set; }
         public bool HasClip => Clip != null;
         public int LastFrame => Mathf.Max(FrameCount - 1, 0);
         public float CurrentTime => FrameRate > 0f ? CurrentFrame / FrameRate : 0f;
@@ -43,6 +45,13 @@ namespace Tools.Editor.AbilityComposer.Center.Timeline
             m_windowDraftValues.Clear();
             SelectedEvent = null;
             SelectedWindow = null;
+            IsWindowInspectorActive = false;
+        }
+
+        // 更新当前编辑的窗口轨道资产
+        public void SetWindowTrack(AbilityWindowTrackSO windowTrack)
+        {
+            WindowTrack = windowTrack;
         }
 
         // 从 AnimationClip 的事件数据重建内存草稿
@@ -87,7 +96,7 @@ namespace Tools.Editor.AbilityComposer.Center.Timeline
             AbilityEventDraft eventDraft = new AbilityEventDraft(Mathf.Clamp(frame, 0, LastFrame));
             m_eventDraftValues.Add(eventDraft);
             SelectedEvent = eventDraft;
-            SelectedWindow = null;
+            IsWindowInspectorActive = false;
             return eventDraft;
         }
 
@@ -105,7 +114,14 @@ namespace Tools.Editor.AbilityComposer.Center.Timeline
         public void SelectEvent(string eventId)
         {
             SelectedEvent = m_eventDraftValues.Find(eventDraft => eventDraft.Id == eventId);
-            SelectedWindow = null;
+            IsWindowInspectorActive = false;
+        }
+
+        // 取消当前事件选中状态
+        public void ClearEventSelection()
+        {
+            SelectedEvent = null;
+            IsWindowInspectorActive = SelectedWindow != null;
         }
 
         // 更新选中事件的编辑器分类
@@ -161,8 +177,8 @@ namespace Tools.Editor.AbilityComposer.Center.Timeline
             windowDraft.SetType(type);
             windowDraft.SetDamage(Mathf.Max(0f, damage));
             m_windowDraftValues.Add(windowDraft);
-            SelectedEvent = null;
             SelectedWindow = windowDraft;
+            IsWindowInspectorActive = true;
             return windowDraft;
         }
 
@@ -171,12 +187,14 @@ namespace Tools.Editor.AbilityComposer.Center.Timeline
         {
             m_windowDraftValues.Clear();
             SelectedWindow = null;
+            IsWindowInspectorActive = false;
         }
 
         // 取消当前窗口选中状态
         public void ClearWindowSelection()
         {
             SelectedWindow = null;
+            IsWindowInspectorActive = false;
         }
 
         // 删除当前选中的窗口草稿
@@ -187,13 +205,14 @@ namespace Tools.Editor.AbilityComposer.Center.Timeline
 
             m_windowDraftValues.Remove(SelectedWindow);
             SelectedWindow = null;
+            IsWindowInspectorActive = SelectedEvent == null;
         }
 
         // 按唯一标识选中指定窗口草稿
         public void SelectWindow(string windowId)
         {
             SelectedWindow = m_windowDraftValues.Find(windowDraft => windowDraft.Id == windowId);
-            SelectedEvent = null;
+            IsWindowInspectorActive = true;
         }
 
         // 更新选中窗口的业务类型

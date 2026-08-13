@@ -32,12 +32,11 @@ namespace Tools.Editor.AbilityComposer
 
         private ObjectField m_previewSourceField;
         private ObjectField m_animationClipField;
-        private ObjectField m_windowTrackField;
         private Button m_returnPreviousSceneButton;
         private Button m_createPreviewButton;
         private Button m_focusPreviewButton;
-        private Button m_applyAnimationButton;
-        private Button m_restoreDraftButton;
+        private Button m_saveAllButton;
+        private Button m_undoLastSaveButton;
         private VisualElement m_rootVisualElement;
         private AbilityComposerData m_composerData;
         private AbilityLeftView m_leftView;
@@ -67,8 +66,12 @@ namespace Tools.Editor.AbilityComposer
         public event Action<AbilityWindowType> OnWindowTypeChanged;
         public event Action<int, int> OnWindowFramesChanged;
         public event Action<float> OnWindowDamageChanged;
-        public event Action OnApplyAnimationRequested;
-        public event Action OnRestoreDraftRequested;
+        public event Action OnSaveWindowRequested;
+        public event Action OnSaveEventRequested;
+        public event Action OnCloseEventInspectorRequested;
+        public event Action OnCloseWindowInspectorRequested;
+        public event Action OnSaveAllRequested;
+        public event Action OnUndoLastSaveRequested;
 
         // 注入主视图需要的根节点与工作上下文
         public AbilityComposerView(VisualElement rootVisualElement, AbilityComposerData composerData)
@@ -120,10 +123,11 @@ namespace Tools.Editor.AbilityComposer
         }
 
         // 使用当前数据刷新播放控件与状态文字
-        public void Refresh(AbilityTimelineData timelineData, bool hasPreview, bool canEditWindows)
+        public void Refresh(AbilityTimelineData timelineData, bool hasPreview, bool canEditWindows, bool canUndoLastSave)
         {
             m_returnPreviousSceneButton.SetEnabled(hasPreview);
-            m_applyAnimationButton.SetEnabled(timelineData.HasClip);
+            m_saveAllButton.SetEnabled(timelineData.HasClip);
+            m_undoLastSaveButton.SetEnabled(canUndoLastSave);
             m_leftView.Refresh(timelineData, hasPreview, canEditWindows);
             m_rightView.Refresh(timelineData);
         }
@@ -141,12 +145,11 @@ namespace Tools.Editor.AbilityComposer
 
             m_previewSourceField.RegisterValueChangedCallback(HandlePreviewSourceChanged);
             m_animationClipField.RegisterValueChangedCallback(HandleAnimationClipChanged);
-            m_windowTrackField.RegisterValueChangedCallback(HandleWindowTrackChanged);
             m_returnPreviousSceneButton.clicked += RequestReturnPreviousScene;
             m_createPreviewButton.clicked += RequestCreatePreview;
             m_focusPreviewButton.clicked += RequestFocusPreview;
-            m_applyAnimationButton.clicked += RequestApplyAnimation;
-            m_restoreDraftButton.clicked += RequestRestoreDraft;
+            m_saveAllButton.clicked += RequestSaveAll;
+            m_undoLastSaveButton.clicked += RequestUndoLastSave;
             m_leftView.OnJumpFirstFrameRequested += RequestJumpFirstFrame;
             m_leftView.OnPreviousFrameRequested += RequestPreviousFrame;
             m_leftView.OnPlaybackToggled += RequestPlaybackToggle;
@@ -160,9 +163,14 @@ namespace Tools.Editor.AbilityComposer
             m_rightView.OnEventCategoryChanged += RequestEventCategoryChanged;
             m_rightView.OnEventReceiverTypeNameChanged += RequestEventReceiverTypeNameChanged;
             m_rightView.OnEventFunctionNameChanged += RequestEventFunctionNameChanged;
+            m_rightView.OnSaveEventRequested += RequestSaveEvent;
             m_rightView.OnWindowTypeChanged += RequestWindowTypeChanged;
+            m_rightView.OnWindowTrackChanged += RequestWindowTrackChanged;
             m_rightView.OnWindowFramesChanged += RequestWindowFramesChanged;
             m_rightView.OnWindowDamageChanged += RequestWindowDamageChanged;
+            m_rightView.OnSaveWindowRequested += RequestSaveWindow;
+            m_rightView.OnCloseEventInspectorRequested += RequestCloseEventInspector;
+            m_rightView.OnCloseWindowInspectorRequested += RequestCloseWindowInspector;
         }
 
         protected override void UnsubscribeViewEvents()
@@ -172,12 +180,11 @@ namespace Tools.Editor.AbilityComposer
 
             m_previewSourceField.UnregisterValueChangedCallback(HandlePreviewSourceChanged);
             m_animationClipField.UnregisterValueChangedCallback(HandleAnimationClipChanged);
-            m_windowTrackField.UnregisterValueChangedCallback(HandleWindowTrackChanged);
             m_returnPreviousSceneButton.clicked -= RequestReturnPreviousScene;
             m_createPreviewButton.clicked -= RequestCreatePreview;
             m_focusPreviewButton.clicked -= RequestFocusPreview;
-            m_applyAnimationButton.clicked -= RequestApplyAnimation;
-            m_restoreDraftButton.clicked -= RequestRestoreDraft;
+            m_saveAllButton.clicked -= RequestSaveAll;
+            m_undoLastSaveButton.clicked -= RequestUndoLastSave;
             m_leftView.OnJumpFirstFrameRequested -= RequestJumpFirstFrame;
             m_leftView.OnPreviousFrameRequested -= RequestPreviousFrame;
             m_leftView.OnPlaybackToggled -= RequestPlaybackToggle;
@@ -191,9 +198,14 @@ namespace Tools.Editor.AbilityComposer
             m_rightView.OnEventCategoryChanged -= RequestEventCategoryChanged;
             m_rightView.OnEventReceiverTypeNameChanged -= RequestEventReceiverTypeNameChanged;
             m_rightView.OnEventFunctionNameChanged -= RequestEventFunctionNameChanged;
+            m_rightView.OnSaveEventRequested -= RequestSaveEvent;
             m_rightView.OnWindowTypeChanged -= RequestWindowTypeChanged;
+            m_rightView.OnWindowTrackChanged -= RequestWindowTrackChanged;
             m_rightView.OnWindowFramesChanged -= RequestWindowFramesChanged;
             m_rightView.OnWindowDamageChanged -= RequestWindowDamageChanged;
+            m_rightView.OnSaveWindowRequested -= RequestSaveWindow;
+            m_rightView.OnCloseEventInspectorRequested -= RequestCloseEventInspector;
+            m_rightView.OnCloseWindowInspectorRequested -= RequestCloseWindowInspector;
             m_isControlsReady = false;
         }
 
@@ -209,16 +221,15 @@ namespace Tools.Editor.AbilityComposer
         {
             m_previewSourceField = rootVisualElement.Q<ObjectField>("preview-source-field");
             m_animationClipField = rootVisualElement.Q<ObjectField>("animation-clip-field");
-            m_windowTrackField = rootVisualElement.Q<ObjectField>("window-track-field");
             m_returnPreviousSceneButton = rootVisualElement.Q<Button>("return-previous-scene-button");
             m_createPreviewButton = rootVisualElement.Q<Button>("create-preview-button");
             m_focusPreviewButton = rootVisualElement.Q<Button>("focus-preview-button");
-            m_applyAnimationButton = rootVisualElement.Q<Button>("apply-animation-button");
-            m_restoreDraftButton = rootVisualElement.Q<Button>("restore-draft-button");
+            m_saveAllButton = rootVisualElement.Q<Button>("save-all-button");
+            m_undoLastSaveButton = rootVisualElement.Q<Button>("undo-last-save-button");
 
-            if (m_previewSourceField == null || m_animationClipField == null || m_windowTrackField == null || m_returnPreviousSceneButton == null
-                || m_createPreviewButton == null || m_focusPreviewButton == null || m_applyAnimationButton == null
-                || m_restoreDraftButton == null)
+            if (m_previewSourceField == null || m_animationClipField == null || m_returnPreviousSceneButton == null
+                || m_createPreviewButton == null || m_focusPreviewButton == null || m_saveAllButton == null
+                || m_undoLastSaveButton == null)
             {
                 QLog.Error("配置 Ability Composer 主视图失败：缺少必要的 UXML 控件");
                 return false;
@@ -237,9 +248,6 @@ namespace Tools.Editor.AbilityComposer
             m_animationClipField.objectType = typeof(AnimationClip);
             m_animationClipField.allowSceneObjects = false;
             m_animationClipField.SetValueWithoutNotify(composerData.SelectedAnimationClip);
-            m_windowTrackField.objectType = typeof(AbilityWindowTrackSO);
-            m_windowTrackField.allowSceneObjects = false;
-            m_windowTrackField.SetValueWithoutNotify(composerData.SelectedWindowTrack);
         }
 
         // 将预览资源变更转换为用户意图
@@ -262,12 +270,6 @@ namespace Tools.Editor.AbilityComposer
             OnAnimationClipChanged?.Invoke(changeEvent.newValue as AnimationClip);
         }
 
-        // 将窗口轨道资产变更转换为用户意图
-        private void HandleWindowTrackChanged(ChangeEvent<UnityEngine.Object> changeEvent)
-        {
-            OnWindowTrackChanged?.Invoke(changeEvent.newValue as AbilityWindowTrackSO);
-        }
-
         // 请求返回进入预览前的场景
         private void RequestReturnPreviousScene()
         {
@@ -286,17 +288,11 @@ namespace Tools.Editor.AbilityComposer
             OnFocusPreviewRequested?.Invoke();
         }
 
-        // 请求将当前事件草稿应用到动画资源
-        private void RequestApplyAnimation()
-        {
-            OnApplyAnimationRequested?.Invoke();
-        }
+        // 请求一键保存全部草稿
+        private void RequestSaveAll() => OnSaveAllRequested?.Invoke();
 
-        // 请求还原当前动画资源中的事件草稿
-        private void RequestRestoreDraft()
-        {
-            OnRestoreDraftRequested?.Invoke();
-        }
+        // 请求撤销 Composer 的上一次保存
+        private void RequestUndoLastSave() => OnUndoLastSaveRequested?.Invoke();
 
         // 请求跳转到第一帧
         private void RequestJumpFirstFrame()
@@ -358,11 +354,26 @@ namespace Tools.Editor.AbilityComposer
         // 转发窗口类型编辑请求
         private void RequestWindowTypeChanged(AbilityWindowType type) => OnWindowTypeChanged?.Invoke(type);
 
+        // 转发窗口轨道切换请求
+        private void RequestWindowTrackChanged(AbilityWindowTrackSO windowTrack) => OnWindowTrackChanged?.Invoke(windowTrack);
+
         // 转发窗口帧范围编辑请求
         private void RequestWindowFramesChanged(int startFrame, int endFrame) => OnWindowFramesChanged?.Invoke(startFrame, endFrame);
 
         // 转发窗口伤害编辑请求
         private void RequestWindowDamageChanged(float damage) => OnWindowDamageChanged?.Invoke(damage);
+
+        // 转发保存窗口轨道请求
+        private void RequestSaveWindow() => OnSaveWindowRequested?.Invoke();
+
+        // 转发保存事件请求
+        private void RequestSaveEvent() => OnSaveEventRequested?.Invoke();
+
+        // 转发关闭事件检查器页签请求
+        private void RequestCloseEventInspector() => OnCloseEventInspectorRequested?.Invoke();
+
+        // 转发关闭窗口检查器页签请求
+        private void RequestCloseWindowInspector() => OnCloseWindowInspectorRequested?.Invoke();
 
         // 为窗口文字应用 MiSans，避免中文回退到系统粗体字体
         private void ApplyMiSansFont(VisualElement rootVisualElement)
