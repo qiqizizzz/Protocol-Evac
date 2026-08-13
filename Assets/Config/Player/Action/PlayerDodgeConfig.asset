@@ -13,8 +13,7 @@ MonoBehaviour:
   m_Name: PlayerDodgeConfig
   m_EditorClassIdentifier: 
   StateClipValues:
-  - StateClipValue: {fileID: -623603649343465320, guid: dab086bbf0738634385cac228fd0ba8a,
-      type: 3}
+  - StateClipValue: {fileID: 7400000, guid: bd344d3a213899743b9df49fd70318ca, type: 2}
     StateDurationValue: 1.8333334
     ShowWeaponValue: 0
     UseComboWindowValue: 0

@@ -13,21 +13,21 @@ MonoBehaviour:
   m_Name: PlayerAirConfig
   m_EditorClassIdentifier: 
   StateClipValues:
-  - StateClipValue: {fileID: -623603649343465320, guid: c25ac958a9e8248438218050e5548a9b,
-      type: 3}
+  - StateClipValue: {fileID: 7400000, guid: a73438e2725448541b1b0905040f0b3f, type: 2}
     StateDurationValue: 0.70000005
+    ShowWeaponValue: 0
     UseComboWindowValue: 0
     ComboOpenNormalizedTimeValue: 0.35
     ComboCloseNormalizedTimeValue: 0.75
-  - StateClipValue: {fileID: -623603649343465320, guid: 61b10d8d928cd5b43b163392b9b3fc61,
-      type: 3}
+  - StateClipValue: {fileID: 7400000, guid: 79f121d7fd96d2c4da783323e7329cbc, type: 2}
     StateDurationValue: 1.3333334
+    ShowWeaponValue: 0
     UseComboWindowValue: 0
     ComboOpenNormalizedTimeValue: 0.35
     ComboCloseNormalizedTimeValue: 0.75
-  - StateClipValue: {fileID: -623603649343465320, guid: 1e3a9cd6cc042a64db376afb9c9556c4,
-      type: 3}
+  - StateClipValue: {fileID: 7400000, guid: ed5ffe6bf4b8e984ab92d038cc0361f3, type: 2}
     StateDurationValue: 1.6666667
+    ShowWeaponValue: 0
     UseComboWindowValue: 0
     ComboOpenNormalizedTimeValue: 0.35
     ComboCloseNormalizedTimeValue: 0.75

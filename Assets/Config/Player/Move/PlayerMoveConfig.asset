@@ -13,59 +13,49 @@ MonoBehaviour:
   m_Name: PlayerMoveConfig
   m_EditorClassIdentifier: 
   StateClipValues:
-  - StateClipValue: {fileID: -623603649343465320, guid: 452b4e86ae9153f438e765aded97a1c2,
-      type: 3}
+  - StateClipValue: {fileID: 7400000, guid: 2b076702264687e409e65d3fd1b331fd, type: 2}
     StateDurationValue: 2.6666667
     ShowWeaponValue: 0
     UseComboWindowValue: 1
     ComboOpenNormalizedTimeValue: 0.35
     ComboCloseNormalizedTimeValue: 0.75
-  - StateClipValue: {fileID: -623603649343465320, guid: c5b2f5a04b4f70f41898453a1174c7c4,
-      type: 3}
+  - StateClipValue: {fileID: 7400000, guid: 1082f854c11dd254c8ceba52832a64e1, type: 2}
     StateDurationValue: 1.2666668
     ShowWeaponValue: 0
     UseComboWindowValue: 1
     ComboOpenNormalizedTimeValue: 0.2
     ComboCloseNormalizedTimeValue: 0.75
-  - StateClipValue: {fileID: -623603649343465320, guid: bd85336ffff0f8547b3c795191256179,
-      type: 3}
+  - StateClipValue: {fileID: 7400000, guid: ad4be21143036ae4cb675597e556fea5, type: 2}
     StateDurationValue: 0.73333335
     ShowWeaponValue: 0
     UseComboWindowValue: 0
     ComboOpenNormalizedTimeValue: 0.35
     ComboCloseNormalizedTimeValue: 0.75
-  - StateClipValue: {fileID: -623603649343465320, guid: 2c6661c6244bd31468005b7e671f85ce,
-      type: 3}
+  - StateClipValue: {fileID: 7400000, guid: 9d94137ff3465574c9ee69485b262a1a, type: 2}
     StateDurationValue: 0.53333336
     ShowWeaponValue: 0
     UseComboWindowValue: 0
     ComboOpenNormalizedTimeValue: 0.35
     ComboCloseNormalizedTimeValue: 0.75
   WalkStopClipPairValue:
-    LeftClipValue: {fileID: -623603649343465320, guid: d8af238977301cb45a4ed1e915363b97,
-      type: 3}
+    LeftClipValue: {fileID: 7400000, guid: 8fc41e4a71e483547bfc81103efe3259, type: 2}
     LeftDurationValue: 3.1000001
     LeftEndNormalizedTimeValue: 0.5
-    RightClipValue: {fileID: -623603649343465320, guid: fa485937e342a7849b11eb435715a397,
-      type: 3}
+    RightClipValue: {fileID: 7400000, guid: a63364ee0cea8244e8e217776183d4f7, type: 2}
     RightDurationValue: 3.1666667
     RightEndNormalizedTimeValue: 0.5
   RunStopClipPairValue:
-    LeftClipValue: {fileID: -623603649343465320, guid: 3b74a757b027d674ba2f1a08186d1fe7,
-      type: 3}
+    LeftClipValue: {fileID: 7400000, guid: 8e64ec0ce90dc9b40887b14f55cfa14e, type: 2}
     LeftDurationValue: 2.8000002
     LeftEndNormalizedTimeValue: 1
-    RightClipValue: {fileID: -623603649343465320, guid: 421d2d75872cb3747ba96f67a643888c,
-      type: 3}
+    RightClipValue: {fileID: 7400000, guid: b565fc8f0c231ff46b50b315c67eb9db, type: 2}
     RightDurationValue: 3.2333336
     RightEndNormalizedTimeValue: 1
   SprintStopClipPairValue:
-    LeftClipValue: {fileID: -623603649343465320, guid: 202fc03352b4e7d4eaa1c022f572f1bd,
-      type: 3}
+    LeftClipValue: {fileID: 7400000, guid: 8a31e48339d029b48aa8c2c386c65874, type: 2}
     LeftDurationValue: 3.2333336
     LeftEndNormalizedTimeValue: 1
-    RightClipValue: {fileID: -623603649343465320, guid: 5935b290af155e64fb1cec28a521ad52,
-      type: 3}
+    RightClipValue: {fileID: 7400000, guid: 45b34d25f562f5245b533764516ffb1e, type: 2}
     RightDurationValue: 4.1000004
     RightEndNormalizedTimeValue: 1
   WalkSpeedValue: 2.5
