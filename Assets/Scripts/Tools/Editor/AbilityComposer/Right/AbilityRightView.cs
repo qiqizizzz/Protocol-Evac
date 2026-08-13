@@ -9,7 +9,7 @@
 using System;
 using System.Collections.Generic;
 using Framework.QTower.Editor.View;
-using Module.Ability.Window.Hit;
+using Module.Ability.Window;
 using Tools.Editor.AbilityComposer.Center.Event;
 using Tools.Editor.AbilityComposer.Center.Timeline;
 using Tools.Editor.AbilityComposer.Right.Event;
@@ -45,7 +45,7 @@ namespace Tools.Editor.AbilityComposer.Right
         public event Action<string> OnEventFunctionNameChanged;
         public event Action OnSaveEventRequested;
         public event Action<AbilityWindowDraftType> OnWindowTypeChanged;
-        public event Action<AbilityHitWindowTrackSO> OnWindowTrackChanged;
+        public event Action<AbilityWindowTrackBaseSO> OnWindowTrackChanged;
         public event Action<int, int> OnWindowFramesChanged;
         public event Action<float> OnWindowDamageChanged;
         public event Action OnSaveWindowRequested;
@@ -168,7 +168,7 @@ namespace Tools.Editor.AbilityComposer.Right
         private void RequestWindowTypeChanged(AbilityWindowDraftType type) => OnWindowTypeChanged?.Invoke(type);
 
         // 转发窗口轨道切换请求
-        private void RequestWindowTrackChanged(AbilityHitWindowTrackSO windowTrack) => OnWindowTrackChanged?.Invoke(windowTrack);
+        private void RequestWindowTrackChanged(AbilityWindowTrackBaseSO windowTrack) => OnWindowTrackChanged?.Invoke(windowTrack);
 
         // 转发窗口帧范围编辑请求
         private void RequestWindowFramesChanged(int startFrame, int endFrame) => OnWindowFramesChanged?.Invoke(startFrame, endFrame);

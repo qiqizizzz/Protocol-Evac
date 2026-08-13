@@ -12,7 +12,7 @@ using UnityEngine;
 namespace Module.Ability.Window.Invincible
 {
     [CreateAssetMenu(fileName = "AbilityInvincibleWindowTrack", menuName = "配置/Ability/窗口/无敌")]
-    public sealed class AbilityInvincibleWindowTrackSO : AbilityWindowTrackSO
+    public sealed class AbilityInvincibleWindowTrackSO : AbilityWindowTrackBaseSO
     {
         [SerializeField] private List<AbilityInvincibleWindowData> WindowValues = new List<AbilityInvincibleWindowData>();
 

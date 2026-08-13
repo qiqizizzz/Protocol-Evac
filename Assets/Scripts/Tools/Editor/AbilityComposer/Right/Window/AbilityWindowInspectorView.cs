@@ -9,7 +9,9 @@
 using System;
 using System.Collections.Generic;
 using Framework.QTower.Editor.View;
+using Module.Ability.Window;
 using Module.Ability.Window.Hit;
+using Module.Ability.Window.StepAdvance;
 using Tools.Editor.AbilityComposer.Center.Timeline;
 using UnityEditor.UIElements;
 using UnityEngine;
@@ -34,7 +36,7 @@ namespace Tools.Editor.AbilityComposer.Right.Window
         private FloatField m_damageField;
         private Button m_saveWindowButton;
 
-        public event Action<AbilityHitWindowTrackSO> OnWindowTrackChanged;
+        public event Action<AbilityWindowTrackBaseSO> OnWindowTrackChanged;
         public event Action<AbilityWindowDraftType> OnTypeChanged;
         public event Action<int, int> OnFramesChanged;
         public event Action<float> OnDamageChanged;
@@ -90,12 +92,19 @@ namespace Tools.Editor.AbilityComposer.Right.Window
         // 刷新选中窗口的检查器字段
         public void Refresh(AbilityTimelineData timelineData)
         {
-            m_windowTrackField.SetValueWithoutNotify(timelineData.HitWindowTrack);
             AbilityWindowDraft selectedWindow = timelineData.SelectedWindow;
             bool isVisible = selectedWindow != null;
             SetInspectorVisible(isVisible);
             if (!isVisible)
                 return;
+
+            bool isHitWindow = selectedWindow.Type == AbilityWindowDraftType.Hit;
+            m_windowTrackField.objectType = isHitWindow
+                ? typeof(AbilityHitWindowTrackSO)
+                : typeof(AbilityStepAdvanceWindowTrackSO);
+            m_windowTrackField.SetValueWithoutNotify(isHitWindow
+                ? timelineData.HitWindowTrack
+                : timelineData.StepAdvanceWindowTrack);
 
             SetWindowFieldsEnabled(true);
             m_saveWindowButton.SetEnabled(true);
@@ -152,7 +161,7 @@ namespace Tools.Editor.AbilityComposer.Right.Window
         // 切换当前编辑的窗口轨道资产
         private void HandleWindowTrackChanged(ChangeEvent<UnityEngine.Object> changeEvent)
         {
-            OnWindowTrackChanged?.Invoke(changeEvent.newValue as AbilityHitWindowTrackSO);
+            OnWindowTrackChanged?.Invoke(changeEvent.newValue as AbilityWindowTrackBaseSO);
         }
 
         // 转换窗口类型下拉框的选择结果

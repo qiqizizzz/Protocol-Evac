@@ -8,6 +8,7 @@
 
 using System.Collections.Generic;
 using Framework.QTower.Editor.Controller;
+using Module.Ability.Window;
 using Module.Ability.Window.Hit;
 using Module.Ability.Window.StepAdvance;
 using Tools.Editor.AbilityComposer.Center.Event;
@@ -84,7 +85,7 @@ namespace Tools.Editor.AbilityComposer
                 callback => m_composerView.OnAnimationClipChanged += callback,
                 callback => m_composerView.OnAnimationClipChanged -= callback,
                 HandleAnimationClipChanged);
-            RegisterEvent<AbilityHitWindowTrackSO>(
+            RegisterEvent<AbilityWindowTrackBaseSO>(
                 callback => m_composerView.OnWindowTrackChanged += callback,
                 callback => m_composerView.OnWindowTrackChanged -= callback,
                 HandleWindowTrackChanged);
@@ -180,9 +181,30 @@ namespace Tools.Editor.AbilityComposer
         }
 
         // 切换当前编辑的通用窗口轨道资产
-        private void HandleWindowTrackChanged(AbilityHitWindowTrackSO windowTrack)
+        private void HandleWindowTrackChanged(AbilityWindowTrackBaseSO windowTrack)
         {
-            m_composerData.SetWindowTracks(windowTrack, m_composerData.SelectedStepAdvanceWindowTrack);
+            if (m_timelineData.SelectedWindow != null && m_timelineData.SelectedWindow.Type == AbilityWindowDraftType.StepAdvance)
+            {
+                AbilityStepAdvanceWindowTrackSO stepAdvanceTrack = windowTrack as AbilityStepAdvanceWindowTrackSO;
+                if (stepAdvanceTrack == null)
+                {
+                    QLog.Error("技能推进窗口必须绑定 AbilityStepAdvanceWindowTrackSO");
+                    return;
+                }
+
+                m_composerData.SetWindowTracks(m_composerData.SelectedHitWindowTrack, stepAdvanceTrack);
+            }
+            else
+            {
+                AbilityHitWindowTrackSO hitTrack = windowTrack as AbilityHitWindowTrackSO;
+                if (hitTrack == null)
+                {
+                    QLog.Error("命中窗口必须绑定 AbilityHitWindowTrackSO");
+                    return;
+                }
+
+                m_composerData.SetWindowTracks(hitTrack, m_composerData.SelectedStepAdvanceWindowTrack);
+            }
             LoadWindowTrack();
             RefreshView();
         }

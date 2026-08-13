@@ -12,7 +12,7 @@ using UnityEngine;
 namespace Module.Ability.Window.Hit
 {
     [CreateAssetMenu(fileName = "AbilityHitWindowTrack", menuName = "配置/Ability/窗口/命中")]
-    public sealed class AbilityHitWindowTrackSO : AbilityWindowTrackSO
+    public sealed class AbilityHitWindowTrackSO : AbilityWindowTrackBaseSO
     {
         [SerializeField] private List<AbilityHitWindowData> WindowValues = new List<AbilityHitWindowData>();
 

@@ -1,7 +1,7 @@
 /*
  * ┌─────────────────────────────────────────────────────────────┐
  * │  描    述: Ability 窗口轨道基类，保存轨道绑定的动画片段      │
- * │  类    名: AbilityWindowTrackSO.cs                          │
+ * │  类    名: AbilityWindowTrackBaseSO.cs                          │
  * │  创    建: By qiqizizzz                                    │
  * └─────────────────────────────────────────────────────────────┘
  */
@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace Module.Ability.Window
 {
-    public abstract class AbilityWindowTrackSO : ScriptableObject
+    public abstract class AbilityWindowTrackBaseSO : ScriptableObject
     {
         [SerializeField] private AnimationClip AnimationClipValue;
 

@@ -9,6 +9,7 @@
 using System;
 using System.Collections.Generic;
 using Framework.QTower.Editor.View;
+using Module.Ability.Window;
 using Module.Ability.Window.Hit;
 using Tools.Editor.AbilityComposer.Center;
 using Tools.Editor.AbilityComposer.Center.Event;
@@ -51,7 +52,7 @@ namespace Tools.Editor.AbilityComposer
 
         public event Action<GameObject> OnPreviewSourceChanged;
         public event Action<AnimationClip> OnAnimationClipChanged;
-        public event Action<AbilityHitWindowTrackSO> OnWindowTrackChanged;
+        public event Action<AbilityWindowTrackBaseSO> OnWindowTrackChanged;
         public event Action OnCreatePreviewRequested;
         public event Action OnFocusPreviewRequested;
         public event Action OnReturnPreviousSceneRequested;
@@ -398,7 +399,7 @@ namespace Tools.Editor.AbilityComposer
         private void RequestWindowTypeChanged(AbilityWindowDraftType type) => OnWindowTypeChanged?.Invoke(type);
 
         // 转发窗口轨道切换请求
-        private void RequestWindowTrackChanged(AbilityHitWindowTrackSO windowTrack) => OnWindowTrackChanged?.Invoke(windowTrack);
+        private void RequestWindowTrackChanged(AbilityWindowTrackBaseSO windowTrack) => OnWindowTrackChanged?.Invoke(windowTrack);
 
         // 转发窗口帧范围编辑请求
         private void RequestWindowFramesChanged(int startFrame, int endFrame) => OnWindowFramesChanged?.Invoke(startFrame, endFrame);

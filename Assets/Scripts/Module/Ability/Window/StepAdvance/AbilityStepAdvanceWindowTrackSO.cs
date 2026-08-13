@@ -12,7 +12,7 @@ using UnityEngine;
 namespace Module.Ability.Window.StepAdvance
 {
     [CreateAssetMenu(fileName = "AbilityStepAdvanceWindowTrack", menuName = "配置/Ability/窗口/阶段推进")]
-    public sealed class AbilityStepAdvanceWindowTrackSO : AbilityWindowTrackSO
+    public sealed class AbilityStepAdvanceWindowTrackSO : AbilityWindowTrackBaseSO
     {
         [SerializeField] private List<AbilityStepAdvanceWindowData> WindowValues = new List<AbilityStepAdvanceWindowData>();
 
