@@ -8,7 +8,7 @@
 
 using System;
 
-namespace Framework.QTower.Common.Animation
+namespace Tools.Editor.AbilityComposer.Right
 {
     [AttributeUsage(AttributeTargets.Class, Inherited = false)]
     public sealed class AnimationEventReceiverAttribute : Attribute

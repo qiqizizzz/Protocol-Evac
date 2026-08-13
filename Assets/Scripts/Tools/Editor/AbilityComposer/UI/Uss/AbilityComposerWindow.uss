@@ -82,8 +82,8 @@
 }
 
 .ac-inspector-panel {
-    width: 275px;
-    min-width: 275px;
+    width: 360px;
+    min-width: 360px;
     padding-top: 12px;
     padding-right: 12px;
     padding-bottom: 12px;
@@ -257,8 +257,8 @@
 }
 
 .ac-inspector-field .unity-base-field__label {
-    width: 145px;
-    min-width: 145px;
+    width: 125px;
+    min-width: 125px;
     flex-shrink: 0;
 }
 

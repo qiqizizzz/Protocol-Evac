@@ -7,7 +7,7 @@
  */
 
 using Module.Player.Context;
-using Framework.QTower.Common.Animation;
+using Tools.Editor.AbilityComposer.Right;
 using UnityEngine;
 using Utils.log;
 

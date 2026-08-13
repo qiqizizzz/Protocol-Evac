@@ -9,7 +9,6 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-using Framework.QTower.Common.Animation;
 using UnityEditor;
 using UnityEngine;
 
