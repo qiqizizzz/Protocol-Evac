@@ -46,5 +46,19 @@ namespace Module.Ability.Window
             if (EndNormalizedTimeValue < StartNormalizedTimeValue)
                 EndNormalizedTimeValue = StartNormalizedTimeValue;
         }
+
+        // 判断指定时间是否处于窗口范围内
+        public bool IsActiveAt(float normalizedTime)
+        {
+            return normalizedTime >= StartNormalizedTimeValue
+                && normalizedTime <= EndNormalizedTimeValue;
+        }
+
+        // 判断时间推进是否跨过窗口范围
+        public bool IsCrossedBy(float previousNormalizedTime, float currentNormalizedTime)
+        {
+            return currentNormalizedTime >= StartNormalizedTimeValue
+                && previousNormalizedTime <= EndNormalizedTimeValue;
+        }
     }
 }

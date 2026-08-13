@@ -11,6 +11,7 @@ using Module.Player.HFSM;
 using Module.Player.Input.Buffer;
 using Module.Player.Skill;
 using Module.Player.Skill.Data;
+using Module.Ability.Window.StepAdvance;
 using Utils.log;
 using Utils.Timer;
 
@@ -175,16 +176,21 @@ namespace Module.Player.Skill.Core
             if (stepData == null)
                 return;
 
-            if (!stepData.TryGetStepAdvanceWindow(out float openNormalizedTime, out float closeNormalizedTime))
+            if (!stepData.UseStepAdvanceWindow || stepData.StepAdvanceWindowTrack == null
+                || stepData.StepAdvanceWindowTrack.WindowCount == 0)
             {
                 m_isStepAdvanceBuffered = true;
                 m_isStepAdvanceRequested = false;
                 return;
             }
 
-            if (!IsNormalizedTimeInWindow(previousNormalizedTime, currentNormalizedTime, openNormalizedTime, closeNormalizedTime))
+            AbilityStepAdvanceWindowTrackSO windowTrack = stepData.StepAdvanceWindowTrack;
+            bool isWindowActive = windowTrack.TryGetActiveWindow<AbilityStepAdvanceWindowData>(currentNormalizedTime, out _);
+            bool hasCrossedWindow = windowTrack.TryGetCrossedWindow<AbilityStepAdvanceWindowData>(previousNormalizedTime, currentNormalizedTime, out _);
+            if (!isWindowActive && !hasCrossedWindow)
             {
-                m_isStepAdvanceRequested = false;
+                if (!windowTrack.HasWindowAtOrAfter(currentNormalizedTime))
+                    m_isStepAdvanceRequested = false;
                 return;
             }
 
@@ -208,12 +214,6 @@ namespace Module.Player.Skill.Core
             m_currentStepIndex = nextStepIndex;
             EnterCurrentStepBegin(context);
             return IsRunning;
-        }
-
-        // 判断归一化时间段是否覆盖指定窗口
-        private bool IsNormalizedTimeInWindow(float previousNormalizedTime, float currentNormalizedTime, float openNormalizedTime, float closeNormalizedTime)
-        {
-            return currentNormalizedTime >= openNormalizedTime && previousNormalizedTime <= closeNormalizedTime;
         }
 
         private void Finish(PlayerContext context)

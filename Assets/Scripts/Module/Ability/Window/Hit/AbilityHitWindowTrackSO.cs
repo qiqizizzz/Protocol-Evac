@@ -16,6 +16,8 @@ namespace Module.Ability.Window.Hit
     {
         [SerializeField] private List<AbilityHitWindowData> WindowValues = new List<AbilityHitWindowData>();
 
+        protected override IReadOnlyList<AbilityWindowDataBase> WindowDataValues => WindowValues;
+
         public IReadOnlyList<AbilityHitWindowData> Windows => WindowValues;
 
         // 使用编辑器提交的命中窗口替换轨道数据

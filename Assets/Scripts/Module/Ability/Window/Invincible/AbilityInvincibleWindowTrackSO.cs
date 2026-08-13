@@ -16,6 +16,8 @@ namespace Module.Ability.Window.Invincible
     {
         [SerializeField] private List<AbilityInvincibleWindowData> WindowValues = new List<AbilityInvincibleWindowData>();
 
+        protected override IReadOnlyList<AbilityWindowDataBase> WindowDataValues => WindowValues;
+
         public IReadOnlyList<AbilityInvincibleWindowData> Windows => WindowValues;
 
         // 使用编辑器提交的无敌窗口替换轨道数据

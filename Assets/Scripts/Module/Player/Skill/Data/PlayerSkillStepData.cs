@@ -154,23 +154,5 @@ namespace Module.Player.Skill.Data
             return hasSynced;
         }
 
-        // 尝试读取下一段推进窗口
-        public bool TryGetStepAdvanceWindow(out float openNormalizedTime, out float closeNormalizedTime)
-        {
-            openNormalizedTime = 0f;
-            closeNormalizedTime = 0f;
-
-            if (!UseStepAdvanceWindowValue)
-                return false;
-
-            if (StepAdvanceWindowTrackValue == null || StepAdvanceWindowTrackValue.Windows.Count == 0)
-                return false;
-
-            AbilityStepAdvanceWindowData window = StepAdvanceWindowTrackValue.Windows[0];
-            openNormalizedTime = window.StartNormalizedTime;
-            closeNormalizedTime = window.EndNormalizedTime;
-            return true;
-        }
-
     }
 }

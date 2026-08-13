@@ -12,7 +12,6 @@ using Module.Ability.Window;
 using Module.Ability.Window.StepAdvance;
 using TriInspector;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace Module.Player.HFSM.Config.Common
 {
@@ -60,15 +59,6 @@ namespace Module.Player.HFSM.Config.Common
         [Tooltip("当前动画段对应的阶段推进窗口轨道")]
         [SerializeField] private AbilityStepAdvanceWindowTrackSO ComboWindowTrackValue;
 
-        // 旧时间字段仅用于兼容已经存在的移动配置资产
-        [HideInInspector]
-        [FormerlySerializedAs("ComboOpenNormalizedTimeValue")]
-        [SerializeField, Range(0f, 1f)] private float LegacyComboOpenNormalizedTimeValue = 0.35f;
-
-        [HideInInspector]
-        [FormerlySerializedAs("ComboCloseNormalizedTimeValue")]
-        [SerializeField, Range(0f, 1f)] private float LegacyComboCloseNormalizedTimeValue = 0.75f;
-
         public AnimationClip StateClip => StateClipValue;
 
         public float StateDuration => StateDurationValue;
@@ -78,10 +68,6 @@ namespace Module.Player.HFSM.Config.Common
         public bool UseComboWindow => UseComboWindowValue;
 
         public AbilityStepAdvanceWindowTrackSO ComboWindowTrack => ComboWindowTrackValue;
-
-        public float ComboOpenNormalizedTime => LegacyComboOpenNormalizedTimeValue;
-
-        public float ComboCloseNormalizedTime => LegacyComboCloseNormalizedTimeValue;
 
         // 从动画片段同步状态持续时间
         public bool SyncDurationFromClip()
@@ -93,29 +79,5 @@ namespace Module.Player.HFSM.Config.Common
             return true;
         }
 
-        // 尝试读取连段窗口
-        public bool TryGetComboWindow(out float comboOpenNormalizedTime, out float comboCloseNormalizedTime)
-        {
-            comboOpenNormalizedTime = 0f;
-            comboCloseNormalizedTime = 0f;
-
-            if (!UseComboWindowValue)
-                return false;
-
-            if (ComboWindowTrackValue != null && ComboWindowTrackValue.Windows.Count > 0)
-            {
-                AbilityStepAdvanceWindowData window = ComboWindowTrackValue.Windows[0];
-                comboOpenNormalizedTime = window.StartNormalizedTime;
-                comboCloseNormalizedTime = window.EndNormalizedTime;
-                return true;
-            }
-
-            comboOpenNormalizedTime = Mathf.Clamp01(LegacyComboOpenNormalizedTimeValue);
-            comboCloseNormalizedTime = Mathf.Clamp01(LegacyComboCloseNormalizedTimeValue);
-            if (comboCloseNormalizedTime < comboOpenNormalizedTime)
-                comboCloseNormalizedTime = comboOpenNormalizedTime;
-
-            return true;
-        }
     }
 }

@@ -6,8 +6,8 @@
  * └──────────────────────────────────┘
  */
 
-using System.Collections.Generic;
 using Framework.QTower.Controller;
+using System.Collections.Generic;
 using Module.Combat.Hitbox;
 using Module.Ability.Window.Hit;
 using Module.Player.Context;
@@ -180,8 +180,7 @@ namespace Module.Player.Skill.Core
             }
 
             float normalizedTime = m_timeline.NormalizedTime;
-            AbilityHitWindowData activeWindow = FindActiveHitWindow(windowTrack, normalizedTime);
-            if (activeWindow == null)
+            if (!windowTrack.TryGetActiveWindow(normalizedTime, out AbilityHitWindowData activeWindow))
             {
                 CloseHitWindow();
                 return;
@@ -194,20 +193,6 @@ namespace Module.Player.Skill.Core
             m_combatHitbox.Open(activeWindow.Damage, m_damageSource);
             m_hitWindowStepIndex = m_timeline.CurrentStepIndex;
             m_activeHitWindowId = activeWindow.Id;
-        }
-
-        // 查找当前时间命中的第一条 Hit 窗口
-        private AbilityHitWindowData FindActiveHitWindow(AbilityHitWindowTrackSO windowTrack, float normalizedTime)
-        {
-            IReadOnlyList<AbilityHitWindowData> windows = windowTrack.Windows;
-            for (int windowIndex = 0; windowIndex < windows.Count; windowIndex++)
-            {
-                AbilityHitWindowData window = windows[windowIndex];
-                if (normalizedTime >= window.StartNormalizedTime && normalizedTime <= window.EndNormalizedTime)
-                    return window;
-            }
-
-            return null;
         }
 
         // 关闭当前命中窗口并重置段落记录

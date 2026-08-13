@@ -40,19 +40,6 @@ namespace Module.Player.Skill.Data
             NormalAttackExitBlendDurationValue = Mathf.Max(0f, NormalAttackExitBlendDurationValue);
         }
 
-        // 尝试读取指定普攻段的连段窗口
-        public bool TryGetComboWindow(int attackIndex, out float comboOpenNormalizedTime, out float comboCloseNormalizedTime)
-        {
-            comboOpenNormalizedTime = 0f;
-            comboCloseNormalizedTime = 0f;
-
-            PlayerSkillStepData stepData = GetStep(attackIndex);
-            if (stepData == null)
-                return false;
-
-            return stepData.TryGetStepAdvanceWindow(out comboOpenNormalizedTime, out comboCloseNormalizedTime);
-        }
-
     }
 }
 

@@ -16,6 +16,8 @@ namespace Module.Ability.Window.StepAdvance
     {
         [SerializeField] private List<AbilityStepAdvanceWindowData> WindowValues = new List<AbilityStepAdvanceWindowData>();
 
+        protected override IReadOnlyList<AbilityWindowDataBase> WindowDataValues => WindowValues;
+
         public IReadOnlyList<AbilityStepAdvanceWindowData> Windows => WindowValues;
 
         // 使用编辑器提交的阶段推进窗口替换轨道数据
