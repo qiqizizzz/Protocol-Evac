@@ -7,11 +7,13 @@
  */
 
 using Module.Player.Context;
+using Framework.QTower.Common.Animation;
 using UnityEngine;
 using Utils.log;
 
 namespace Module.Player.HFSM.Animation
 {
+    [AnimationEventReceiver]
     public sealed class PlayerRootMotionReceiver : MonoBehaviour
     {
         private Animator m_animator;

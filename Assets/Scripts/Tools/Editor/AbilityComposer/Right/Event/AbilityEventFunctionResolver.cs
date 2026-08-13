@@ -9,6 +9,8 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using Framework.QTower.Common.Animation;
+using UnityEditor;
 using UnityEngine;
 
 namespace Tools.Editor.AbilityComposer.Right.Event
@@ -29,31 +31,43 @@ namespace Tools.Editor.AbilityComposer.Right.Event
                 if (receiver == null)
                     continue;
 
-                MethodInfo[] methods = receiver.GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public);
-                string receiverTypeName = receiver.GetType().Name;
-                if (!functionGroups.TryGetValue(receiverTypeName, out List<string> functionNames))
-                {
-                    functionNames = new List<string>();
-                    functionGroups.Add(receiverTypeName, functionNames);
-                }
-
-                for (int methodIndex = 0; methodIndex < methods.Length; methodIndex++)
-                {
-                    MethodInfo method = methods[methodIndex];
-                    if (!IsAnimationEventMethod(method) || functionNames.Contains(method.Name))
-                        continue;
-
-                    functionNames.Add(method.Name);
-                }
-
-                if (functionNames.Count == 0)
-                    functionGroups.Remove(receiverTypeName);
+                AddReceiverMethods(functionGroups, receiver.GetType());
             }
+
+            foreach (Type receiverType in TypeCache.GetTypesWithAttribute<AnimationEventReceiverAttribute>())
+                AddReceiverMethods(functionGroups, receiverType);
 
             foreach (List<string> functionNames in functionGroups.Values)
                 functionNames.Sort(StringComparer.Ordinal);
 
             return functionGroups;
+        }
+
+        // 将指定接收类的合法方法加入候选分组
+        private static void AddReceiverMethods(Dictionary<string, List<string>> functionGroups, Type receiverType)
+        {
+            if (!typeof(MonoBehaviour).IsAssignableFrom(receiverType))
+                return;
+
+            string receiverTypeName = receiverType.Name;
+            if (!functionGroups.TryGetValue(receiverTypeName, out List<string> functionNames))
+            {
+                functionNames = new List<string>();
+                functionGroups.Add(receiverTypeName, functionNames);
+            }
+
+            MethodInfo[] methods = receiverType.GetMethods(BindingFlags.Instance | BindingFlags.Public);
+            for (int methodIndex = 0; methodIndex < methods.Length; methodIndex++)
+            {
+                MethodInfo method = methods[methodIndex];
+                if (!IsAnimationEventMethod(method) || functionNames.Contains(method.Name))
+                    continue;
+
+                functionNames.Add(method.Name);
+            }
+
+            if (functionNames.Count == 0)
+                functionGroups.Remove(receiverTypeName);
         }
 
         // 判断方法是否符合 Unity Animation Event 的调用签名
