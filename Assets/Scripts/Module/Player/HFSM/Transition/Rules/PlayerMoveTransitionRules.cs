@@ -53,14 +53,13 @@ namespace Module.Player.HFSM.Transition.Rules
                 context.Input.MoveInput.sqrMagnitude > MOVE_INPUT_THRESHOLD_SQR;
         }
 
-        // 判断当前是否应播放非锁定状态下的急停动作
+        // 判断当前是否应播放急停动作
         private static bool CanStop(PlayerContext context)
         {
             Vector3 velocity = context.Movement.Velocity;
             velocity.y = 0f;
 
             return
-                !context.View.IsLockOn &&
                 !context.Input.IsInputLocked &&
                 !context.Movement.IsMovementLocked &&
                 context.Input.MoveInput.sqrMagnitude <= MOVE_INPUT_THRESHOLD_SQR &&
