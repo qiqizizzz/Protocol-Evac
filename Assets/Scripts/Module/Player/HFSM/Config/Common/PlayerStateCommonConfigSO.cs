@@ -48,7 +48,7 @@ namespace Module.Player.HFSM.Config.Common
         public bool SyncAllClipDurations()
         {
             if (StateClipValues == null || StateClipValues.Length == 0)
-                return false;
+                return SyncAdditionalClipDurations();
 
             bool hasSynced = false;
             for (int i = 0; i < StateClipValues.Length; i++)
@@ -60,7 +60,13 @@ namespace Module.Player.HFSM.Config.Common
                 hasSynced |= clipData.SyncDurationFromClip();
             }
 
-            return hasSynced;
+            return hasSynced | SyncAdditionalClipDurations();
+        }
+
+        // 同步派生配置中额外维护的动画时长
+        protected virtual bool SyncAdditionalClipDurations()
+        {
+            return false;
         }
     }
 }

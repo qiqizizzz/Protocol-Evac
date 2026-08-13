@@ -69,6 +69,21 @@ namespace Module.Player.Core
         private CombatHitbox m_combatHitbox;
         //Skill
         private PlayerSkillController m_skillController;
+
+        // 对外提供玩家状态机的只读诊断入口
+        public PlayerStateId CurrentStateId => m_stateMachine == null
+            ? PlayerStateId.None
+            : m_stateMachine.CurrentLeafStateId;
+
+        // 对外提供玩家当前完整状态路径
+        public System.Collections.Generic.IReadOnlyList<PlayerStateId> ActiveStatePath => m_stateMachine == null
+            ? System.Array.Empty<PlayerStateId>()
+            : m_stateMachine.ActiveStatePath;
+
+        // 对外提供玩家本帧即将转换到的目标状态
+        public PlayerStateId NextStateId => m_transitionSelector == null
+            ? PlayerStateId.None
+            : m_transitionSelector.GetNextTargetStateId();
         
         #region 生命周期
         private void Awake()
@@ -86,8 +101,8 @@ namespace Module.Player.Core
         {
             m_inputReader.Tick();
             m_viewController.Tick(Time.deltaTime);
-            m_transitionSelector.Tick();
             m_stateMachine.Tick(Time.deltaTime);
+            m_transitionSelector.Tick();
             m_skillController.Tick(Time.deltaTime);
             m_weaponController.Tick();
             m_animWriter.Tick(Time.deltaTime);

@@ -96,7 +96,7 @@ namespace Module.Player.HFSM.Animation
 
             if (stateId == PlayerStateId.GroundedIdle || stateId == PlayerStateId.GroundedMove)
             {
-                float blendDuration = m_context.Action.AnimReplayBlendDuration > 0f ? m_context.Action.AnimReplayBlendDuration : 0.05f;
+                float blendDuration = m_context.Action.AnimReplayBlendDuration;
                 m_animator.CrossFadeInFixedTime(S_GroundedLocomotionStateHash, blendDuration, 0, 0f);
                 return;
             }

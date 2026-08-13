@@ -16,6 +16,7 @@ namespace Module.Player.HFSM.States.Ground
 {
     public sealed class PlayerStopState : BasePlayerState
     {
+        private const float STOP_EXIT_BLEND_DURATION = 0f;
         private readonly PlayerContext m_context;
         private readonly PlayerMoveConfigSO m_moveConfig;
         private readonly DurationTimer m_stopTimer;
@@ -51,6 +52,9 @@ namespace Module.Player.HFSM.States.Ground
         {
             m_stopTimer.Reset();
             m_context.Action.IsStateFinished = false;
+            m_context.Action.SetRootMotionMoveEnabled(false);
+            m_context.Action.ClearRootMotionDeltaPosition();
+            m_context.Movement.ClearHorizontalVelocity();
             m_context.Movement.StopAnimationId = PlayerStopAnimationId.None;
 
             if (m_context.Movement.IsGrounded)
@@ -58,7 +62,7 @@ namespace Module.Player.HFSM.States.Ground
                 PlayerStateId locomotionStateId = m_context.Input.MoveInput.sqrMagnitude > 0.01f
                     ? PlayerStateId.GroundedMove
                     : PlayerStateId.GroundedIdle;
-                m_context.Action.RequestAnimReplay(locomotionStateId, 0.05f);
+                m_context.Action.RequestAnimReplay(locomotionStateId, STOP_EXIT_BLEND_DURATION);
             }
         }
 

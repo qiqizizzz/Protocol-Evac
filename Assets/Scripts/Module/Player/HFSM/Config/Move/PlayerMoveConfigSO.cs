@@ -78,6 +78,16 @@ namespace Module.Player.HFSM.Config.Move
 
         public PlayerStateClipData SprintRunClipData => GetStateClip(SPRINT_RUN_CLIP_INDEX);
 
+        // 同步移动配置中的急停动画时长
+        protected override bool SyncAdditionalClipDurations()
+        {
+            bool hasSynced = false;
+            hasSynced |= WalkStopClipPairValue != null && WalkStopClipPairValue.SyncDurationsFromClips();
+            hasSynced |= RunStopClipPairValue != null && RunStopClipPairValue.SyncDurationsFromClips();
+            hasSynced |= SprintStopClipPairValue != null && SprintStopClipPairValue.SyncDurationsFromClips();
+            return hasSynced;
+        }
+
         // 获取指定急停动作的左右动作对
         public PlayerStopClipPairData GetStopClipPairData(PlayerStopAnimationId animationId)
         {

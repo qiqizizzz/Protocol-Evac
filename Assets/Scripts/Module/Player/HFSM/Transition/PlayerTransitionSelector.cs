@@ -55,11 +55,11 @@ namespace Module.Player.HFSM.Transition
                 .ToList();
         }
 
-        // 按优先级选择本帧第一条有效规则并提交状态转换
-        public void Tick()
+        // 获取当前规则裁决出的下一目标状态，不执行状态切换
+        public PlayerStateId GetNextTargetStateId()
         {
             if (m_stateMachine == null)
-                return;
+                return PlayerStateId.None;
 
             for (int i = 0; i < m_rules.Count; i++)
             {
@@ -69,11 +69,23 @@ namespace Module.Player.HFSM.Transition
                     continue;
 
                 if (rule.TargetId == m_stateMachine.CurrentLeafStateId)
-                    return;
+                    return PlayerStateId.None;
 
-                m_stateMachine.ChangeState(rule.TargetId);
-                return;
+                return rule.TargetId;
             }
+
+            return PlayerStateId.None;
+        }
+
+        // 按优先级选择本帧第一条有效规则并提交状态转换
+        public void Tick()
+        {
+            if (m_stateMachine == null)
+                return;
+
+            PlayerStateId targetStateId = GetNextTargetStateId();
+            if (targetStateId != PlayerStateId.None)
+                m_stateMachine.ChangeState(targetStateId);
         }
     }
 }
