@@ -73,7 +73,6 @@ namespace Module.Player.Skill.Data
         [SerializeField] private bool ShowWeaponValue;
 
         [Group("WindowSettings")]
-        [PropertyOrder(-100)]
         [Button("打开技能编辑器")]
         // 打开 Ability Composer 编辑窗口
         private void OpenSkillEditor()
