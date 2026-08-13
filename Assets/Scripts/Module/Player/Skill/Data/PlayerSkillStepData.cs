@@ -97,12 +97,6 @@ namespace Module.Player.Skill.Data
         [Tooltip("当前技能段对应的阶段推进窗口轨道")]
         [SerializeField] private AbilityStepAdvanceWindowTrackSO StepAdvanceWindowTrackValue;
 
-        [HideInInspector]
-        [SerializeField] private float StepAdvanceOpenNormalizedTimeValue = 0.35f;
-
-        [HideInInspector]
-        [SerializeField] private float StepAdvanceCloseNormalizedTimeValue = 0.75f;
-
         [Group("WindowSettings")]
         [LabelText("启用命中窗口")]
         [Tooltip("是否启用命中窗口")]
@@ -113,15 +107,6 @@ namespace Module.Player.Skill.Data
         [LabelText("命中窗口配置")]
         [Tooltip("当前攻击阶段对应的命中窗口轨道")]
         [SerializeField] private AbilityHitWindowTrackSO BeginHitWindowTrackValue;
-
-        [HideInInspector]
-        [SerializeField] private float HitOpenNormalizedTimeValue;
-
-        [HideInInspector]
-        [SerializeField] private float HitCloseNormalizedTimeValue;
-
-        [HideInInspector]
-        [SerializeField] private float DamageValue;
 
         public AnimationClip BeginAnimationClip => BeginAnimationClipValue;
 
@@ -150,8 +135,6 @@ namespace Module.Player.Skill.Data
         public bool UseStepAdvanceWindow => UseStepAdvanceWindowValue;
 
         public bool UseHitWindow => UseHitWindowValue;
-
-        public float Damage => DamageValue;
 
         // 从攻击与收招动画片段同步两个阶段的持续时间
         public bool SyncDurationsFromClips()
@@ -185,24 +168,6 @@ namespace Module.Player.Skill.Data
                 return false;
 
             AbilityStepAdvanceWindowData window = StepAdvanceWindowTrackValue.Windows[0];
-            openNormalizedTime = window.StartNormalizedTime;
-            closeNormalizedTime = window.EndNormalizedTime;
-            return true;
-        }
-
-        // 尝试读取命中窗口
-        public bool TryGetHitWindow(out float openNormalizedTime, out float closeNormalizedTime)
-        {
-            openNormalizedTime = 0f;
-            closeNormalizedTime = 0f;
-
-            if (!UseHitWindowValue)
-                return false;
-
-            if (BeginHitWindowTrackValue == null || BeginHitWindowTrackValue.Windows.Count == 0)
-                return false;
-
-            AbilityHitWindowData window = BeginHitWindowTrackValue.Windows[0];
             openNormalizedTime = window.StartNormalizedTime;
             closeNormalizedTime = window.EndNormalizedTime;
             return true;
