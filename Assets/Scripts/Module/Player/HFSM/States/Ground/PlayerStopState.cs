@@ -41,7 +41,7 @@ namespace Module.Player.HFSM.States.Ground
             m_context.Action.IsStateFinished = false;
             m_context.Movement.StopAnimationId = animationId;
             m_context.Movement.ClearHorizontalMoveIntent();
-            m_context.Action.SetRootMotionMoveEnabled(false);
+            m_context.Action.SetRootMotionMoveEnabled(true);
             m_context.Action.ClearRootMotionDeltaPosition();
             m_context.Action.RequestAnimReplay(PlayerStateId.GroundedStop, 0.03f);
             m_stopTimer.Start(clipPairData.GetDuration(useLeftFoot));

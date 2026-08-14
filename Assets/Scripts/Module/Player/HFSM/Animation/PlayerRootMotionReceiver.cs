@@ -16,6 +16,8 @@ namespace Module.Player.HFSM.Animation
     [AnimationEventReceiver]
     public sealed class PlayerRootMotionReceiver : MonoBehaviour
     {
+        private const float ROOT_MOTION_DELTA_THRESHOLD_SQR = 0.00000001f;
+
         private Animator m_animator;
         private Transform m_animatorTransform;
         private Transform m_rootMotionNode;
@@ -23,6 +25,9 @@ namespace Module.Player.HFSM.Animation
         private Vector3 m_animatorAnchorLocalPosition;
         private Quaternion m_animatorAnchorLocalRotation;
         private Vector3 m_rootMotionNodeAnchorLocalPosition;
+        private Vector3 m_previousRootMotionNodeLocalPosition;
+        private bool m_hasAnimatorRootMotionDelta;
+        private bool m_wasRootMotionMoveEnabled;
         private bool m_isInited;
 
         // 初始化玩家根运动接收器依赖
@@ -41,6 +46,7 @@ namespace Module.Player.HFSM.Animation
             m_animatorAnchorLocalPosition = m_animatorTransform.localPosition;
             m_animatorAnchorLocalRotation = m_animatorTransform.localRotation;
             m_rootMotionNodeAnchorLocalPosition = m_rootMotionNode.localPosition;
+            m_previousRootMotionNodeLocalPosition = m_rootMotionNode.localPosition;
             m_isInited = true;
         }
 
@@ -52,15 +58,13 @@ namespace Module.Player.HFSM.Animation
             Vector3 deltaPosition = m_animator.deltaPosition;
             m_animator.ApplyBuiltinRootMotion();
             RestoreAnimatorAnchor();
-            RestoreRootMotionNodeAnchor();
 
-            if (!m_context.Action.IsRootMotionMoveEnabled)
+            m_hasAnimatorRootMotionDelta = deltaPosition.sqrMagnitude > ROOT_MOTION_DELTA_THRESHOLD_SQR;
+
+            if (!m_context.Action.IsRootMotionMoveEnabled || !m_hasAnimatorRootMotionDelta)
                 return;
 
             deltaPosition.y = 0f;
-            if (deltaPosition.sqrMagnitude <= 0f)
-                return;
-
             m_context.Action.AddRootMotionDeltaPosition(deltaPosition);
         }
 
@@ -69,8 +73,11 @@ namespace Module.Player.HFSM.Animation
             if (!m_isInited)
                 return;
 
+            CaptureGenericRootMotion();
             RestoreAnimatorAnchor();
             RestoreRootMotionNodeAnchor();
+            m_hasAnimatorRootMotionDelta = false;
+            m_wasRootMotionMoveEnabled = m_context.Action.IsRootMotionMoveEnabled;
         }
 
         // 接收移动动画左脚落地事件
@@ -89,6 +96,25 @@ namespace Module.Player.HFSM.Animation
                 return;
 
             m_context.Movement.RecordPlantedFoot(false);
+        }
+
+        // 在动画姿势完成求值后读取未被Unity提取的Generic Root节点位移
+        private void CaptureGenericRootMotion()
+        {
+            Vector3 rootMotionNodeLocalPosition = m_rootMotionNode.localPosition;
+            bool isRootMotionMoveEnabled = m_context.Action.IsRootMotionMoveEnabled;
+
+            if (isRootMotionMoveEnabled && m_wasRootMotionMoveEnabled && !m_hasAnimatorRootMotionDelta)
+            {
+                Vector3 localDeltaPosition = rootMotionNodeLocalPosition - m_previousRootMotionNodeLocalPosition;
+                Vector3 deltaPosition = m_animatorTransform.TransformVector(localDeltaPosition);
+                deltaPosition.y = 0f;
+
+                if (deltaPosition.sqrMagnitude > ROOT_MOTION_DELTA_THRESHOLD_SQR)
+                    m_context.Action.AddRootMotionDeltaPosition(deltaPosition);
+            }
+
+            m_previousRootMotionNodeLocalPosition = rootMotionNodeLocalPosition;
         }
 
         // 将 Animator 子节点固定在玩家根节点挂点，避免 Generic 骨架重复表现根位移
