@@ -1,0 +1,227 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Enemy 决策、Ability 与导航分层",
+    "subtitle": "先以 MonoBehaviour 闭环验证，再平滑迁移 A* 与 ECS 群体避障",
+    "output": "EnemyAbilityNavigation架构方案.html",
+    "quality_profile": "showcase",
+    "visual_preset": "blueprint",
+    "views": [
+      {
+        "id": "decision-path",
+        "label": "敌人决策路径",
+        "focus": ["sensor", "utility", "tree", "ability", "motor"],
+        "note": "感知写事实，效用层选意图，树编排步骤，Ability 执行攻击"
+      },
+      {
+        "id": "navigation-path",
+        "label": "导航与避障",
+        "focus": ["tree", "pathagent", "avoidance", "motor"],
+        "note": "行为树只提交目的地，导航与局部避障独立替换"
+      },
+      {
+        "id": "authoring-path",
+        "label": "可视化编辑",
+        "focus": ["behaviorgraph", "abilitycomposer", "tree", "ability"],
+        "note": "图编辑器保存数据资产，运行时不依赖编辑器 UI"
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "sensor",
+      "type": "external",
+      "label": "EnemySensor",
+      "sublabel": "视野、听觉、仇恨、最后目击位置",
+      "pos": [40, 210],
+      "size": [165, 66],
+      "tag": "低频采样"
+    },
+    {
+      "id": "utility",
+      "type": "backend",
+      "label": "Utility Selector",
+      "sublabel": "基于事实选择 Patrol / Chase / Attack 等意图",
+      "pos": [270, 210],
+      "size": [175, 66],
+      "tag": "意图防抖"
+    },
+    {
+      "id": "tree",
+      "type": "backend",
+      "label": "Behavior Tree Runner",
+      "sublabel": "按意图编排条件、移动、施法与终止流程",
+      "pos": [510, 210],
+      "size": [180, 66],
+      "tag": "可视化数据驱动"
+    },
+    {
+      "id": "ability",
+      "type": "backend",
+      "label": "Ability Runtime",
+      "sublabel": "通用动作时间轴、窗口、事件、命中与 Root Motion",
+      "pos": [760, 120],
+      "size": [190, 66],
+      "tag": "Player / Enemy 共用"
+    },
+    {
+      "id": "pathagent",
+      "type": "cloud",
+      "label": "IPathAgent + A* Adapter",
+      "sublabel": "全局路径、重寻路节流、期望速度输出",
+      "pos": [760, 310],
+      "size": [190, 66],
+      "tag": "可替换寻路后端"
+    },
+    {
+      "id": "avoidance",
+      "type": "messagebus",
+      "label": "Local Avoidance",
+      "sublabel": "少量敌人物理避障；后续 ECS 群体求解",
+      "pos": [1000, 310],
+      "size": [180, 66],
+      "tag": "速度修正层"
+    },
+    {
+      "id": "motor",
+      "type": "backend",
+      "label": "EnemyMotor + Anim Output",
+      "sublabel": "角色移动、朝向、动画参数与命中盒",
+      "pos": [1000, 120],
+      "size": [180, 66],
+      "tag": "最终执行"
+    },
+    {
+      "id": "behaviorgraph",
+      "type": "frontend",
+      "label": "Behavior Graph Editor",
+      "sublabel": "节点图仅编辑 BT / Utility 数据资产与实时调试",
+      "pos": [270, 500],
+      "size": [195, 66],
+      "tag": "新增工具"
+    },
+    {
+      "id": "abilitycomposer",
+      "type": "frontend",
+      "label": "Ability Composer",
+      "sublabel": "现有时间轴、窗口、Animation Event 与预览能力",
+      "pos": [760, 500],
+      "size": [190, 66],
+      "tag": "扩展为通用入口"
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Enemy 运行时",
+      "wraps": ["sensor", "utility", "tree", "ability", "pathagent", "avoidance", "motor"],
+      "pad": 34
+    },
+    {
+      "kind": "region",
+      "label": "Unity Editor 作者工具",
+      "wraps": ["behaviorgraph", "abilitycomposer"],
+      "pad": 30
+    }
+  ],
+  "connections": [
+    {
+      "id": "sense-to-intent",
+      "from": "sensor",
+      "to": "utility",
+      "label": "感知事实",
+      "variant": "emphasis"
+    },
+    {
+      "id": "intent-to-tree",
+      "from": "utility",
+      "to": "tree",
+      "label": "当前意图",
+      "variant": "emphasis"
+    },
+    {
+      "id": "tree-to-ability",
+      "from": "tree",
+      "to": "ability",
+      "label": "执行 Ability",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "tree-to-path",
+      "from": "tree",
+      "to": "pathagent",
+      "label": "提交目的地",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "ability-to-motor",
+      "from": "ability",
+      "to": "motor",
+      "label": "Root Motion / Hit",
+      "variant": "emphasis",
+      "labelDy": 57
+    },
+    {
+      "id": "path-to-avoid",
+      "from": "pathagent",
+      "to": "avoidance",
+      "label": "期望速度"
+    },
+    {
+      "id": "avoid-to-motor",
+      "from": "avoidance",
+      "to": "motor",
+      "label": "安全速度",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "graph-to-tree",
+      "from": "behaviorgraph",
+      "to": "tree",
+      "label": "BT / Utility 资产",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "composer-to-ability",
+      "from": "abilitycomposer",
+      "to": "ability",
+      "label": "Ability / 窗口资产",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "top",
+      "via": [[855, 430], [1190, 430], [1190, 80], [855, 80]]
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "复用边界",
+      "items": [
+        "复用 Ability 时间轴、窗口、事件与 CombatHitbox",
+        "不复用 Player 的输入解释与 HFSM 状态转换"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "编辑器边界",
+      "items": [
+        "Ability Composer 管单个动作时间轴",
+        "Behavior Graph 管决策图与运行时调试"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "性能演进",
+      "items": [
+        "先用 A* + MonoBehaviour 完成少量敌人闭环",
+        "ECS 只替换批量路径与局部避障，不进入 BT / Ability 语义层"
+      ]
+    }
+  ]
+}

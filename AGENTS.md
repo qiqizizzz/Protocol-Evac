@@ -36,6 +36,7 @@
 |   |-- 玩家状态与敌人AI/
 |   |   |-- 玩家状态与敌人AI设计方案.md ........ Player HFSM、Skill 与 Enemy AI 主设计
 |   |   `-- 技能系统与编辑器设计方案.md ........ Skill 数据、事件与编辑器工具路线
+|   |   `-- 敌人AI、能力与导航设计方案.md ...... Enemy BT、Ability 复用、A* 与 ECS 避障路线
 |   |
 |   |-- 工具与编辑器/
 |   |   `-- AbilityComposer设计方案.md ......... 通用 Ability Composer 的架构、预览与事件编辑方案

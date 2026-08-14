@@ -19,7 +19,7 @@ MonoBehaviour:
     UseComboWindowValue: 0
     ComboWindowTrackValue: {fileID: 0}
   - StateClipValue: {fileID: 7400000, guid: 1082f854c11dd254c8ceba52832a64e1, type: 2}
-    StateDurationValue: 1.2666668
+    StateDurationValue: 1.6044444
     ShowWeaponValue: 0
     UseComboWindowValue: 0
     ComboWindowTrackValue: {fileID: 0}
