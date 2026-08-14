@@ -118,3 +118,15 @@ InitTestScene*.unity*
 
 # IL2CPP
 /il2cpp_Cache/
+
+# ==========================================
+# External Environment Assets - 外部场景资源
+# ==========================================
+# Tokyo Street 为第三方大型环境资源，当前项目本地使用但不纳入仓库
+/Assets/Tokyo_Street/
+/Assets/Tokyo_Street.meta
+
+# Restricted MMD-derived enemy asset, local-only by its license
+/Assets/Art/Models/Enemy-流浪者/
+/Assets/Art/Textures/Enemy-流浪者/
+/Assets/Prefabs/Character/Enemy_流浪者.prefab

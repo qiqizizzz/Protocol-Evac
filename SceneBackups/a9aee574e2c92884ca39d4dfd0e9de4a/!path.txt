@@ -1,1 +1,0 @@
-﻿Assets/Scenes/Tools/AbilityPreview.unity
