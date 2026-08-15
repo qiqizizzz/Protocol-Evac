@@ -26,8 +26,9 @@ MonoBehaviour:
     ShowWeaponValue: 1
     UseStepAdvanceWindowValue: 0
     StepAdvanceWindowTrackValue: {fileID: 0}
-    UseHitWindowValue: 0
-    BeginHitWindowTrackValue: {fileID: 0}
+    UseHitWindowValue: 1
+    BeginHitWindowTrackValue: {fileID: 11400000, guid: 91823e0c19c0e0947bdd47335e49761e,
+      type: 2}
   CooldownValue: 0
   LockMovementValue: 0
   CanRotateValue: 0

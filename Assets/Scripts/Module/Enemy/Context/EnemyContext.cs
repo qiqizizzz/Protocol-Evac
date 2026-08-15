@@ -8,6 +8,7 @@
 
 using Module.Enemy.Config;
 using Module.Enemy.Behavior.Config;
+using Module.Enemy.Context.Runtime;
 using UnityEngine;
 
 namespace Module.Enemy.Context
@@ -17,6 +18,7 @@ namespace Module.Enemy.Context
         public Transform Transform { get; }
         public EnemyStatsConfigSO StatsConfig { get; }
         public EnemyBehaviorConfigSO BehaviorConfig { get; }
+        public EnemyActionContext Action { get; }
         public bool IsActive { get; private set; }
 
         // 创建敌人的运行时上下文
@@ -25,6 +27,7 @@ namespace Module.Enemy.Context
             Transform = transform;
             StatsConfig = statsConfig;
             BehaviorConfig = behaviorConfig;
+            Action = new EnemyActionContext();
         }
 
         // 更新敌人的启用状态

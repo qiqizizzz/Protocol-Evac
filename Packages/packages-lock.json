@@ -29,6 +29,13 @@
       "dependencies": {},
       "hash": "ceac8d6946b1125fe782cd171fbcb245b567dbf9"
     },
+    "com.fluid.behavior-tree": {
+      "version": "https://github.com/ashblue/fluid-behavior-tree.git?path=/Assets/com.fluid.behavior-tree#v2.3.0",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "8ef28a249d93e84d3159bdf8ba6e5f4a0a5f30f5"
+    },
     "com.ivanmurzak.unity.mcp": {
       "version": "0.83.1",
       "depth": 0,

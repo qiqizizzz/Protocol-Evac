@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 8036122143564619715}
   m_Layer: 7
   m_Name: Hero_Chaisaki
-  m_TagString: Untagged
+  m_TagString: Hero
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

@@ -3,6 +3,7 @@
     "com.candidumgames.unitymmdtools": "https://github.com/qiqizizzz/Fork_UnityMMDTools.git",
     "com.codewriter.triinspector": "https://github.com/codewriter-packages/Tri-Inspector.git#d75c4dac2e449bc19b5313ce741bd496fca7c123",
     "com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
+    "com.fluid.behavior-tree": "https://github.com/ashblue/fluid-behavior-tree.git?path=/Assets/com.fluid.behavior-tree#v2.3.0",
     "com.ivanmurzak.unity.mcp": "0.83.1",
     "com.unity.addressables": "1.22.3",
     "com.unity.collab-proxy": "2.12.4",
