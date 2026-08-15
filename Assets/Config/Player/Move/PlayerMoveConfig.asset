@@ -63,4 +63,4 @@ MonoBehaviour:
   GroundCheckDistanceValue: 0.2
   GroundLayerValue:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 512

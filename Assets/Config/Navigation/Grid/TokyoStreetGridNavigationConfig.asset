@@ -22,9 +22,9 @@ MonoBehaviour:
   GroundProbeDistance: 5
   GroundLayerMask:
     serializedVersion: 2
-    m_Bits: 1
+    m_Bits: 512
   ObstacleLayerMask:
     serializedVersion: 2
-    m_Bits: 1
+    m_Bits: 257
   CornerReachDistance: 0.2
   RandomSampleAttempts: 12
