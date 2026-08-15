@@ -122,6 +122,12 @@ InitTestScene*.unity*
 # ==========================================
 # External Environment Assets - 外部场景资源
 # ==========================================
+# Animation 与 Art 为本地美术资源，不纳入仓库
+/Assets/Animation/
+/Assets/Animation.meta
+/Assets/Art/
+/Assets/Art.meta
+
 # Tokyo Street 为第三方大型环境资源，当前项目本地使用但不纳入仓库
 /Assets/Tokyo_Street/
 /Assets/Tokyo_Street.meta
