@@ -13,6 +13,7 @@ using Module.Enemy.Behavior.Actions.Common;
 using Module.Enemy.Behavior.Actions.Patrol;
 using Module.Enemy.Behavior.Conditions.Attack;
 using Module.Enemy.Behavior.Conditions.Common;
+using Module.Enemy.Behavior.Conditions.Patrol;
 using Module.Enemy.Context;
 using Module.Enemy.Skill.Core;
 using Module.Navigation.Core;
@@ -78,6 +79,16 @@ namespace Module.Enemy.Behavior.Trees.Wanderer
                         .AddNode(new EnemyChaseAction(context, navigationController)
                         {
                             Name = "追击目标"
+                        })
+                    .End()
+                    .Sequence("脱战归位")
+                        .AddNode(new EnemyOutsidePatrolRangeCondition(context)
+                        {
+                            Name = "已离开出生区域"
+                        })
+                        .AddNode(new EnemyReturnToSpawnAction(context, navigationController)
+                        {
+                            Name = "返回出生点"
                         })
                     .End()
                     .AddNode(new EnemyPatrolAction(context, navigationController)

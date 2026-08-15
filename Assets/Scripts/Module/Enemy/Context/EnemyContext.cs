@@ -16,6 +16,7 @@ namespace Module.Enemy.Context
     public sealed class EnemyContext
     {
         public Transform Transform { get; }
+        public Vector3 SpawnPosition { get; }
         public EnemyStatsConfigSO StatsConfig { get; }
         public EnemyBehaviorConfigSO BehaviorConfig { get; }
         public EnemyActionContext Action { get; }
@@ -27,6 +28,7 @@ namespace Module.Enemy.Context
         public EnemyContext(Transform transform, EnemyStatsConfigSO statsConfig, EnemyBehaviorConfigSO behaviorConfig)
         {
             Transform = transform;
+            SpawnPosition = transform.position;
             StatsConfig = statsConfig;
             BehaviorConfig = behaviorConfig;
             Action = new EnemyActionContext();
