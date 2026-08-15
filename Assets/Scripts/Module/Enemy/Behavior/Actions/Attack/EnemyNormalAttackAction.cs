@@ -10,24 +10,28 @@ using CleverCrow.Fluid.BTs.Tasks;
 using CleverCrow.Fluid.BTs.Tasks.Actions;
 using Module.Enemy.Skill;
 using Module.Enemy.Skill.Core;
+using Module.Enemy.Context;
 
 namespace Module.Enemy.Behavior.Actions.Attack
 {
     public sealed class EnemyNormalAttackAction : ActionBase
     {
         private readonly EnemySkillController m_skillController;
+        private readonly EnemyContext m_context;
 
         private bool m_hasOpenedSkill;
 
         // 创建敌人普通攻击行为节点
-        public EnemyNormalAttackAction(EnemySkillController skillController)
+        public EnemyNormalAttackAction(EnemySkillController skillController, EnemyContext context)
         {
             m_skillController = skillController;
+            m_context = context;
         }
 
         // 尝试打开普通攻击
         protected override void OnStart()
         {
+            m_context.Movement.StopMove();
             m_hasOpenedSkill = m_skillController.TryOpen(EnemySkillType.NormalAttack);
         }
 

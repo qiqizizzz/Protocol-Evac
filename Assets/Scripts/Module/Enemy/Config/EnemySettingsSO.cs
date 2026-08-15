@@ -9,7 +9,9 @@
 using UnityEngine;
 using Module.Enemy.Animation.Config;
 using Module.Enemy.Behavior.Config;
+using Module.Enemy.Movement.Config;
 using Module.Enemy.Skill.Data;
+using Module.Navigation.Grid.Config;
 
 namespace Module.Enemy.Config
 {
@@ -24,6 +26,14 @@ namespace Module.Enemy.Config
         [Tooltip("敌人的行为调度与意图配置")]
         [SerializeField] private EnemyBehaviorConfigSO BehaviorConfigValue;
 
+        [Header("移动配置")]
+        [Tooltip("敌人的移动速度与转向配置")]
+        [SerializeField] private EnemyMoveConfigSO MoveConfigValue;
+
+        [Header("导航配置")]
+        [Tooltip("敌人使用的通用网格导航配置")]
+        [SerializeField] private GridNavigationConfigSO NavigationConfigValue;
+
         [Header("动画配置")]
         [Tooltip("敌人的基础动画片段配置")]
         [SerializeField] private EnemyAnimationConfigSO AnimationConfigValue;
@@ -34,6 +44,8 @@ namespace Module.Enemy.Config
 
         public EnemyStatsConfigSO StatsConfig => StatsConfigValue;
         public EnemyBehaviorConfigSO BehaviorConfig => BehaviorConfigValue;
+        public EnemyMoveConfigSO MoveConfig => MoveConfigValue;
+        public GridNavigationConfigSO NavigationConfig => NavigationConfigValue;
         public EnemyAnimationConfigSO AnimationConfig => AnimationConfigValue;
         public EnemyNormalAttackConfigSO NormalAttackConfig => NormalAttackConfigValue;
     }

@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 07f97df6c288c1046b05b5a85425ff89, type: 3}
+  m_Name: "Enemy_\u6D41\u6D6A\u8005NormalAttack_A_HitWindowTrack"
+  m_EditorClassIdentifier: 
+  AnimationClipValue: {fileID: 3625414872004886998, guid: eea23087c2f686a4785dee8bd6c8f2de,
+    type: 3}
+  WindowValues:
+  - IdValue: enemy_wanderer_sword_regular_a_01
+    StartNormalizedTimeValue: 0.23
+    EndNormalizedTimeValue: 0.7
+    DamageValue: 10

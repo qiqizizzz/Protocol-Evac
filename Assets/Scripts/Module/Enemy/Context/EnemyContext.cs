@@ -19,6 +19,7 @@ namespace Module.Enemy.Context
         public EnemyStatsConfigSO StatsConfig { get; }
         public EnemyBehaviorConfigSO BehaviorConfig { get; }
         public EnemyActionContext Action { get; }
+        public EnemyMovementContext Movement { get; }
         public EnemyTargetContext Target { get; }
         public bool IsActive { get; private set; }
 
@@ -29,6 +30,7 @@ namespace Module.Enemy.Context
             StatsConfig = statsConfig;
             BehaviorConfig = behaviorConfig;
             Action = new EnemyActionContext();
+            Movement = new EnemyMovementContext();
             Target = new EnemyTargetContext();
         }
 

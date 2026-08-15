@@ -9,12 +9,8 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4e09882c33c3ead48bbeba4529c0a8da, type: 3}
-  m_Name: "Enemy_\u6D41\u6D6A\u8005BehaviorConfig"
+  m_Script: {fileID: 11500000, guid: 8626caa278924954aa99624017d2297c, type: 3}
+  m_Name: "Enemy_\u6D41\u6D6A\u8005MoveConfig"
   m_EditorClassIdentifier: 
-  SensorRefreshInterval: 0.1
-  PathRefreshInterval: 0.25
-  AttackDistance: 2
-  PatrolRadius: 6
-  PatrolWaitDuration: 1.2
-  SearchDuration: 2
+  MoveSpeed: 1.6
+  TurnSpeed: 360

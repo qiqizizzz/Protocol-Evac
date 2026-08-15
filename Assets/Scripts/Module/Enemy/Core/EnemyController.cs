@@ -17,6 +17,9 @@ using Module.Enemy.Config;
 using Module.Enemy.Context;
 using Module.Enemy.Skill;
 using Module.Enemy.Skill.Core;
+using Module.Enemy.Movement;
+using Module.Navigation.Core;
+using Module.Navigation.Grid;
 using TriInspector;
 using UnityEngine;
 using Utils.Find;
@@ -36,12 +39,15 @@ namespace Module.Enemy.Core
         
         private Transform m_transform;
         private Animator m_animator;
+        private CharacterController m_characterController;
         private CombatHitbox m_combatHitbox;
         private EnemyContext m_context;
         private EnemySkillController m_skillController;
         private EnemyBehaviorController m_behaviorController;
         private EnemyTargetReader m_targetReader;
         private EnemyAnimWriter m_animWriter;
+        private EnemyMotor m_motor;
+        private INavigationController m_navigationController;
 
         public EnemyContext Context => m_context;
         public bool IsNormalAttacking => m_skillController.IsRunning
@@ -56,6 +62,7 @@ namespace Module.Enemy.Core
             FindReferences();
             CheckConfigs();
             InitCore();
+            InitMovement();
             InitSkill();
             InitAnim();
             InitBehavior();
@@ -77,11 +84,18 @@ namespace Module.Enemy.Core
             m_animWriter.Tick(Time.deltaTime);
         }
 
+        private void FixedUpdate()
+        {
+            m_motor.FixedTick(Time.fixedDeltaTime);
+        }
+
         private void OnDisable()
         {
             m_behaviorController.Reset();
             m_skillController.Close();
             m_animWriter.Close();
+            m_navigationController.Reset();
+            m_motor.Reset();
             m_context.Target.Reset();
             m_context.SetActive(false);
         }
@@ -91,6 +105,7 @@ namespace Module.Enemy.Core
             m_behaviorController.Reset();
             m_skillController.Close();
             m_animWriter.UnInit();
+            m_navigationController.Reset();
             m_context.SetActive(false);
             m_context = null;
         }
@@ -110,11 +125,19 @@ namespace Module.Enemy.Core
             m_skillController.RegisterConfig(EnemySkillType.NormalAttack, Settings.NormalAttackConfig);
         }
 
+        // 初始化敌人移动与通用网格导航模块
+        private void InitMovement()
+        {
+            m_navigationController = new GridPathController(Settings.NavigationConfig);
+            m_motor = new EnemyMotor();
+            m_motor.Init(m_characterController, m_context, Settings.MoveConfig);
+        }
+
         // 初始化敌人行为树模块
         private void InitBehavior()
         {
             WandererBehaviorTree wandererBehaviorTree = new WandererBehaviorTree(gameObject, m_context,
-                m_skillController);
+                m_skillController, m_navigationController);
             m_behaviorController = new EnemyBehaviorController(wandererBehaviorTree.Tree);
             EnemyBehaviorTree = m_behaviorController.Tree;
         }
@@ -136,6 +159,7 @@ namespace Module.Enemy.Core
         private void FindReferences()
         {
             m_transform = transform;
+            m_characterController = this.GetOwnerComponent<CharacterController>();
             m_animator = this.GetChildComponent<Animator>();
             m_combatHitbox = this.GetChildComponent<CombatHitbox>();
         }
@@ -155,6 +179,12 @@ namespace Module.Enemy.Core
 
             if (Settings.BehaviorConfig == null)
                 QLog.Warning("EnemyBehaviorConfig 未配置，敌人行为模块可能无法正常运行");
+
+            if (Settings.MoveConfig == null)
+                QLog.Warning("EnemyMoveConfig 未配置，敌人移动模块可能无法正常运行");
+
+            if (Settings.NavigationConfig == null)
+                QLog.Warning("GridNavigationConfig 未配置，敌人导航模块可能无法正常运行");
 
             if (Settings.AnimationConfig == null)
             {

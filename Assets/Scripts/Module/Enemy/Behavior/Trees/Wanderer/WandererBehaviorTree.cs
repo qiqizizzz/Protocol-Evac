@@ -9,10 +9,12 @@
 using CleverCrow.Fluid.BTs.Trees;
 using Module.Enemy.Behavior.Actions.Attack;
 using Module.Enemy.Behavior.Actions.Common;
+using Module.Enemy.Behavior.Actions.Patrol;
 using Module.Enemy.Behavior.Conditions.Attack;
 using Module.Enemy.Behavior.Conditions.Common;
 using Module.Enemy.Context;
 using Module.Enemy.Skill.Core;
+using Module.Navigation.Core;
 using UnityEngine;
 
 namespace Module.Enemy.Behavior.Trees.Wanderer
@@ -22,13 +24,15 @@ namespace Module.Enemy.Behavior.Trees.Wanderer
         public BehaviorTree Tree { get; }
 
         // 创建流浪者行为树
-        public WandererBehaviorTree(GameObject owner, EnemyContext context, EnemySkillController skillController)
+        public WandererBehaviorTree(GameObject owner, EnemyContext context, EnemySkillController skillController,
+            INavigationController navigationController)
         {
-            Tree = CreateTree(owner, context, skillController);
+            Tree = CreateTree(owner, context, skillController, navigationController);
         }
 
         // 组合流浪者当前可执行的行为分支
-        private BehaviorTree CreateTree(GameObject owner, EnemyContext context, EnemySkillController skillController)
+        private BehaviorTree CreateTree(GameObject owner, EnemyContext context, EnemySkillController skillController,
+            INavigationController navigationController)
         {
             return new BehaviorTreeBuilder(owner)
                 .Name("流浪者行为树")
@@ -46,12 +50,30 @@ namespace Module.Enemy.Behavior.Trees.Wanderer
                         {
                             Name = "普通攻击可用"
                         })
-                        .AddNode(new EnemyNormalAttackAction(skillController)
+                        .AddNode(new EnemyNormalAttackAction(skillController, context)
                         {
                             Name = "执行普通攻击"
                         })
                     .End()
-                    .AddNode(new EnemyIdleAction
+                    .Sequence("战斗等待")
+                        .AddNode(new EnemyHasTargetCondition(context.Target)
+                        {
+                            Name = "存在目标"
+                        })
+                        .AddNode(new EnemyTargetInAttackRangeCondition(context.Target)
+                        {
+                            Name = "目标处于攻击范围"
+                        })
+                        .AddNode(new EnemyCombatWaitAction(context, skillController)
+                        {
+                            Name = "等待普通攻击冷却"
+                        })
+                    .End()
+                    .AddNode(new EnemyPatrolAction(context, navigationController)
+                    {
+                        Name = "巡逻"
+                    })
+                    .AddNode(new EnemyIdleAction(context.Movement)
                     {
                         Name = "待机"
                     })

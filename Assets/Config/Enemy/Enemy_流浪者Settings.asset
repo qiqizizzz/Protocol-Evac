@@ -15,6 +15,9 @@ MonoBehaviour:
   StatsConfigValue: {fileID: 11400000, guid: f36f4f16897aea84d90aae8f3d0d1d22, type: 2}
   BehaviorConfigValue: {fileID: 11400000, guid: 5d17e4915868f0840aee64f022dd11e1,
     type: 2}
+  MoveConfigValue: {fileID: 11400000, guid: f2a660b625bb0da47b694b65522d945c, type: 2}
+  NavigationConfigValue: {fileID: 11400000, guid: c21154664e7380141b008d94267a542a,
+    type: 2}
   AnimationConfigValue: {fileID: 11400000, guid: f62a358b62c2af249b3b8b97e979c8a6,
     type: 2}
   NormalAttackConfigValue: {fileID: 11400000, guid: d1c9079a22115c44da05ac53060f6019,

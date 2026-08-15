@@ -8,15 +8,25 @@
 
 using CleverCrow.Fluid.BTs.Tasks;
 using CleverCrow.Fluid.BTs.Tasks.Actions;
+using Module.Enemy.Context.Runtime;
 
 namespace Module.Enemy.Behavior.Actions.Common
 {
     public sealed class EnemyIdleAction : ActionBase
     {
+        private readonly EnemyMovementContext m_movementContext;
+
+        // 创建敌人待机行为节点
+        public EnemyIdleAction(EnemyMovementContext movementContext)
+        {
+            m_movementContext = movementContext;
+        }
+
+        // 保持停止移动并持续占用待机分支
         protected override TaskStatus OnUpdate()
         {
-            return TaskStatus.Success;
+            m_movementContext.StopMove();
+            return TaskStatus.Continue;
         }
     }
 }
-

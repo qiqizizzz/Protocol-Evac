@@ -29,6 +29,38 @@ MonoBehaviour:
     UseHitWindowValue: 1
     BeginHitWindowTrackValue: {fileID: 11400000, guid: 91823e0c19c0e0947bdd47335e49761e,
       type: 2}
+  - BeginAnimationClipValue: {fileID: -1662512729948635066, guid: eea23087c2f686a4785dee8bd6c8f2de,
+      type: 3}
+    BeginDurationValue: 0.53333336
+    BeginUseRootMotionValue: 0
+    BeginCanEndEarlyValue: 1
+    RecoveryAnimationClipValue: {fileID: 7742298430783984577, guid: eea23087c2f686a4785dee8bd6c8f2de,
+      type: 3}
+    RecoveryDurationValue: 1.0333334
+    RecoveryUseRootMotionValue: 0
+    RecoveryCanEndEarlyValue: 1
+    ShowWeaponValue: 1
+    UseStepAdvanceWindowValue: 0
+    StepAdvanceWindowTrackValue: {fileID: 0}
+    UseHitWindowValue: 1
+    BeginHitWindowTrackValue: {fileID: 11400000, guid: d93e95d54de831e4f9078e6f0d1883b1,
+      type: 2}
+  - BeginAnimationClipValue: {fileID: 543990450412311274, guid: eea23087c2f686a4785dee8bd6c8f2de,
+      type: 3}
+    BeginDurationValue: 2
+    BeginUseRootMotionValue: 0
+    BeginCanEndEarlyValue: 1
+    RecoveryAnimationClipValue: {fileID: 7742298430783984577, guid: eea23087c2f686a4785dee8bd6c8f2de,
+      type: 3}
+    RecoveryDurationValue: 1.0333334
+    RecoveryUseRootMotionValue: 0
+    RecoveryCanEndEarlyValue: 1
+    ShowWeaponValue: 1
+    UseStepAdvanceWindowValue: 0
+    StepAdvanceWindowTrackValue: {fileID: 0}
+    UseHitWindowValue: 1
+    BeginHitWindowTrackValue: {fileID: 11400000, guid: ec2071127123ac04a8ed7d5ab3e567c4,
+      type: 2}
   CooldownValue: 0.5
   LockMovementValue: 1
   CanRotateValue: 1

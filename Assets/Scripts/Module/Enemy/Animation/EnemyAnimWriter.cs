@@ -23,6 +23,7 @@ namespace Module.Enemy.Animation
         private EnemyContext m_context;
         private RuntimeAnimatorController m_originalController;
         private AnimationClip m_idleAnimationClip;
+        private AnimationClip m_moveAnimationClip;
         private PlayableGraph m_playableGraph;
         private AnimationMixerPlayable m_animationMixer;
         private AnimationClipPlayable[] m_clipPlayables;
@@ -33,6 +34,7 @@ namespace Module.Enemy.Animation
         private float m_currentClipDuration;
         private bool m_originalApplyRootMotion;
         private bool m_isCurrentClipLooping;
+        private bool m_isLocomotionMoving;
 
         // 初始化敌人 Playables 动画输出
         public void Init(Animator animator, EnemyContext context, EnemyAnimationConfigSO animationConfig)
@@ -42,6 +44,7 @@ namespace Module.Enemy.Animation
             m_originalController = animator.runtimeAnimatorController;
             m_originalApplyRootMotion = animator.applyRootMotion;
             m_idleAnimationClip = animationConfig.IdleAnimationClip;
+            m_moveAnimationClip = animationConfig.MoveAnimationClip;
             m_clipPlayables = new AnimationClipPlayable[PLAYABLE_INPUT_COUNT];
             m_currentInputIndex = -1;
             m_previousInputIndex = -1;
@@ -54,6 +57,7 @@ namespace Module.Enemy.Animation
             AnimationPlayableOutput output = AnimationPlayableOutput.Create(m_playableGraph, "Enemy Animation", animator);
             output.SetSourcePlayable(m_animationMixer);
             m_playableGraph.Play();
+            m_isLocomotionMoving = false;
             PlayClip(m_idleAnimationClip, true, false, 0f);
         }
 
@@ -67,7 +71,12 @@ namespace Module.Enemy.Animation
             }
             else if (m_context.Action.ConsumeIdleAnimRequest())
             {
-                PlayIdle();
+                PlayLocomotion();
+            }
+            else if (!m_context.Action.CurrentSkillType.HasValue
+                     && m_isLocomotionMoving != m_context.Movement.IsMoving)
+            {
+                PlayLocomotion();
             }
 
             UpdateCurrentClipLoop();
@@ -77,7 +86,8 @@ namespace Module.Enemy.Animation
         // 立即请求切回待机动画
         public void Close()
         {
-            PlayIdle();
+            m_isLocomotionMoving = false;
+            PlayClip(m_idleAnimationClip, true, false, ANIMATION_BLEND_DURATION);
         }
 
         // 销毁 PlayableGraph 并还原 Animator 原始设置
@@ -96,15 +106,19 @@ namespace Module.Enemy.Animation
             m_context = null;
             m_originalController = null;
             m_idleAnimationClip = null;
+            m_moveAnimationClip = null;
             m_clipPlayables = null;
             m_currentInputIndex = -1;
             m_previousInputIndex = -1;
+            m_isLocomotionMoving = false;
         }
 
-        // 使用短混合切回循环待机动画
-        private void PlayIdle()
+        // 根据当前移动事实切换待机或移动循环动画
+        private void PlayLocomotion()
         {
-            PlayClip(m_idleAnimationClip, true, false, ANIMATION_BLEND_DURATION);
+            m_isLocomotionMoving = m_context.Movement.IsMoving;
+            AnimationClip animationClip = m_isLocomotionMoving ? m_moveAnimationClip : m_idleAnimationClip;
+            PlayClip(animationClip, true, false, ANIMATION_BLEND_DURATION);
         }
 
         // 创建动画输入并与当前输入交叉混合
