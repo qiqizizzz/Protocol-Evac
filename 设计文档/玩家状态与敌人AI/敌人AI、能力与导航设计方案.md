@@ -49,6 +49,7 @@ Patrol
 
 | 现有能力 | Enemy 中的用途 | 边界 |
 | --- | --- | --- |
+| `AbilityConfigSO`、`AbilityStepData`、`AbilityStepPhase` | 敌人多段攻击的动画、阶段、窗口与武器表现配置 | 只保存中立数据，不负责 BT、冷却或输入 |
 | `AbilityWindowTrackBaseSO` 与命中/无敌窗口轨道 | 敌人攻击、蓄力、无敌和可取消窗口 | 轨道只描述时间窗口，不负责决策或移动 |
 | `CombatHitbox`、`DamageData`、`IDamageable` | 敌人对 Player 造成伤害；Player 对 Enemy 造成伤害 | Combat 不依赖 Enemy 或 Player |
 | Ability Composer 的动画预览、时间轴、Animation Event、窗口编辑与保存流程 | 为 Enemy Ability 编辑攻击窗口与动画事件 | Composer 是“能力时间轴工具”，不是行为树工具 |
@@ -60,9 +61,9 @@ Patrol
 | --- | --- |
 | `PlayerInputReader` / `PlayerInputBuffer` | Enemy 没有玩家输入，应该由 Sensor 和 Intent 写入行为事实 |
 | `PlayerStateMachine` / Transition Rules | Player 的跳跃、闪避、输入取消规则与 Enemy 决策模型不同 |
-| `PlayerSkillTimeline` / `PlayerSkillStepData` | 当前含 Player 专属连段、输入缓存和动画阶段语义；Enemy 只能先复用能力窗口与 Combat 协议 |
+| `PlayerSkillTimeline` / `PlayerSkillController` | 含 Player 输入缓存、连段请求、HFSM Context 与取消规则；Enemy 应由自己的 Ability Controller 消费通用段落数据 |
 
-当第二种以上角色都需要“多段 Ability 时间轴”时，再从 Player 专属 Timeline 中抽出不含输入/连段的 `CombatAbilityTimeline`。在此之前不为了通用而提前重写已验证的 Player Skill。
+通用多段数据已经提取到 `Ability.Data`，但运行时 Timeline 仍不共享。只有 Enemy 运行时真正出现与 Player 相同的阶段推进算法时，才评估继续抽取控制逻辑；当前不为了形式统一重写已验证的 Player Skill。
 
 ## 四、总体运行架构
 
@@ -155,20 +156,18 @@ BT PlayAbility
 -> 清理窗口并将结果返回 BT
 ```
 
-### 2. 第一版 EnemyAbilityConfigSO
+### 2. 第一版 EnemyNormalAttackConfigSO
 
-每个 Ability 配置至少包含：
+Enemy 普攻配置继承 `AbilityConfigSO`，通用段落包含：
 
 ```text
-AnimationClip / AnimationStateId
-Duration
-Cooldown
-CanRotate / IsMovementLocked
-DamageData
-AbilityWindowTrackBaseSO[]
+Begin Animation / Recovery Animation
+各阶段 Duration / Root Motion / CanEndEarly
+ShowWeapon
+StepAdvanceWindowTrack / HitWindowTrack
 ```
 
-第一版只需近战攻击与受击/死亡的必要动作。`DamageData`、Hitbox 与窗口含义与 Player 一致；Enemy 不需要 Player 的连段推进、输入缓存和技能请求优先级。
+`EnemyNormalAttackConfigSO` 只额外保存 `Cooldown`、`LockMovement` 与 `CanRotate`。第一版流浪者目前配置一段攻击，但数据结构可直接扩展为三段；Enemy 不复用 Player 的连段输入、HFSM 或技能请求优先级。
 
 ### 3. Ability Composer 的定位
 

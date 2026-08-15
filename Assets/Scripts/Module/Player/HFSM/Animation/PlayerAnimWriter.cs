@@ -6,10 +6,10 @@
  * └──────────────────────────────────┘
  */
 
+using Module.Ability.Data;
 using Module.Player.Context;
 using Module.Player.Context.Runtime;
 using Module.Player.HFSM;
-using Module.Player.Skill;
 using UnityEngine;
 using Utils.log;
 
@@ -124,14 +124,14 @@ namespace Module.Player.HFSM.Animation
         {
             fullStateHash = m_context.Action.NormalAttackPhase switch
             {
-                PlayerSkillStepPhase.Begin => m_context.Action.NormalAttackIndex switch
+                AbilityStepPhase.Begin => m_context.Action.NormalAttackIndex switch
                 {
                     0 => S_SkillNormalAttack01StateHash,
                     1 => S_SkillNormalAttack02StateHash,
                     2 => S_SkillNormalAttack03StateHash,
                     _ => 0
                 },
-                PlayerSkillStepPhase.Recovery => m_context.Action.NormalAttackIndex switch
+                AbilityStepPhase.Recovery => m_context.Action.NormalAttackIndex switch
                 {
                     0 => S_SkillNormalAttack01RecoveryStateHash,
                     1 => S_SkillNormalAttack02RecoveryStateHash,

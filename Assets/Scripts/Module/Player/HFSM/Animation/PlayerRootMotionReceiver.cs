@@ -6,8 +6,8 @@
  * └────────────────────────────────────────────┘
  */
 
+using Module.Ability.Data;
 using Module.Player.Context;
-using Tools.Editor.AbilityComposer.Right;
 using UnityEngine;
 using Utils.log;
 

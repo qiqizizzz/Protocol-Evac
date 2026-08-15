@@ -15,3 +15,5 @@ MonoBehaviour:
   StatsConfigValue: {fileID: 11400000, guid: f36f4f16897aea84d90aae8f3d0d1d22, type: 2}
   BehaviorConfigValue: {fileID: 11400000, guid: 5d17e4915868f0840aee64f022dd11e1,
     type: 2}
+  NormalAttackConfigValue: {fileID: 11400000, guid: d1c9079a22115c44da05ac53060f6019,
+    type: 2}

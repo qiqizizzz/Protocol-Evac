@@ -6,8 +6,8 @@
  * └─────────────────────────────────────────────────────┘
  */
 
+using Module.Ability.Data;
 using Module.Player.HFSM;
-using Module.Player.Skill;
 using UnityEngine;
 
 namespace Module.Player.Context.Runtime
@@ -16,7 +16,7 @@ namespace Module.Player.Context.Runtime
     {
         public bool IsStateFinished { get; set; }
         public int NormalAttackIndex { get; set; }
-        public PlayerSkillStepPhase NormalAttackPhase { get; set; }
+        public AbilityStepPhase NormalAttackPhase { get; set; }
         public bool IsRootMotionMoveEnabled { get; private set; }
         public Vector3 RootMotionDeltaPosition { get; private set; }
         public bool IsWeaponVisible { get; set; }
@@ -34,7 +34,7 @@ namespace Module.Player.Context.Runtime
         {
             IsStateFinished = false;
             NormalAttackIndex = 0;
-            NormalAttackPhase = PlayerSkillStepPhase.Begin;
+            NormalAttackPhase = AbilityStepPhase.Begin;
             IsRootMotionMoveEnabled = false;
             RootMotionDeltaPosition = Vector3.zero;
             IsWeaponVisible = false;

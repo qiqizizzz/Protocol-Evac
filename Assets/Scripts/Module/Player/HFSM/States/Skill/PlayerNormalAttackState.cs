@@ -6,6 +6,7 @@
  * └──────────────────────────────────┘
  */
 
+using Module.Ability.Data;
 using Module.Player.Context;
 using Module.Player.Input.Buffer;
 using Module.Player.Skill;
@@ -53,7 +54,7 @@ namespace Module.Player.HFSM.States.Skill
             m_context.Action.IsStateFinished = false;
             m_context.Movement.IsMovementLocked = false;
             m_context.Action.NormalAttackIndex = 0;
-            m_context.Action.NormalAttackPhase = PlayerSkillStepPhase.Begin;
+            m_context.Action.NormalAttackPhase = AbilityStepPhase.Begin;
 
             if (m_context.Movement.IsGrounded &&
                 m_context.Input.MoveInput.sqrMagnitude > MOVE_INPUT_THRESHOLD_SQR)

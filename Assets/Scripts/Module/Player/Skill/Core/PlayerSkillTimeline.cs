@@ -6,12 +6,13 @@
  * └──────────────────────────────────┘
  */
 
+using Module.Ability.Data;
+using Module.Ability.Data.Window.StepAdvance;
 using Module.Player.Context;
 using Module.Player.HFSM;
 using Module.Player.Input.Buffer;
 using Module.Player.Skill;
 using Module.Player.Skill.Data;
-using Module.Ability.Window.StepAdvance;
 using Utils.log;
 using Utils.Timer;
 
@@ -21,18 +22,18 @@ namespace Module.Player.Skill.Core
     {
         private readonly DurationTimer m_stepTimer;
 
-        private PlayerSkillConfigSO m_currentConfig;
+        private AbilityConfigSO m_currentConfig;
         private int m_currentStepIndex;
         private bool m_isStepAdvanceRequested;
         private bool m_isStepAdvanceBuffered;
 
         public PlayerSkillType? CurrentSkillType { get; private set; }
         public int CurrentStepIndex => m_currentStepIndex;
-        public PlayerSkillStepPhase CurrentPhase { get; private set; }
+        public AbilityStepPhase CurrentPhase { get; private set; }
         public float NormalizedTime => m_stepTimer.NormalizedTime;
         public bool IsRunning { get; private set; }
         public bool IsFinished { get; private set; }
-        public PlayerSkillStepData CurrentStep => m_currentConfig?.GetStep(m_currentStepIndex);
+        public AbilityStepData CurrentStep => m_currentConfig?.GetStep(m_currentStepIndex);
 
         public PlayerSkillTimeline()
         {
@@ -41,7 +42,7 @@ namespace Module.Player.Skill.Core
         }
 
         #region 生命周期
-        public void Open(PlayerSkillType skillType, PlayerSkillConfigSO config, PlayerContext context)
+        public void Open(PlayerSkillType skillType, AbilityConfigSO config, PlayerContext context)
         {
             Reset();
 
@@ -61,13 +62,13 @@ namespace Module.Player.Skill.Core
 
             float previousNormalizedTime = m_stepTimer.NormalizedTime;
             m_stepTimer.Tick(deltaTime);
-            if (CurrentPhase == PlayerSkillStepPhase.Begin)
+            if (CurrentPhase == AbilityStepPhase.Begin)
                 UpdateStepAdvanceBuffer(previousNormalizedTime, m_stepTimer.NormalizedTime);
 
             if (!m_stepTimer.IsFinished)
                 return;
 
-            if (CurrentPhase == PlayerSkillStepPhase.Begin)
+            if (CurrentPhase == AbilityStepPhase.Begin)
             {
                 if (TryAdvanceStep(context))
                     return;
@@ -91,7 +92,7 @@ namespace Module.Player.Skill.Core
         // 记录进入下一段的请求，等待推进窗口满足后执行
         public void RequestNextStep()
         {
-            if (!IsRunning || CurrentPhase != PlayerSkillStepPhase.Begin)
+            if (!IsRunning || CurrentPhase != AbilityStepPhase.Begin)
                 return;
 
             m_isStepAdvanceRequested = true;
@@ -103,14 +104,14 @@ namespace Module.Player.Skill.Core
             if (!IsRunning)
                 return false;
 
-            PlayerSkillStepData stepData = CurrentStep;
+            AbilityStepData stepData = CurrentStep;
             if (stepData == null)
                 return false;
 
             bool canEndEarly = CurrentPhase switch
             {
-                PlayerSkillStepPhase.Begin => stepData.BeginCanEndEarly,
-                PlayerSkillStepPhase.Recovery => stepData.RecoveryCanEndEarly,
+                AbilityStepPhase.Begin => stepData.BeginCanEndEarly,
+                AbilityStepPhase.Recovery => stepData.RecoveryCanEndEarly,
                 _ => false
             };
             if (!canEndEarly)
@@ -123,7 +124,7 @@ namespace Module.Player.Skill.Core
         // 进入当前技能段落的攻击阶段
         private void EnterCurrentStepBegin(PlayerContext context)
         {
-            PlayerSkillStepData stepData = CurrentStep;
+            AbilityStepData stepData = CurrentStep;
             if (stepData == null)
             {
                 QLog.Error($"进入玩家技能段落失败：{CurrentSkillType} 第 {m_currentStepIndex} 段配置为空");
@@ -133,7 +134,7 @@ namespace Module.Player.Skill.Core
 
             m_isStepAdvanceRequested = false;
             m_isStepAdvanceBuffered = false;
-            CurrentPhase = PlayerSkillStepPhase.Begin;
+            CurrentPhase = AbilityStepPhase.Begin;
             m_stepTimer.Reset();
             m_stepTimer.Start(stepData.BeginDuration);
             context.Action.SetRootMotionMoveEnabled(stepData.BeginUseRootMotion);
@@ -142,7 +143,7 @@ namespace Module.Player.Skill.Core
             if (CurrentSkillType == PlayerSkillType.NormalAttack)
             {
                 context.Action.NormalAttackIndex = m_currentStepIndex;
-                context.Action.NormalAttackPhase = PlayerSkillStepPhase.Begin;
+                context.Action.NormalAttackPhase = AbilityStepPhase.Begin;
                 context.Action.RequestAnimReplay(PlayerStateId.SkillNormalAttack);
             }
         }
@@ -150,8 +151,8 @@ namespace Module.Player.Skill.Core
         // 进入当前技能段落的收招阶段
         private void EnterCurrentStepRecovery(PlayerContext context)
         {
-            PlayerSkillStepData stepData = CurrentStep;
-            CurrentPhase = PlayerSkillStepPhase.Recovery;
+            AbilityStepData stepData = CurrentStep;
+            CurrentPhase = AbilityStepPhase.Recovery;
             m_isStepAdvanceRequested = false;
             m_isStepAdvanceBuffered = false;
             m_stepTimer.Reset();
@@ -161,7 +162,7 @@ namespace Module.Player.Skill.Core
 
             if (CurrentSkillType == PlayerSkillType.NormalAttack)
             {
-                context.Action.NormalAttackPhase = PlayerSkillStepPhase.Recovery;
+                context.Action.NormalAttackPhase = AbilityStepPhase.Recovery;
                 context.Action.RequestAnimReplay(PlayerStateId.SkillNormalAttack);
             }
         }
@@ -172,7 +173,7 @@ namespace Module.Player.Skill.Core
             if (!m_isStepAdvanceRequested || m_isStepAdvanceBuffered)
                 return;
 
-            PlayerSkillStepData stepData = CurrentStep;
+            AbilityStepData stepData = CurrentStep;
             if (stepData == null)
                 return;
 
@@ -233,7 +234,7 @@ namespace Module.Player.Skill.Core
             CurrentSkillType = null;
             m_currentConfig = null;
             m_currentStepIndex = -1;
-            CurrentPhase = PlayerSkillStepPhase.Begin;
+            CurrentPhase = AbilityStepPhase.Begin;
             IsRunning = false;
             IsFinished = false;
             m_isStepAdvanceRequested = false;

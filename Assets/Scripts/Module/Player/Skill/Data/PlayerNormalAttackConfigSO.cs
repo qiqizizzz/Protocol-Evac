@@ -6,13 +6,13 @@
  * └────────────────────────────────────────────┘
  */
 
-using Module.Ability.Window.StepAdvance;
+using Module.Ability.Data;
 using UnityEngine;
 
 namespace Module.Player.Skill.Data
 {
     [CreateAssetMenu(fileName = "PlayerNormalAttackConfig", menuName = "配置/玩家/技能/玩家普攻配置")]
-    public sealed class PlayerNormalAttackConfigSO : PlayerSkillConfigSO
+    public sealed class PlayerNormalAttackConfigSO : AbilityConfigSO
     {
         [Header("输入容错")]
         [Tooltip("普攻输入缓存时间")]

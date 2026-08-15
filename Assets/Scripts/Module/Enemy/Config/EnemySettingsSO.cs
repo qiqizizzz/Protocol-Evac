@@ -7,6 +7,7 @@
  */
 
 using UnityEngine;
+using Module.Enemy.Ability.Config;
 using Module.Enemy.Behavior.Config;
 
 namespace Module.Enemy.Config
@@ -22,7 +23,12 @@ namespace Module.Enemy.Config
         [Tooltip("敌人的行为调度与意图配置")]
         [SerializeField] private EnemyBehaviorConfigSO BehaviorConfigValue;
 
+        [Header("普攻配置")]
+        [Tooltip("敌人的普通攻击配置")]
+        [SerializeField] private EnemyNormalAttackConfigSO NormalAttackConfigValue;
+
         public EnemyStatsConfigSO StatsConfig => StatsConfigValue;
         public EnemyBehaviorConfigSO BehaviorConfig => BehaviorConfigValue;
+        public EnemyNormalAttackConfigSO NormalAttackConfig => NormalAttackConfigValue;
     }
 }

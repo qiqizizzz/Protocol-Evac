@@ -8,8 +8,8 @@
         "GUID:2e2028143becd3b47bc14ed467d11a06",
         "GUID:324caed91501a9c47a04ebfd87b68794",
         "GUID:47b93ceb36104063b4d385403b21ee9b",
-        "GUID:408ec2388a195ca4080faf4f9d45545b",
-        "Ability.Window"
+        "Ability.Data",
+        "Ability.Core"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

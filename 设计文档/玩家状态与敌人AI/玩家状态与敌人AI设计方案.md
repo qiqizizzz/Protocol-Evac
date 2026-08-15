@@ -116,19 +116,10 @@ Assets/Scripts/Module/
 │  │  └─ PlayerInterruptPriority.cs
 │  ├─ Skill/
 │  │  ├─ Data/
-│  │  │  ├─ PlayerSkillConfigSO.cs
-│  │  │  ├─ PlayerSkillStepData.cs
 │  │  │  └─ PlayerNormalAttackConfigSO.cs
 │  │  ├─ Core/
 │  │  │  ├─ PlayerSkillController.cs
-│  │  │  └─ PlayerSkillContext.cs
-│  │  ├─ Event/
-│  │  ├─ Editor/
-│  │  │  ├─ PlayerSkillConfigSOEditor.cs
-│  │  │  ├─ PlayerSkillEditorWindow.cs
-│  │  │  ├─ PlayerSkillStepListView.cs
-│  │  │  ├─ PlayerSkillTimelineView.cs
-│  │  │  └─ PlayerSkillInspectorView.cs
+│  │  │  └─ PlayerSkillTimeline.cs
 │  │  └─ PlayerSkillType.cs
 │  └─ Config/
 │     └─ PlayerConfigSO.cs
@@ -602,19 +593,19 @@ Skill System
 
 Skill 分层：
 
-- 数据层：`PlayerSkillConfigSO`、`PlayerSkillStepData`、具体技能配置子类
-- 事件层：`Event/` 只保存以后真实出现的技能事件协议，第一版保持为空
-- 核心层：`PlayerSkillController`、`PlayerSkillContext`
-- 编辑器层：UI Toolkit 技能编辑器，只编辑 Skill Config
+- 通用数据层：`AbilityConfigSO`、`AbilityStepData`、`AbilityStepPhase` 与窗口轨道
+- Player 数据层：`PlayerNormalAttackConfigSO` 等具体技能配置子类
+- 核心层：`PlayerSkillController`、`PlayerSkillTimeline`
+- 编辑器层：通用 Ability Composer，不依赖 Player 运行时模块
 
 ```text
-PlayerSkillConfigSO
+AbilityConfigSO
 └─ Steps
    ├─ 第 1 段
    ├─ 第 2 段
    └─ 第 3 段
 
-PlayerNormalAttackConfigSO : PlayerSkillConfigSO
+PlayerNormalAttackConfigSO : AbilityConfigSO
 ├─ NormalAttackBufferTime
 ├─ LockMovement
 └─ NormalAttackExitBlendDuration
@@ -634,13 +625,12 @@ public enum PlayerSkillType
 单段技能数据：
 
 ```text
-PlayerSkillStepData
-├─ AnimationClip
-├─ Duration
-├─ UseRootMotion
-├─ StepAdvanceWindow
-├─ HitWindow
-└─ Damage
+AbilityStepData
+├─ Begin Animation / Recovery Animation
+├─ Duration / Root Motion / CanEndEarly
+├─ ShowWeapon
+├─ StepAdvanceWindowTrack
+└─ HitWindowTrack
 ```
 
 第一版数据边界：
@@ -701,7 +691,7 @@ HFSM
 └─ DisabledDead
 
 Skill
-├─ PlayerSkillConfigSO
+├─ AbilityConfigSO / AbilityStepData
 ├─ PlayerSkillController
 └─ NormalAttack 第一段时间轴
 
@@ -1052,14 +1042,13 @@ PlayerConfigSO
 ```
 
 ```text
-PlayerSkillConfigSO
+AbilityConfigSO
 └─ Steps
-   ├─ AnimationClip
-   ├─ Duration
-   ├─ UseRootMotion
-   ├─ StepAdvanceWindow
-   ├─ HitWindow
-   └─ Damage
+   ├─ Begin / Recovery Animation
+   ├─ Duration / Root Motion / CanEndEarly
+   ├─ ShowWeapon
+   ├─ StepAdvanceWindowTrack
+   └─ HitWindowTrack
 ```
 
 ### 10.2 Enemy 配置
@@ -1113,8 +1102,8 @@ Player 模块当前统一沿用 `Module.Player.*`，本阶段不调整已有命�
 
 ### 阶段 2：Skill 与 Transition Evaluator
 
-1. 创建 `PlayerSkillConfigSO`
-2. 创建 `PlayerSkillStepData`
+1. 创建 `AbilityConfigSO`
+2. 创建 `AbilityStepData`
 3. 让 `PlayerNormalAttackConfigSO` 继承通用技能配置
 4. 将现有三段普攻迁移到唯一的 `StepValues`
 5. 创建 `PlayerSkillController`

@@ -1,0 +1,21 @@
+{
+    "name": "Tools.AbilityComposer.Editor",
+    "rootNamespace": "",
+    "references": [
+        "GUID:1e6a16ebd49fdb74fad1843f95457608",
+        "QTower.Editor",
+        "QTower",
+        "GUID:acf43c769833d514296adacabaf21c8f",
+        "GUID:288bd087505822543835be2ef9f6f548",
+        "Ability.Data"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

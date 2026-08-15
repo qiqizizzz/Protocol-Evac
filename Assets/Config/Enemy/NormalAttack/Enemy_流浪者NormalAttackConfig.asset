@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0cc844071aec9944ca43d442a67494eb, type: 3}
+  m_Name: "Enemy_\u6D41\u6D6A\u8005NormalAttackConfig"
+  m_EditorClassIdentifier: 
+  StepValues:
+  - BeginAnimationClipValue: {fileID: 3625414872004886998, guid: eea23087c2f686a4785dee8bd6c8f2de,
+      type: 3}
+    BeginDurationValue: 0.43333337
+    BeginUseRootMotionValue: 0
+    BeginCanEndEarlyValue: 1
+    RecoveryAnimationClipValue: {fileID: 7400775424482280638, guid: eea23087c2f686a4785dee8bd6c8f2de,
+      type: 3}
+    RecoveryDurationValue: 0.9666667
+    RecoveryUseRootMotionValue: 0
+    RecoveryCanEndEarlyValue: 1
+    ShowWeaponValue: 1
+    UseStepAdvanceWindowValue: 0
+    StepAdvanceWindowTrackValue: {fileID: 0}
+    UseHitWindowValue: 0
+    BeginHitWindowTrackValue: {fileID: 0}
+  CooldownValue: 0
+  LockMovementValue: 0
+  CanRotateValue: 0

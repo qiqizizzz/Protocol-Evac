@@ -1,0 +1,94 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements">
+        <ui:VisualElement name="ability-composer-root" class="ac-root">
+        <ui:VisualElement name="top-context-bar" class="ac-context-bar">
+            <ui:VisualElement class="ac-context-inputs">
+                <uie:ObjectField name="preview-source-field" label="" class="ac-object-field" />
+                <ui:DropdownField name="prefab-animation-clip-field" label="" class="ac-object-field" />
+                <uie:ObjectField name="animation-clip-field" label="" class="ac-object-field" />
+                <ui:Toggle name="show-global-animation-toggle" label="显示全局动画" class="ac-global-animation-toggle" />
+            </ui:VisualElement>
+            <ui:VisualElement class="ac-context-spacer" />
+            <ui:VisualElement class="ac-context-actions">
+                <ui:Button name="return-previous-scene-button" class="ac-button ac-button-secondary">
+                    <ui:Label text="返回旧场景" class="ac-button-label" />
+                </ui:Button>
+                <ui:Button name="create-preview-button" class="ac-button ac-button-secondary">
+                    <ui:Label text="创建预览" class="ac-button-label" />
+                </ui:Button>
+                <ui:Button name="focus-preview-button" class="ac-button ac-button-secondary">
+                    <ui:Label text="聚焦 Scene" class="ac-button-label" />
+                </ui:Button>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <ui:VisualElement name="content-layout" class="ac-content-layout">
+            <ui:VisualElement name="preview-control-panel" class="ac-panel ac-preview-panel">
+                <ui:VisualElement class="ac-preview-header">
+                    <ui:VisualElement class="ac-transport-row">
+                        <ui:Button name="jump-first-frame-button" tooltip="跳到第一帧" class="ac-transport-button"><ui:Label text="|&lt;" class="ac-button-label" /></ui:Button>
+                        <ui:Button name="previous-frame-button" tooltip="上一帧" class="ac-transport-button"><ui:Label text="&lt;" class="ac-button-label" /></ui:Button>
+                        <ui:Button name="play-toggle-button" tooltip="播放或暂停" class="ac-transport-button ac-play-button"><ui:Label name="play-toggle-label" text="▶" class="ac-button-label" /></ui:Button>
+                        <ui:Button name="next-frame-button" tooltip="下一帧" class="ac-transport-button"><ui:Label text="&gt;" class="ac-button-label" /></ui:Button>
+                        <ui:Button name="jump-last-frame-button" tooltip="跳到最后一帧" class="ac-transport-button"><ui:Label text="&gt;|" class="ac-button-label" /></ui:Button>
+                    </ui:VisualElement>
+                    <ui:VisualElement class="ac-frame-counter">
+                        <ui:TextField name="preview-current-frame-field" value="--" is-delayed="true" class="ac-frame-input" />
+                        <ui:Label text="/" class="ac-frame-separator" />
+                        <ui:Label name="preview-last-frame-label" text="--" class="ac-frame-total" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement class="ac-module-divider" />
+                <ui:VisualElement class="ac-event-action-row">
+                    <ui:Button name="add-event-button" class="ac-button ac-event-action-button">
+                        <ui:Label text="＋ 添加事件" class="ac-button-label ac-muted-button-label" />
+                    </ui:Button>
+                    <ui:Button name="delete-event-button" class="ac-button ac-event-action-button ac-event-action-button-last">
+                        <ui:Label text="删除选中事件" class="ac-button-label ac-muted-button-label" />
+                    </ui:Button>
+                </ui:VisualElement>
+                <ui:VisualElement class="ac-module-divider ac-hit-window-divider" />
+                <ui:VisualElement class="ac-hit-window-action-row">
+                    <ui:Button name="add-window-button" class="ac-button ac-hit-window-action-button">
+                        <ui:Label text="＋ 添加窗口" class="ac-button-label ac-muted-button-label" />
+                    </ui:Button>
+                    <ui:Button name="delete-window-button" class="ac-button ac-hit-window-action-button ac-hit-window-action-button-last">
+                        <ui:Label text="删除选中窗口" class="ac-button-label ac-muted-button-label" />
+                    </ui:Button>
+                </ui:VisualElement>
+                <ui:VisualElement class="ac-window-track-toggle-row">
+                    <ui:VisualElement class="ac-window-track-toggle-cell">
+                        <ui:Button name="hit-window-track-toggle" class="ac-window-track-toggle-button" />
+                        <ui:Label text="Hit" class="ac-window-track-toggle-label" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="ac-window-track-toggle-cell ac-window-track-toggle-cell-last">
+                        <ui:Button name="step-advance-window-track-toggle" class="ac-window-track-toggle-button" />
+                        <ui:Label text="Step" class="ac-window-track-toggle-label" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement class="ac-panel-spacer" />
+            </ui:VisualElement>
+
+            <ui:VisualElement name="timeline-panel" class="ac-panel ac-timeline-panel">
+                <ui:VisualElement name="timeline-workspace" class="ac-timeline-workspace">
+                    <ui:ScrollView name="timeline-scroll-view" class="ac-timeline-scroll-view">
+                        <ui:VisualElement name="timeline-content" class="ac-timeline-content" />
+                    </ui:ScrollView>
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <ui:VisualElement name="event-inspector-panel" class="ac-panel ac-inspector-panel">
+                <ui:VisualElement name="event-inspector-workspace" class="ac-inspector-workspace" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <ui:VisualElement name="bottom-status-bar" class="ac-status-bar">
+            <ui:VisualElement class="ac-status-spacer" />
+            <ui:Button name="save-all-button" class="ac-button ac-bottom-save-button">
+                <ui:Label text="一键保存" class="ac-button-label ac-muted-button-label" />
+            </ui:Button>
+            <ui:Button name="undo-last-save-button" class="ac-button ac-button-secondary ac-bottom-undo-button">
+                <ui:Label text="撤销" class="ac-button-label ac-muted-button-label" />
+            </ui:Button>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

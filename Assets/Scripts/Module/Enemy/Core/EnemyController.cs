@@ -82,6 +82,9 @@ namespace Module.Enemy.Core
 
             if (Settings.BehaviorConfig == null)
                 QLog.Warning("EnemyBehaviorConfig 未配置，敌人行为模块可能无法正常运行");
+
+            if (Settings.NormalAttackConfig == null)
+                QLog.Warning("NormalAttackConfig 未配置，敌人普通攻击模块可能无法正常运行");
         }
         
         

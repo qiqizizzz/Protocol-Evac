@@ -4,14 +4,14 @@
 
 `Ability Composer` 是项目内的通用动画能力编排工具。它不是 Player、Combat 或单一技能系统的附属 Inspector，而是一个独立的 Unity EditorWindow：先解决任意动画片段的 Scene 逐帧预览与 `Animation Event` 编辑，再按实际需求扩展时间窗口、特效、音效与能力数据轨道。
 
-当前已落地第一条通用窗口轨道。窗口草稿与 `Animation Event` 分离，具有类型、开始帧、结束帧和类型参数；首批类型为“命中窗口”和“无敌帧窗口”。窗口持久化于中立的 `AbilityWindowTrackSO`，Composer 与 Player 以后都只依赖这份运行时无关的数据资产，避免通用编辑器与业务程序集形成循环依赖。
+当前已落地通用能力配置、状态动画段落与窗口轨道。窗口草稿与 `Animation Event` 分离，具有类型、开始帧、结束帧和类型参数；首批类型为命中窗口、阶段推进窗口和无敌窗口。`AbilityConfigSO`、`AbilityStepData`、`AbilityStepPhase` 与窗口轨道统一位于 `Ability.Data` 程序集，Player、Enemy 与 Composer Editor 都只依赖这份中立数据，避免编辑器与业务程序集形成循环依赖。
 
 工具入口与代码位置：
 
 ```text
-Assets/Scripts/Tools/Editor/AbilityComposer/
-├─ 程序集：Tools.AbilityComposer.Editor
-├─ 主窗口：AbilityComposerWindow
+Assets/Scripts/Tools/AbilityComposer/
+├─ Data/    程序集：Ability.Data
+├─ Editor/  程序集：Tools.AbilityComposer.Editor
 └─ 菜单：工具 / Ability / Ability Composer
 ```
 
@@ -62,8 +62,8 @@ Composer
 ```text
 不创建运行时 Ability 系统
 不引入节点图、Graph 或 Flow
-不读取或写入 PlayerSkillConfigSO
-不在首版直接实现 Player/Combat 专用运行时轨道；通用窗口轨道可承载 Hit、Invincible 等类型，但必须通过业务配置适配层接入保存
+不依赖或写入 Player、Enemy 专属配置字段
+不把 Player 输入、HFSM、连段请求或 Enemy BT 执行逻辑放入通用 Data
 不在拖动事件过程中反复重导 FBX
 不修改原场景角色、FBX 骨骼、关键帧或 Clip 设置
 ```
@@ -142,7 +142,20 @@ Message Options
 
 ## 五、总体架构
 
-采用模块级 `Data - Controller - View`。它直接对应工具当前的职责，不为了未来需求提前增加 `Reader`、`Resolver` 或通用轨道接口。
+采用程序集级 `Data + Editor` 与编辑器内部的 `Data - Controller - View`。通用运行时数据不依赖 `UnityEditor`，Editor 只负责预览、编辑与保存，不为了未来需求提前增加无真实消费者的通用轨道接口。
+
+```text
+Ability.Data
+├─ AbilityConfigSO
+├─ AbilityStepData
+├─ AbilityStepPhase
+└─ Window/
+
+Tools.AbilityComposer.Editor
+├─ AbilityComposerWindow / Controller / Data
+├─ Preview / Selection
+└─ View/Left / View/Center / View/Right
+```
 
 ```text
 AbilityComposerWindow
@@ -186,7 +199,9 @@ AbilityPreviewController
 依赖方向固定为：
 
 ```text
-View -> AbilityComposerController -> Data / AbilityPreviewController
+View -> AbilityComposerController -> AbilityComposerData / AbilityPreviewController
+Player / Enemy / Ability.Core -> Ability.Data
+Tools.AbilityComposer.Editor -> Ability.Data
 AbilityComposerController -> QTower.Editor / BaseEditorController -> QTower / BaseController
 AbilityComposerWindow -> 仅装配上述对象
 ```
@@ -213,28 +228,32 @@ P3 新增 `AbilityEventInspectorView`、事件草稿数据和 `AbilityTimelineCo
 ## 六、代码目录
 
 ```text
-Assets/Scripts/Tools/Editor/AbilityComposer/
-├─ Tools.Editor.AbilityComposer.asmdef
-├─ AbilityComposerWindow.cs
-├─ AbilityComposerData.cs
-│
-├─ Controller/
-│  └─ AbilityComposerController.cs
-│
-├─ View/
-│  └─ AbilityComposerView.cs
-│
-├─ Timeline/
-│  ├─ AbilityTimelineData.cs
-│  ├─ AbilityTimelineView.cs
-│  └─ Commands/                       P3 新增
-│
-├─ Preview/
-│  └─ AbilityPreviewController.cs
-│
-└─ UI/
-   ├─ Uxml/AbilityComposerWindow.uxml
-   └─ Uss/AbilityComposerWindow.uss
+Assets/Scripts/Tools/AbilityComposer/
+├─ Data/
+│  ├─ Ability.Data.asmdef
+│  ├─ AbilityConfigSO.cs
+│  ├─ AbilityStepData.cs
+│  ├─ AbilityStepPhase.cs
+│  ├─ AnimationEventReceiverAttribute.cs
+│  └─ Window/
+│     ├─ AbilityWindowDataBase.cs
+│     ├─ AbilityWindowTrackBaseSO.cs
+│     ├─ Hit/
+│     ├─ StepAdvance/
+│     └─ Invincible/
+└─ Editor/
+   ├─ Tools.AbilityComposer.Editor.asmdef
+   ├─ AbilityComposerWindow.cs
+   ├─ AbilityComposerController.cs
+   ├─ AbilityComposerData.cs
+   ├─ Preview/
+   ├─ Selection/
+   ├─ View/
+   │  ├─ AbilityComposerView.cs
+   │  ├─ Left/
+   │  ├─ Center/
+   │  └─ Right/
+   └─ UI/
 ```
 
 `AbilityComposerWindow` 不实现播放、场景或时间轴业务。`AbilityComposerController` 不操作 `VisualElement`。`AbilityPreviewController` 不依赖 Player、Combat 或其他运行时模块。
@@ -355,6 +374,6 @@ Prefab 预览不在 Hierarchy 留下对象
 
 ## 十二、与现有文档的关系
 
-[技能系统与编辑器设计方案.md](../玩家状态与敌人AI/技能系统与编辑器设计方案.md) 继续定义 Player Skill 数据、`PlayerSkillConfigSO`、`PlayerSkillStepData` 与 Player 专用能力编辑路线。
+[技能系统与编辑器设计方案.md](../玩家状态与敌人AI/技能系统与编辑器设计方案.md) 继续定义 Player 输入、HFSM、`PlayerSkillController` 与普攻专属配置；通用配置和状态动画段落由本方案的 `AbilityConfigSO / AbilityStepData` 定义。
 
-本方案定义独立、通用的 Ability Composer。未来若 Player Skill 需要时间窗口可视化，应由 Player 编辑扩展或 Combat 扩展接入 Ability Composer 的轨道能力；不得让通用工具直接依赖 Player 运行时模块。
+本方案定义独立、通用的 Ability Composer。Player 与 Enemy 通过 `Ability.Data` 共享配置和窗口数据，但 Composer Editor 不直接依赖任何一方的运行时模块。

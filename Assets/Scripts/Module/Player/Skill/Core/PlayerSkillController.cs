@@ -8,8 +8,9 @@
 
 using Framework.QTower.Controller;
 using System.Collections.Generic;
+using Module.Ability.Data;
+using Module.Ability.Hit;
 using Module.Combat.Hitbox;
-using Module.Ability.Window.Hit;
 using Module.Player.Context;
 using Module.Player.Skill;
 using Module.Player.Skill.Data;
@@ -23,33 +24,28 @@ namespace Module.Player.Skill.Core
         private const float MOVE_INPUT_THRESHOLD_SQR = 0.01f;
 
         private readonly PlayerContext m_context;
-        private readonly CombatHitbox m_combatHitbox;
-        private readonly GameObject m_damageSource;
-        private readonly Dictionary<PlayerSkillType, PlayerSkillConfigSO> m_skillConfigs;
+        private readonly AbilityHitWindowController m_hitWindowController;
+        private readonly Dictionary<PlayerSkillType, AbilityConfigSO> m_skillConfigs;
         private readonly PlayerSkillTimeline m_timeline;
 
-        private int m_hitWindowStepIndex;
-        private string m_activeHitWindowId;
         private Vector2 m_previousMoveInput;
         private bool m_wasSprintActive;
 
         public PlayerSkillType? CurrentSkillType => m_timeline.CurrentSkillType;
         public int CurrentStepIndex => m_timeline.CurrentStepIndex;
-        public PlayerSkillStepPhase CurrentPhase => m_timeline.CurrentPhase;
+        public AbilityStepPhase CurrentPhase => m_timeline.CurrentPhase;
         public float NormalizedTime => m_timeline.NormalizedTime;
         public bool IsRunning => m_timeline.IsRunning;
         public bool IsFinished => m_timeline.IsFinished;
-        public PlayerSkillStepData CurrentStep => m_timeline.CurrentStep;
+        public AbilityStepData CurrentStep => m_timeline.CurrentStep;
 
         // 创建玩家技能控制器
         public PlayerSkillController(PlayerContext context, CombatHitbox combatHitbox, GameObject damageSource)
         {
             m_context = context;
-            m_combatHitbox = combatHitbox;
-            m_damageSource = damageSource;
-            m_skillConfigs = new Dictionary<PlayerSkillType, PlayerSkillConfigSO>();
+            m_hitWindowController = new AbilityHitWindowController(combatHitbox, damageSource);
+            m_skillConfigs = new Dictionary<PlayerSkillType, AbilityConfigSO>();
             m_timeline = new PlayerSkillTimeline();
-            m_hitWindowStepIndex = -1;
         }
 
         #region 生命周期
@@ -57,7 +53,7 @@ namespace Module.Player.Skill.Core
         {
             Close();
 
-            if (!m_skillConfigs.TryGetValue(skillType, out PlayerSkillConfigSO config))
+            if (!m_skillConfigs.TryGetValue(skillType, out AbilityConfigSO config))
             {
                 QLog.Error($"打开玩家技能失败：未注册技能配置 {skillType}");
                 return;
@@ -107,7 +103,7 @@ namespace Module.Player.Skill.Core
         }
 
         // 注册玩家技能配置
-        public void RegisterConfig(PlayerSkillType skillType, PlayerSkillConfigSO config)
+        public void RegisterConfig(PlayerSkillType skillType, AbilityConfigSO config)
         {
             if (config == null)
             {
@@ -159,51 +155,27 @@ namespace Module.Player.Skill.Core
                 return;
             }
 
-            if (m_timeline.CurrentPhase != PlayerSkillStepPhase.Begin)
+            if (m_timeline.CurrentPhase != AbilityStepPhase.Begin)
             {
                 CloseHitWindow();
                 return;
             }
 
-            PlayerSkillStepData stepData = m_timeline.CurrentStep;
+            AbilityStepData stepData = m_timeline.CurrentStep;
             if (!stepData.UseHitWindow)
             {
                 CloseHitWindow();
                 return;
             }
 
-            AbilityHitWindowTrackSO windowTrack = stepData.BeginHitWindowTrack;
-            if (windowTrack == null)
-            {
-                CloseHitWindow();
-                return;
-            }
-
-            float normalizedTime = m_timeline.NormalizedTime;
-            if (!windowTrack.TryGetActiveWindow(normalizedTime, out AbilityHitWindowData activeWindow))
-            {
-                CloseHitWindow();
-                return;
-            }
-
-            if (m_hitWindowStepIndex == m_timeline.CurrentStepIndex && m_activeHitWindowId == activeWindow.Id)
-                return;
-
-            CloseHitWindow();
-            m_combatHitbox.Open(activeWindow.Damage, m_damageSource);
-            m_hitWindowStepIndex = m_timeline.CurrentStepIndex;
-            m_activeHitWindowId = activeWindow.Id;
+            m_hitWindowController.Sync(stepData.BeginHitWindowTrack, m_timeline.NormalizedTime,
+                m_timeline.CurrentStepIndex);
         }
 
         // 关闭当前命中窗口并重置段落记录
         private void CloseHitWindow()
         {
-            if (m_hitWindowStepIndex < 0)
-                return;
-
-            m_combatHitbox.Close();
-            m_hitWindowStepIndex = -1;
-            m_activeHitWindowId = null;
+            m_hitWindowController.Close();
         }
     }
 }

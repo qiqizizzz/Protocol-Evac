@@ -6,8 +6,8 @@
  * └────────────────────────────────────────────┘
  */
 
+using Module.Ability.Data;
 using Module.Player.Context;
-using Module.Player.Skill;
 using UnityEngine;
 using Utils.log;
 
@@ -22,7 +22,7 @@ namespace Module.Player.Core
 
         private Animator m_animator;
         private PlayerContext m_context;
-        private PlayerSkillStepPhase m_lastAttackPhase;
+        private AbilityStepPhase m_lastAttackPhase;
         private bool m_wasWeaponVisible;
 
         private void Awake()
@@ -75,7 +75,7 @@ namespace Module.Player.Core
                 return;
 
             m_lastAttackPhase = m_context.Action.NormalAttackPhase;
-            if (m_lastAttackPhase == PlayerSkillStepPhase.Recovery)
+            if (m_lastAttackPhase == AbilityStepPhase.Recovery)
             {
                 PlayRecoveryAnimation();
                 return;

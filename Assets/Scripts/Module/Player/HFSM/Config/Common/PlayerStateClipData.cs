@@ -8,8 +8,8 @@
 
 using System;
 using System.Reflection;
-using Module.Ability.Window;
-using Module.Ability.Window.StepAdvance;
+using Module.Ability.Data;
+using Module.Ability.Data.Window.StepAdvance;
 using TriInspector;
 using UnityEngine;
 
