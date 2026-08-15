@@ -1,6 +1,6 @@
 /*
  * ┌───────────────────────────────────────────────────┐
- * │  描    述: 敌人行为控制器，负责构建与调度行为树
+ * │  描    述: 敌人行为控制器，负责持有、推进与重置行为树
  * │  类    名: EnemyBehaviorController.cs
  * │  创    建: By qiqizizzz
  * └───────────────────────────────────────────────────┘
@@ -8,28 +8,17 @@
 
 using CleverCrow.Fluid.BTs.Tasks;
 using CleverCrow.Fluid.BTs.Trees;
-using Module.Enemy.Ability.Core;
-using Module.Enemy.Behavior.Actions;
-using Module.Enemy.Context;
-using UnityEngine;
 
 namespace Module.Enemy.Behavior.Core
 {
     public sealed class EnemyBehaviorController
     {
-        private readonly EnemyContext m_context;
-        private readonly EnemyAbilityController m_abilityController;
-        private readonly GameObject m_owner;
-
         public BehaviorTree Tree { get; }
 
-        // 创建敌人行为控制器并构建运行时树
-        public EnemyBehaviorController(GameObject owner, EnemyContext context, EnemyAbilityController abilityController)
+        // 创建敌人行为控制器并接收已组合的运行时树
+        public EnemyBehaviorController(BehaviorTree tree)
         {
-            m_owner = owner;
-            m_context = context;
-            m_abilityController = abilityController;
-            Tree = BuildTree();
+            Tree = tree;
         }
 
         // 推进敌人行为树
@@ -43,24 +32,5 @@ namespace Module.Enemy.Behavior.Core
         {
             Tree.Reset();
         }
-
-        // 构建第一版能力请求行为树
-        private BehaviorTree BuildTree()
-        {
-            return new BehaviorTreeBuilder(m_owner)
-                .Name("Enemy Behavior Tree")
-                .Selector("Root")
-                    .Sequence("Ability Request")
-                        .Condition("Has Ability Request", () => m_context.Action.HasAbilityRequest)
-                        .AddNode(new EnemyPlayAbilityAction(m_abilityController, m_context.Action)
-                        {
-                            Name = "Play Ability"
-                        })
-                    .End()
-                    .Do("Idle", () => TaskStatus.Continue)
-                .End()
-                .Build();
-        }
     }
 }
-

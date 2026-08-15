@@ -29,6 +29,6 @@ MonoBehaviour:
     UseHitWindowValue: 1
     BeginHitWindowTrackValue: {fileID: 11400000, guid: 91823e0c19c0e0947bdd47335e49761e,
       type: 2}
-  CooldownValue: 0
-  LockMovementValue: 0
-  CanRotateValue: 0
+  CooldownValue: 0.5
+  LockMovementValue: 1
+  CanRotateValue: 1

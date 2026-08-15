@@ -1,4 +1,4 @@
-# Protocol_Evac 敌人 AI、能力与导航设计方案
+# Protocol_Evac 敌人 AI、技能与导航设计方案
 
 ## 一、文档目的与当前结论
 
@@ -7,13 +7,14 @@
 结论如下：
 
 ```text
-Enemy：BT 编排行为 + Utility 决策意图 + A* 导航
-Ability：复用现有 Ability Window、Combat 与 Ability Composer 的制作能力
+Enemy Behavior：BT 直接读取运行时事实并编排行为 + A* 导航
+Enemy Skill：执行技能时间轴、冷却与攻击窗口
+Ability：只提供通用段落数据、Ability Window、Combat 与 Ability Composer 制作能力
 Player：保留 Input Buffer + HFSM + Skill，不迁移到 Enemy BT
 Editor：行为树编辑器做成通用的可视化工具，但不取代 Ability Composer
 ```
 
-Enemy 的“想做什么”与“如何执行”必须分离：Utility 负责选择意图，BT 负责执行流程，Ability / PathAgent 负责实际攻击或导航，Motor 负责最终移动、旋转与表现。
+Enemy 的“想做什么”与“如何执行”必须分离：BT 读取 Context 事实并选择行为，Enemy Skill / PathAgent 负责实际攻击或导航，Motor 负责最终移动、旋转与表现。
 
 ## 二、范围与非目标
 
@@ -31,7 +32,7 @@ Patrol
 -> 回到 Patrol
 ```
 
-必须包含感知、意图切换、BT Running/Abort、路径请求、近战攻击窗口、受击和死亡的清理边界。
+必须包含感知、BT Running/Abort、路径请求、近战攻击窗口、受击和死亡的清理边界。
 
 ### 2. 当前不做
 
@@ -52,7 +53,7 @@ Patrol
 | `AbilityConfigSO`、`AbilityStepData`、`AbilityStepPhase` | 敌人多段攻击的动画、阶段、窗口与武器表现配置 | 只保存中立数据，不负责 BT、冷却或输入 |
 | `AbilityWindowTrackBaseSO` 与命中/无敌窗口轨道 | 敌人攻击、蓄力、无敌和可取消窗口 | 轨道只描述时间窗口，不负责决策或移动 |
 | `CombatHitbox`、`DamageData`、`IDamageable` | 敌人对 Player 造成伤害；Player 对 Enemy 造成伤害 | Combat 不依赖 Enemy 或 Player |
-| Ability Composer 的动画预览、时间轴、Animation Event、窗口编辑与保存流程 | 为 Enemy Ability 编辑攻击窗口与动画事件 | Composer 是“能力时间轴工具”，不是行为树工具 |
+| Ability Composer 的动画预览、时间轴、Animation Event、窗口编辑与保存流程 | 为 Enemy Skill 编辑攻击窗口与动画事件 | Composer 是“技能时间轴工具”，不是行为树工具 |
 | Player Root Motion / Motor 的经验 | Enemy Motor 的位移、转向、动画驱动边界 | 不复制 Player 的 Input / HFSM 实现 |
 
 ### 2. 暂不直接复用
@@ -61,7 +62,7 @@ Patrol
 | --- | --- |
 | `PlayerInputReader` / `PlayerInputBuffer` | Enemy 没有玩家输入，应该由 Sensor 和 Intent 写入行为事实 |
 | `PlayerStateMachine` / Transition Rules | Player 的跳跃、闪避、输入取消规则与 Enemy 决策模型不同 |
-| `PlayerSkillTimeline` / `PlayerSkillController` | 含 Player 输入缓存、连段请求、HFSM Context 与取消规则；Enemy 应由自己的 Ability Controller 消费通用段落数据 |
+| `PlayerSkillTimeline` / `PlayerSkillController` | 含 Player 输入缓存、连段请求、HFSM Context 与取消规则；Enemy 应由自己的 Skill Controller 消费通用段落数据 |
 
 通用多段数据已经提取到 `Ability.Data`，但运行时 Timeline 仍不共享。只有 Enemy 运行时真正出现与 Player 相同的阶段推进算法时，才评估继续抽取控制逻辑；当前不为了形式统一重写已验证的 Player Skill。
 
@@ -70,20 +71,18 @@ Patrol
 ```mermaid
 flowchart LR
     Sensor["EnemySensor\n感知事实"] --> Context["EnemyContext\n角色黑板"]
-    Context --> Utility["EnemyUtilitySelector\n选择意图"]
-    Utility --> Context
     Context --> BT["EnemyBehaviorTreeRunner\n编排行为"]
-    BT --> Ability["EnemyAbilityController\n攻击与窗口"]
+    BT --> Skill["EnemySkillController\n技能时间轴与冷却"]
     BT --> Path["IPathAgent\nA* 路径结果"]
-    Ability --> Combat["CombatHitbox / DamageData"]
+    Skill --> Combat["CombatHitbox / DamageData"]
     Path --> Motor["EnemyMotor\n移动、转向"]
-    Ability --> Motor
+    Skill --> Motor
     Motor --> Animator["EnemyAnimationWriter\n动画表现"]
 ```
 
 ### 1. EnemyController
 
-`EnemyController` 是装配与调度入口，不承载具体行为规则。它负责创建 `EnemyContext`，绑定 Sensor、Utility、BT、Ability、PathAgent、Motor、Animation 与受伤/死亡事件，并按配置频率调度它们。
+`EnemyController` 是装配与调度入口，不承载具体行为规则。它负责创建 `EnemyContext`，绑定 TargetReader、BT、Skill、PathAgent、Motor、Animation 与受伤/死亡事件，并按配置频率调度它们。
 
 ### 2. EnemyContext
 
@@ -92,16 +91,15 @@ EnemyContext 是单个敌人的运行时黑板，不是全局对象。建议按�
 ```text
 引用：Transform、CombatHitbox、目标、配置、PathAgent
 感知：CurrentTarget、CanSeeTarget、DistanceToTarget、LastSeenPosition、LastSeenTime
-意图：CurrentIntent、IntentEnteredTime、各候选 Utility Score
 导航：Destination、HasPath、PathStatus、RemainingDistance、PreferredVelocity
-动作：CurrentAbility、AbilityPhase、Cooldown、IsMovementLocked
+动作：CurrentSkillType、SkillPhase、Cooldown、IsMovementLocked
 生命：Health、IsHurt、IsDead
 调试：当前 BT Running 节点、最近 Abort 原因、最后一次路径刷新时间
 ```
 
-Context 只保存可被多个模块消费的事实。BT 节点的临时计时器、Path 的内部缓存和 Ability 的阶段时钟保留在各自模块中。
+Context 只保存可被多个模块消费的事实。BT 节点的临时计时器、Path 的内部缓存和 Skill 的阶段时钟保留在各自模块中。
 
-## 五、感知、Utility 与 BT 的分工
+## 五、感知与 BT 的分工
 
 ### 1. EnemySensor：写入事实
 
@@ -114,24 +112,9 @@ Sensor 以固定间隔更新，不在每帧重复做昂贵的视线和目标搜�
 
 第一版的目标选择固定为 Player；接口仍以 `ITargetable` / 阵营与 LayerMask 的语义设计，避免日后重写感知层。
 
-### 2. EnemyUtilitySelector：选择意图
+### 2. EnemyBehaviorTree：选择并执行流程
 
-第一版候选只有 `Patrol`、`Chase`、`Attack`、`Search`。每个候选把明确输入映射成分数，例如距离、是否可见、是否可攻击、丢失目标时间、攻击冷却。
-
-必须具备：
-
-```text
-同分时固定优先级
-最短意图保持时间
-切换阈值（新意图必须明显更高才切换）
-当前意图和全部分数的可视化调试
-```
-
-Utility 只写 `CurrentIntent`；不得直接播放动画、移动或开关 Hitbox。
-
-### 3. EnemyBehaviorTreeRunner：执行流程
-
-BT 读取 `CurrentIntent` 并运行对应分支。第一版通用节点最少包含：
+BT 直接读取 `EnemyContext` 中的目标、距离、冷却和生命事实，并运行对应分支。第一版通用节点最少包含：
 
 ```text
 BtNode / BtStatus（Success、Failure、Running）
@@ -139,20 +122,20 @@ Selector / Sequence
 Condition / Action
 ```
 
-Enemy 专属叶节点包括：`MoveToTarget`、`MoveToLastSeenPosition`、`PlayAbility`、`Wait`、`AdvancePatrolPoint`。意图、目标、死亡或路径失败变化时，Runner 必须显式 Abort / Reset 当前 Running 分支，并关闭遗留攻击窗口和导航请求。
+Enemy 专属叶节点包括：`MoveToTarget`、`MoveToLastSeenPosition`、`NormalAttack`、`Wait`、`AdvancePatrolPoint`。目标、死亡或路径失败变化时，Behavior Controller 必须显式 Reset 当前 Running 分支，并关闭遗留技能窗口和导航请求。
 
-## 六、Enemy Ability：复用时间轴，而非复用 Player Skill
+## 六、Enemy Skill：复用数据，不复用 Player Skill 运行时
 
 ### 1. 运行时职责
 
-Enemy 的攻击由 `EnemyAbilityController` 执行。BT 中的 `PlayAbility` 只请求一个 Ability 并等待其完成；Controller 负责动画、冷却、窗口推进和 Combat 输出。
+Enemy 的攻击由 `EnemySkillController` 执行。BT 中的 `EnemyNormalAttackAction` 只请求普通攻击并等待其完成；Controller 负责动画、冷却、窗口推进和 Combat 输出。
 
 ```text
-BT PlayAbility
--> EnemyAbilityController.Start(AbilityId)
+BT EnemyNormalAttackAction
+-> EnemySkillController.TryOpen(EnemySkillType.NormalAttack)
 -> 播放攻击动画 / 锁移动
 -> 按 Ability Window 开关 CombatHitbox、无敌、转向等效果
--> Ability 完成或被 Abort
+-> Skill 完成或被 Reset
 -> 清理窗口并将结果返回 BT
 ```
 
@@ -182,7 +165,7 @@ Ability Composer 继续是“单个动作时间轴”的唯一编辑入口：预
 | 工具 | 编辑对象 | 典型内容 |
 | --- | --- | --- |
 | Ability Composer | 单条动画的时间轴 | 命中窗口、无敌窗口、动画事件、持续时间 |
-| Behavior Graph | 角色的决策与流程 | Selector、Sequence、Condition、Move、PlayAbility |
+| Behavior Graph | 角色的决策与流程 | Selector、Sequence、Condition、Move、NormalAttack |
 
 ### 2. 通用数据与运行时隔离
 
@@ -193,7 +176,7 @@ Ability Composer 继续是“单个动作时间轴”的唯一编辑入口：预
 ```text
 通用组合节点：Selector / Sequence
 通用条件节点：Blackboard Bool、距离比较、冷却完成
-领域动作节点：MoveTo、PlayAbility、Wait、Patrol
+领域动作节点：MoveTo、NormalAttack、Wait、Patrol
 ```
 
 ### 3. Player 是否使用
@@ -216,7 +199,7 @@ B4：出现真实复用需求后再加入子树、Decorator、模板
 
 ### 1. 接口优先
 
-BT 与 Utility 只依赖 `IPathAgent`，接口语义为：设置目的地、取消请求、刷新路径、读取路径状态、读取下一拐点与期望速度。具体 A*、NavMesh 或未来实现都只能是后端适配器。
+BT 只依赖 `IPathAgent`，接口语义为：设置目的地、取消请求、刷新路径、读取路径状态、读取下一拐点与期望速度。具体 A*、NavMesh 或未来实现都只能是后端适配器。
 
 ```text
 BT MoveTo
@@ -246,13 +229,13 @@ PathAgent 输出 PreferredVelocity
 当有明确数量级压力与 Profiler 数据后，将高频、同构的邻居收集和速度修正迁到 ECS：
 
 ```text
-OOP EnemyController / BT / Ability
+OOP EnemyController / BT / Skill
 -> 写入 Destination、PreferredVelocity、Radius、Priority
 -> ECS CrowdAvoidanceSystem 批量生成 AdjustedVelocity
 -> EnemyMotor 或桥接层读取结果执行
 ```
 
-这使 Enemy 的决策、Ability 和 Combat 继续保留可读的 OOP 边界，而 ECS 只承担大量实体的热点计算。PathAgent 同样可先是 OOP A*，只有路径请求规模成为瓶颈时再做批处理或 ECS 化。
+这使 Enemy 的 Behavior、Skill 和 Combat 继续保留可读的 OOP 边界，而 ECS 只承担大量实体的热点计算。PathAgent 同样可先是 OOP A*，只有路径请求规模成为瓶颈时再做批处理或 ECS 化。
 
 ## 九、分阶段交付与验收
 
@@ -260,10 +243,10 @@ OOP EnemyController / BT / Ability
 | --- | --- | --- |
 | E0 | EnemyContext、Brain、生命与 Prefab 装配 | 启用/禁用/死亡无悬挂状态 |
 | E1 | Sensor 与 Gizmos | 目标、可见性、距离、LastSeenPosition 正确 |
-| E2 | Utility Intent | 四种意图切换稳定且可观察 |
+| E2 | BT 目标与攻击条件 | 目标、距离和技能冷却条件稳定且可观察 |
 | E3 | 最小 BT | Running、Success、Failure、Abort 可复现 |
 | E4 | IPathAgent + EnemyMotor | Patrol / Chase / Search 不耦合具体导航实现 |
-| E5 | EnemyAbility + Combat | 攻击窗口内只对 Player 提交一次伤害 |
+| E5 | EnemySkill + Combat | 攻击窗口内只对 Player 提交一次伤害 |
 | E6 | Hurt / Dead | 受击中断正确，死亡清理 BT、路径和 Hitbox |
 | E7 | Behavior Graph 编辑器 | 可编辑最小树，PlayMode 可查看节点执行 |
 | E8 | 局部避障与 ECS 评估 | 依据敌人数和 Profiler 决定是否迁移热点 |

@@ -1,16 +1,15 @@
 /*
  * ┌──────────────────────────────────┐
- * │  描    述: 敌人能力类型枚举
- * │  类    名: EnemyAbilityType.cs
+ * │  描    述: 敌人技能类型枚举
+ * │  类    名: EnemySkillType.cs
  * │  创    建: By qiqizizzz
  * └──────────────────────────────────┘
  */
 
-namespace Module.Enemy.Ability
+namespace Module.Enemy.Skill
 {
-    public enum EnemyAbilityType
+    public enum EnemySkillType
     {
         NormalAttack
     }
 }
-

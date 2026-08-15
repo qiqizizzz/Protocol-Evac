@@ -8,13 +8,16 @@
 
 using CleverCrow.Fluid.BTs.Trees;
 using Module.Combat.Hitbox;
-using Module.Enemy.Ability;
-using Module.Enemy.Ability.Core;
 using Module.Enemy.Animation;
 using Module.Enemy.Behavior.Config;
 using Module.Enemy.Behavior.Core;
+using Module.Enemy.Behavior.Readers;
+using Module.Enemy.Behavior.Trees.Wanderer;
 using Module.Enemy.Config;
 using Module.Enemy.Context;
+using Module.Enemy.Skill;
+using Module.Enemy.Skill.Core;
+using TriInspector;
 using UnityEngine;
 using Utils.Find;
 using Utils.log;
@@ -27,22 +30,25 @@ namespace Module.Enemy.Core
         [SerializeField] private EnemySettingsSO Settings;
 
         [Header("行为树调试")]
+        [LabelText("运行时行为树")]
+        [Tooltip("Play Mode 下点击 View Tree 查看当前行为树节点状态")]
         [SerializeField] private BehaviorTree EnemyBehaviorTree;
         
         private Transform m_transform;
         private Animator m_animator;
         private CombatHitbox m_combatHitbox;
         private EnemyContext m_context;
-        private EnemyAbilityController m_abilityController;
+        private EnemySkillController m_skillController;
         private EnemyBehaviorController m_behaviorController;
+        private EnemyTargetReader m_targetReader;
         private EnemyAnimWriter m_animWriter;
 
         public EnemyContext Context => m_context;
-        public bool IsNormalAttacking => m_abilityController.IsRunning
-            && m_abilityController.CurrentAbilityType == EnemyAbilityType.NormalAttack;
-        public bool IsNormalAttackCoolingDown => m_abilityController.IsCoolingDown(EnemyAbilityType.NormalAttack);
-        public bool IsNormalAttackMovementLocked => m_abilityController.IsMovementLocked;
-        public bool CanRotateDuringNormalAttack => m_abilityController.CanRotate;
+        public bool IsNormalAttacking => m_skillController.IsRunning
+            && m_skillController.CurrentSkillType == EnemySkillType.NormalAttack;
+        public bool IsNormalAttackCoolingDown => m_skillController.IsCoolingDown(EnemySkillType.NormalAttack);
+        public bool IsNormalAttackMovementLocked => m_skillController.IsMovementLocked;
+        public bool CanRotateDuringNormalAttack => m_skillController.CanRotate;
 
         #region 生命周期
         private void Awake()
@@ -50,9 +56,10 @@ namespace Module.Enemy.Core
             FindReferences();
             CheckConfigs();
             InitCore();
-            InitAbility();
-            InitBehavior();
+            InitSkill();
             InitAnim();
+            InitBehavior();
+            InitTarget();
         }
 
         private void OnEnable()
@@ -62,23 +69,27 @@ namespace Module.Enemy.Core
 
         private void Update()
         {
-            m_abilityController.Tick(Time.deltaTime);
+            if (m_targetReader.Tick(Time.deltaTime))
+                m_behaviorController.Reset();
+
+            m_skillController.Tick(Time.deltaTime);
             m_behaviorController.Tick();
-            m_animWriter.Tick();
+            m_animWriter.Tick(Time.deltaTime);
         }
 
         private void OnDisable()
         {
             m_behaviorController.Reset();
-            m_abilityController.Close();
+            m_skillController.Close();
             m_animWriter.Close();
+            m_context.Target.Reset();
             m_context.SetActive(false);
         }
 
         private void OnDestroy()
         {
             m_behaviorController.Reset();
-            m_abilityController.Close();
+            m_skillController.Close();
             m_animWriter.UnInit();
             m_context.SetActive(false);
             m_context = null;
@@ -92,17 +103,19 @@ namespace Module.Enemy.Core
             m_context = new EnemyContext(m_transform, Settings.StatsConfig, Settings.BehaviorConfig);
         }
 
-        // 初始化敌人能力模块
-        private void InitAbility()
+        // 初始化敌人技能模块
+        private void InitSkill()
         {
-            m_abilityController = new EnemyAbilityController(m_context.Action, m_combatHitbox, gameObject);
-            m_abilityController.RegisterConfig(EnemyAbilityType.NormalAttack, Settings.NormalAttackConfig);
+            m_skillController = new EnemySkillController(m_context.Action, m_combatHitbox, gameObject);
+            m_skillController.RegisterConfig(EnemySkillType.NormalAttack, Settings.NormalAttackConfig);
         }
 
         // 初始化敌人行为树模块
         private void InitBehavior()
         {
-            m_behaviorController = new EnemyBehaviorController(gameObject, m_context, m_abilityController);
+            WandererBehaviorTree wandererBehaviorTree = new WandererBehaviorTree(gameObject, m_context,
+                m_skillController);
+            m_behaviorController = new EnemyBehaviorController(wandererBehaviorTree.Tree);
             EnemyBehaviorTree = m_behaviorController.Tree;
         }
 
@@ -110,7 +123,13 @@ namespace Module.Enemy.Core
         private void InitAnim()
         {
             m_animWriter = new EnemyAnimWriter();
-            m_animWriter.Init(m_animator, m_context, Settings.NormalAttackConfig);
+            m_animWriter.Init(m_animator, m_context, Settings.AnimationConfig);
+        }
+
+        // 初始化敌人目标事实读取器
+        private void InitTarget()
+        {
+            m_targetReader = new EnemyTargetReader(m_context);
         }
 
         // 查找敌人运行依赖引用
@@ -121,17 +140,6 @@ namespace Module.Enemy.Core
             m_combatHitbox = this.GetChildComponent<CombatHitbox>();
         }
         #endregion
-
-        // 尝试开始敌人普通攻击
-        public bool TryStartNormalAttack()
-        {
-            if (!m_abilityController.CanOpen(EnemyAbilityType.NormalAttack))
-                return false;
-
-            m_context.Action.RequestAbility(EnemyAbilityType.NormalAttack);
-            m_behaviorController.Reset();
-            return true;
-        }
 
         // 校验敌人配置引用，缺失时在控制台提示
         private void CheckConfigs()
@@ -147,6 +155,22 @@ namespace Module.Enemy.Core
 
             if (Settings.BehaviorConfig == null)
                 QLog.Warning("EnemyBehaviorConfig 未配置，敌人行为模块可能无法正常运行");
+
+            if (Settings.AnimationConfig == null)
+            {
+                QLog.Warning("EnemyAnimationConfig 未配置，敌人动画模块可能无法正常运行");
+            }
+            else
+            {
+                if (Settings.AnimationConfig.IdleAnimationClip == null)
+                    QLog.Error("EnemyAnimationConfig 未配置待机动画");
+
+                if (Settings.AnimationConfig.MoveAnimationClip == null)
+                    QLog.Error("EnemyAnimationConfig 未配置移动动画");
+
+                if (Settings.AnimationConfig.HitAnimationClip == null)
+                    QLog.Error("EnemyAnimationConfig 未配置受击动画");
+            }
 
             if (Settings.NormalAttackConfig == null)
                 QLog.Warning("NormalAttackConfig 未配置，敌人普通攻击模块可能无法正常运行");

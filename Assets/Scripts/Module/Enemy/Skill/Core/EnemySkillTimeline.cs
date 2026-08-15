@@ -1,7 +1,7 @@
 /*
  * ┌───────────────────────────────────────────────┐
- * │  描    述: 敌人能力时间轴，负责段落与阶段推进
- * │  类    名: EnemyAbilityTimeline.cs
+ * │  描    述: 敌人技能时间轴，负责段落与阶段推进
+ * │  类    名: EnemySkillTimeline.cs
  * │  创    建: By qiqizizzz
  * └───────────────────────────────────────────────┘
  */
@@ -12,9 +12,9 @@ using Module.Enemy.Context.Runtime;
 using Utils.log;
 using Utils.Timer;
 
-namespace Module.Enemy.Ability.Core
+namespace Module.Enemy.Skill.Core
 {
-    internal sealed class EnemyAbilityTimeline
+    internal sealed class EnemySkillTimeline
     {
         private readonly DurationTimer m_stepTimer;
 
@@ -23,7 +23,7 @@ namespace Module.Enemy.Ability.Core
         private bool m_isStepAdvanceRequested;
         private bool m_isStepAdvanceBuffered;
 
-        public EnemyAbilityType? CurrentAbilityType { get; private set; }
+        public EnemySkillType? CurrentSkillType { get; private set; }
         public int CurrentStepIndex => m_currentStepIndex;
         public AbilityStepPhase CurrentPhase { get; private set; }
         public float NormalizedTime => m_stepTimer.NormalizedTime;
@@ -31,26 +31,26 @@ namespace Module.Enemy.Ability.Core
         public bool IsFinished { get; private set; }
         public AbilityStepData CurrentStep => m_currentConfig?.GetStep(m_currentStepIndex);
 
-        // 创建敌人能力时间轴
-        public EnemyAbilityTimeline()
+        // 创建敌人技能时间轴
+        public EnemySkillTimeline()
         {
             m_stepTimer = new DurationTimer();
             Reset();
         }
 
-        // 打开指定敌人能力时间轴
-        public void Open(EnemyAbilityType abilityType, AbilityConfigSO config, EnemyActionContext actionContext)
+        // 打开指定敌人技能时间轴
+        public void Open(EnemySkillType skillType, AbilityConfigSO config, EnemyActionContext actionContext)
         {
             Reset();
 
-            CurrentAbilityType = abilityType;
+            CurrentSkillType = skillType;
             m_currentConfig = config;
             m_currentStepIndex = 0;
             IsRunning = true;
             EnterCurrentStepBegin(actionContext);
         }
 
-        // 推进当前能力段落与阶段
+        // 推进当前技能段落与阶段
         public void Tick(float deltaTime, EnemyActionContext actionContext)
         {
             if (!IsRunning)
@@ -76,11 +76,11 @@ namespace Module.Enemy.Ability.Core
             Finish(actionContext);
         }
 
-        // 关闭并重置当前能力时间轴
+        // 关闭并重置当前技能时间轴
         public void Close(EnemyActionContext actionContext)
         {
             Reset();
-            actionContext.FinishAbility();
+            actionContext.FinishSkill();
         }
 
         // 请求时间轴在阶段推进窗口满足后进入下一段
@@ -92,13 +92,13 @@ namespace Module.Enemy.Ability.Core
             m_isStepAdvanceRequested = true;
         }
 
-        // 进入当前能力段落的攻击阶段
+        // 进入当前技能段落的攻击阶段
         private void EnterCurrentStepBegin(EnemyActionContext actionContext)
         {
             AbilityStepData stepData = CurrentStep;
             if (stepData == null)
             {
-                QLog.Error($"进入敌人能力段落失败：{CurrentAbilityType} 第 {m_currentStepIndex} 段配置为空");
+                QLog.Error($"进入敌人技能段落失败：{CurrentSkillType} 第 {m_currentStepIndex} 段配置为空");
                 Finish(actionContext);
                 return;
             }
@@ -108,11 +108,11 @@ namespace Module.Enemy.Ability.Core
             CurrentPhase = AbilityStepPhase.Begin;
             m_stepTimer.Reset();
             m_stepTimer.Start(stepData.BeginDuration);
-            actionContext.EnterAbilityStep(m_currentStepIndex, CurrentPhase, stepData.BeginAnimationClip,
-                stepData.ShowWeapon);
+            actionContext.EnterSkillStep(m_currentStepIndex, CurrentPhase, stepData.BeginAnimationClip,
+                stepData.BeginUseRootMotion, stepData.ShowWeapon);
         }
 
-        // 进入当前能力段落的收招阶段
+        // 进入当前技能段落的收招阶段
         private void EnterCurrentStepRecovery(EnemyActionContext actionContext)
         {
             AbilityStepData stepData = CurrentStep;
@@ -121,8 +121,8 @@ namespace Module.Enemy.Ability.Core
             m_isStepAdvanceBuffered = false;
             m_stepTimer.Reset();
             m_stepTimer.Start(stepData.RecoveryDuration);
-            actionContext.EnterAbilityStep(m_currentStepIndex, CurrentPhase, stepData.RecoveryAnimationClip,
-                stepData.ShowWeapon);
+            actionContext.EnterSkillStep(m_currentStepIndex, CurrentPhase, stepData.RecoveryAnimationClip,
+                stepData.RecoveryUseRootMotion, stepData.ShowWeapon);
         }
 
         // 刷新段落推进缓存
@@ -156,7 +156,7 @@ namespace Module.Enemy.Ability.Core
             m_isStepAdvanceRequested = false;
         }
 
-        // 尝试推进到下一段能力
+        // 尝试推进到下一段技能
         private bool TryAdvanceStep(EnemyActionContext actionContext)
         {
             if (!m_isStepAdvanceBuffered)
@@ -171,7 +171,7 @@ namespace Module.Enemy.Ability.Core
             return IsRunning;
         }
 
-        // 完成当前能力
+        // 完成当前技能
         private void Finish(EnemyActionContext actionContext)
         {
             IsRunning = false;
@@ -179,13 +179,13 @@ namespace Module.Enemy.Ability.Core
             m_isStepAdvanceRequested = false;
             m_isStepAdvanceBuffered = false;
             m_stepTimer.Complete();
-            actionContext.FinishAbility();
+            actionContext.FinishSkill();
         }
 
         // 重置时间轴内部状态
         private void Reset()
         {
-            CurrentAbilityType = null;
+            CurrentSkillType = null;
             m_currentConfig = null;
             m_currentStepIndex = -1;
             CurrentPhase = AbilityStepPhase.Begin;

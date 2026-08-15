@@ -19,6 +19,7 @@ namespace Module.Enemy.Context
         public EnemyStatsConfigSO StatsConfig { get; }
         public EnemyBehaviorConfigSO BehaviorConfig { get; }
         public EnemyActionContext Action { get; }
+        public EnemyTargetContext Target { get; }
         public bool IsActive { get; private set; }
 
         // 创建敌人的运行时上下文
@@ -28,6 +29,7 @@ namespace Module.Enemy.Context
             StatsConfig = statsConfig;
             BehaviorConfig = behaviorConfig;
             Action = new EnemyActionContext();
+            Target = new EnemyTargetContext();
         }
 
         // 更新敌人的启用状态

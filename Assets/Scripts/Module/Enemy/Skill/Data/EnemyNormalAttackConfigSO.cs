@@ -10,7 +10,7 @@ using Module.Ability.Data;
 using TriInspector;
 using UnityEngine;
 
-namespace Module.Enemy.Ability.Config
+namespace Module.Enemy.Skill.Data
 {
     [CreateAssetMenu(fileName = "EnemyNormalAttackConfig", menuName = "配置/敌人/普攻/敌人普攻配置")]
     [DeclareFoldoutGroup("ExecutionSettings", Title = "执行设置", Expanded = true)]

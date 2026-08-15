@@ -12,9 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4e09882c33c3ead48bbeba4529c0a8da, type: 3}
   m_Name: "Enemy_\u6D41\u6D6A\u8005BehaviorConfig"
   m_EditorClassIdentifier: 
-  SensorRefreshInterval: 0
-  UtilityRefreshInterval: 0
-  PathRefreshInterval: 0
-  IntentChangeThreshold: 0
-  MinIntentHoldTime: 0
-  SearchDuration: 0
+  SensorRefreshInterval: 0.1
+  PathRefreshInterval: 0.25
+  AttackDistance: 2
+  SearchDuration: 2
