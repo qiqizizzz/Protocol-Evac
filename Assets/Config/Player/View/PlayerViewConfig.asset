@@ -16,6 +16,7 @@ MonoBehaviour:
   FirstPersonYawSpeedValue: 6
   FirstPersonPitchSpeedValue: 6
   FirstPersonCameraLocalPositionValue: {x: 0, y: 1.55, z: 0}
+  FirstPersonCameraNearClipPlaneValue: 0.03
   FirstPersonCameraCollisionRadiusValue: 0.15
   ThirdPersonYawSpeedValue: 6
   ThirdPersonPitchSpeedValue: 6

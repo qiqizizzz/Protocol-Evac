@@ -24,6 +24,8 @@ namespace Module.Player.Core.View.Config
         [SerializeField, Min(0f)] private float FirstPersonPitchSpeedValue = 180f;
         [Tooltip("第一人称相机本地位置")]
         [SerializeField] private Vector3 FirstPersonCameraLocalPositionValue = new Vector3(0f, 1.55f, 0.15f);
+        [Tooltip("第一人称相机近裁面距离")]
+        [SerializeField, Min(0.01f)] private float FirstPersonCameraNearClipPlaneValue = 0.03f;
         [Tooltip("第一人称镜头检测球体半径")]
         [SerializeField, Min(0.01f)] private float FirstPersonCameraCollisionRadiusValue = 0.15f;
 
@@ -66,6 +68,8 @@ namespace Module.Player.Core.View.Config
         public float FirstPersonPitchSpeed => FirstPersonPitchSpeedValue;
 
         public Vector3 FirstPersonCameraLocalPosition => FirstPersonCameraLocalPositionValue;
+
+        public float FirstPersonCameraNearClipPlane => FirstPersonCameraNearClipPlaneValue;
 
         public float FirstPersonCameraCollisionRadius => FirstPersonCameraCollisionRadiusValue;
 

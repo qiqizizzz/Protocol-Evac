@@ -24,6 +24,9 @@ namespace Module.Player.Core.View
         private readonly PlayerViewConfigSO m_viewConfig;
         private readonly Transform m_viewRoot;
         private readonly Camera m_playerCamera;
+        private readonly int m_defaultCameraCullingMask;
+        private readonly int m_playerLayerMask;
+        private readonly float m_defaultCameraNearClipPlane;
 
         // 创建玩家视角控制器
         public PlayerViewController(PlayerContext context, PlayerViewConfigSO viewConfig, Transform viewRoot, Camera playerCamera)
@@ -32,6 +35,9 @@ namespace Module.Player.Core.View
             m_viewConfig = viewConfig;
             m_viewRoot = viewRoot;
             m_playerCamera = playerCamera;
+            m_defaultCameraCullingMask = playerCamera.cullingMask;
+            m_playerLayerMask = LayerMask.GetMask("Player");
+            m_defaultCameraNearClipPlane = playerCamera.nearClipPlane;
         }
 
         // 初始化玩家视角控制器
@@ -200,6 +206,8 @@ namespace Module.Player.Core.View
             if (m_context.View.ViewMode == PlayerViewMode.FirstPerson)
             {
                 m_viewRoot.rotation = Quaternion.Euler(0f, m_context.View.CameraYaw, 0f);
+                m_playerCamera.cullingMask = m_defaultCameraCullingMask & ~m_playerLayerMask;
+                m_playerCamera.nearClipPlane = m_viewConfig.FirstPersonCameraNearClipPlane;
                 m_playerCamera.transform.localPosition = ResolveFirstPersonCameraLocalPosition();
                 m_playerCamera.transform.localRotation = Quaternion.Euler(m_context.View.CameraPitch, 0f, 0f);
                 return;
@@ -207,6 +215,8 @@ namespace Module.Player.Core.View
 
             Quaternion viewRotation = Quaternion.Euler(m_context.View.CameraPitch, m_context.View.CameraYaw, 0f);
             m_viewRoot.rotation = viewRotation;
+            m_playerCamera.cullingMask = m_defaultCameraCullingMask;
+            m_playerCamera.nearClipPlane = m_defaultCameraNearClipPlane;
             m_playerCamera.transform.localPosition = ResolveThirdPersonCameraLocalPosition();
             m_playerCamera.transform.localRotation = Quaternion.identity;
         }
