@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e66f1cf708cd2fc41b544faf81ef6d44, type: 3}
   m_Name: "Enemy_\u6D41\u6D6A\u8005AnimationConfig"
   m_EditorClassIdentifier: 
-  IdleAnimationClipValue: {fileID: -9126102581851218018, guid: eea23087c2f686a4785dee8bd6c8f2de,
+  IdleAnimationClipValue: {fileID: 4925837963642883786, guid: 4e1e63e924a6e13428abecd9d1deb2ce,
     type: 3}
-  MoveAnimationClipValue: {fileID: -3840084151542393336, guid: eea23087c2f686a4785dee8bd6c8f2de,
+  MoveAnimationClipValue: {fileID: -8349492526526354690, guid: 4e1e63e924a6e13428abecd9d1deb2ce,
     type: 3}
-  HitAnimationClipValue: {fileID: 937510309337268382, guid: eea23087c2f686a4785dee8bd6c8f2de,
+  HitAnimationClipValue: {fileID: -2547592662905567392, guid: 4e1e63e924a6e13428abecd9d1deb2ce,
     type: 3}

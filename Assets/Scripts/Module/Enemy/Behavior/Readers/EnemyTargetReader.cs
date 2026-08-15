@@ -18,6 +18,7 @@ namespace Module.Enemy.Behavior.Readers
         private readonly EnemyContext m_context;
         private readonly float m_refreshInterval;
         private readonly float m_attackDistanceSqr;
+        private readonly float m_detectionDistanceSqr;
 
         private float m_refreshRemainingTime;
 
@@ -28,6 +29,8 @@ namespace Module.Enemy.Behavior.Readers
             m_refreshInterval = context.BehaviorConfig.SensorRefreshIntervalValue;
             float attackDistance = context.BehaviorConfig.AttackDistanceValue;
             m_attackDistanceSqr = attackDistance * attackDistance;
+            float detectionDistance = context.BehaviorConfig.DetectionDistanceValue;
+            m_detectionDistanceSqr = detectionDistance * detectionDistance;
         }
 
         // 按配置间隔刷新目标，并返回行为事实是否发生变化
@@ -44,14 +47,22 @@ namespace Module.Enemy.Behavior.Readers
             return m_context.Target.UpdateTarget(currentTarget, isInAttackRange);
         }
 
-        // 优先复用当前目标，目标失效后重新查找 Hero
+        // 只在警戒范围内锁定 Hero，离开范围后解除目标
         private Transform ResolveTarget()
         {
-            if (m_context.Target.CurrentTarget != null)
-                return m_context.Target.CurrentTarget;
+            Transform target = m_context.Target.CurrentTarget;
+            if (target == null)
+            {
+                GameObject hero = GameObject.FindGameObjectWithTag(HERO_TAG);
+                target = hero != null ? hero.transform : null;
+            }
 
-            GameObject hero = GameObject.FindGameObjectWithTag(HERO_TAG);
-            return hero != null ? hero.transform : null;
+            if (target == null)
+                return null;
+
+            Vector3 offset = target.position - m_context.Transform.position;
+            offset.y = 0f;
+            return offset.sqrMagnitude <= m_detectionDistanceSqr ? target : null;
         }
     }
 }

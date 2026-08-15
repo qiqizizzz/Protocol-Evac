@@ -24,6 +24,10 @@ namespace Module.Enemy.Behavior.Config
         [Tooltip("敌人允许执行近战攻击的最大距离")]
         [SerializeField, Min(0f)] private float AttackDistance;
 
+        [Header("目标")]
+        [Tooltip("敌人锁定并追击目标的最大水平距离")]
+        [SerializeField, Min(0f)] private float DetectionDistance;
+
         [Header("巡逻")]
         [Tooltip("敌人围绕出生位置随机巡逻的最大半径")]
         [SerializeField, Min(0f)] private float PatrolRadius;
@@ -38,6 +42,7 @@ namespace Module.Enemy.Behavior.Config
         public float SensorRefreshIntervalValue => SensorRefreshInterval;
         public float PathRefreshIntervalValue => PathRefreshInterval;
         public float AttackDistanceValue => AttackDistance;
+        public float DetectionDistanceValue => DetectionDistance;
         public float PatrolRadiusValue => PatrolRadius;
         public float PatrolWaitDurationValue => PatrolWaitDuration;
         public float SearchDurationValue => SearchDuration;

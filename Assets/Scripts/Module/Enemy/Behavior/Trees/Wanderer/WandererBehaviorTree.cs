@@ -8,6 +8,7 @@
 
 using CleverCrow.Fluid.BTs.Trees;
 using Module.Enemy.Behavior.Actions.Attack;
+using Module.Enemy.Behavior.Actions.Chase;
 using Module.Enemy.Behavior.Actions.Common;
 using Module.Enemy.Behavior.Actions.Patrol;
 using Module.Enemy.Behavior.Conditions.Attack;
@@ -67,6 +68,16 @@ namespace Module.Enemy.Behavior.Trees.Wanderer
                         .AddNode(new EnemyCombatWaitAction(context, skillController)
                         {
                             Name = "等待普通攻击冷却"
+                        })
+                    .End()
+                    .Sequence("追击目标")
+                        .AddNode(new EnemyHasTargetCondition(context.Target)
+                        {
+                            Name = "存在目标"
+                        })
+                        .AddNode(new EnemyChaseAction(context, navigationController)
+                        {
+                            Name = "追击目标"
                         })
                     .End()
                     .AddNode(new EnemyPatrolAction(context, navigationController)
