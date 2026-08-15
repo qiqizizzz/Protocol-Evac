@@ -15,10 +15,19 @@ MonoBehaviour:
   DefaultViewModeValue: 0
   FirstPersonYawSpeedValue: 6
   FirstPersonPitchSpeedValue: 6
-  FirstPersonCameraLocalPositionValue: {x: 0, y: 1.55, z: 0.15}
+  FirstPersonCameraLocalPositionValue: {x: 0, y: 1.55, z: 0}
+  FirstPersonCameraCollisionRadiusValue: 0.15
   ThirdPersonYawSpeedValue: 6
   ThirdPersonPitchSpeedValue: 6
   ThirdPersonBodyTurnSpeedValue: 720
   ThirdPersonCameraLocalPositionValue: {x: 0, y: 1.45, z: -4}
+  ThirdPersonCameraCollisionRadiusValue: 0.32
+  EnvironmentLayerMaskValue:
+    serializedVersion: 2
+    m_Bits: 768
+  CameraCollisionPaddingValue: 0.08
+  LockRangeValue: 8
+  LockReleaseRangeValue: 12
+  LockCameraYawSpeedValue: 360
   PitchMinValue: -60
   PitchMaxValue: 75

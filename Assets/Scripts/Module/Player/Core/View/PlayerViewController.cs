@@ -18,6 +18,7 @@ namespace Module.Player.Core.View
     public sealed class PlayerViewController : BaseController
     {
         private const string ENEMY_TAG = "Enemy";
+        private const float MIN_CAMERA_CAST_DISTANCE = 0.0001f;
 
         private readonly PlayerContext m_context;
         private readonly PlayerViewConfigSO m_viewConfig;
@@ -199,15 +200,70 @@ namespace Module.Player.Core.View
             if (m_context.View.ViewMode == PlayerViewMode.FirstPerson)
             {
                 m_viewRoot.rotation = Quaternion.Euler(0f, m_context.View.CameraYaw, 0f);
-                m_playerCamera.transform.localPosition = m_viewConfig.FirstPersonCameraLocalPosition;
+                m_playerCamera.transform.localPosition = ResolveFirstPersonCameraLocalPosition();
                 m_playerCamera.transform.localRotation = Quaternion.Euler(m_context.View.CameraPitch, 0f, 0f);
                 return;
             }
 
             Quaternion viewRotation = Quaternion.Euler(m_context.View.CameraPitch, m_context.View.CameraYaw, 0f);
             m_viewRoot.rotation = viewRotation;
-            m_playerCamera.transform.localPosition = m_viewConfig.ThirdPersonCameraLocalPosition;
+            m_playerCamera.transform.localPosition = ResolveThirdPersonCameraLocalPosition();
             m_playerCamera.transform.localRotation = Quaternion.identity;
+        }
+
+        // 计算第一人称镜头在建筑前的安全本地位置
+        private Vector3 ResolveFirstPersonCameraLocalPosition()
+        {
+            Vector3 requestedLocalPosition = m_viewConfig.FirstPersonCameraLocalPosition;
+            Vector3 headLocalPosition = new Vector3(0f, requestedLocalPosition.y, 0f);
+            Vector3 horizontalOffset = requestedLocalPosition - headLocalPosition;
+            float castDistance = horizontalOffset.magnitude;
+            if (castDistance <= MIN_CAMERA_CAST_DISTANCE)
+                return requestedLocalPosition;
+
+            Vector3 castOrigin = m_viewRoot.TransformPoint(headLocalPosition);
+            Vector3 castDirection = m_viewRoot.TransformDirection(horizontalOffset / castDistance);
+            Vector3 requestedWorldPosition = m_viewRoot.TransformPoint(requestedLocalPosition);
+            if (IsCameraPositionBlocked(requestedWorldPosition, m_viewConfig.FirstPersonCameraCollisionRadius))
+                return headLocalPosition;
+
+            if (!Physics.SphereCast(castOrigin, m_viewConfig.FirstPersonCameraCollisionRadius, castDirection,
+                    out RaycastHit hit, castDistance + m_viewConfig.CameraCollisionPadding,
+                    m_viewConfig.EnvironmentLayerMask, QueryTriggerInteraction.Ignore))
+                return requestedLocalPosition;
+
+            float safeDistance = Mathf.Max(0f, hit.distance - m_viewConfig.CameraCollisionPadding);
+            Vector3 safeWorldPosition = castOrigin + castDirection * safeDistance;
+            return m_viewRoot.InverseTransformPoint(safeWorldPosition);
+        }
+
+        // 计算第三人称镜头在建筑前的安全本地位置
+        private Vector3 ResolveThirdPersonCameraLocalPosition()
+        {
+            Vector3 requestedLocalPosition = m_viewConfig.ThirdPersonCameraLocalPosition;
+            Vector3 pivotLocalPosition = new Vector3(0f, requestedLocalPosition.y, 0f);
+            Vector3 cameraOffsetLocalPosition = requestedLocalPosition - pivotLocalPosition;
+            float castDistance = cameraOffsetLocalPosition.magnitude;
+            if (castDistance <= MIN_CAMERA_CAST_DISTANCE)
+                return requestedLocalPosition;
+
+            Vector3 castOrigin = m_viewRoot.TransformPoint(pivotLocalPosition);
+            Vector3 castDirection = m_viewRoot.TransformDirection(cameraOffsetLocalPosition / castDistance);
+
+            if (!Physics.SphereCast(castOrigin, m_viewConfig.ThirdPersonCameraCollisionRadius, castDirection,
+                    out RaycastHit hit, castDistance + m_viewConfig.CameraCollisionPadding,
+                    m_viewConfig.EnvironmentLayerMask, QueryTriggerInteraction.Ignore))
+                return requestedLocalPosition;
+
+            float safeDistance = Mathf.Max(0f, hit.distance - m_viewConfig.CameraCollisionPadding);
+            Vector3 safeWorldPosition = castOrigin + castDirection * safeDistance;
+            return m_viewRoot.InverseTransformPoint(safeWorldPosition);
+        }
+
+        // 判断期望镜头位置是否已与环境碰撞体重叠
+        private bool IsCameraPositionBlocked(Vector3 position, float radius)
+        {
+            return Physics.CheckSphere(position, radius, m_viewConfig.EnvironmentLayerMask, QueryTriggerInteraction.Ignore);
         }
     }
 }

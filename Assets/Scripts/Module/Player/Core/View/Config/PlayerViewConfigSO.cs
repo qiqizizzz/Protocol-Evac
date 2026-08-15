@@ -24,6 +24,8 @@ namespace Module.Player.Core.View.Config
         [SerializeField, Min(0f)] private float FirstPersonPitchSpeedValue = 180f;
         [Tooltip("第一人称相机本地位置")]
         [SerializeField] private Vector3 FirstPersonCameraLocalPositionValue = new Vector3(0f, 1.55f, 0.15f);
+        [Tooltip("第一人称镜头检测球体半径")]
+        [SerializeField, Min(0.01f)] private float FirstPersonCameraCollisionRadiusValue = 0.15f;
 
         [Header("第三人称")]
         [Tooltip("第三人称水平视角旋转速度")]
@@ -34,6 +36,14 @@ namespace Module.Player.Core.View.Config
         [SerializeField, Min(0f)] private float ThirdPersonBodyTurnSpeedValue = 720f;
         [Tooltip("第三人称相机本地位置")]
         [SerializeField] private Vector3 ThirdPersonCameraLocalPositionValue = new Vector3(0f, 1.45f, -4f);
+        [Tooltip("第三人称镜头检测球体半径")]
+        [SerializeField, Min(0.01f)] private float ThirdPersonCameraCollisionRadiusValue = 0.25f;
+
+        [Header("建筑碰撞")]
+        [Tooltip("相机防穿模检测的建筑与地面 Layer")]
+        [SerializeField] private LayerMask EnvironmentLayerMaskValue;
+        [Tooltip("镜头与建筑保持的最小间距")]
+        [SerializeField, Min(0f)] private float CameraCollisionPaddingValue = 0.03f;
 
         [Header("锁定目标")]
         [Tooltip("按下锁定输入时搜索 Enemy Tag 目标的最大水平距离")]
@@ -57,6 +67,8 @@ namespace Module.Player.Core.View.Config
 
         public Vector3 FirstPersonCameraLocalPosition => FirstPersonCameraLocalPositionValue;
 
+        public float FirstPersonCameraCollisionRadius => FirstPersonCameraCollisionRadiusValue;
+
         public float ThirdPersonYawSpeed => ThirdPersonYawSpeedValue;
 
         public float ThirdPersonPitchSpeed => ThirdPersonPitchSpeedValue;
@@ -64,6 +76,12 @@ namespace Module.Player.Core.View.Config
         public float ThirdPersonBodyTurnSpeed => ThirdPersonBodyTurnSpeedValue;
 
         public Vector3 ThirdPersonCameraLocalPosition => ThirdPersonCameraLocalPositionValue;
+
+        public float ThirdPersonCameraCollisionRadius => ThirdPersonCameraCollisionRadiusValue;
+
+        public LayerMask EnvironmentLayerMask => EnvironmentLayerMaskValue;
+
+        public float CameraCollisionPadding => CameraCollisionPaddingValue;
 
         public float LockRange => LockRangeValue;
 
