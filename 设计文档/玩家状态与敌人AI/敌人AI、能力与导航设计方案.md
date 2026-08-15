@@ -80,9 +80,9 @@ flowchart LR
     Motor --> Animator["EnemyAnimationWriter\n动画表现"]
 ```
 
-### 1. EnemyBrain
+### 1. EnemyController
 
-`EnemyBrain` 是装配与调度入口，不承载具体行为规则。它负责创建 `EnemyContext`，绑定 Sensor、Utility、BT、Ability、PathAgent、Motor、Animation 与受伤/死亡事件，并按配置频率调度它们。
+`EnemyController` 是装配与调度入口，不承载具体行为规则。它负责创建 `EnemyContext`，绑定 Sensor、Utility、BT、Ability、PathAgent、Motor、Animation 与受伤/死亡事件，并按配置频率调度它们。
 
 ### 2. EnemyContext
 
@@ -247,7 +247,7 @@ PathAgent 输出 PreferredVelocity
 当有明确数量级压力与 Profiler 数据后，将高频、同构的邻居收集和速度修正迁到 ECS：
 
 ```text
-OOP EnemyBrain / BT / Ability
+OOP EnemyController / BT / Ability
 -> 写入 Destination、PreferredVelocity、Radius、Priority
 -> ECS CrowdAvoidanceSystem 批量生成 AdjustedVelocity
 -> EnemyMotor 或桥接层读取结果执行

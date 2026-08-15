@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 763f7c06ffbf15f4b83a03ff13fa5a6d, type: 3}
+  m_Name: "Enemy_\u6D41\u6D6A\u8005Settings"
+  m_EditorClassIdentifier: 
+  StatsConfigValue: {fileID: 11400000, guid: f36f4f16897aea84d90aae8f3d0d1d22, type: 2}
+  BehaviorConfigValue: {fileID: 11400000, guid: 5d17e4915868f0840aee64f022dd11e1,
+    type: 2}

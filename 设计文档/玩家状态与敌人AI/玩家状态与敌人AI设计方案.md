@@ -134,7 +134,7 @@ Assets/Scripts/Module/
 │     └─ PlayerConfigSO.cs
 ├─ Enemy/
 │  ├─ Core/
-│  │  ├─ EnemyBrain.cs
+│  │  ├─ EnemyController.cs
 │  │  ├─ EnemyMotor.cs
 │  │  ├─ EnemySensor.cs
 │  │  └─ EnemyAnimatorDriver.cs
@@ -721,13 +721,13 @@ Transition Evaluator
 建议每帧流程：
 
 ```text
-EnemyBrain.Update
+EnemyController.Update
 ├─ EnemySensor.Tick()
 ├─ EnemyUtilitySelector.Tick()
 ├─ EnemyBehaviorTreeRunner.Tick()
 └─ EnemyAnimatorDriver.Tick()
 
-EnemyBrain.FixedUpdate
+EnemyController.FixedUpdate
 └─ EnemyMotor.FixedTick()
 ```
 
@@ -908,7 +908,7 @@ EnemyMotor
 
 不要在 `PlayerController` 里写大量移动、Skill、动画细节。
 
-### 8.2 EnemyBrain
+### 8.2 EnemyController
 
 只做调度和生命周期管理：
 
@@ -918,7 +918,7 @@ EnemyMotor
 - 按频率 Tick 各系统
 - 统一处理死亡、启用、禁用
 
-不要在 `EnemyBrain` 里硬编码复杂行为分支。
+不要在 `EnemyController` 里硬编码复杂行为分支。
 
 ## 9. 与 QF 框架的关系
 
@@ -965,7 +965,7 @@ EnemyMotor
 
 ```text
 Unity MonoBehaviour 层
-├─ PlayerController / EnemyBrain
+├─ PlayerController / EnemyController
 │  ├─ 持有 Context
 │  ├─ 调度 HFSM / Skill / BT / Utility / PathAgent
 │  └─ 必要时对接 QF Command / Event / Query
@@ -998,7 +998,7 @@ QF 架构层
 原则：
 
 - `PlayerContext` / `EnemyContext` 不注册为 QF Model
-- `PlayerController` / `EnemyBrain` 可以作为 QF 与纯逻辑层之间的适配入口
+- `PlayerController` / `EnemyController` 可以作为 QF 与纯逻辑层之间的适配入口
 - 状态、Skill、BT 节点内部不要直接依赖 QF，避免后期测试和复用困难
 
 ### 9.5 推荐接入方式
@@ -1022,10 +1022,10 @@ PlayerController
 当敌人死亡时：
 
 ```text
-EnemyBrain
+EnemyController
 └─ 检测 EnemyContext.IsDead
 
-EnemyBrain
+EnemyController
 └─ 发送 EnemyDeadCommand 或触发 CombatEventSystem
 
 EnemySpawnSystem / UISystem / AudioSystem
@@ -1065,28 +1065,16 @@ PlayerSkillConfigSO
 ### 10.2 Enemy 配置
 
 ```text
-EnemyConfigSO
-├─ 最大生命值
-├─ 移动速度
-├─ 转向速度
-├─ 视野距离
-├─ 视野角度
-├─ 听觉半径
-├─ 攻击距离
-├─ 攻击冷却
-├─ 追击最大距离
-├─ 巡逻点配置
-└─ Utility 权重配置
-```
-
-```text
-EnemyBehaviorConfigSO
-├─ BT 模板类型
-├─ Utility 权重
-├─ 感知刷新间隔
-├─ 决策刷新间隔
-├─ 寻路刷新间隔
-└─ 行为参数
+EnemySettingsSO
+├─ StatsConfig
+│  └─ 最大生命值
+└─ BehaviorConfig
+   ├─ BT 模板类型
+   ├─ Utility 权重
+   ├─ 感知刷新间隔
+   ├─ 决策刷新间隔
+   ├─ 寻路刷新间隔
+   └─ 行为参数
 ```
 
 ## 11. 命名空间建议
@@ -1137,7 +1125,7 @@ Player 模块当前统一沿用 `Module.Player.*`，本阶段不调整已有命�
 ### 阶段 3：Enemy Context 与感知
 
 1. 创建 `EnemyContext`
-2. 创建 `EnemyBrain`
+2. 创建 `EnemyController`
 3. 创建 `EnemySensor`
 4. 写入目标、距离、可见性、最后看见位置
 5. 用 Gizmos 绘制视野范围和攻击范围
