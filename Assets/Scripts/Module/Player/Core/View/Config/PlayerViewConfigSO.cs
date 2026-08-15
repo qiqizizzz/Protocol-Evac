@@ -36,6 +36,8 @@ namespace Module.Player.Core.View.Config
         [SerializeField, Min(0f)] private float ThirdPersonPitchSpeedValue = 180f;
         [Tooltip("第三人称身体朝移动方向转向速度")]
         [SerializeField, Min(0f)] private float ThirdPersonBodyTurnSpeedValue = 720f;
+        [Tooltip("第三人称最高下视角")]
+        [SerializeField, Range(0f, 89f)] private float ThirdPersonPitchMaxValue = 55f;
         [Tooltip("第三人称相机本地位置")]
         [SerializeField] private Vector3 ThirdPersonCameraLocalPositionValue = new Vector3(0f, 1.45f, -4f);
         [Tooltip("第三人称镜头检测球体半径")]
@@ -78,6 +80,8 @@ namespace Module.Player.Core.View.Config
         public float ThirdPersonPitchSpeed => ThirdPersonPitchSpeedValue;
 
         public float ThirdPersonBodyTurnSpeed => ThirdPersonBodyTurnSpeedValue;
+
+        public float ThirdPersonPitchMax => ThirdPersonPitchMaxValue;
 
         public Vector3 ThirdPersonCameraLocalPosition => ThirdPersonCameraLocalPositionValue;
 

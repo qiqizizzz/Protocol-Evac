@@ -176,7 +176,10 @@ namespace Module.Player.Core.View
             else
                 m_context.View.CameraYaw += lookInput.x * yawSpeed * deltaTime;
             m_context.View.CameraPitch -= lookInput.y * pitchSpeed * deltaTime;
-            m_context.View.CameraPitch = Mathf.Clamp(m_context.View.CameraPitch, m_viewConfig.PitchMin, m_viewConfig.PitchMax);
+            float pitchMax = m_context.View.ViewMode == PlayerViewMode.FirstPerson
+                ? m_viewConfig.PitchMax
+                : m_viewConfig.ThirdPersonPitchMax;
+            m_context.View.CameraPitch = Mathf.Clamp(m_context.View.CameraPitch, m_viewConfig.PitchMin, pitchMax);
             
             //第一人称模式下使用视角水平角驱动身体朝向
             if (m_context.View.ViewMode == PlayerViewMode.FirstPerson)
