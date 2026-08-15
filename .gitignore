@@ -63,10 +63,7 @@ ExportedObj/
 /[Aa]ssets/Plugins/Editor/JetBrains*
 
 # VS Code
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
+.vscode/
 *.code-workspace
 
 # Lua Caches (EmmyLua / LuaPanda)
@@ -127,6 +124,18 @@ InitTestScene*.unity*
 /Assets/Animation.meta
 /Assets/Art/
 /Assets/Art.meta
+
+# 本仓库仅保留自有代码与架构，以下可恢复资源保持本地使用
+/Assets/Fonts/
+/Assets/Fonts.meta
+/Assets/Plugins/
+/Assets/Plugins.meta
+/Assets/Settings/
+/Assets/Settings.meta
+/Assets/TextMesh Pro/
+/Assets/TextMesh Pro.meta
+/Assets/TutorialInfo/
+/Assets/TutorialInfo.meta
 
 # Tokyo Street 为第三方大型环境资源，当前项目本地使用但不纳入仓库
 /Assets/Tokyo_Street/
