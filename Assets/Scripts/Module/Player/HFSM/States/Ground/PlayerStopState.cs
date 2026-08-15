@@ -40,6 +40,7 @@ namespace Module.Player.HFSM.States.Ground
 
             m_context.Action.IsStateFinished = false;
             m_context.Movement.StopAnimationId = animationId;
+            m_context.Movement.SetStopDirection(GetHorizontalVelocity());
             m_context.Movement.ClearHorizontalMoveIntent();
             m_context.Action.SetRootMotionMoveEnabled(true);
             m_context.Action.ClearRootMotionDeltaPosition();
@@ -55,6 +56,7 @@ namespace Module.Player.HFSM.States.Ground
             m_context.Action.SetRootMotionMoveEnabled(false);
             m_context.Action.ClearRootMotionDeltaPosition();
             m_context.Movement.ClearHorizontalVelocity();
+            m_context.Movement.ClearStopDirection();
             m_context.Movement.StopAnimationId = PlayerStopAnimationId.None;
 
             if (m_context.Movement.IsGrounded)
@@ -115,9 +117,15 @@ namespace Module.Player.HFSM.States.Ground
         // 获取当前实际水平速度
         private float GetHorizontalSpeed()
         {
+            return GetHorizontalVelocity().magnitude;
+        }
+
+        // 获取进入急停前的水平速度方向
+        private Vector3 GetHorizontalVelocity()
+        {
             Vector3 velocity = m_context.Movement.Velocity;
             velocity.y = 0f;
-            return velocity.magnitude;
+            return velocity;
         }
     }
 }

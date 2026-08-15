@@ -37,6 +37,12 @@ namespace Module.Player.Core
         public void FixedTick(float fixedDeltaTime)
         {
             Vector3 velocity = m_context.Movement.Velocity;
+            if (m_context.View.ViewMode == PlayerViewMode.ThirdPerson
+                && m_context.Movement.StopDirection.sqrMagnitude > 0.0001f)
+            {
+                RotateByDirection(m_context.Movement.StopDirection, fixedDeltaTime);
+            }
+
             Vector3 rootMotionDeltaPosition = m_context.Action.ConsumeRootMotionDeltaPosition();
             if (rootMotionDeltaPosition.sqrMagnitude > 0f)
             {

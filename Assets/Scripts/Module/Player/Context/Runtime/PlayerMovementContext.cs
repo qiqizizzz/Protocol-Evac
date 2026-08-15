@@ -15,6 +15,7 @@ namespace Module.Player.Context.Runtime
         public Vector3 MoveDir { get; set; }
         public float TargetMoveSpeed { get; set; }
         public Vector3 Velocity { get; set; }
+        public Vector3 StopDirection { get; private set; }
         public bool HasForcedMoveVelocity { get; private set; }
         public Vector3 ForcedMoveVelocity { get; private set; }
         public PlayerStopAnimationId StopAnimationId { get; set; }
@@ -37,6 +38,7 @@ namespace Module.Player.Context.Runtime
             MoveDir = Vector3.zero;
             TargetMoveSpeed = 0f;
             Velocity = Vector3.zero;
+            StopDirection = Vector3.zero;
             HasForcedMoveVelocity = false;
             ForcedMoveVelocity = Vector3.zero;
             StopAnimationId = PlayerStopAnimationId.None;
@@ -73,6 +75,21 @@ namespace Module.Player.Context.Runtime
         {
             MoveDir = Vector3.zero;
             TargetMoveSpeed = 0f;
+        }
+
+        // 设置急停期间角色应朝向的水平移动方向
+        public void SetStopDirection(Vector3 direction)
+        {
+            direction.y = 0f;
+            StopDirection = direction.sqrMagnitude > 0.0001f
+                ? direction.normalized
+                : Vector3.zero;
+        }
+
+        // 清空急停方向，避免后续根运动复用旧方向
+        public void ClearStopDirection()
+        {
+            StopDirection = Vector3.zero;
         }
 
         // 记录最近一次由移动动画触发的落脚
