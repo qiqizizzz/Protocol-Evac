@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2955d192f35746e49b1abec8b67d72f6, type: 3}
+  m_Name: Chisaki_attack03_begin_WindowConfig
+  m_EditorClassIdentifier: 
+  AnimationClipValue: {fileID: 7400000, guid: fc0d1abce176bef40987e5073bb60ca2, type: 2}
+  UseHitWindowValue: 1
+  HitWindowTrackValue:
+    WindowValues:
+    - IdValue: 5bbe57ca0c8847c189405b45da3fe857
+      StartNormalizedTimeValue: 0.10169491
+      EndNormalizedTimeValue: 0.18644068
+      DamageValue: 20
+      ReactionTypeValue: 0
+    - IdValue: 383b478258c0477bbdb3cc5d60797b81
+      StartNormalizedTimeValue: 0.44067797
+      EndNormalizedTimeValue: 0.5423729
+      DamageValue: 30
+      ReactionTypeValue: 0
+  UseStepAdvanceWindowValue: 0
+  StepAdvanceWindowTrackValue:
+    WindowValues: []
+  UseMovementLockWindowValue: 0
+  MovementLockWindowTrackValue:
+    WindowValues: []

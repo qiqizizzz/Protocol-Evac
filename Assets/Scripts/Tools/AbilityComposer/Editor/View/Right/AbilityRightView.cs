@@ -45,7 +45,7 @@ namespace Tools.AbilityComposer.Editor.View.Right
         public event Action<string> OnEventFunctionNameChanged;
         public event Action OnSaveEventRequested;
         public event Action<AbilityWindowDraftType> OnWindowTypeChanged;
-        public event Action<AbilityWindowTrackBaseSO> OnWindowTrackChanged;
+        public event Action<AbilityWindowConfigSO> OnWindowConfigChanged;
         public event Action<int, int> OnWindowFramesChanged;
         public event Action<float> OnWindowDamageChanged;
         public event Action OnSaveWindowRequested;
@@ -120,7 +120,7 @@ namespace Tools.AbilityComposer.Editor.View.Right
             m_eventInspectorView.OnFunctionNameChanged += RequestEventFunctionNameChanged;
             m_eventInspectorView.OnSaveEventRequested += RequestSaveEvent;
             m_windowInspectorView.OnTypeChanged += RequestWindowTypeChanged;
-            m_windowInspectorView.OnWindowTrackChanged += RequestWindowTrackChanged;
+            m_windowInspectorView.OnWindowConfigChanged += RequestWindowConfigChanged;
             m_windowInspectorView.OnFramesChanged += RequestWindowFramesChanged;
             m_windowInspectorView.OnDamageChanged += RequestWindowDamageChanged;
             m_windowInspectorView.OnSaveWindowRequested += RequestSaveWindow;
@@ -136,7 +136,7 @@ namespace Tools.AbilityComposer.Editor.View.Right
             m_eventInspectorView.OnFunctionNameChanged -= RequestEventFunctionNameChanged;
             m_eventInspectorView.OnSaveEventRequested -= RequestSaveEvent;
             m_windowInspectorView.OnTypeChanged -= RequestWindowTypeChanged;
-            m_windowInspectorView.OnWindowTrackChanged -= RequestWindowTrackChanged;
+            m_windowInspectorView.OnWindowConfigChanged -= RequestWindowConfigChanged;
             m_windowInspectorView.OnFramesChanged -= RequestWindowFramesChanged;
             m_windowInspectorView.OnDamageChanged -= RequestWindowDamageChanged;
             m_windowInspectorView.OnSaveWindowRequested -= RequestSaveWindow;
@@ -167,8 +167,8 @@ namespace Tools.AbilityComposer.Editor.View.Right
         // 转发窗口类型编辑请求
         private void RequestWindowTypeChanged(AbilityWindowDraftType type) => OnWindowTypeChanged?.Invoke(type);
 
-        // 转发窗口轨道切换请求
-        private void RequestWindowTrackChanged(AbilityWindowTrackBaseSO windowTrack) => OnWindowTrackChanged?.Invoke(windowTrack);
+        // 转发窗口主体配置切换请求
+        private void RequestWindowConfigChanged(AbilityWindowConfigSO windowConfig) => OnWindowConfigChanged?.Invoke(windowConfig);
 
         // 转发窗口帧范围编辑请求
         private void RequestWindowFramesChanged(int startFrame, int endFrame) => OnWindowFramesChanged?.Invoke(startFrame, endFrame);

@@ -10,9 +10,6 @@ using System;
 using System.Collections.Generic;
 using Framework.QTower.Editor.View;
 using Module.Ability.Data.Window;
-using Module.Ability.Data.Window.Hit;
-using Module.Ability.Data.Window.MovementLock;
-using Module.Ability.Data.Window.StepAdvance;
 using Tools.AbilityComposer.Editor.View.Center.Timeline;
 using UnityEditor.UIElements;
 using UnityEngine;
@@ -31,14 +28,14 @@ namespace Tools.AbilityComposer.Editor.View.Right.Window
 
         private readonly VisualElement m_rootVisualElement;
         private Label m_titleLabel;
-        private ObjectField m_windowTrackField;
+        private ObjectField m_windowConfigField;
         private DropdownField m_typeField;
         private IntegerField m_startFrameField;
         private IntegerField m_endFrameField;
         private FloatField m_damageField;
         private Button m_saveWindowButton;
 
-        public event Action<AbilityWindowTrackBaseSO> OnWindowTrackChanged;
+        public event Action<AbilityWindowConfigSO> OnWindowConfigChanged;
         public event Action<AbilityWindowDraftType> OnTypeChanged;
         public event Action<int, int> OnFramesChanged;
         public event Action<float> OnDamageChanged;
@@ -55,10 +52,10 @@ namespace Tools.AbilityComposer.Editor.View.Right.Window
         {
             m_titleLabel = new Label("窗口检查器");
             m_titleLabel.AddToClassList("ac-section-title");
-            m_windowTrackField = new ObjectField("窗口轨道");
-            m_windowTrackField.objectType = typeof(AbilityHitWindowTrackSO);
-            m_windowTrackField.allowSceneObjects = false;
-            m_windowTrackField.AddToClassList("ac-inspector-field");
+            m_windowConfigField = new ObjectField("窗口主体配置");
+            m_windowConfigField.objectType = typeof(AbilityWindowConfigSO);
+            m_windowConfigField.allowSceneObjects = false;
+            m_windowConfigField.AddToClassList("ac-inspector-field");
             m_typeField = new DropdownField("类型", S_TypeChoices, 0);
             m_typeField.AddToClassList("ac-inspector-field");
             m_startFrameField = new IntegerField("开始帧");
@@ -79,7 +76,7 @@ namespace Tools.AbilityComposer.Editor.View.Right.Window
             saveButtonLabel.AddToClassList("ac-muted-button-label");
             m_saveWindowButton.Add(saveButtonLabel);
             m_rootVisualElement.Add(m_titleLabel);
-            m_rootVisualElement.Add(m_windowTrackField);
+            m_rootVisualElement.Add(m_windowConfigField);
             m_rootVisualElement.Add(m_typeField);
             m_rootVisualElement.Add(m_startFrameField);
             m_rootVisualElement.Add(m_endFrameField);
@@ -100,8 +97,7 @@ namespace Tools.AbilityComposer.Editor.View.Right.Window
             if (!isVisible)
                 return;
 
-            m_windowTrackField.objectType = GetWindowTrackType(selectedWindow.Type);
-            m_windowTrackField.SetValueWithoutNotify(GetWindowTrack(timelineData, selectedWindow.Type));
+            m_windowConfigField.SetValueWithoutNotify(timelineData.WindowConfig);
 
             SetWindowFieldsEnabled(true);
             m_saveWindowButton.SetEnabled(true);
@@ -115,7 +111,7 @@ namespace Tools.AbilityComposer.Editor.View.Right.Window
 
         protected override void SubscribeViewEvents()
         {
-            m_windowTrackField.RegisterValueChangedCallback(HandleWindowTrackChanged);
+            m_windowConfigField.RegisterValueChangedCallback(HandleWindowConfigChanged);
             m_typeField.RegisterValueChangedCallback(HandleTypeChanged);
             m_startFrameField.RegisterValueChangedCallback(HandleFramesChanged);
             m_endFrameField.RegisterValueChangedCallback(HandleFramesChanged);
@@ -125,7 +121,7 @@ namespace Tools.AbilityComposer.Editor.View.Right.Window
 
         protected override void UnsubscribeViewEvents()
         {
-            m_windowTrackField.UnregisterValueChangedCallback(HandleWindowTrackChanged);
+            m_windowConfigField.UnregisterValueChangedCallback(HandleWindowConfigChanged);
             m_typeField.UnregisterValueChangedCallback(HandleTypeChanged);
             m_startFrameField.UnregisterValueChangedCallback(HandleFramesChanged);
             m_endFrameField.UnregisterValueChangedCallback(HandleFramesChanged);
@@ -138,7 +134,7 @@ namespace Tools.AbilityComposer.Editor.View.Right.Window
         {
             DisplayStyle displayStyle = isVisible ? DisplayStyle.Flex : DisplayStyle.None;
             m_titleLabel.style.display = displayStyle;
-            m_windowTrackField.style.display = displayStyle;
+            m_windowConfigField.style.display = displayStyle;
             m_typeField.style.display = displayStyle;
             m_startFrameField.style.display = displayStyle;
             m_endFrameField.style.display = displayStyle;
@@ -155,10 +151,10 @@ namespace Tools.AbilityComposer.Editor.View.Right.Window
             m_damageField.SetEnabled(isEnabled);
         }
 
-        // 切换当前编辑的窗口轨道资产
-        private void HandleWindowTrackChanged(ChangeEvent<UnityEngine.Object> changeEvent)
+        // 切换当前编辑的窗口主体配置
+        private void HandleWindowConfigChanged(ChangeEvent<UnityEngine.Object> changeEvent)
         {
-            OnWindowTrackChanged?.Invoke(changeEvent.newValue as AbilityWindowTrackBaseSO);
+            OnWindowConfigChanged?.Invoke(changeEvent.newValue as AbilityWindowConfigSO);
         }
 
         // 转换窗口类型下拉框的选择结果
@@ -213,32 +209,5 @@ namespace Tools.AbilityComposer.Editor.View.Right.Window
             }
         }
 
-        // 返回窗口类型对应的轨道资产类型
-        private Type GetWindowTrackType(AbilityWindowDraftType type)
-        {
-            switch (type)
-            {
-                case AbilityWindowDraftType.StepAdvance:
-                    return typeof(AbilityStepAdvanceWindowTrackSO);
-                case AbilityWindowDraftType.MovementLock:
-                    return typeof(AbilityMovementLockWindowTrackSO);
-                default:
-                    return typeof(AbilityHitWindowTrackSO);
-            }
-        }
-
-        // 返回当前窗口类型绑定的轨道资产
-        private AbilityWindowTrackBaseSO GetWindowTrack(AbilityTimelineData timelineData, AbilityWindowDraftType type)
-        {
-            switch (type)
-            {
-                case AbilityWindowDraftType.StepAdvance:
-                    return timelineData.StepAdvanceWindowTrack;
-                case AbilityWindowDraftType.MovementLock:
-                    return timelineData.MovementLockWindowTrack;
-                default:
-                    return timelineData.HitWindowTrack;
-            }
-        }
     }
 }

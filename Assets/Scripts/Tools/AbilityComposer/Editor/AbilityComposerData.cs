@@ -7,9 +7,7 @@
  */
 
 using System;
-using Module.Ability.Data.Window.Hit;
-using Module.Ability.Data.Window.MovementLock;
-using Module.Ability.Data.Window.StepAdvance;
+using Module.Ability.Data.Window;
 using UnityEngine;
 
 namespace Tools.AbilityComposer.Editor
@@ -20,16 +18,12 @@ namespace Tools.AbilityComposer.Editor
         [SerializeField] private GameObject PreviewPrefab;
         [SerializeField] private AnimationClip AnimationClip;
         [SerializeField] private bool ShowGlobalAnimations;
-        [SerializeField] private AbilityHitWindowTrackSO HitWindowTrack;
-        [SerializeField] private AbilityStepAdvanceWindowTrackSO StepAdvanceWindowTrack;
-        [SerializeField] private AbilityMovementLockWindowTrackSO MovementLockWindowTrack;
+        [SerializeField] private AbilityWindowConfigSO WindowConfig;
 
         public GameObject PreviewSource => PreviewPrefab;
         public AnimationClip SelectedAnimationClip => AnimationClip;
         public bool IsShowingGlobalAnimations => ShowGlobalAnimations;
-        public AbilityHitWindowTrackSO SelectedHitWindowTrack => HitWindowTrack;
-        public AbilityStepAdvanceWindowTrackSO SelectedStepAdvanceWindowTrack => StepAdvanceWindowTrack;
-        public AbilityMovementLockWindowTrackSO SelectedMovementLockWindowTrack => MovementLockWindowTrack;
+        public AbilityWindowConfigSO SelectedWindowConfig => WindowConfig;
 
         // 更新当前选择的预览 Prefab
         public void SetPreviewSource(GameObject previewPrefab)
@@ -49,15 +43,10 @@ namespace Tools.AbilityComposer.Editor
             ShowGlobalAnimations = showGlobalAnimations;
         }
 
-        // 更新当前编辑的窗口轨道资产
-        public void SetWindowTracks(AbilityHitWindowTrackSO hitWindowTrack,
-            AbilityStepAdvanceWindowTrackSO stepAdvanceWindowTrack,
-            AbilityMovementLockWindowTrackSO movementLockWindowTrack)
+        // 更新当前编辑的窗口主体配置
+        public void SetWindowConfig(AbilityWindowConfigSO windowConfig)
         {
-            HitWindowTrack = hitWindowTrack;
-            StepAdvanceWindowTrack = stepAdvanceWindowTrack;
-            MovementLockWindowTrack = movementLockWindowTrack;
+            WindowConfig = windowConfig;
         }
-
     }
 }

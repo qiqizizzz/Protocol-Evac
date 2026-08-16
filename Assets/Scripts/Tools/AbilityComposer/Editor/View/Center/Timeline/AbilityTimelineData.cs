@@ -7,6 +7,7 @@
  */
 
 using System.Collections.Generic;
+using Module.Ability.Data.Window;
 using Module.Ability.Data.Window.Hit;
 using Module.Ability.Data.Window.MovementLock;
 using Module.Ability.Data.Window.StepAdvance;
@@ -34,9 +35,10 @@ namespace Tools.AbilityComposer.Editor.View.Center.Timeline
         public IReadOnlyList<AbilityWindowDraft> MovementLockWindowDraftValues => m_movementLockWindowDraftValues;
         public AbilityEventDraft SelectedEvent { get; private set; }
         public AbilityWindowDraft SelectedWindow { get; private set; }
-        public AbilityHitWindowTrackSO HitWindowTrack { get; private set; }
-        public AbilityStepAdvanceWindowTrackSO StepAdvanceWindowTrack { get; private set; }
-        public AbilityMovementLockWindowTrackSO MovementLockWindowTrack { get; private set; }
+        public AbilityWindowConfigSO WindowConfig { get; private set; }
+        public AbilityHitWindowTrackData HitWindowTrack { get; private set; }
+        public AbilityStepAdvanceWindowTrackData StepAdvanceWindowTrack { get; private set; }
+        public AbilityMovementLockWindowTrackData MovementLockWindowTrack { get; private set; }
         public bool IsWindowInspectorActive { get; private set; }
         public bool IsHitWindowTrackEnabled { get; private set; } = true;
         public bool IsStepAdvanceWindowTrackEnabled { get; private set; } = true;
@@ -62,14 +64,13 @@ namespace Tools.AbilityComposer.Editor.View.Center.Timeline
             IsWindowInspectorActive = false;
         }
 
-        // 更新当前编辑的窗口轨道资产
-        public void SetWindowTracks(AbilityHitWindowTrackSO hitWindowTrack,
-            AbilityStepAdvanceWindowTrackSO stepAdvanceWindowTrack,
-            AbilityMovementLockWindowTrackSO movementLockWindowTrack)
+        // 更新当前编辑的窗口主体配置与三类轨道数据
+        public void SetWindowConfig(AbilityWindowConfigSO windowConfig)
         {
-            HitWindowTrack = hitWindowTrack;
-            StepAdvanceWindowTrack = stepAdvanceWindowTrack;
-            MovementLockWindowTrack = movementLockWindowTrack;
+            WindowConfig = windowConfig;
+            HitWindowTrack = windowConfig == null ? null : windowConfig.HitWindowTrack;
+            StepAdvanceWindowTrack = windowConfig == null ? null : windowConfig.StepAdvanceWindowTrack;
+            MovementLockWindowTrack = windowConfig == null ? null : windowConfig.MovementLockWindowTrack;
         }
 
         // 设置命中窗口轨道的显示状态

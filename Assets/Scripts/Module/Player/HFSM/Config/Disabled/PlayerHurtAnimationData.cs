@@ -8,6 +8,7 @@
 
 using System;
 using Module.Ability.Data.Animation;
+using Module.Ability.Data.Window;
 using TriInspector;
 using UnityEngine;
 
@@ -27,8 +28,14 @@ namespace Module.Player.HFSM.Config.Disabled
         [Tooltip("从受击动画片段烘焙的状态持续时间")]
         [SerializeField, Min(0f)] private float DurationValue;
 
+        [Group("Animation")]
+        [LabelText("窗口主体配置")]
+        [Tooltip("当前受击动画对应的窗口主体配置")]
+        [SerializeField] private AbilityWindowConfigSO WindowConfigValue;
+
         public AnimationClip AnimationClip => AnimationClipValue;
         public float Duration => DurationValue;
+        public AbilityWindowConfigSO WindowConfig => WindowConfigValue;
 
         // 创建空的受击动画段落数据
         public PlayerHurtAnimationData()
@@ -50,6 +57,20 @@ namespace Module.Player.HFSM.Config.Disabled
 
             DurationValue = AnimationClipValue.length;
             return true;
+        }
+
+        // 返回移动锁定窗口约束后的受击状态持续时间
+        public float GetStateDuration()
+        {
+            return WindowConfigValue == null
+                ? DurationValue
+                : WindowConfigValue.ResolveMovementLockDuration(DurationValue);
+        }
+
+        // 更新当前受击动画绑定的窗口主体配置
+        public void SetWindowConfig(AbilityWindowConfigSO windowConfig)
+        {
+            WindowConfigValue = windowConfig;
         }
     }
 }

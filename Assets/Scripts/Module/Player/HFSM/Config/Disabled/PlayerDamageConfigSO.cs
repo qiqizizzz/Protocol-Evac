@@ -84,7 +84,7 @@ namespace Module.Player.HFSM.Config.Disabled
         public float GetHurtDuration(PlayerHurtAnimationId animationId)
         {
             PlayerHurtAnimationData hurtAnimationData = GetHurtAnimationData(animationId);
-            return hurtAnimationData == null ? 0f : hurtAnimationData.Duration;
+            return hurtAnimationData == null ? 0f : hurtAnimationData.GetStateDuration();
         }
 
         // 返回受击配置内所有可同步时长的动画段落

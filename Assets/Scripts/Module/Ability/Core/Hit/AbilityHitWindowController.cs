@@ -33,7 +33,7 @@ namespace Module.Ability.Hit
         /// <param name="windowTrack">当前动画绑定的命中窗口轨道</param>
         /// <param name="normalizedTime">当前动画归一化时间</param>
         /// <param name="segmentIndex">当前 Ability 段落索引</param>
-        public void Sync(AbilityHitWindowTrackSO windowTrack, float normalizedTime, int segmentIndex)
+        public void Sync(AbilityHitWindowTrackData windowTrack, float normalizedTime, int segmentIndex)
         {
             if (windowTrack == null || !windowTrack.TryGetActiveWindow(normalizedTime, out AbilityHitWindowData activeWindow))
             {

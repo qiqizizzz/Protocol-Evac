@@ -6,14 +6,14 @@
  * └─────────────────────────────────────────────────────────┘
  */
 
-using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace Module.Ability.Data.Window
 {
     public abstract class AbilityWindowTrackBaseSO : ScriptableObject
     {
-        [SerializeField] private AnimationClip AnimationClipValue;
+        [HideInInspector, SerializeField] private AnimationClip AnimationClipValue;
 
         protected abstract IReadOnlyList<AbilityWindowDataBase> WindowDataValues { get; }
 
@@ -73,6 +73,17 @@ namespace Module.Ability.Data.Window
             }
 
             return false;
+        }
+
+        // 返回轨道内所有窗口最晚的结束时间
+        public float GetLatestEndNormalizedTime()
+        {
+            float latestEndNormalizedTime = 0f;
+            for (int windowIndex = 0; windowIndex < WindowDataValues.Count; windowIndex++)
+                latestEndNormalizedTime = Mathf.Max(latestEndNormalizedTime,
+                    WindowDataValues[windowIndex].EndNormalizedTime);
+
+            return latestEndNormalizedTime;
         }
     }
 }

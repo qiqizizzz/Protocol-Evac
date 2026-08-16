@@ -24,11 +24,7 @@ MonoBehaviour:
     RecoveryUseRootMotionValue: 1
     RecoveryCanEndEarlyValue: 1
     ShowWeaponValue: 1
-    UseStepAdvanceWindowValue: 1
-    StepAdvanceWindowTrackValue: {fileID: 11400000, guid: 44b74a3ebdd64f688aebc671cf4f90b1,
-      type: 2}
-    UseHitWindowValue: 1
-    BeginHitWindowTrackValue: {fileID: 11400000, guid: 5430f6000baf40fba757348e7d649fd7,
+    WindowConfigValue: {fileID: 11400000, guid: 4172c22c0c3d50d4792d29fb6e45a108,
       type: 2}
   - BeginAnimationClipValue: {fileID: 7400000, guid: 5cb2d1ad2743927489afad103d857b6b,
       type: 2}
@@ -41,11 +37,7 @@ MonoBehaviour:
     RecoveryUseRootMotionValue: 1
     RecoveryCanEndEarlyValue: 1
     ShowWeaponValue: 1
-    UseStepAdvanceWindowValue: 1
-    StepAdvanceWindowTrackValue: {fileID: 11400000, guid: 6226949e7e2146ef8fb16a686c26ceef,
-      type: 2}
-    UseHitWindowValue: 1
-    BeginHitWindowTrackValue: {fileID: 11400000, guid: 6c4e7924b63044d5bea4e67992dddf1f,
+    WindowConfigValue: {fileID: 11400000, guid: dcb8272594c4ea147b91b6b50baca574,
       type: 2}
   - BeginAnimationClipValue: {fileID: 7400000, guid: fc0d1abce176bef40987e5073bb60ca2,
       type: 2}
@@ -58,10 +50,7 @@ MonoBehaviour:
     RecoveryUseRootMotionValue: 1
     RecoveryCanEndEarlyValue: 1
     ShowWeaponValue: 1
-    UseStepAdvanceWindowValue: 0
-    StepAdvanceWindowTrackValue: {fileID: 0}
-    UseHitWindowValue: 1
-    BeginHitWindowTrackValue: {fileID: 11400000, guid: 2d53ddcafff44d24b634002946f4195a,
+    WindowConfigValue: {fileID: 11400000, guid: 89bb42d1e5809214e98c5b6ee7a99d35,
       type: 2}
   NormalAttackBufferTimeValue: 0.25
   LockMovementValue: 1

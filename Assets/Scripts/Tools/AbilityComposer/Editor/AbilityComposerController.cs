@@ -54,7 +54,7 @@ namespace Tools.AbilityComposer.Editor
         {
             m_timelineData = new AbilityTimelineData();
             m_timelineData.SetAnimationClip(m_composerData.SelectedAnimationClip);
-            SetWindowTracksForClip(m_composerData.SelectedAnimationClip);
+            SetWindowConfigForClip(m_composerData.SelectedAnimationClip);
             LoadAnimationEvents();
             LoadWindowTrack();
             RefreshEventFunctionChoices();
@@ -97,10 +97,10 @@ namespace Tools.AbilityComposer.Editor
                 callback => m_composerView.OnShowGlobalAnimationsChanged += callback,
                 callback => m_composerView.OnShowGlobalAnimationsChanged -= callback,
                 HandleShowGlobalAnimationsChanged);
-            RegisterEvent<AbilityWindowTrackBaseSO>(
-                callback => m_composerView.OnWindowTrackChanged += callback,
-                callback => m_composerView.OnWindowTrackChanged -= callback,
-                HandleWindowTrackChanged);
+            RegisterEvent<AbilityWindowConfigSO>(
+                callback => m_composerView.OnWindowConfigChanged += callback,
+                callback => m_composerView.OnWindowConfigChanged -= callback,
+                HandleWindowConfigChanged);
             RegisterEvent(callback => m_composerView.OnCreatePreviewRequested += callback,
                 callback => m_composerView.OnCreatePreviewRequested -= callback, CreatePreview);
             RegisterEvent(callback => m_composerView.OnFocusPreviewRequested += callback,
@@ -187,7 +187,7 @@ namespace Tools.AbilityComposer.Editor
             ClearEventFunctionChoices();
             m_composerData.SetAnimationClip(animationClip);
             m_composerView.SetSelectedAnimationClip(animationClip);
-            SetWindowTracksForClip(animationClip);
+            SetWindowConfigForClip(animationClip);
             m_timelineData.SetAnimationClip(animationClip);
             LoadAnimationEvents();
             LoadWindowTrack();
@@ -205,52 +205,16 @@ namespace Tools.AbilityComposer.Editor
                 RefreshPrefabAnimationClips(false);
         }
 
-        // 切换当前编辑的通用窗口轨道资产
-        private void HandleWindowTrackChanged(AbilityWindowTrackBaseSO windowTrack)
+        // 切换当前编辑的窗口主体配置
+        private void HandleWindowConfigChanged(AbilityWindowConfigSO windowConfig)
         {
-            switch (m_timelineData.SelectedWindow.Type)
+            if (windowConfig.AnimationClip != m_timelineData.Clip)
             {
-                case AbilityWindowDraftType.Hit:
-                {
-                    AbilityHitWindowTrackSO hitTrack = windowTrack as AbilityHitWindowTrackSO;
-                    if (hitTrack == null)
-                    {
-                        QLog.Error("命中窗口必须绑定 AbilityHitWindowTrackSO");
-                        return;
-                    }
-
-                    m_composerData.SetWindowTracks(hitTrack, m_composerData.SelectedStepAdvanceWindowTrack,
-                        m_composerData.SelectedMovementLockWindowTrack);
-                    break;
-                }
-                case AbilityWindowDraftType.StepAdvance:
-                {
-                    AbilityStepAdvanceWindowTrackSO stepAdvanceTrack = windowTrack as AbilityStepAdvanceWindowTrackSO;
-                    if (stepAdvanceTrack == null)
-                    {
-                        QLog.Error("技能推进窗口必须绑定 AbilityStepAdvanceWindowTrackSO");
-                        return;
-                    }
-
-                    m_composerData.SetWindowTracks(m_composerData.SelectedHitWindowTrack, stepAdvanceTrack,
-                        m_composerData.SelectedMovementLockWindowTrack);
-                    break;
-                }
-                case AbilityWindowDraftType.MovementLock:
-                {
-                    AbilityMovementLockWindowTrackSO movementLockTrack = windowTrack as AbilityMovementLockWindowTrackSO;
-                    if (movementLockTrack == null)
-                    {
-                        QLog.Error("移动锁定窗口必须绑定 AbilityMovementLockWindowTrackSO");
-                        return;
-                    }
-
-                    m_composerData.SetWindowTracks(m_composerData.SelectedHitWindowTrack,
-                        m_composerData.SelectedStepAdvanceWindowTrack, movementLockTrack);
-                    break;
-                }
+                QLog.Error("窗口主体配置绑定的 Animation Clip 与当前时间轴动画不一致");
+                return;
             }
 
+            m_composerData.SetWindowConfig(windowConfig);
             LoadWindowTrack();
             RefreshView();
         }
@@ -530,7 +494,7 @@ namespace Tools.AbilityComposer.Editor
         {
             BeginSaveUndoGroup("一键保存 Ability Composer");
             bool savedEvents = ApplyAnimationEvents(false);
-            bool savedWindows = SaveWindowTrack(false);
+            bool savedWindows = SaveAllWindowTracks();
             if (savedEvents || savedWindows)
                 CompleteSaveUndoGroup();
             else
@@ -717,142 +681,164 @@ namespace Tools.AbilityComposer.Editor
             m_composerView.SetEventFunctionChoices(new Dictionary<string, List<string>>());
         }
 
-        // 从选中的窗口轨道资产加载草稿到时间轴
+        // 从当前窗口主体配置加载草稿到时间轴
         private void LoadWindowTrack()
         {
             m_timelineData.ClearWindows();
-            AbilityHitWindowTrackSO hitTrack = m_composerData.SelectedHitWindowTrack;
-            AbilityStepAdvanceWindowTrackSO stepAdvanceTrack = m_composerData.SelectedStepAdvanceWindowTrack;
-            AbilityMovementLockWindowTrackSO movementLockTrack = m_composerData.SelectedMovementLockWindowTrack;
-            m_timelineData.SetWindowTracks(hitTrack, stepAdvanceTrack, movementLockTrack);
-            if (!m_timelineData.HasClip)
+            AbilityWindowConfigSO windowConfig = m_composerData.SelectedWindowConfig;
+            m_timelineData.SetWindowConfig(windowConfig);
+
+            if (!m_timelineData.HasClip || windowConfig == null)
                 return;
 
-            if (hitTrack != null && hitTrack.AnimationClip != null && hitTrack.AnimationClip != m_timelineData.Clip)
+            AbilityHitWindowTrackData hitTrack = windowConfig.UseHitWindow ? windowConfig.HitWindowTrack : null;
+            AbilityStepAdvanceWindowTrackData stepAdvanceTrack = windowConfig.UseStepAdvanceWindow
+                ? windowConfig.StepAdvanceWindowTrack
+                : null;
+            AbilityMovementLockWindowTrackData movementLockTrack = windowConfig.UseMovementLockWindow
+                ? windowConfig.MovementLockWindowTrack
+                : null;
+
+            if (windowConfig != null && windowConfig.AnimationClip != m_timelineData.Clip)
             {
-                QLog.Error("命中窗口轨道绑定的 Animation Clip 与当前时间轴动画不一致");
+                QLog.Error("窗口主体配置绑定的 Animation Clip 与当前时间轴动画不一致");
                 return;
             }
 
             if (hitTrack != null)
-            foreach (AbilityHitWindowData windowData in hitTrack.Windows)
             {
-                int startFrame = Mathf.RoundToInt(windowData.StartNormalizedTime * m_timelineData.LastFrame);
-                int endFrame = Mathf.RoundToInt(windowData.EndNormalizedTime * m_timelineData.LastFrame);
-                AbilityWindowDraft windowDraft = m_timelineData.AddWindow(AbilityWindowDraftType.Hit, startFrame, endFrame, windowData.Damage);
-                windowDraft.SetId(windowData.Id);
+                foreach (AbilityHitWindowData windowData in hitTrack.Windows)
+                {
+                    int startFrame = Mathf.RoundToInt(windowData.StartNormalizedTime * m_timelineData.LastFrame);
+                    int endFrame = Mathf.RoundToInt(windowData.EndNormalizedTime * m_timelineData.LastFrame);
+                    AbilityWindowDraft windowDraft = m_timelineData.AddWindow(AbilityWindowDraftType.Hit,
+                        startFrame, endFrame, windowData.Damage);
+                    windowDraft.SetId(windowData.Id);
+                }
             }
 
             if (stepAdvanceTrack != null)
-            foreach (AbilityStepAdvanceWindowData windowData in stepAdvanceTrack.Windows)
             {
-                int startFrame = Mathf.RoundToInt(windowData.StartNormalizedTime * m_timelineData.LastFrame);
-                int endFrame = Mathf.RoundToInt(windowData.EndNormalizedTime * m_timelineData.LastFrame);
-                AbilityWindowDraft windowDraft = m_timelineData.AddWindow(AbilityWindowDraftType.StepAdvance, startFrame, endFrame, 0f);
-                windowDraft.SetId(windowData.Id);
-            }
-
-            if (movementLockTrack != null && movementLockTrack.AnimationClip != null
-                && movementLockTrack.AnimationClip != m_timelineData.Clip)
-            {
-                QLog.Error("移动锁定窗口轨道绑定的 Animation Clip 与当前时间轴动画不一致");
-                return;
+                foreach (AbilityStepAdvanceWindowData windowData in stepAdvanceTrack.Windows)
+                {
+                    int startFrame = Mathf.RoundToInt(windowData.StartNormalizedTime * m_timelineData.LastFrame);
+                    int endFrame = Mathf.RoundToInt(windowData.EndNormalizedTime * m_timelineData.LastFrame);
+                    AbilityWindowDraft windowDraft = m_timelineData.AddWindow(AbilityWindowDraftType.StepAdvance,
+                        startFrame, endFrame, 0f);
+                    windowDraft.SetId(windowData.Id);
+                }
             }
 
             if (movementLockTrack != null)
-            foreach (AbilityMovementLockWindowData windowData in movementLockTrack.Windows)
             {
-                int startFrame = Mathf.RoundToInt(windowData.StartNormalizedTime * m_timelineData.LastFrame);
-                int endFrame = Mathf.RoundToInt(windowData.EndNormalizedTime * m_timelineData.LastFrame);
-                AbilityWindowDraft windowDraft = m_timelineData.AddWindow(AbilityWindowDraftType.MovementLock,
-                    startFrame, endFrame, 0f);
-                windowDraft.SetId(windowData.Id);
+                foreach (AbilityMovementLockWindowData windowData in movementLockTrack.Windows)
+                {
+                    int startFrame = Mathf.RoundToInt(windowData.StartNormalizedTime * m_timelineData.LastFrame);
+                    int endFrame = Mathf.RoundToInt(windowData.EndNormalizedTime * m_timelineData.LastFrame);
+                    AbilityWindowDraft windowDraft = m_timelineData.AddWindow(AbilityWindowDraftType.MovementLock,
+                        startFrame, endFrame, 0f);
+                    windowDraft.SetId(windowData.Id);
+                }
             }
 
             m_timelineData.ClearWindowSelection();
         }
 
-        // 查找当前动画唯一绑定的窗口轨道资产
-        private AbilityHitWindowTrackSO FindWindowTrack(AnimationClip animationClip)
+        // 查找当前动画唯一绑定的窗口主体配置
+        private AbilityWindowConfigSO FindWindowConfig(AnimationClip animationClip, out bool hasDuplicate)
         {
+            hasDuplicate = false;
             if (animationClip == null)
                 return null;
 
-            string[] windowTrackGuids = AssetDatabase.FindAssets("t:AbilityHitWindowTrackSO");
-            foreach (string windowTrackGuid in windowTrackGuids)
+            AbilityWindowConfigSO matchedConfig = null;
+            string[] configGuids = AssetDatabase.FindAssets("t:AbilityWindowConfigSO");
+            foreach (string configGuid in configGuids)
             {
-                string assetPath = AssetDatabase.GUIDToAssetPath(windowTrackGuid);
-                AbilityHitWindowTrackSO windowTrack = AssetDatabase.LoadAssetAtPath<AbilityHitWindowTrackSO>(assetPath);
-                if (windowTrack.AnimationClip == animationClip)
-                    return windowTrack;
-            }
+                string assetPath = AssetDatabase.GUIDToAssetPath(configGuid);
+                AbilityWindowConfigSO windowConfig = AssetDatabase.LoadAssetAtPath<AbilityWindowConfigSO>(assetPath);
+                if (windowConfig == null || windowConfig.AnimationClip != animationClip)
+                    continue;
 
-            return null;
-        }
+                if (matchedConfig == null)
+                {
+                    matchedConfig = windowConfig;
+                    continue;
+                }
 
-        // 查找当前动画绑定的三类窗口轨道
-        private void SetWindowTracksForClip(AnimationClip animationClip)
-        {
-            m_composerData.SetWindowTracks(FindWindowTrack(animationClip), FindStepAdvanceWindowTrack(animationClip),
-                FindMovementLockWindowTrack(animationClip));
-        }
-
-        // 查找当前动画唯一绑定的技能推进窗口轨道资产
-        private AbilityStepAdvanceWindowTrackSO FindStepAdvanceWindowTrack(AnimationClip animationClip)
-        {
-            if (animationClip == null)
+                hasDuplicate = true;
+                QLog.Error($"动画 {animationClip.name} 绑定了多个窗口主体配置，请保留唯一配置");
                 return null;
-
-            string[] trackGuids = AssetDatabase.FindAssets("t:AbilityStepAdvanceWindowTrackSO");
-            foreach (string trackGuid in trackGuids)
-            {
-                string assetPath = AssetDatabase.GUIDToAssetPath(trackGuid);
-                AbilityStepAdvanceWindowTrackSO track = AssetDatabase.LoadAssetAtPath<AbilityStepAdvanceWindowTrackSO>(assetPath);
-                if (track != null && track.AnimationClip == animationClip)
-                    return track;
             }
 
-            return null;
+            return matchedConfig;
         }
 
-        // 查找当前动画唯一绑定的移动锁定窗口轨道资产
-        private AbilityMovementLockWindowTrackSO FindMovementLockWindowTrack(AnimationClip animationClip)
+        // 匹配当前动画唯一绑定的窗口主体配置
+        private void SetWindowConfigForClip(AnimationClip animationClip)
         {
-            if (animationClip == null)
-                return null;
-
-            string[] trackGuids = AssetDatabase.FindAssets("t:AbilityMovementLockWindowTrackSO");
-            foreach (string trackGuid in trackGuids)
+            AbilityWindowConfigSO windowConfig = FindWindowConfig(animationClip, out bool hasDuplicate);
+            if (hasDuplicate)
             {
-                string assetPath = AssetDatabase.GUIDToAssetPath(trackGuid);
-                AbilityMovementLockWindowTrackSO track = AssetDatabase.LoadAssetAtPath<AbilityMovementLockWindowTrackSO>(assetPath);
-                if (track != null && track.AnimationClip == animationClip)
-                    return track;
+                m_composerData.SetWindowConfig(null);
+                return;
             }
 
-            return null;
+            m_composerData.SetWindowConfig(windowConfig);
         }
 
-        // 将时间轴窗口草稿写回选中的窗口轨道资产
+        // 将当前选中窗口写回所属类型的轨道数据
         private void SaveWindowTrack()
         {
-            SaveWindowTrack(true);
+            switch (m_timelineData.SelectedWindow.Type)
+            {
+                case AbilityWindowDraftType.Hit:
+                    SaveHitWindowTrack(true);
+                    break;
+                case AbilityWindowDraftType.StepAdvance:
+                    SaveStepAdvanceWindowTrack(true);
+                    break;
+                case AbilityWindowDraftType.MovementLock:
+                    SaveMovementLockWindowTrack(true);
+                    break;
+            }
+
             RefreshView();
         }
 
-        // 将当前窗口草稿写回窗口轨道资产，并按需创建独立 Undo 组
-        private bool SaveWindowTrack(bool createUndoGroup)
+        // 保存全部已启用或包含草稿的窗口轨道
+        private bool SaveAllWindowTracks()
         {
-            AbilityHitWindowTrackSO windowTrack = m_composerData.SelectedHitWindowTrack;
+            bool savedWindowTrack = false;
+            AbilityWindowConfigSO windowConfig = m_composerData.SelectedWindowConfig;
+            bool hasHitWindowTrack = windowConfig != null && windowConfig.UseHitWindow;
+            bool hasStepAdvanceWindowTrack = windowConfig != null && windowConfig.UseStepAdvanceWindow;
+            bool hasMovementLockWindowTrack = windowConfig != null && windowConfig.UseMovementLockWindow;
+
+            if (hasHitWindowTrack || m_timelineData.HitWindowDraftValues.Count > 0)
+                savedWindowTrack |= SaveHitWindowTrack(false);
+            if (hasStepAdvanceWindowTrack || m_timelineData.StepAdvanceWindowDraftValues.Count > 0)
+                savedWindowTrack |= SaveStepAdvanceWindowTrack(false);
+            if (hasMovementLockWindowTrack || m_timelineData.MovementLockWindowDraftValues.Count > 0)
+                savedWindowTrack |= SaveMovementLockWindowTrack(false);
+
+            return savedWindowTrack;
+        }
+
+        // 将当前命中窗口草稿写回对应轨道数据
+        private bool SaveHitWindowTrack(bool createUndoGroup)
+        {
             if (!m_timelineData.HasClip)
                 return false;
 
-            if (windowTrack == null)
-            {
-                windowTrack = CreateWindowTrack();
-                if (windowTrack == null)
-                    return false;
-            }
+            AbilityWindowConfigSO windowConfig = GetOrCreateWindowConfig();
+            if (windowConfig == null)
+                return false;
+
+            if (createUndoGroup)
+                BeginSaveUndoGroup("保存命中窗口轨道");
+
+            AbilityHitWindowTrackData windowTrack = windowConfig.HitWindowTrack;
 
             List<AbilityHitWindowData> windowValues = new List<AbilityHitWindowData>();
             foreach (AbilityWindowDraft windowDraft in m_timelineData.HitWindowDraftValues)
@@ -866,42 +852,33 @@ namespace Tools.AbilityComposer.Editor
                 windowValues.Add(new AbilityHitWindowData(startNormalizedTime, endNormalizedTime, windowDraft.Damage));
             }
 
-            if (createUndoGroup)
-                BeginSaveUndoGroup("保存 Ability 窗口轨道");
-
-            Undo.RecordObject(windowTrack, "保存 Ability 窗口轨道");
-            windowTrack.SetAnimationClip(m_timelineData.Clip);
+            Undo.RecordObject(windowConfig, "保存命中窗口轨道");
             windowTrack.SetWindows(windowValues);
-            EditorUtility.SetDirty(windowTrack);
+            windowConfig.SetHitWindow(true, windowTrack);
+            EditorUtility.SetDirty(windowConfig);
+            m_composerData.SetWindowConfig(windowConfig);
+            m_timelineData.SetWindowConfig(windowConfig);
             AssetDatabase.SaveAssets();
             if (createUndoGroup)
                 CompleteSaveUndoGroup();
 
-            bool savedStepAdvanceWindowTrack = SaveStepAdvanceWindowTrack(createUndoGroup);
-            bool savedMovementLockWindowTrack = SaveMovementLockWindowTrack(createUndoGroup);
-            return savedStepAdvanceWindowTrack && savedMovementLockWindowTrack;
+            return true;
         }
 
-        // 将当前技能推进窗口草稿写回对应轨道资产
+        // 将当前技能推进窗口草稿写回对应轨道数据
         private bool SaveStepAdvanceWindowTrack(bool createUndoGroup)
         {
             if (!m_timelineData.HasClip)
                 return false;
 
-            AbilityStepAdvanceWindowTrackSO track = m_composerData.SelectedStepAdvanceWindowTrack;
-            if (track == null)
-            {
-                string clipName = CreateSafeAssetFileName(m_timelineData.Clip.name);
-                string defaultName = $"{clipName}_StepAdvanceWindowTrack.asset";
-                string assetPath = EditorUtility.SaveFilePanelInProject("新建技能推进窗口轨道", defaultName, "asset", "选择窗口轨道的保存位置");
-                if (string.IsNullOrEmpty(assetPath))
-                    return false;
+            AbilityWindowConfigSO windowConfig = GetOrCreateWindowConfig();
+            if (windowConfig == null)
+                return false;
 
-                track = ScriptableObject.CreateInstance<AbilityStepAdvanceWindowTrackSO>();
-                AssetDatabase.CreateAsset(track, assetPath);
-                m_composerData.SetWindowTracks(m_composerData.SelectedHitWindowTrack, track,
-                    m_composerData.SelectedMovementLockWindowTrack);
-            }
+            if (createUndoGroup)
+                BeginSaveUndoGroup("保存技能推进窗口轨道");
+
+            AbilityStepAdvanceWindowTrackData track = windowConfig.StepAdvanceWindowTrack;
 
             List<AbilityStepAdvanceWindowData> values = new List<AbilityStepAdvanceWindowData>();
             foreach (AbilityWindowDraft draft in m_timelineData.StepAdvanceWindowDraftValues)
@@ -911,34 +888,33 @@ namespace Tools.AbilityComposer.Editor
                 values.Add(new AbilityStepAdvanceWindowData(draft.Id, start, end));
             }
 
-            Undo.RecordObject(track, "保存技能推进窗口轨道");
-            track.SetAnimationClip(m_timelineData.Clip);
+            Undo.RecordObject(windowConfig, "保存技能推进窗口轨道");
             track.SetWindows(values);
-            EditorUtility.SetDirty(track);
+            windowConfig.SetStepAdvanceWindow(true, track);
+            EditorUtility.SetDirty(windowConfig);
+            m_composerData.SetWindowConfig(windowConfig);
+            m_timelineData.SetWindowConfig(windowConfig);
             AssetDatabase.SaveAssets();
+            if (createUndoGroup)
+                CompleteSaveUndoGroup();
+
             return true;
         }
 
-        // 将当前移动锁定窗口草稿写回对应轨道资产
+        // 将当前移动锁定窗口草稿写回对应轨道数据
         private bool SaveMovementLockWindowTrack(bool createUndoGroup)
         {
             if (!m_timelineData.HasClip)
                 return false;
 
-            AbilityMovementLockWindowTrackSO track = m_composerData.SelectedMovementLockWindowTrack;
-            if (track == null)
-            {
-                string clipName = CreateSafeAssetFileName(m_timelineData.Clip.name);
-                string defaultName = $"{clipName}_MovementLockWindowTrack.asset";
-                string assetPath = EditorUtility.SaveFilePanelInProject("新建移动锁定窗口轨道", defaultName, "asset", "选择窗口轨道的保存位置");
-                if (string.IsNullOrEmpty(assetPath))
-                    return false;
+            AbilityWindowConfigSO windowConfig = GetOrCreateWindowConfig();
+            if (windowConfig == null)
+                return false;
 
-                track = ScriptableObject.CreateInstance<AbilityMovementLockWindowTrackSO>();
-                AssetDatabase.CreateAsset(track, assetPath);
-                m_composerData.SetWindowTracks(m_composerData.SelectedHitWindowTrack,
-                    m_composerData.SelectedStepAdvanceWindowTrack, track);
-            }
+            if (createUndoGroup)
+                BeginSaveUndoGroup("保存移动锁定窗口轨道");
+
+            AbilityMovementLockWindowTrackData track = windowConfig.MovementLockWindowTrack;
 
             List<AbilityMovementLockWindowData> values = new List<AbilityMovementLockWindowData>();
             foreach (AbilityWindowDraft draft in m_timelineData.MovementLockWindowDraftValues)
@@ -948,31 +924,51 @@ namespace Tools.AbilityComposer.Editor
                 values.Add(new AbilityMovementLockWindowData(draft.Id, start, end));
             }
 
-            Undo.RecordObject(track, "保存移动锁定窗口轨道");
-            track.SetAnimationClip(m_timelineData.Clip);
+            Undo.RecordObject(windowConfig, "保存移动锁定窗口轨道");
             track.SetWindows(values);
-            EditorUtility.SetDirty(track);
+            windowConfig.SetMovementLockWindow(true, track);
+            EditorUtility.SetDirty(windowConfig);
+            m_composerData.SetWindowConfig(windowConfig);
+            m_timelineData.SetWindowConfig(windowConfig);
             AssetDatabase.SaveAssets();
+            if (createUndoGroup)
+                CompleteSaveUndoGroup();
+
             return true;
         }
 
-        // 让用户指定路径创建当前动画专属的窗口轨道资产
-        private AbilityHitWindowTrackSO CreateWindowTrack()
+        // 获取当前动画的窗口主体配置，缺失时只创建一个主体资产
+        private AbilityWindowConfigSO GetOrCreateWindowConfig()
         {
+            AbilityWindowConfigSO selectedConfig = m_composerData.SelectedWindowConfig;
+            if (selectedConfig != null)
+                return selectedConfig;
+
+            AbilityWindowConfigSO windowConfig = FindWindowConfig(m_timelineData.Clip, out bool hasDuplicate);
+            if (hasDuplicate)
+                return null;
+
+            if (windowConfig != null)
+            {
+                m_composerData.SetWindowConfig(windowConfig);
+                m_timelineData.SetWindowConfig(windowConfig);
+                return windowConfig;
+            }
+
             string clipName = CreateSafeAssetFileName(m_timelineData.Clip.name);
-            string defaultName = $"{clipName}_WindowTrack.asset";
-            string assetPath = EditorUtility.SaveFilePanelInProject("新建 Ability 窗口轨道", defaultName, "asset", "选择窗口轨道的保存位置");
+            string defaultName = $"{clipName}_WindowConfig.asset";
+            string assetPath = EditorUtility.SaveFilePanelInProject("新建 Ability 窗口主体配置", defaultName,
+                "asset", "选择窗口主体配置的保存位置");
             if (string.IsNullOrEmpty(assetPath))
                 return null;
 
-            AbilityHitWindowTrackSO windowTrack = ScriptableObject.CreateInstance<AbilityHitWindowTrackSO>();
-            AssetDatabase.CreateAsset(windowTrack, assetPath);
-            AssetDatabase.SaveAssets();
-            m_composerData.SetWindowTracks(windowTrack, m_composerData.SelectedStepAdvanceWindowTrack,
-                m_composerData.SelectedMovementLockWindowTrack);
-            m_timelineData.SetWindowTracks(windowTrack, m_composerData.SelectedStepAdvanceWindowTrack,
-                m_composerData.SelectedMovementLockWindowTrack);
-            return windowTrack;
+            windowConfig = ScriptableObject.CreateInstance<AbilityWindowConfigSO>();
+            windowConfig.SetAnimationClip(m_timelineData.Clip);
+            AssetDatabase.CreateAsset(windowConfig, assetPath);
+            EditorUtility.SetDirty(windowConfig);
+            m_composerData.SetWindowConfig(windowConfig);
+            m_timelineData.SetWindowConfig(windowConfig);
+            return windowConfig;
         }
 
         // 创建可被底部撤销按钮定位的一次保存 Undo 组

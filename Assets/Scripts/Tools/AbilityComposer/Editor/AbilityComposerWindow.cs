@@ -7,6 +7,7 @@
  */
 
 using Module.Ability.Data;
+using Module.Ability.Data.Window;
 using Tools.AbilityComposer.Editor.Preview;
 using Tools.AbilityComposer.Editor.View;
 using Tools.AbilityComposer.Editor.View.Center.Timeline;
@@ -33,12 +34,19 @@ namespace Tools.AbilityComposer.Editor
         private static void OpenWindow()
         {
             AbilityComposerWindow window = GetWindow<AbilityComposerWindow>();
+            AbilityWindowConfigSO requestedWindowConfig = AbilityComposerOpenRequest.ConsumeWindowConfig();
             AnimationClip requestedAnimationClip = AbilityComposerOpenRequest.ConsumeAnimationClip();
             window.titleContent = new GUIContent(WINDOW_TITLE);
             window.minSize = new Vector2(1024f, 640f);
             window.Show();
 
-            if (requestedAnimationClip != null)
+            if (requestedWindowConfig != null)
+            {
+                window.ComposerData.SetWindowConfig(requestedWindowConfig);
+                window.ComposerData.SetAnimationClip(requestedWindowConfig.AnimationClip);
+                window.RebuildComposer();
+            }
+            else if (requestedAnimationClip != null)
             {
                 window.ComposerData.SetAnimationClip(requestedAnimationClip);
                 window.RebuildComposer();
@@ -47,8 +55,14 @@ namespace Tools.AbilityComposer.Editor
 
         private void CreateGUI()
         {
+            AbilityWindowConfigSO requestedWindowConfig = AbilityComposerOpenRequest.ConsumeWindowConfig();
             AnimationClip requestedAnimationClip = AbilityComposerOpenRequest.ConsumeAnimationClip();
-            if (requestedAnimationClip != null)
+            if (requestedWindowConfig != null)
+            {
+                ComposerData.SetWindowConfig(requestedWindowConfig);
+                ComposerData.SetAnimationClip(requestedWindowConfig.AnimationClip);
+            }
+            else if (requestedAnimationClip != null)
                 ComposerData.SetAnimationClip(requestedAnimationClip);
 
             DisposeModules(false);

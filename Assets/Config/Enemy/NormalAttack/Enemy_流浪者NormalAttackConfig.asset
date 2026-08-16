@@ -24,10 +24,7 @@ MonoBehaviour:
     RecoveryUseRootMotionValue: 0
     RecoveryCanEndEarlyValue: 1
     ShowWeaponValue: 1
-    UseStepAdvanceWindowValue: 0
-    StepAdvanceWindowTrackValue: {fileID: 0}
-    UseHitWindowValue: 1
-    BeginHitWindowTrackValue: {fileID: 11400000, guid: 91823e0c19c0e0947bdd47335e49761e,
+    WindowConfigValue: {fileID: 11400000, guid: 220952b4e84ac1440a66e444c22c857d,
       type: 2}
   - BeginAnimationClipValue: {fileID: -1662512729948635066, guid: eea23087c2f686a4785dee8bd6c8f2de,
       type: 3}
@@ -40,10 +37,7 @@ MonoBehaviour:
     RecoveryUseRootMotionValue: 0
     RecoveryCanEndEarlyValue: 1
     ShowWeaponValue: 1
-    UseStepAdvanceWindowValue: 0
-    StepAdvanceWindowTrackValue: {fileID: 0}
-    UseHitWindowValue: 1
-    BeginHitWindowTrackValue: {fileID: 11400000, guid: d93e95d54de831e4f9078e6f0d1883b1,
+    WindowConfigValue: {fileID: 11400000, guid: da1701f4690b2f54da91047929a6f249,
       type: 2}
   - BeginAnimationClipValue: {fileID: 543990450412311274, guid: eea23087c2f686a4785dee8bd6c8f2de,
       type: 3}
@@ -56,10 +50,7 @@ MonoBehaviour:
     RecoveryUseRootMotionValue: 0
     RecoveryCanEndEarlyValue: 1
     ShowWeaponValue: 1
-    UseStepAdvanceWindowValue: 0
-    StepAdvanceWindowTrackValue: {fileID: 0}
-    UseHitWindowValue: 1
-    BeginHitWindowTrackValue: {fileID: 11400000, guid: ec2071127123ac04a8ed7d5ab3e567c4,
+    WindowConfigValue: {fileID: 11400000, guid: e5c147aeb48871f4b8dfd4cd20a6f7e9,
       type: 2}
   CooldownValue: 0.5
   LockMovementValue: 1

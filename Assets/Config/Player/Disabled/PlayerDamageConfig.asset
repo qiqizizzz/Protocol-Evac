@@ -16,26 +16,34 @@ MonoBehaviour:
   - AnimationClipValue: {fileID: -623603649343465320, guid: b9b2b7e4a4fe57d4bb31ec5d399e2225,
       type: 3}
     DurationValue: 3.6666667
+    WindowConfigValue: {fileID: 11400000, guid: 18e1a979a959b0941aa9d5f1453f1b5a,
+      type: 2}
   - AnimationClipValue: {fileID: -623603649343465320, guid: 6a6a5a0c356a49549bae389ea3171bda,
       type: 3}
     DurationValue: 3.2333336
+    WindowConfigValue: {fileID: 0}
   HeavyHurtAnimationValues:
   - AnimationClipValue: {fileID: -623603649343465320, guid: d0107548462b76e428a22db76e730638,
       type: 3}
     DurationValue: 4.1333337
+    WindowConfigValue: {fileID: 0}
   - AnimationClipValue: {fileID: -623603649343465320, guid: 28a29c28813f31143898a3dd88a1c314,
       type: 3}
     DurationValue: 3.8000002
+    WindowConfigValue: {fileID: 0}
   KnockUpAnimationValues:
   - AnimationClipValue: {fileID: -623603649343465320, guid: aabd96c765ebc774d966af3f65e86d8a,
       type: 3}
     DurationValue: 1
+    WindowConfigValue: {fileID: 0}
   - AnimationClipValue: {fileID: -623603649343465320, guid: dff2b757faf0de64bbbbdfcfe88ae92e,
       type: 3}
     DurationValue: 1.3333334
+    WindowConfigValue: {fileID: 0}
   - AnimationClipValue: {fileID: -623603649343465320, guid: c06221ec7ad96c248883e34b508a883d,
       type: 3}
     DurationValue: 1
+    WindowConfigValue: {fileID: 0}
   DamageInvulnerabilityDurationValue: 0.25
   HeavyHurtKnockbackSpeedValue: 4
   HorizontalKnockbackDurationValue: 0.25
@@ -66,21 +74,28 @@ MonoBehaviour:
   - AnimationClipValue: {fileID: -623603649343465320, guid: b9b2b7e4a4fe57d4bb31ec5d399e2225,
       type: 3}
     DurationValue: 3.6666667
+    WindowConfigValue: {fileID: 0}
   - AnimationClipValue: {fileID: -623603649343465320, guid: 6a6a5a0c356a49549bae389ea3171bda,
       type: 3}
     DurationValue: 3.2333336
+    WindowConfigValue: {fileID: 0}
   - AnimationClipValue: {fileID: -623603649343465320, guid: d0107548462b76e428a22db76e730638,
       type: 3}
     DurationValue: 4.1333337
+    WindowConfigValue: {fileID: 0}
   - AnimationClipValue: {fileID: -623603649343465320, guid: 28a29c28813f31143898a3dd88a1c314,
       type: 3}
     DurationValue: 3.8000002
+    WindowConfigValue: {fileID: 0}
   - AnimationClipValue: {fileID: -623603649343465320, guid: aabd96c765ebc774d966af3f65e86d8a,
       type: 3}
     DurationValue: 1
+    WindowConfigValue: {fileID: 0}
   - AnimationClipValue: {fileID: -623603649343465320, guid: dff2b757faf0de64bbbbdfcfe88ae92e,
       type: 3}
     DurationValue: 1.3333334
+    WindowConfigValue: {fileID: 0}
   - AnimationClipValue: {fileID: -623603649343465320, guid: c06221ec7ad96c248883e34b508a883d,
       type: 3}
     DurationValue: 1
+    WindowConfigValue: {fileID: 0}

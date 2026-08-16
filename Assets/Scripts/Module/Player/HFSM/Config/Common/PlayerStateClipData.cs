@@ -58,7 +58,7 @@ namespace Module.Player.HFSM.Config.Common
         [ShowIf(nameof(UseComboWindowValue))]
         [LabelText("连招窗口配置")]
         [Tooltip("当前动画段对应的阶段推进窗口轨道")]
-        [SerializeField] private AbilityStepAdvanceWindowTrackSO ComboWindowTrackValue;
+        [SerializeField] private AbilityStepAdvanceWindowTrackData ComboWindowTrackValue = new AbilityStepAdvanceWindowTrackData();
 
         public AnimationClip StateClip => StateClipValue;
 
@@ -68,7 +68,7 @@ namespace Module.Player.HFSM.Config.Common
 
         public bool UseComboWindow => UseComboWindowValue;
 
-        public AbilityStepAdvanceWindowTrackSO ComboWindowTrack => ComboWindowTrackValue;
+        public AbilityStepAdvanceWindowTrackData ComboWindowTrack => ComboWindowTrackValue;
 
         // 从动画片段同步状态持续时间
         public bool SyncAnimationDurations()

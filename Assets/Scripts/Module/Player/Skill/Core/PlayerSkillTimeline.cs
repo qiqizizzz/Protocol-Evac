@@ -185,9 +185,9 @@ namespace Module.Player.Skill.Core
                 return;
             }
 
-            AbilityStepAdvanceWindowTrackSO windowTrack = stepData.StepAdvanceWindowTrack;
-            bool isWindowActive = windowTrack.TryGetActiveWindow<AbilityStepAdvanceWindowData>(currentNormalizedTime, out _);
-            bool hasCrossedWindow = windowTrack.TryGetCrossedWindow<AbilityStepAdvanceWindowData>(previousNormalizedTime, currentNormalizedTime, out _);
+            AbilityStepAdvanceWindowTrackData windowTrack = stepData.StepAdvanceWindowTrack;
+            bool isWindowActive = windowTrack.TryGetActiveWindow(currentNormalizedTime, out _);
+            bool hasCrossedWindow = windowTrack.TryGetCrossedWindow(previousNormalizedTime, currentNormalizedTime, out _);
             if (!isWindowActive && !hasCrossedWindow)
             {
                 if (!windowTrack.HasWindowAtOrAfter(currentNormalizedTime))

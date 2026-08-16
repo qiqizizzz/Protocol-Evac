@@ -56,7 +56,7 @@ namespace Tools.AbilityComposer.Editor.View
         public event Action<GameObject> OnPreviewSourceChanged;
         public event Action<AnimationClip> OnAnimationClipChanged;
         public event Action<bool> OnShowGlobalAnimationsChanged;
-        public event Action<AbilityWindowTrackBaseSO> OnWindowTrackChanged;
+        public event Action<AbilityWindowConfigSO> OnWindowConfigChanged;
         public event Action OnCreatePreviewRequested;
         public event Action OnFocusPreviewRequested;
         public event Action OnReturnPreviousSceneRequested;
@@ -228,7 +228,7 @@ namespace Tools.AbilityComposer.Editor.View
             m_rightView.OnEventFunctionNameChanged += RequestEventFunctionNameChanged;
             m_rightView.OnSaveEventRequested += RequestSaveEvent;
             m_rightView.OnWindowTypeChanged += RequestWindowTypeChanged;
-            m_rightView.OnWindowTrackChanged += RequestWindowTrackChanged;
+            m_rightView.OnWindowConfigChanged += RequestWindowConfigChanged;
             m_rightView.OnWindowFramesChanged += RequestWindowFramesChanged;
             m_rightView.OnWindowDamageChanged += RequestWindowDamageChanged;
             m_rightView.OnSaveWindowRequested += RequestSaveWindow;
@@ -268,7 +268,7 @@ namespace Tools.AbilityComposer.Editor.View
             m_rightView.OnEventFunctionNameChanged -= RequestEventFunctionNameChanged;
             m_rightView.OnSaveEventRequested -= RequestSaveEvent;
             m_rightView.OnWindowTypeChanged -= RequestWindowTypeChanged;
-            m_rightView.OnWindowTrackChanged -= RequestWindowTrackChanged;
+            m_rightView.OnWindowConfigChanged -= RequestWindowConfigChanged;
             m_rightView.OnWindowFramesChanged -= RequestWindowFramesChanged;
             m_rightView.OnWindowDamageChanged -= RequestWindowDamageChanged;
             m_rightView.OnSaveWindowRequested -= RequestSaveWindow;
@@ -476,8 +476,8 @@ namespace Tools.AbilityComposer.Editor.View
         // 转发窗口类型编辑请求
         private void RequestWindowTypeChanged(AbilityWindowDraftType type) => OnWindowTypeChanged?.Invoke(type);
 
-        // 转发窗口轨道切换请求
-        private void RequestWindowTrackChanged(AbilityWindowTrackBaseSO windowTrack) => OnWindowTrackChanged?.Invoke(windowTrack);
+        // 转发窗口主体配置切换请求
+        private void RequestWindowConfigChanged(AbilityWindowConfigSO windowConfig) => OnWindowConfigChanged?.Invoke(windowConfig);
 
         // 转发窗口帧范围编辑请求
         private void RequestWindowFramesChanged(int startFrame, int endFrame) => OnWindowFramesChanged?.Invoke(startFrame, endFrame);
