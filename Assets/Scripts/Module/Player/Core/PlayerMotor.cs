@@ -44,7 +44,7 @@ namespace Module.Player.Core
             }
 
             Vector3 rootMotionDeltaPosition = m_context.Action.ConsumeRootMotionDeltaPosition();
-            if (rootMotionDeltaPosition.sqrMagnitude > 0f)
+            if (rootMotionDeltaPosition.sqrMagnitude > 0f && !m_context.Movement.HasForcedMoveVelocity)
             {
                 ApplyRootMotionMove(rootMotionDeltaPosition, ref velocity, fixedDeltaTime);
                 return;

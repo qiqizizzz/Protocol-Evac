@@ -21,7 +21,7 @@ MonoBehaviour:
       StartNormalizedTimeValue: 0.2
       EndNormalizedTimeValue: 0.66
       DamageValue: 12
-      ReactionTypeValue: 0
+      ReactionTypeValue: 1
   UseStepAdvanceWindowValue: 0
   StepAdvanceWindowTrackValue:
     WindowValues: []
