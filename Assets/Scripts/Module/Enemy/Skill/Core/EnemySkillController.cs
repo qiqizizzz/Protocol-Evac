@@ -114,8 +114,12 @@ namespace Module.Enemy.Skill.Core
         // 关闭当前技能并清理命中窗口
         public void Close()
         {
+            EnemySkillType? skillType = m_timeline.CurrentSkillType;
+            bool wasRunning = m_timeline.IsRunning;
             m_hitWindowController.Close();
             m_timeline.Close(m_actionContext);
+            if (wasRunning && skillType.HasValue)
+                StartCooldown(skillType.Value);
         }
 
         // 查询指定技能是否处于冷却
@@ -148,7 +152,7 @@ namespace Module.Enemy.Skill.Core
         }
 
         // 根据技能配置开始冷却
-        private void StartCooldown(EnemySkillType skillType)
+        public void StartCooldown(EnemySkillType skillType)
         {
             if (skillType == EnemySkillType.NormalAttack)
             {

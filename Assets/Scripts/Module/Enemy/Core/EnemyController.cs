@@ -195,14 +195,17 @@ namespace Module.Enemy.Core
         // 接收伤害并中断敌人的行为、技能与导航
         private void HandleDamageReceived(Module.Combat.Damage.DamageData damageData)
         {
-            if (m_damageController == null || !m_damageController.TryTakeDamage(damageData,
-                    Settings.AnimationConfig.HitAnimationClip.length))
+            float hurtDuration = m_damageController.CalculateHurtDuration(damageData,
+                Settings.AnimationConfig.HitAnimationClip.length, Settings.AnimationConfig.MinimumHurtDuration);
+            if (!m_damageController.TryTakeDamage(damageData, hurtDuration))
                 return;
 
             m_behaviorController.Reset();
             m_skillController.Close();
+            m_skillController.StartCooldown(EnemySkillType.NormalAttack);
             m_navigationController.Reset();
-            m_context.Movement.StopMove();
+            m_context.Movement.StopNavigationMove();
+            m_damageController.ApplyHitMotion(damageData);
             if (m_context.Damage.IsDead)
             {
                 m_context.Action.BeginDead();

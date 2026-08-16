@@ -81,6 +81,20 @@ namespace Tools.AbilityComposer.Editor
             m_composerController.Init();
         }
 
+        // 在脚本重载或窗口重新启用后恢复已保留的 UI 控制器
+        private void OnEnable()
+        {
+            if (rootVisualElement.childCount > 0)
+                RebuildComposer();
+        }
+
+        // 聚焦窗口时补建可能被 Unity 生命周期释放的控制器
+        private void OnFocus()
+        {
+            if (m_composerController == null)
+                RebuildComposer();
+        }
+
         private void OnDisable()
         {
             DisposeModules(true);

@@ -6,11 +6,14 @@
  * └────────────────────────────────────────────┘
  */
 
+using UnityEngine;
+
 namespace Tools.GM
 {
     internal interface IGamePanel
     {
         void Refresh();
-        void Draw();
+        void Draw(int activeTabIndex, GUIStyle labelStyle, GUIStyle valueStyle, GUIStyle toggleStyle,
+            GUIStyle buttonStyle);
     }
 }

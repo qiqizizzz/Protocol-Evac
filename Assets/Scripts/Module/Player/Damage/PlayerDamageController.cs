@@ -23,6 +23,9 @@ namespace Module.Player.Damage
 
         private float m_nextDamageAvailableTime;
 
+        public float CurrentHealth => m_context.Damage.CurrentHealth;
+        public bool IsGmInvincible { get; private set; }
+
         // 创建玩家伤害控制器并初始化生命值
         public PlayerDamageController(PlayerContext context, PlayerStatsConfigSO statsConfig, PlayerDamageConfigSO damageConfig)
         {
@@ -35,6 +38,9 @@ namespace Module.Player.Damage
         // 尝试应用本次伤害并写入受击状态请求
         public bool TryTakeDamage(DamageData damageData)
         {
+            if (IsGmInvincible)
+                return false;
+
             if (damageData.Damage <= 0f)
             {
                 QLog.Error($"玩家受伤失败，伤害值必须大于 0：{damageData.Damage}");
@@ -55,6 +61,12 @@ namespace Module.Player.Damage
         {
             m_context.Damage.InitHealth(m_statsConfig.MaxHealthValue);
             m_nextDamageAvailableTime = 0f;
+        }
+
+        // 设置 GM 专用的玩家无敌状态
+        public void SetGmInvincible(bool isEnabled)
+        {
+            IsGmInvincible = isEnabled;
         }
     }
 }

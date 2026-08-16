@@ -14,14 +14,17 @@ namespace Module.Enemy.Context.Runtime
     {
         public Transform CurrentTarget { get; private set; }
         public bool IsInAttackRange { get; private set; }
+        public bool IsInCombatObserveRange { get; private set; }
         public bool HasTarget => CurrentTarget != null;
 
         // 更新目标事实并返回行为相关事实是否发生变化
-        public bool UpdateTarget(Transform currentTarget, bool isInAttackRange)
+        public bool UpdateTarget(Transform currentTarget, bool isInAttackRange, bool isInCombatObserveRange)
         {
-            bool hasChanged = CurrentTarget != currentTarget || IsInAttackRange != isInAttackRange;
+            bool hasChanged = CurrentTarget != currentTarget || IsInAttackRange != isInAttackRange
+                || IsInCombatObserveRange != isInCombatObserveRange;
             CurrentTarget = currentTarget;
             IsInAttackRange = isInAttackRange;
+            IsInCombatObserveRange = isInCombatObserveRange;
             return hasChanged;
         }
 
@@ -30,7 +33,7 @@ namespace Module.Enemy.Context.Runtime
         {
             CurrentTarget = null;
             IsInAttackRange = false;
+            IsInCombatObserveRange = false;
         }
     }
 }
-

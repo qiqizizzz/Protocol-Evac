@@ -82,12 +82,18 @@ namespace Module.Enemy.Context.Runtime
             HasForcedMoveVelocity = false;
         }
 
-        // 停止导航移动并保留当前朝向请求
-        public void StopMove()
+        // 停止导航移动并保留受击产生的强制位移
+        public void StopNavigationMove()
         {
             MoveDirection = Vector3.zero;
             HasMoveRequest = false;
             IsMoving = false;
+        }
+
+        // 停止导航移动并保留当前朝向请求
+        public void StopMove()
+        {
+            StopNavigationMove();
             ForcedMoveVelocity = Vector3.zero;
             HasForcedMoveVelocity = false;
             ForcedMoveRemainingTime = 0f;

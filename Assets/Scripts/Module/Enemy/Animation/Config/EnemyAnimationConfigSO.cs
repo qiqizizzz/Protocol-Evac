@@ -26,9 +26,13 @@ namespace Module.Enemy.Animation.Config
         [Tooltip("敌人受到攻击时播放的动画片段")]
         [SerializeField] private AnimationClip HitAnimationClipValue;
 
+        [LabelText("最短受击硬直")]
+        [Tooltip("普通受击至少保持受击控制的时长，击退和击飞会按各自位移时长延长")]
+        [SerializeField, Min(0f)] private float MinimumHurtDurationValue;
+
         public AnimationClip IdleAnimationClip => IdleAnimationClipValue;
         public AnimationClip MoveAnimationClip => MoveAnimationClipValue;
         public AnimationClip HitAnimationClip => HitAnimationClipValue;
+        public float MinimumHurtDuration => MinimumHurtDurationValue;
     }
 }
-

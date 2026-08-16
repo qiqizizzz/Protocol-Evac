@@ -24,6 +24,13 @@ namespace Module.Enemy.Behavior.Config
         [Tooltip("敌人允许执行近战攻击的最大距离")]
         [SerializeField, Min(0f)] private float AttackDistance;
 
+        [Header("战斗观察")]
+        [Tooltip("普通攻击结束后，敌人在目标侧方观察的最短时间")]
+        [SerializeField, Min(0f)] private float CombatObserveDuration;
+
+        [Tooltip("敌人进入左右侧向观察的最大水平距离")]
+        [SerializeField, Min(0f)] private float CombatObserveDistance;
+
         [Header("目标")]
         [Tooltip("敌人锁定并追击目标的最大水平距离")]
         [SerializeField, Min(0f)] private float DetectionDistance;
@@ -42,6 +49,8 @@ namespace Module.Enemy.Behavior.Config
         public float SensorRefreshIntervalValue => SensorRefreshInterval;
         public float PathRefreshIntervalValue => PathRefreshInterval;
         public float AttackDistanceValue => AttackDistance;
+        public float CombatObserveDurationValue => CombatObserveDuration;
+        public float CombatObserveDistanceValue => CombatObserveDistance;
         public float DetectionDistanceValue => DetectionDistance;
         public float PatrolRadiusValue => PatrolRadius;
         public float PatrolWaitDurationValue => PatrolWaitDuration;

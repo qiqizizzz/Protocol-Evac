@@ -57,7 +57,7 @@ namespace Module.Enemy.Behavior.Trees.Wanderer
                             Name = "执行普通攻击"
                         })
                     .End()
-                    .Sequence("战斗等待")
+                    .Sequence("侧向观察")
                         .AddNode(new EnemyHasTargetCondition(context.Target)
                         {
                             Name = "存在目标"
@@ -68,7 +68,21 @@ namespace Module.Enemy.Behavior.Trees.Wanderer
                         })
                         .AddNode(new EnemyCombatWaitAction(context, skillController)
                         {
-                            Name = "等待普通攻击冷却"
+                            Name = "侧向观察攻击时机"
+                        })
+                    .End()
+                    .Sequence("临近侧向观察")
+                        .AddNode(new EnemyHasTargetCondition(context.Target)
+                        {
+                            Name = "存在目标"
+                        })
+                        .AddNode(new EnemyTargetInCombatObserveRangeCondition(context.Target)
+                        {
+                            Name = "目标进入战斗观察范围"
+                        })
+                        .AddNode(new EnemyCombatWaitAction(context, skillController)
+                        {
+                            Name = "在攻击距离外侧向观察"
                         })
                     .End()
                     .Sequence("追击目标")

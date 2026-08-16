@@ -14,7 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   SensorRefreshInterval: 0.1
   PathRefreshInterval: 0.25
-  AttackDistance: 2
+  AttackDistance: 2.2
+  CombatObserveDuration: 1.2
+  CombatObserveDistance: 5
   DetectionDistance: 12
   PatrolRadius: 6
   PatrolWaitDuration: 1.2

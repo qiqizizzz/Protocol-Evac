@@ -17,6 +17,7 @@ namespace Module.Player.HFSM.Animation
     public sealed class PlayerRootMotionReceiver : MonoBehaviour
     {
         private const float ROOT_MOTION_DELTA_THRESHOLD_SQR = 0.00000001f;
+        private const float MAX_ROOT_MOTION_SPEED = 8f;
 
         private Animator m_animator;
         private Transform m_animatorTransform;
@@ -65,7 +66,7 @@ namespace Module.Player.HFSM.Animation
                 return;
 
             deltaPosition.y = 0f;
-            m_context.Action.AddRootMotionDeltaPosition(deltaPosition);
+            m_context.Action.AddRootMotionDeltaPosition(ClampRootMotionDelta(deltaPosition));
         }
 
         private void LateUpdate()
@@ -111,10 +112,20 @@ namespace Module.Player.HFSM.Animation
                 deltaPosition.y = 0f;
 
                 if (deltaPosition.sqrMagnitude > ROOT_MOTION_DELTA_THRESHOLD_SQR)
-                    m_context.Action.AddRootMotionDeltaPosition(deltaPosition);
+                    m_context.Action.AddRootMotionDeltaPosition(ClampRootMotionDelta(deltaPosition));
             }
 
             m_previousRootMotionNodeLocalPosition = rootMotionNodeLocalPosition;
+        }
+
+        // 限制异常动画根运动曲线的单帧位移，避免动画数据突变造成闪现
+        private Vector3 ClampRootMotionDelta(Vector3 deltaPosition)
+        {
+            float maxDistance = MAX_ROOT_MOTION_SPEED * Time.deltaTime;
+            if (deltaPosition.sqrMagnitude <= maxDistance * maxDistance)
+                return deltaPosition;
+
+            return deltaPosition.normalized * maxDistance;
         }
 
         // 将 Animator 子节点固定在玩家根节点挂点，避免 Generic 骨架重复表现根位移

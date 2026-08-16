@@ -18,6 +18,7 @@ namespace Module.Enemy.Behavior.Readers
         private readonly EnemyContext m_context;
         private readonly float m_refreshInterval;
         private readonly float m_attackDistanceSqr;
+        private readonly float m_combatObserveDistanceSqr;
         private readonly float m_detectionDistanceSqr;
 
         private float m_refreshRemainingTime;
@@ -29,6 +30,8 @@ namespace Module.Enemy.Behavior.Readers
             m_refreshInterval = context.BehaviorConfig.SensorRefreshIntervalValue;
             float attackDistance = context.BehaviorConfig.AttackDistanceValue;
             m_attackDistanceSqr = attackDistance * attackDistance;
+            float combatObserveDistance = context.BehaviorConfig.CombatObserveDistanceValue;
+            m_combatObserveDistanceSqr = combatObserveDistance * combatObserveDistance;
             float detectionDistance = context.BehaviorConfig.DetectionDistanceValue;
             m_detectionDistanceSqr = detectionDistance * detectionDistance;
         }
@@ -42,9 +45,14 @@ namespace Module.Enemy.Behavior.Readers
 
             m_refreshRemainingTime = m_refreshInterval;
             Transform currentTarget = ResolveTarget();
-            bool isInAttackRange = currentTarget != null
-                && (currentTarget.position - m_context.Transform.position).sqrMagnitude <= m_attackDistanceSqr;
-            return m_context.Target.UpdateTarget(currentTarget, isInAttackRange);
+            Vector3 targetOffset = currentTarget != null
+                ? currentTarget.position - m_context.Transform.position
+                : Vector3.zero;
+            targetOffset.y = 0f;
+            bool isInAttackRange = currentTarget != null && targetOffset.sqrMagnitude <= m_attackDistanceSqr;
+            bool isInCombatObserveRange = currentTarget != null
+                && targetOffset.sqrMagnitude <= m_combatObserveDistanceSqr;
+            return m_context.Target.UpdateTarget(currentTarget, isInAttackRange, isInCombatObserveRange);
         }
 
         // 只在警戒范围内锁定 Hero，离开范围后解除目标

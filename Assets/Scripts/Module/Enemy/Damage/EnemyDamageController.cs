@@ -40,10 +40,27 @@ namespace Module.Enemy.Damage
                 return false;
 
             m_context.Damage.ApplyDamage(damageData.Damage, hurtDuration);
+            return true;
+        }
+
+        // 计算覆盖受击动画与受击位移的硬直时长
+        public float CalculateHurtDuration(DamageData damageData, float animationDuration, float minimumHurtDuration)
+        {
+            float hurtDuration = Mathf.Max(0f, animationDuration, minimumHurtDuration,
+                damageData.HorizontalKnockbackDuration);
+            if (damageData.VerticalLaunchSpeed <= 0f)
+                return hurtDuration;
+
+            float airborneDuration = damageData.VerticalLaunchSpeed * 2f / Mathf.Abs(Physics.gravity.y);
+            return Mathf.Max(hurtDuration, airborneDuration);
+        }
+
+        // 根据本次命中数据写入受击位移与浮空请求
+        public void ApplyHitMotion(DamageData damageData)
+        {
             Vector3 horizontalVelocity = damageData.HitDirection * damageData.HorizontalKnockbackSpeed;
             m_context.Movement.SetForcedMove(horizontalVelocity, damageData.HorizontalKnockbackDuration,
                 damageData.VerticalLaunchSpeed);
-            return true;
         }
 
         // 推进受击持续时间并返回是否刚完成受击

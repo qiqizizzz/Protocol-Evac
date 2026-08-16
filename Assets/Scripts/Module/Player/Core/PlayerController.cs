@@ -90,6 +90,12 @@ namespace Module.Player.Core
         public PlayerStateId NextStateId => m_transitionSelector == null
             ? PlayerStateId.None
             : m_transitionSelector.GetNextTargetStateId();
+
+        // 对外提供当前生命值的调试读取入口
+        public float CurrentHealth => m_damageController == null ? 0f : m_damageController.CurrentHealth;
+
+        // 对外提供 GM 无敌状态的调试读取入口
+        public bool IsGmInvincible => m_damageController != null && m_damageController.IsGmInvincible;
         
         #region 生命周期
         private void Awake()
@@ -302,6 +308,18 @@ namespace Module.Player.Core
 
         // 恢复玩家生命并允许状态机退出死亡状态
         private void HandlePlayerRetryRequested()
+        {
+            m_damageController.RestoreFullHealth();
+        }
+
+        // 设置 GM 专用无敌状态
+        public void SetGmInvincible(bool isEnabled)
+        {
+            m_damageController.SetGmInvincible(isEnabled);
+        }
+
+        // 通过 GM 恢复玩家全部生命
+        public void RestoreFullHealth()
         {
             m_damageController.RestoreFullHealth();
         }

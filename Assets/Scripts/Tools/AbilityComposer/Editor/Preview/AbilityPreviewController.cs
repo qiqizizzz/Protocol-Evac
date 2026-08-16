@@ -276,7 +276,7 @@ namespace Tools.AbilityComposer.Editor.Preview
                 string bindingPath = curveBindings[bindingIndex].path;
                 if (string.IsNullOrEmpty(bindingPath))
                 {
-                    if (sampleRoot == m_previewInstance.transform)
+                    if (sampleRoot.GetComponent(curveBindings[bindingIndex].type) != null)
                         matchCount++;
 
                     continue;

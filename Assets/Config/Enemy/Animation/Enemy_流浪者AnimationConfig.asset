@@ -18,3 +18,4 @@ MonoBehaviour:
     type: 3}
   HitAnimationClipValue: {fileID: -2547592662905567392, guid: 4e1e63e924a6e13428abecd9d1deb2ce,
     type: 3}
+  MinimumHurtDurationValue: 0.8
