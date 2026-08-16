@@ -32,6 +32,23 @@ namespace Module.Ability.Data.Window.MovementLock
             }
         }
 
+        // 查找指定时间处于活动状态的第一个移动锁定窗口
+        public bool TryGetActiveWindow(float normalizedTime, out AbilityMovementLockWindowData activeWindow)
+        {
+            for (int windowIndex = 0; windowIndex < WindowValues.Count; windowIndex++)
+            {
+                AbilityMovementLockWindowData window = WindowValues[windowIndex];
+                if (!window.IsActiveAt(normalizedTime))
+                    continue;
+
+                activeWindow = window;
+                return true;
+            }
+
+            activeWindow = null;
+            return false;
+        }
+
         // 返回轨道内所有移动锁定窗口最晚的结束时间
         public float GetLatestEndNormalizedTime()
         {
@@ -44,4 +61,3 @@ namespace Module.Ability.Data.Window.MovementLock
         }
     }
 }
-

@@ -67,6 +67,12 @@ namespace Module.Player.HFSM.Config.Disabled
                 : WindowConfigValue.ResolveMovementLockDuration(DurationValue);
         }
 
+        // 判断指定动画归一化时间是否处于移动锁定窗口
+        public bool IsMovementLockedAt(float normalizedTime)
+        {
+            return WindowConfigValue.IsMovementLockedAt(normalizedTime);
+        }
+
         // 更新当前受击动画绑定的窗口主体配置
         public void SetWindowConfig(AbilityWindowConfigSO windowConfig)
         {

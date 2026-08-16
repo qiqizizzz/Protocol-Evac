@@ -20,6 +20,7 @@ namespace Module.Player.HFSM.States.Disabled
         private readonly PlayerContext m_context;
         private readonly PlayerDamageConfigSO m_damageConfig;
         private readonly DurationTimer m_hurtTimer;
+        private readonly DurationTimer m_hurtAnimationTimer;
         private readonly DurationTimer m_forcedMoveTimer;
 
         private DamageReactionType m_reactionType;
@@ -34,6 +35,7 @@ namespace Module.Player.HFSM.States.Disabled
             m_context = context;
             m_damageConfig = damageConfig;
             m_hurtTimer = new DurationTimer();
+            m_hurtAnimationTimer = new DurationTimer();
             m_forcedMoveTimer = new DurationTimer();
         }
 
@@ -43,8 +45,6 @@ namespace Module.Player.HFSM.States.Disabled
             m_reactionType = m_context.Damage.PendingReactionType;
             m_context.Damage.ConsumePendingHurt();
             m_context.Action.IsStateFinished = false;
-            m_context.Input.IsInputLocked = true;
-            m_context.Movement.IsMovementLocked = true;
             m_context.Movement.ClearForcedMoveVelocity();
             m_context.Movement.ClearHorizontalVelocity();
             m_context.Movement.ClearHorizontalMoveIntent();
@@ -77,6 +77,7 @@ namespace Module.Player.HFSM.States.Disabled
         public override void Exit()
         {
             m_hurtTimer.Reset();
+            m_hurtAnimationTimer.Reset();
             m_forcedMoveTimer.Reset();
             m_context.Action.IsStateFinished = false;
             m_context.Input.IsInputLocked = false;
@@ -94,6 +95,7 @@ namespace Module.Player.HFSM.States.Disabled
 
             if (m_reactionType != DamageReactionType.KnockUp)
             {
+                TickHurtAnimation(deltaTime, false);
                 m_hurtTimer.Tick(deltaTime);
                 m_context.Action.IsStateFinished = m_hurtTimer.IsFinished;
                 return;
@@ -105,16 +107,14 @@ namespace Module.Player.HFSM.States.Disabled
         // 开始轻受击或重受击的单段表现
         private void StartSingleHurt(PlayerHurtAnimationId animationId, float duration)
         {
-            m_context.Damage.SetHurtAnimationId(animationId);
-            m_context.Action.RequestAnimReplay(PlayerStateId.DisabledHurt);
+            StartHurtAnimation(animationId);
             m_hurtTimer.Start(duration);
         }
 
         // 开始击飞起始动作并写入初速度
         private void StartKnockUp()
         {
-            m_context.Damage.SetHurtAnimationId(PlayerHurtAnimationId.KnockUpStart);
-            m_context.Action.RequestAnimReplay(PlayerStateId.DisabledHurt);
+            StartHurtAnimation(PlayerHurtAnimationId.KnockUpStart);
             SetKnockbackVelocity(m_damageConfig.KnockUpHorizontalSpeed);
             Vector3 velocity = m_context.Movement.Velocity;
             velocity.y = m_damageConfig.KnockUpVerticalSpeed;
@@ -125,6 +125,9 @@ namespace Module.Player.HFSM.States.Disabled
         // 推进击飞起始、滞空与落地三个动画阶段
         private void TickKnockUp(float deltaTime)
         {
+            TickHurtAnimation(deltaTime,
+                m_context.Damage.HurtAnimationId == PlayerHurtAnimationId.KnockUpLoop);
+
             if (!m_hasLeftGround && !m_context.Movement.IsGrounded)
                 m_hasLeftGround = true;
 
@@ -134,18 +137,16 @@ namespace Module.Player.HFSM.States.Disabled
                 if (!m_hurtTimer.IsFinished)
                     return;
 
-                m_context.Damage.SetHurtAnimationId(PlayerHurtAnimationId.KnockUpLoop);
-                m_context.Action.RequestAnimReplay(PlayerStateId.DisabledHurt);
+                StartHurtAnimation(PlayerHurtAnimationId.KnockUpLoop);
                 return;
             }
 
             if (!m_isKnockUpFalling && m_hasLeftGround && m_context.Movement.IsGrounded)
             {
                 m_isKnockUpFalling = true;
-                m_context.Damage.SetHurtAnimationId(PlayerHurtAnimationId.KnockUpFall);
+                StartHurtAnimation(PlayerHurtAnimationId.KnockUpFall);
                 m_context.Movement.ClearForcedMoveVelocity();
                 m_context.Movement.ClearHorizontalVelocity();
-                m_context.Action.RequestAnimReplay(PlayerStateId.DisabledHurt);
                 m_hurtTimer.Start(m_damageConfig.GetHurtDuration(PlayerHurtAnimationId.KnockUpFall));
                 return;
             }
@@ -155,6 +156,34 @@ namespace Module.Player.HFSM.States.Disabled
 
             m_hurtTimer.Tick(deltaTime);
             m_context.Action.IsStateFinished = m_hurtTimer.IsFinished;
+        }
+
+        // 开始指定受击动画并初始化窗口采样计时
+        private void StartHurtAnimation(PlayerHurtAnimationId animationId)
+        {
+            m_context.Damage.SetHurtAnimationId(animationId);
+            m_context.Action.RequestAnimReplay(PlayerStateId.DisabledHurt);
+            m_hurtAnimationTimer.Start(m_damageConfig.GetHurtAnimationDuration(animationId));
+            SyncMovementLock();
+        }
+
+        // 推进受击动画窗口时间并同步移动锁定状态
+        private void TickHurtAnimation(float deltaTime, bool loop)
+        {
+            m_hurtAnimationTimer.Tick(deltaTime);
+            if (loop && m_hurtAnimationTimer.IsFinished)
+                m_hurtAnimationTimer.Start(m_hurtAnimationTimer.Duration);
+
+            SyncMovementLock();
+        }
+
+        // 根据当前受击动画的移动锁定窗口同步输入与移动约束
+        private void SyncMovementLock()
+        {
+            bool isMovementLocked = m_damageConfig.IsHurtMovementLocked(
+                m_context.Damage.HurtAnimationId, m_hurtAnimationTimer.NormalizedTime);
+            m_context.Input.IsInputLocked = isMovementLocked;
+            m_context.Movement.IsMovementLocked = isMovementLocked;
         }
 
         // 根据来袭方向选择左侧或右侧受击动画

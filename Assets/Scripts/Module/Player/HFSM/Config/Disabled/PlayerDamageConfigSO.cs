@@ -87,6 +87,20 @@ namespace Module.Player.HFSM.Config.Disabled
             return hurtAnimationData == null ? 0f : hurtAnimationData.GetStateDuration();
         }
 
+        // 获取指定受击动画的完整动画时长
+        public float GetHurtAnimationDuration(PlayerHurtAnimationId animationId)
+        {
+            PlayerHurtAnimationData hurtAnimationData = GetHurtAnimationData(animationId);
+            return hurtAnimationData == null ? 0f : hurtAnimationData.Duration;
+        }
+
+        // 判断指定受击动画时间是否处于移动锁定窗口
+        public bool IsHurtMovementLocked(PlayerHurtAnimationId animationId, float normalizedTime)
+        {
+            PlayerHurtAnimationData hurtAnimationData = GetHurtAnimationData(animationId);
+            return hurtAnimationData != null && hurtAnimationData.IsMovementLockedAt(normalizedTime);
+        }
+
         // 返回受击配置内所有可同步时长的动画段落
         protected override IEnumerable<IAnimationDurationSyncable> GetAnimationDurationItems()
         {

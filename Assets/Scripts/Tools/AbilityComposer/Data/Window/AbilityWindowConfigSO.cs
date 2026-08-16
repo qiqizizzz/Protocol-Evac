@@ -92,6 +92,13 @@ namespace Module.Ability.Data.Window
             MovementLockWindowTrackValue = windowTrack;
         }
 
+        // 判断指定动画归一化时间是否处于移动锁定窗口
+        public bool IsMovementLockedAt(float normalizedTime)
+        {
+            return UseMovementLockWindowValue
+                && MovementLockWindowTrackValue.TryGetActiveWindow(normalizedTime, out _);
+        }
+
         // 根据移动锁定窗口末端计算当前动画的控制时长
         public float ResolveMovementLockDuration(float animationDuration)
         {
