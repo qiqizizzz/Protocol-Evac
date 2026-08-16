@@ -17,6 +17,8 @@ namespace Module.Player.HFSM.States.Disabled
 {
     public sealed class PlayerHurtState : BasePlayerState
     {
+        private const float MOVE_INPUT_THRESHOLD_SQR = 0.01f;
+
         private readonly PlayerContext m_context;
         private readonly PlayerDamageConfigSO m_damageConfig;
         private readonly DurationTimer m_hurtTimer;
@@ -86,6 +88,7 @@ namespace Module.Player.HFSM.States.Disabled
             m_context.Movement.ClearHorizontalVelocity();
             m_context.Movement.ClearHorizontalMoveIntent();
             m_context.Damage.SetHurtAnimationId(PlayerHurtAnimationId.None);
+            RequestGroundedRecoveryAnimation();
         }
 
         // 推进普通受击硬直或击飞分段表现
@@ -97,7 +100,8 @@ namespace Module.Player.HFSM.States.Disabled
             {
                 TickHurtAnimation(deltaTime, false);
                 m_hurtTimer.Tick(deltaTime);
-                m_context.Action.IsStateFinished = m_hurtTimer.IsFinished;
+                if (m_hurtTimer.IsFinished)
+                    FinishHurt();
                 return;
             }
 
@@ -155,7 +159,8 @@ namespace Module.Player.HFSM.States.Disabled
                 return;
 
             m_hurtTimer.Tick(deltaTime);
-            m_context.Action.IsStateFinished = m_hurtTimer.IsFinished;
+            if (m_hurtTimer.IsFinished)
+                FinishHurt();
         }
 
         // 开始指定受击动画并初始化窗口采样计时
@@ -184,6 +189,26 @@ namespace Module.Player.HFSM.States.Disabled
                 m_context.Damage.HurtAnimationId, m_hurtAnimationTimer.NormalizedTime);
             m_context.Input.IsInputLocked = isMovementLocked;
             m_context.Movement.IsMovementLocked = isMovementLocked;
+        }
+
+        // 完成受击控制窗口并立即开放状态转换
+        private void FinishHurt()
+        {
+            m_context.Input.IsInputLocked = false;
+            m_context.Movement.IsMovementLocked = false;
+            m_context.Action.IsStateFinished = true;
+        }
+
+        // 受击退出到地面状态时立即切回对应移动动画
+        private void RequestGroundedRecoveryAnimation()
+        {
+            if (!m_context.Movement.IsGrounded)
+                return;
+
+            PlayerStateId targetStateId = m_context.Input.MoveInput.sqrMagnitude > MOVE_INPUT_THRESHOLD_SQR
+                ? PlayerStateId.GroundedMove
+                : PlayerStateId.GroundedIdle;
+            m_context.Action.RequestAnimReplay(targetStateId);
         }
 
         // 根据来袭方向选择左侧或右侧受击动画

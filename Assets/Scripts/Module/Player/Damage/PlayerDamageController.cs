@@ -9,7 +9,6 @@
 using Module.Combat.Damage;
 using Module.Player.Config;
 using Module.Player.Context;
-using Module.Player.HFSM.Animation.Type;
 using Module.Player.HFSM.Config.Disabled;
 using UnityEngine;
 using Utils.log;
@@ -43,7 +42,6 @@ namespace Module.Player.Damage
             }
 
             if (m_context.Damage.IsDead || m_context.Damage.HasPendingHurt ||
-                m_context.Damage.HurtAnimationId != PlayerHurtAnimationId.None ||
                 Time.time < m_nextDamageAvailableTime)
                 return false;
 

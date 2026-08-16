@@ -19,6 +19,7 @@ namespace Module.Player.HFSM.Transition
         public PlayerStateId TargetId { get; }
         public PlayerTransitionPriority Priority { get; }
         public int Order { get; }
+        public bool AllowReentry { get; }
 
         private readonly Func<bool> m_condition;
 
@@ -30,8 +31,9 @@ namespace Module.Player.HFSM.Transition
         /// <param name="priority">规则优先级</param>
         /// <param name="condition">规则触发条件</param>
         /// <param name="order">同层级规则的优先顺序，数值越大越优先</param>
+        /// <param name="allowReentry">目标已是当前叶子状态时是否强制重新进入</param>
         public PlayerTransitionRule(PlayerStateId sourceId, PlayerStateId targetId, PlayerTransitionPriority priority,
-            Func<bool> condition, int order = 0)
+            Func<bool> condition, int order = 0, bool allowReentry = false)
         {
             if (targetId == PlayerStateId.None)
                 QLog.Error("创建状态转换规则失败：目标状态不能是 PlayerStateId.None");
@@ -43,6 +45,7 @@ namespace Module.Player.HFSM.Transition
             TargetId = targetId;
             Priority = priority;
             Order = order;
+            AllowReentry = allowReentry;
             m_condition = condition;
         }
 

@@ -113,17 +113,23 @@ namespace Module.Player.HFSM
         }
 
         // 切换到目标状态，复合状态会自动展开到默认叶子状态
-        public void ChangeState(PlayerStateId targetStateId)
+        public void ChangeState(PlayerStateId targetStateId, bool allowReentry = false)
         {
             if (!IsStateMachineValid(nameof(ChangeState)))
                 return;
 
             List<PlayerStateId> targetPath = BuildExpandedPath(targetStateId);
 
-            if (targetPath.Count == 0 || IsSameActivePath(targetPath))
+            if (targetPath.Count == 0)
                 return;
-            
-            int commonPrefixLength = GetCommonPrefixLength(targetPath);
+
+            bool isSameActivePath = IsSameActivePath(targetPath);
+            if (isSameActivePath && !allowReentry)
+                return;
+
+            int commonPrefixLength = isSameActivePath
+                ? targetPath.Count - 1
+                : GetCommonPrefixLength(targetPath);
 
             m_isExecutingLifecycle = true;
 

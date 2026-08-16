@@ -45,7 +45,8 @@ namespace Module.Player.HFSM.Transition.Controllers
             Register(PlayerAirTransitionRules.Create(m_context, m_airConfig));
             Register(PlayerActionTransitionRules.Create(m_context, m_dodgeConfig));
             Register(PlayerSkillTransitionRules.Create(m_context, m_normalAttackConfig));
-            Register(PlayerDamageTransitionRules.Create(m_context));
+            Register(PlayerDamageTransitionRules.Create(m_context, m_airConfig, m_dodgeConfig,
+                m_normalAttackConfig));
         }
 
         // 注册一组玩家状态转换规则

@@ -58,23 +58,8 @@ namespace Module.Player.HFSM.Transition
         // 获取当前规则裁决出的下一目标状态，不执行状态切换
         public PlayerStateId GetNextTargetStateId()
         {
-            if (m_stateMachine == null)
-                return PlayerStateId.None;
-
-            for (int i = 0; i < m_rules.Count; i++)
-            {
-                PlayerTransitionRule rule = m_rules[i];
-
-                if (!rule.CanApply(m_stateMachine.ActiveStatePath))
-                    continue;
-
-                if (rule.TargetId == m_stateMachine.CurrentLeafStateId)
-                    continue;
-
-                return rule.TargetId;
-            }
-
-            return PlayerStateId.None;
+            PlayerTransitionRule rule = GetNextRule();
+            return rule == null ? PlayerStateId.None : rule.TargetId;
         }
 
         // 按优先级选择本帧第一条有效规则并提交状态转换
@@ -83,9 +68,30 @@ namespace Module.Player.HFSM.Transition
             if (m_stateMachine == null)
                 return;
 
-            PlayerStateId targetStateId = GetNextTargetStateId();
-            if (targetStateId != PlayerStateId.None)
-                m_stateMachine.ChangeState(targetStateId);
+            PlayerTransitionRule rule = GetNextRule();
+            if (rule != null)
+                m_stateMachine.ChangeState(rule.TargetId, rule.AllowReentry);
+        }
+
+        // 返回当前活动路径中优先级最高的可执行规则
+        private PlayerTransitionRule GetNextRule()
+        {
+            if (m_stateMachine == null)
+                return null;
+
+            for (int i = 0; i < m_rules.Count; i++)
+            {
+                PlayerTransitionRule rule = m_rules[i];
+                if (!rule.CanApply(m_stateMachine.ActiveStatePath))
+                    continue;
+
+                if (rule.TargetId == m_stateMachine.CurrentLeafStateId && !rule.AllowReentry)
+                    continue;
+
+                return rule;
+            }
+
+            return null;
         }
     }
 }
