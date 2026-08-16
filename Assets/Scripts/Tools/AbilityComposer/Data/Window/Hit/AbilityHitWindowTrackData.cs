@@ -28,7 +28,8 @@ namespace Module.Ability.Data.Window.Hit
             {
                 AbilityHitWindowData window = windows[windowIndex];
                 WindowValues.Add(new AbilityHitWindowData(window.Id, window.StartNormalizedTime,
-                    window.EndNormalizedTime, window.Damage, window.ReactionType));
+                    window.EndNormalizedTime, window.Damage, window.ReactionType, window.HorizontalKnockbackSpeed,
+                    window.HorizontalKnockbackDuration, window.VerticalLaunchSpeed));
             }
         }
 
@@ -50,4 +51,3 @@ namespace Module.Ability.Data.Window.Hit
         }
     }
 }
-

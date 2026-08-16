@@ -18,7 +18,7 @@ MonoBehaviour:
     DurationValue: 3.6666667
     WindowConfigValue: {fileID: 11400000, guid: 18e1a979a959b0941aa9d5f1453f1b5a,
       type: 2}
-    HorizontalKnockbackSpeedValue: 2.5
+    HorizontalKnockbackSpeedValue: 3
     HorizontalKnockbackDurationValue: 0.2
     VerticalLaunchSpeedValue: 0
   - AnimationClipValue: {fileID: -623603649343465320, guid: 6a6a5a0c356a49549bae389ea3171bda,
@@ -26,7 +26,7 @@ MonoBehaviour:
     DurationValue: 3.2333336
     WindowConfigValue: {fileID: 11400000, guid: 669a1bbbf65743a42b449196e95bb2d5,
       type: 2}
-    HorizontalKnockbackSpeedValue: 2.5
+    HorizontalKnockbackSpeedValue: 3
     HorizontalKnockbackDurationValue: 0.2
     VerticalLaunchSpeedValue: 0
   HeavyHurtAnimationValues:
@@ -35,7 +35,7 @@ MonoBehaviour:
     DurationValue: 4.1333337
     WindowConfigValue: {fileID: 11400000, guid: 245abad63f680aa4ca99d8003a210642,
       type: 2}
-    HorizontalKnockbackSpeedValue: 5
+    HorizontalKnockbackSpeedValue: 4.5
     HorizontalKnockbackDurationValue: 0.4
     VerticalLaunchSpeedValue: 0
   - AnimationClipValue: {fileID: -623603649343465320, guid: 28a29c28813f31143898a3dd88a1c314,
@@ -43,7 +43,7 @@ MonoBehaviour:
     DurationValue: 3.8000002
     WindowConfigValue: {fileID: 11400000, guid: ead431760277dc5418b0e3d554f9a455,
       type: 2}
-    HorizontalKnockbackSpeedValue: 5
+    HorizontalKnockbackSpeedValue: 4.5
     HorizontalKnockbackDurationValue: 0.4
     VerticalLaunchSpeedValue: 0
   KnockUpAnimationValues:
@@ -52,7 +52,7 @@ MonoBehaviour:
     DurationValue: 1
     WindowConfigValue: {fileID: 11400000, guid: 7856ef2d252ec154bb4188b5413a21e4,
       type: 2}
-    HorizontalKnockbackSpeedValue: 6
+    HorizontalKnockbackSpeedValue: 7
     HorizontalKnockbackDurationValue: 0.5
     VerticalLaunchSpeedValue: 7
   - AnimationClipValue: {fileID: -623603649343465320, guid: dff2b757faf0de64bbbbdfcfe88ae92e,
@@ -98,27 +98,48 @@ MonoBehaviour:
       type: 3}
     DurationValue: 3.6666667
     WindowConfigValue: {fileID: 0}
+    HorizontalKnockbackSpeedValue: 0
+    HorizontalKnockbackDurationValue: 0
+    VerticalLaunchSpeedValue: 0
   - AnimationClipValue: {fileID: -623603649343465320, guid: 6a6a5a0c356a49549bae389ea3171bda,
       type: 3}
     DurationValue: 3.2333336
     WindowConfigValue: {fileID: 0}
+    HorizontalKnockbackSpeedValue: 0
+    HorizontalKnockbackDurationValue: 0
+    VerticalLaunchSpeedValue: 0
   - AnimationClipValue: {fileID: -623603649343465320, guid: d0107548462b76e428a22db76e730638,
       type: 3}
     DurationValue: 4.1333337
     WindowConfigValue: {fileID: 0}
+    HorizontalKnockbackSpeedValue: 0
+    HorizontalKnockbackDurationValue: 0
+    VerticalLaunchSpeedValue: 0
   - AnimationClipValue: {fileID: -623603649343465320, guid: 28a29c28813f31143898a3dd88a1c314,
       type: 3}
     DurationValue: 3.8000002
     WindowConfigValue: {fileID: 0}
+    HorizontalKnockbackSpeedValue: 0
+    HorizontalKnockbackDurationValue: 0
+    VerticalLaunchSpeedValue: 0
   - AnimationClipValue: {fileID: -623603649343465320, guid: aabd96c765ebc774d966af3f65e86d8a,
       type: 3}
     DurationValue: 1
     WindowConfigValue: {fileID: 0}
+    HorizontalKnockbackSpeedValue: 0
+    HorizontalKnockbackDurationValue: 0
+    VerticalLaunchSpeedValue: 0
   - AnimationClipValue: {fileID: -623603649343465320, guid: dff2b757faf0de64bbbbdfcfe88ae92e,
       type: 3}
     DurationValue: 1.3333334
     WindowConfigValue: {fileID: 0}
+    HorizontalKnockbackSpeedValue: 0
+    HorizontalKnockbackDurationValue: 0
+    VerticalLaunchSpeedValue: 0
   - AnimationClipValue: {fileID: -623603649343465320, guid: c06221ec7ad96c248883e34b508a883d,
       type: 3}
     DurationValue: 1
     WindowConfigValue: {fileID: 0}
+    HorizontalKnockbackSpeedValue: 0
+    HorizontalKnockbackDurationValue: 0
+    VerticalLaunchSpeedValue: 0

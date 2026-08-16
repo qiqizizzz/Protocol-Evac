@@ -26,6 +26,8 @@ namespace Module.Enemy.Context.Runtime
         public bool IsMovementLocked { get; private set; }
         public bool CanRotate { get; private set; }
         public bool IsWeaponVisible { get; private set; }
+        public bool IsHurt { get; private set; }
+        public bool IsDead { get; private set; }
 
         // 创建敌人动作上下文
         public EnemyActionContext()
@@ -84,6 +86,50 @@ namespace Module.Enemy.Context.Runtime
             m_hasIdleAnimRequest = true;
         }
 
+        // 中断当前动作并请求播放受击动画
+        public void BeginHurt(AnimationClip animationClip)
+        {
+            CurrentSkillType = null;
+            SkillStepIndex = -1;
+            SkillPhase = AbilityStepPhase.Begin;
+            IsMovementLocked = true;
+            CanRotate = false;
+            IsWeaponVisible = false;
+            IsHurt = true;
+            m_animReplayClip = animationClip;
+            m_animReplayPhase = AbilityStepPhase.Begin;
+            m_animReplayUseRootMotion = false;
+            m_hasAnimReplayRequest = true;
+            m_hasIdleAnimRequest = false;
+        }
+
+        // 结束受击动作并请求切回待机动画
+        public void FinishHurt()
+        {
+            if (IsDead)
+                return;
+
+            IsHurt = false;
+            IsMovementLocked = false;
+            CanRotate = false;
+            IsWeaponVisible = false;
+            m_hasIdleAnimRequest = true;
+        }
+
+        // 锁定敌人全部行为，保留当前受击表现
+        public void BeginDead()
+        {
+            CurrentSkillType = null;
+            SkillStepIndex = -1;
+            SkillPhase = AbilityStepPhase.Begin;
+            IsMovementLocked = true;
+            CanRotate = false;
+            IsWeaponVisible = false;
+            IsHurt = false;
+            IsDead = true;
+            m_hasIdleAnimRequest = false;
+        }
+
         // 消费一次待机动画请求
         public bool ConsumeIdleAnimRequest()
         {
@@ -108,6 +154,8 @@ namespace Module.Enemy.Context.Runtime
             IsMovementLocked = false;
             CanRotate = false;
             IsWeaponVisible = false;
+            IsHurt = false;
+            IsDead = false;
         }
     }
 }

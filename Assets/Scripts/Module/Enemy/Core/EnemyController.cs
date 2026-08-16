@@ -15,6 +15,7 @@ using Module.Enemy.Behavior.Readers;
 using Module.Enemy.Behavior.Trees.Wanderer;
 using Module.Enemy.Config;
 using Module.Enemy.Context;
+using Module.Enemy.Damage;
 using Module.Enemy.Skill;
 using Module.Enemy.Skill.Core;
 using Module.Enemy.Movement;
@@ -27,6 +28,7 @@ using Utils.log;
 
 namespace Module.Enemy.Core
 {
+    [RequireComponent(typeof(EnemyDamageReceiver))]
     public sealed class EnemyController : MonoBehaviour
     {
         [Header("Enemy 配置")]
@@ -41,7 +43,9 @@ namespace Module.Enemy.Core
         private Animator m_animator;
         private CharacterController m_characterController;
         private CombatHitbox m_combatHitbox;
+        private EnemyDamageReceiver m_damageReceiver;
         private EnemyContext m_context;
+        private EnemyDamageController m_damageController;
         private EnemySkillController m_skillController;
         private EnemyBehaviorController m_behaviorController;
         private EnemyTargetReader m_targetReader;
@@ -62,6 +66,7 @@ namespace Module.Enemy.Core
             FindReferences();
             CheckConfigs();
             InitCore();
+            InitDamage();
             InitMovement();
             InitSkill();
             InitAnim();
@@ -76,11 +81,17 @@ namespace Module.Enemy.Core
 
         private void Update()
         {
-            if (m_targetReader.Tick(Time.deltaTime))
-                m_behaviorController.Reset();
+            if (m_damageController.Tick(Time.deltaTime))
+                m_context.Action.FinishHurt();
 
-            m_skillController.Tick(Time.deltaTime);
-            m_behaviorController.Tick();
+            if (!m_context.Damage.IsDead && !m_context.Damage.IsHurt)
+            {
+                if (m_targetReader.Tick(Time.deltaTime))
+                    m_behaviorController.Reset();
+
+                m_skillController.Tick(Time.deltaTime);
+                m_behaviorController.Tick();
+            }
             m_animWriter.Tick(Time.deltaTime);
         }
 
@@ -106,6 +117,8 @@ namespace Module.Enemy.Core
             m_skillController.Close();
             m_animWriter.UnInit();
             m_navigationController.Reset();
+            if (m_damageReceiver != null)
+                m_damageReceiver.OnDamageReceived -= HandleDamageReceived;
             m_context.SetActive(false);
             m_context = null;
         }
@@ -116,6 +129,19 @@ namespace Module.Enemy.Core
         private void InitCore()
         {
             m_context = new EnemyContext(m_transform, Settings.StatsConfig, Settings.BehaviorConfig);
+        }
+
+        // 初始化敌人伤害接收与生命控制模块
+        private void InitDamage()
+        {
+            if (m_damageReceiver == null)
+            {
+                QLog.Error("EnemyDamageReceiver 未找到，敌人无法接收 Combat 伤害");
+                return;
+            }
+
+            m_damageController = new EnemyDamageController(m_context, Settings.StatsConfig);
+            m_damageReceiver.OnDamageReceived += HandleDamageReceived;
         }
 
         // 初始化敌人技能模块
@@ -162,8 +188,29 @@ namespace Module.Enemy.Core
             m_characterController = this.GetOwnerComponent<CharacterController>();
             m_animator = this.GetChildComponent<Animator>();
             m_combatHitbox = this.GetChildComponent<CombatHitbox>();
+            m_damageReceiver = this.GetOwnerComponent<EnemyDamageReceiver>();
         }
         #endregion
+
+        // 接收伤害并中断敌人的行为、技能与导航
+        private void HandleDamageReceived(Module.Combat.Damage.DamageData damageData)
+        {
+            if (m_damageController == null || !m_damageController.TryTakeDamage(damageData,
+                    Settings.AnimationConfig.HitAnimationClip.length))
+                return;
+
+            m_behaviorController.Reset();
+            m_skillController.Close();
+            m_navigationController.Reset();
+            m_context.Movement.StopMove();
+            if (m_context.Damage.IsDead)
+            {
+                m_context.Action.BeginDead();
+                return;
+            }
+
+            m_context.Action.BeginHurt(Settings.AnimationConfig.HitAnimationClip);
+        }
 
         // 校验敌人配置引用，缺失时在控制台提示
         private void CheckConfigs()

@@ -28,6 +28,9 @@ namespace Module.Combat.Hitbox
         private GameObject m_source;
         private float m_damage;
         private DamageReactionType m_reactionType;
+        private float m_horizontalKnockbackSpeed;
+        private float m_horizontalKnockbackDuration;
+        private float m_verticalLaunchSpeed;
         private bool m_isOpen;
         private bool m_hasWarnedCapacity;
 
@@ -36,8 +39,12 @@ namespace Module.Combat.Hitbox
         /// </summary>
         /// <param name="damage">本次命中伤害值</param>
         /// <param name="reactionType">本次命中的通用受击反应</param>
+        /// <param name="horizontalKnockbackSpeed">受击方水平击退速度</param>
+        /// <param name="horizontalKnockbackDuration">受击方水平击退持续时间</param>
+        /// <param name="verticalLaunchSpeed">受击方竖直起飞初速度</param>
         /// <param name="source">伤害来源对象</param>
-        public void Open(float damage, DamageReactionType reactionType, GameObject source)
+        public void Open(float damage, DamageReactionType reactionType, float horizontalKnockbackSpeed,
+            float horizontalKnockbackDuration, float verticalLaunchSpeed, GameObject source)
         {
             if (damage <= 0f)
             {
@@ -53,6 +60,9 @@ namespace Module.Combat.Hitbox
 
             m_damage = damage;
             m_reactionType = reactionType;
+            m_horizontalKnockbackSpeed = Mathf.Max(0f, horizontalKnockbackSpeed);
+            m_horizontalKnockbackDuration = Mathf.Max(0f, horizontalKnockbackDuration);
+            m_verticalLaunchSpeed = Mathf.Max(0f, verticalLaunchSpeed);
             m_source = source;
             m_hitTargets.Clear();
             m_hasWarnedCapacity = false;
@@ -65,6 +75,9 @@ namespace Module.Combat.Hitbox
             m_isOpen = false;
             m_damage = 0f;
             m_reactionType = DamageReactionType.Light;
+            m_horizontalKnockbackSpeed = 0f;
+            m_horizontalKnockbackDuration = 0f;
+            m_verticalLaunchSpeed = 0f;
             m_source = null;
             m_hitTargets.Clear();
             m_hasWarnedCapacity = false;
@@ -154,7 +167,8 @@ namespace Module.Combat.Hitbox
             hitDirection.y = 0f;
             hitDirection.Normalize();
 
-            DamageData damageData = new DamageData(m_damage, m_source, hitPoint, hitDirection, m_reactionType);
+            DamageData damageData = new DamageData(m_damage, m_source, hitPoint, hitDirection, m_reactionType,
+                m_horizontalKnockbackSpeed, m_horizontalKnockbackDuration, m_verticalLaunchSpeed);
             
             damageable.TakeDamage(damageData);
         }

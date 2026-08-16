@@ -156,13 +156,10 @@ namespace Module.Player.HFSM.Animation
 
             if (stateId == PlayerStateId.SkillNormalAttack)
             {
-                if (!m_wasSkillActive && isSkillActive)
-                    return;
-
                 if (!TryGetNormalAttackStateHash(out int fullStateHash))
                     return;
 
-                m_animator.CrossFadeInFixedTime(fullStateHash, 0.03f, 0, 0f);
+                m_animator.Play(fullStateHash, 0, 0f);
                 return;
             }
 

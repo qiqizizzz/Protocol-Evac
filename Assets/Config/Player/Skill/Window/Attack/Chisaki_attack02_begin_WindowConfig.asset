@@ -21,16 +21,25 @@ MonoBehaviour:
       EndNormalizedTimeValue: 0.20454545
       DamageValue: 5
       ReactionTypeValue: 0
+      HorizontalKnockbackSpeedValue: 2.5
+      HorizontalKnockbackDurationValue: 0.2
+      VerticalLaunchSpeedValue: 0
     - IdValue: 3514940e260f4d1787f42a52da5787bb
       StartNormalizedTimeValue: 0.29545453
       EndNormalizedTimeValue: 0.3181818
       DamageValue: 10
       ReactionTypeValue: 0
+      HorizontalKnockbackSpeedValue: 3
+      HorizontalKnockbackDurationValue: 0.25
+      VerticalLaunchSpeedValue: 0
     - IdValue: 03f8a5629466458abb4e32ddf142aaf4
       StartNormalizedTimeValue: 0.3409091
       EndNormalizedTimeValue: 0.38636363
       DamageValue: 20
-      ReactionTypeValue: 0
+      ReactionTypeValue: 1
+      HorizontalKnockbackSpeedValue: 5
+      HorizontalKnockbackDurationValue: 0.4
+      VerticalLaunchSpeedValue: 0
   UseStepAdvanceWindowValue: 1
   StepAdvanceWindowTrackValue:
     WindowValues:

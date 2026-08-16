@@ -34,18 +34,23 @@ namespace Module.Enemy.Movement
         public void FixedTick(float fixedDeltaTime)
         {
             Vector3 horizontalVelocity = Vector3.zero;
-            if (m_context.Movement.HasMoveRequest && !m_context.Action.IsMovementLocked)
+            if (m_context.Movement.HasForcedMoveVelocity)
+                horizontalVelocity = m_context.Movement.ForcedMoveVelocity;
+            else if (m_context.Movement.HasMoveRequest && !m_context.Action.IsMovementLocked)
                 horizontalVelocity = m_context.Movement.MoveDirection * m_moveConfig.MoveSpeedValue;
 
             Rotate(fixedDeltaTime);
-            if (m_characterController.isGrounded && m_verticalSpeed < 0f)
+            if (m_context.Movement.TryConsumeVerticalLaunch(out float verticalLaunchSpeed))
+                m_verticalSpeed = verticalLaunchSpeed;
+            else if (m_characterController.isGrounded && m_verticalSpeed < 0f)
                 m_verticalSpeed = GROUNDED_VERTICAL_SPEED;
             else
                 m_verticalSpeed += Physics.gravity.y * fixedDeltaTime;
 
             Vector3 velocity = horizontalVelocity + Vector3.up * m_verticalSpeed;
             m_characterController.Move(velocity * fixedDeltaTime);
-            m_context.Movement.SetMoving(horizontalVelocity.sqrMagnitude > 0f);
+            m_context.Movement.TickForcedMove(fixedDeltaTime);
+            m_context.Movement.SetMoving(horizontalVelocity.sqrMagnitude > 0f && !m_context.Action.IsHurt);
         }
 
         // 重置移动执行器的竖直速度
@@ -58,6 +63,9 @@ namespace Module.Enemy.Movement
         // 根据技能目标或行为请求旋转敌人身体
         private void Rotate(float deltaTime)
         {
+            if (m_context.Action.IsHurt || m_context.Action.IsDead)
+                return;
+
             Vector3 lookDirection;
             if (m_context.Action.CurrentSkillType.HasValue && m_context.Action.CanRotate
                 && m_context.Target.CurrentTarget != null)
@@ -83,4 +91,3 @@ namespace Module.Enemy.Movement
         }
     }
 }
-
