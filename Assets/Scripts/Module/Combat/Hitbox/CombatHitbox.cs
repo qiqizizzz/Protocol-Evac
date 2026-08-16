@@ -144,7 +144,15 @@ namespace Module.Combat.Hitbox
             if (damageable == null || !m_hitTargets.Add(damageable)) return;
 
             Vector3 hitPoint = hitCollider.ClosestPoint(hitboxCenter);
-            Vector3 hitDirection = (hitCollider.bounds.center - m_source.transform.position).normalized;
+            Vector3 hitDirection = hitCollider.bounds.center - m_source.transform.position;
+            hitDirection.y = 0f;
+
+            // 来源与目标水平重叠时，用攻击者朝向保证受击方仍能被推出碰撞体
+            if (hitDirection.sqrMagnitude <= 0.0001f)
+                hitDirection = m_source.transform.forward;
+
+            hitDirection.y = 0f;
+            hitDirection.Normalize();
 
             DamageData damageData = new DamageData(m_damage, m_source, hitPoint, hitDirection, m_reactionType);
             

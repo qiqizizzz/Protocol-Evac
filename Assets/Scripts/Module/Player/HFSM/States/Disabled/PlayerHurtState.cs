@@ -68,7 +68,6 @@ namespace Module.Player.HFSM.States.Disabled
                     PlayerHurtAnimationId heavyAnimationId = ResolveDirectionalAnimation(PlayerHurtAnimationId.HeavyLeft,
                         PlayerHurtAnimationId.HeavyRight);
                     StartSingleHurt(heavyAnimationId, m_damageConfig.GetHurtAnimationDuration(heavyAnimationId));
-                    SetKnockbackVelocity(m_damageConfig.HeavyHurtKnockbackSpeed);
                     break;
                 case DamageReactionType.KnockUp:
                     StartKnockUp();
@@ -114,6 +113,7 @@ namespace Module.Player.HFSM.States.Disabled
         private void StartSingleHurt(PlayerHurtAnimationId animationId, float duration)
         {
             StartHurtAnimation(animationId);
+            SetKnockbackVelocity(animationId);
             m_hurtTimer.Start(duration);
         }
 
@@ -121,9 +121,9 @@ namespace Module.Player.HFSM.States.Disabled
         private void StartKnockUp()
         {
             StartHurtAnimation(PlayerHurtAnimationId.KnockUpStart);
-            SetKnockbackVelocity(m_damageConfig.KnockUpHorizontalSpeed);
+            SetKnockbackVelocity(PlayerHurtAnimationId.KnockUpStart);
             Vector3 velocity = m_context.Movement.Velocity;
-            velocity.y = m_damageConfig.KnockUpVerticalSpeed;
+            velocity.y = m_damageConfig.GetHurtVerticalLaunchSpeed(PlayerHurtAnimationId.KnockUpStart);
             m_context.Movement.Velocity = velocity;
             m_hurtTimer.Start(m_damageConfig.GetHurtAnimationDuration(PlayerHurtAnimationId.KnockUpStart));
         }
@@ -228,17 +228,18 @@ namespace Module.Player.HFSM.States.Disabled
                 : leftAnimationId;
         }
 
-        // 写入向来袭反方向的水平强制位移
-        private void SetKnockbackVelocity(float speed)
+        // 写入当前受击动画配置的水平强制位移
+        private void SetKnockbackVelocity(PlayerHurtAnimationId animationId)
         {
-            Vector3 knockbackDirection = -m_context.Damage.PendingHitDirection;
+            float speed = m_damageConfig.GetHurtHorizontalKnockbackSpeed(animationId);
+            float duration = m_damageConfig.GetHurtHorizontalKnockbackDuration(animationId);
+            Vector3 knockbackDirection = m_context.Damage.PendingHitDirection;
             knockbackDirection.y = 0f;
-            if (knockbackDirection.sqrMagnitude <= 0.0001f || speed <= 0f ||
-                m_damageConfig.HorizontalKnockbackDuration <= 0f)
+            if (knockbackDirection.sqrMagnitude <= 0.0001f || speed <= 0f || duration <= 0f)
                 return;
 
             m_context.Movement.SetForcedMoveVelocity(knockbackDirection.normalized * speed);
-            m_forcedMoveTimer.Start(m_damageConfig.HorizontalKnockbackDuration);
+            m_forcedMoveTimer.Start(duration);
         }
 
         // 在水平击退脉冲结束后清理残留速度

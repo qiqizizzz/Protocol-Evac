@@ -41,23 +41,6 @@ namespace Module.Player.HFSM.Config.Disabled
         [Tooltip("受到一次伤害后忽略后续伤害的时长")]
         [SerializeField, Min(0f)] private float DamageInvulnerabilityDurationValue;
 
-        [Header("受击位移")]
-        [LabelText("击退速度")]
-        [Tooltip("重受击向来袭反方向推退的水平速度")]
-        [SerializeField, Min(0f)] private float HeavyHurtKnockbackSpeedValue;
-
-        [LabelText("水平击退持续时间")]
-        [Tooltip("重受击与击飞施加水平速度的持续时间")]
-        [SerializeField, Min(0f)] private float HorizontalKnockbackDurationValue;
-
-        [LabelText("水平速度")]
-        [Tooltip("击飞向来袭反方向施加的水平速度")]
-        [SerializeField, Min(0f)] private float KnockUpHorizontalSpeedValue;
-
-        [LabelText("竖直速度")]
-        [Tooltip("击飞起跳时写入的竖直初速度")]
-        [SerializeField, Min(0f)] private float KnockUpVerticalSpeedValue;
-
         [HideInInspector, SerializeField] private float MaxHealthValue;
         [HideInInspector, SerializeField] private AnimationClip LightLeftClipValue;
         [HideInInspector, SerializeField] private float LightLeftDurationValue;
@@ -75,11 +58,6 @@ namespace Module.Player.HFSM.Config.Disabled
         [HideInInspector, SerializeField] private PlayerHurtAnimationData[] HurtAnimationValues;
 
         public float DamageInvulnerabilityDuration => DamageInvulnerabilityDurationValue;
-        public float HeavyHurtKnockbackSpeed => HeavyHurtKnockbackSpeedValue;
-        public float HorizontalKnockbackDuration => HorizontalKnockbackDurationValue;
-        public float KnockUpHorizontalSpeed => KnockUpHorizontalSpeedValue;
-        public float KnockUpVerticalSpeed => KnockUpVerticalSpeedValue;
-
         // 获取指定受击动画应使用的已烘焙时长
         public float GetHurtDuration(PlayerHurtAnimationId animationId)
         {
@@ -99,6 +77,27 @@ namespace Module.Player.HFSM.Config.Disabled
         {
             PlayerHurtAnimationData hurtAnimationData = GetHurtAnimationData(animationId);
             return hurtAnimationData != null && hurtAnimationData.IsMovementLockedAt(normalizedTime);
+        }
+
+        // 获取指定受击动画的水平击退速度
+        public float GetHurtHorizontalKnockbackSpeed(PlayerHurtAnimationId animationId)
+        {
+            PlayerHurtAnimationData hurtAnimationData = GetHurtAnimationData(animationId);
+            return hurtAnimationData == null ? 0f : hurtAnimationData.HorizontalKnockbackSpeed;
+        }
+
+        // 获取指定受击动画的水平击退持续时间
+        public float GetHurtHorizontalKnockbackDuration(PlayerHurtAnimationId animationId)
+        {
+            PlayerHurtAnimationData hurtAnimationData = GetHurtAnimationData(animationId);
+            return hurtAnimationData == null ? 0f : hurtAnimationData.HorizontalKnockbackDuration;
+        }
+
+        // 获取指定受击动画的竖直初速度
+        public float GetHurtVerticalLaunchSpeed(PlayerHurtAnimationId animationId)
+        {
+            PlayerHurtAnimationData hurtAnimationData = GetHurtAnimationData(animationId);
+            return hurtAnimationData == null ? 0f : hurtAnimationData.VerticalLaunchSpeed;
         }
 
         // 返回受击配置内所有可同步时长的动画段落
