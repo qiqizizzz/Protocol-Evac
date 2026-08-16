@@ -92,7 +92,7 @@
             <ui:Button name="save-all-button" class="ac-button ac-bottom-save-button">
                 <ui:Label text="一键保存" class="ac-button-label ac-muted-button-label" />
             </ui:Button>
-            <ui:Button name="undo-last-save-button" class="ac-button ac-button-secondary ac-bottom-undo-button">
+            <ui:Button name="undo-button" class="ac-button ac-button-secondary ac-bottom-undo-button">
                 <ui:Label text="撤销" class="ac-button-label ac-muted-button-label" />
             </ui:Button>
         </ui:VisualElement>

@@ -106,6 +106,29 @@ namespace Tools.AbilityComposer.Editor.View.Center.Timeline
             SelectedEvent = null;
         }
 
+        // 创建当前事件草稿的独立副本供撤销使用
+        public List<AbilityEventDraft> CreateEventDraftSnapshot()
+        {
+            List<AbilityEventDraft> snapshot = new List<AbilityEventDraft>(m_eventDraftValues.Count);
+            for (int eventIndex = 0; eventIndex < m_eventDraftValues.Count; eventIndex++)
+                snapshot.Add(m_eventDraftValues[eventIndex].Clone());
+
+            return snapshot;
+        }
+
+        // 从撤销快照恢复事件草稿与选中状态
+        public void RestoreEventDraftSnapshot(IReadOnlyList<AbilityEventDraft> snapshot, string selectedEventId)
+        {
+            m_eventDraftValues.Clear();
+            for (int eventIndex = 0; eventIndex < snapshot.Count; eventIndex++)
+                m_eventDraftValues.Add(snapshot[eventIndex].Clone());
+
+            SelectedEvent = string.IsNullOrEmpty(selectedEventId)
+                ? null
+                : m_eventDraftValues.Find(eventDraft => eventDraft.Id == selectedEventId);
+            IsWindowInspectorActive = SelectedEvent == null && SelectedWindow != null;
+        }
+
         // 将播放头设置到有效帧范围内
         public void SetCurrentFrame(int frame)
         {

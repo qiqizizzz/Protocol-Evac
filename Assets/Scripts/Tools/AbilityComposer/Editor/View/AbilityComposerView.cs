@@ -44,7 +44,7 @@ namespace Tools.AbilityComposer.Editor.View
         private Button m_createPreviewButton;
         private Button m_focusPreviewButton;
         private Button m_saveAllButton;
-        private Button m_undoLastSaveButton;
+        private Button m_undoButton;
         private VisualElement m_rootVisualElement;
         private AbilityComposerData m_composerData;
         private AbilityLeftView m_leftView;
@@ -84,7 +84,7 @@ namespace Tools.AbilityComposer.Editor.View
         public event Action OnCloseEventInspectorRequested;
         public event Action OnCloseWindowInspectorRequested;
         public event Action OnSaveAllRequested;
-        public event Action OnUndoLastSaveRequested;
+        public event Action OnUndoRequested;
 
         // 注入主视图需要的根节点与工作上下文
         public AbilityComposerView(VisualElement rootVisualElement, AbilityComposerData composerData)
@@ -138,11 +138,11 @@ namespace Tools.AbilityComposer.Editor.View
         }
 
         // 使用当前数据刷新播放控件与状态文字
-        public void Refresh(AbilityTimelineData timelineData, bool hasPreview, bool canEditWindows, bool canUndoLastSave)
+        public void Refresh(AbilityTimelineData timelineData, bool hasPreview, bool canEditWindows, bool canUndo)
         {
             m_returnPreviousSceneButton.SetEnabled(hasPreview);
             m_saveAllButton.SetEnabled(timelineData.HasClip);
-            m_undoLastSaveButton.SetEnabled(canUndoLastSave);
+            m_undoButton.SetEnabled(canUndo);
             m_leftView.Refresh(timelineData, hasPreview, canEditWindows);
             m_rightView.Refresh(timelineData);
         }
@@ -209,7 +209,7 @@ namespace Tools.AbilityComposer.Editor.View
             m_createPreviewButton.clicked += RequestCreatePreview;
             m_focusPreviewButton.clicked += RequestFocusPreview;
             m_saveAllButton.clicked += RequestSaveAll;
-            m_undoLastSaveButton.clicked += RequestUndoLastSave;
+            m_undoButton.clicked += RequestUndo;
             m_leftView.OnJumpFirstFrameRequested += RequestJumpFirstFrame;
             m_leftView.OnPreviousFrameRequested += RequestPreviousFrame;
             m_leftView.OnPlaybackToggled += RequestPlaybackToggle;
@@ -249,7 +249,7 @@ namespace Tools.AbilityComposer.Editor.View
             m_createPreviewButton.clicked -= RequestCreatePreview;
             m_focusPreviewButton.clicked -= RequestFocusPreview;
             m_saveAllButton.clicked -= RequestSaveAll;
-            m_undoLastSaveButton.clicked -= RequestUndoLastSave;
+            m_undoButton.clicked -= RequestUndo;
             m_leftView.OnJumpFirstFrameRequested -= RequestJumpFirstFrame;
             m_leftView.OnPreviousFrameRequested -= RequestPreviousFrame;
             m_leftView.OnPlaybackToggled -= RequestPlaybackToggle;
@@ -319,12 +319,12 @@ namespace Tools.AbilityComposer.Editor.View
             m_createPreviewButton = rootVisualElement.Q<Button>("create-preview-button");
             m_focusPreviewButton = rootVisualElement.Q<Button>("focus-preview-button");
             m_saveAllButton = rootVisualElement.Q<Button>("save-all-button");
-            m_undoLastSaveButton = rootVisualElement.Q<Button>("undo-last-save-button");
+            m_undoButton = rootVisualElement.Q<Button>("undo-button");
 
             if (m_previewSourceField == null || m_prefabAnimationClipField == null || m_animationClipField == null
                 || m_showGlobalAnimationToggle == null || m_returnPreviousSceneButton == null
                 || m_createPreviewButton == null || m_focusPreviewButton == null || m_saveAllButton == null
-                || m_undoLastSaveButton == null)
+                || m_undoButton == null)
             {
                 QLog.Error("配置 Ability Composer 主视图失败：缺少必要的 UXML 控件");
                 return false;
@@ -404,8 +404,8 @@ namespace Tools.AbilityComposer.Editor.View
         // 请求一键保存全部草稿
         private void RequestSaveAll() => OnSaveAllRequested?.Invoke();
 
-        // 请求撤销 Composer 的上一次保存
-        private void RequestUndoLastSave() => OnUndoLastSaveRequested?.Invoke();
+        // 请求撤销 Composer 的上一步操作
+        private void RequestUndo() => OnUndoRequested?.Invoke();
 
         // 请求跳转到第一帧
         private void RequestJumpFirstFrame()

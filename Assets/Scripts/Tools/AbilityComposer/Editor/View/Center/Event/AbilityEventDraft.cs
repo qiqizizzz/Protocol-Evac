@@ -12,7 +12,7 @@ namespace Tools.AbilityComposer.Editor.View.Center.Event
 {
     public sealed class AbilityEventDraft
     {
-        public string Id { get; }
+        public string Id { get; private set; }
         public int Frame { get; private set; }
         public AbilityEventCategory Category { get; private set; }
         public string ReceiverTypeName { get; private set; }
@@ -26,6 +26,17 @@ namespace Tools.AbilityComposer.Editor.View.Center.Event
             Category = AbilityEventCategory.Default;
             ReceiverTypeName = string.Empty;
             FunctionName = string.Empty;
+        }
+
+        // 创建保留稳定标识与编辑数据的独立副本
+        public AbilityEventDraft Clone()
+        {
+            AbilityEventDraft clone = new AbilityEventDraft(Frame);
+            clone.Id = Id;
+            clone.Category = Category;
+            clone.ReceiverTypeName = ReceiverTypeName;
+            clone.FunctionName = FunctionName;
+            return clone;
         }
 
         // 更新事件所在帧

@@ -28,15 +28,56 @@ namespace Tools.AbilityComposer.Editor
 {
     public sealed class AbilityComposerController : BaseEditorController
     {
+        private enum ComposerUndoEntryType
+        {
+            EventDraft,
+            SavedAsset
+        }
+
+        private readonly struct ComposerUndoEntry
+        {
+            public readonly ComposerUndoEntryType Type;
+            public readonly List<AbilityEventDraft> EventDrafts;
+            public readonly string SelectedEventId;
+            public readonly int UnityUndoGroup;
+            public readonly bool RestoreEvents;
+            public readonly bool RestoreWindows;
+
+            // 创建未保存事件草稿的撤销记录
+            public ComposerUndoEntry(List<AbilityEventDraft> eventDrafts, string selectedEventId)
+            {
+                Type = ComposerUndoEntryType.EventDraft;
+                EventDrafts = eventDrafts;
+                SelectedEventId = selectedEventId;
+                UnityUndoGroup = -1;
+                RestoreEvents = false;
+                RestoreWindows = false;
+            }
+
+            // 创建已保存资产的撤销记录
+            public ComposerUndoEntry(int unityUndoGroup, bool restoreEvents, bool restoreWindows)
+            {
+                Type = ComposerUndoEntryType.SavedAsset;
+                EventDrafts = null;
+                SelectedEventId = null;
+                UnityUndoGroup = unityUndoGroup;
+                RestoreEvents = restoreEvents;
+                RestoreWindows = restoreWindows;
+            }
+        }
+
         private AbilityComposerData m_composerData;
         private AbilityTimelineData m_timelineData;
         private AbilityComposerView m_composerView;
         private AbilityTimelineView m_timelineView;
         private AbilityPreviewController m_previewController;
         private readonly AbilityAnimationClipResolver m_animationClipResolver;
+        private readonly Stack<ComposerUndoEntry> m_undoEntries = new Stack<ComposerUndoEntry>();
         private float m_playbackElapsedTime;
         private int m_playbackStartFrame;
-        private int m_lastSaveUndoGroup = -1;
+        private int m_currentSaveUndoGroup = -1;
+        private bool m_currentSaveRestoresEvents;
+        private bool m_currentSaveRestoresWindows;
 
         // 注入当前窗口的时间轴、预览与视图依赖
         public AbilityComposerController(AbilityComposerData composerData, AbilityComposerView composerView,
@@ -165,8 +206,8 @@ namespace Tools.AbilityComposer.Editor
                 callback => m_composerView.OnCloseWindowInspectorRequested -= callback, CloseWindowInspector);
             RegisterEvent(callback => m_composerView.OnSaveAllRequested += callback,
                 callback => m_composerView.OnSaveAllRequested -= callback, SaveAll);
-            RegisterEvent(callback => m_composerView.OnUndoLastSaveRequested += callback,
-                callback => m_composerView.OnUndoLastSaveRequested -= callback, UndoLastSave);
+            RegisterEvent(callback => m_composerView.OnUndoRequested += callback,
+                callback => m_composerView.OnUndoRequested -= callback, UndoLastOperation);
         }
 
         // 更新预览来源并销毁旧的临时克隆
@@ -185,6 +226,7 @@ namespace Tools.AbilityComposer.Editor
         {
             m_previewController.ReturnToPreviousScene();
             ClearEventFunctionChoices();
+            ClearUndoHistory();
             m_composerData.SetAnimationClip(animationClip);
             m_composerView.SetSelectedAnimationClip(animationClip);
             SetWindowConfigForClip(animationClip);
@@ -292,6 +334,7 @@ namespace Tools.AbilityComposer.Editor
                 return;
 
             RefreshEventFunctionChoices();
+            RecordEventDraftUndo();
             m_timelineData.AddEvent(m_timelineData.CurrentFrame);
             RefreshView();
         }
@@ -299,6 +342,10 @@ namespace Tools.AbilityComposer.Editor
         // 删除当前选中的动画事件草稿
         private void DeleteSelectedEvent()
         {
+            if (m_timelineData.SelectedEvent == null)
+                return;
+
+            RecordEventDraftUndo();
             m_timelineData.DeleteSelectedEvent();
             RefreshView();
         }
@@ -313,6 +360,11 @@ namespace Tools.AbilityComposer.Editor
         // 刷新拖动后的动画事件位置
         private void HandleEventMoved(AbilityTimelineView.EventMoveRequest request)
         {
+            AbilityEventDraft eventDraft = FindEventDraft(request.EventId);
+            if (eventDraft == null || eventDraft.Frame == request.Frame)
+                return;
+
+            RecordEventDraftUndo();
             m_timelineData.SetEventFrame(request.EventId, request.Frame);
             RefreshView();
         }
@@ -408,6 +460,10 @@ namespace Tools.AbilityComposer.Editor
         // 更新选中事件的分类颜色
         private void HandleEventCategoryChanged(AbilityEventCategory category)
         {
+            if (m_timelineData.SelectedEvent == null || m_timelineData.SelectedEvent.Category == category)
+                return;
+
+            RecordEventDraftUndo();
             m_timelineData.SetSelectedEventCategory(category);
             RefreshView();
         }
@@ -415,6 +471,11 @@ namespace Tools.AbilityComposer.Editor
         // 更新选中事件的接收类名称
         private void HandleEventReceiverTypeNameChanged(string receiverTypeName)
         {
+            if (m_timelineData.SelectedEvent == null
+                || m_timelineData.SelectedEvent.ReceiverTypeName == receiverTypeName)
+                return;
+
+            RecordEventDraftUndo();
             m_timelineData.SetSelectedEventReceiverTypeName(receiverTypeName);
             RefreshView();
         }
@@ -422,6 +483,10 @@ namespace Tools.AbilityComposer.Editor
         // 更新选中事件的 Function 名称
         private void HandleEventFunctionNameChanged(string functionName)
         {
+            if (m_timelineData.SelectedEvent == null || m_timelineData.SelectedEvent.FunctionName == functionName)
+                return;
+
+            RecordEventDraftUndo();
             m_timelineData.SetSelectedEventFunctionName(functionName);
             RefreshView();
         }
@@ -445,7 +510,7 @@ namespace Tools.AbilityComposer.Editor
             if (assetPath.EndsWith(".anim", System.StringComparison.OrdinalIgnoreCase))
             {
                 if (createUndoGroup)
-                    BeginSaveUndoGroup("保存 Ability Animation Events");
+                    BeginSaveUndoGroup("保存 Ability Animation Events", true, false);
 
                 Undo.RecordObject(animationClip, "保存 Ability Animation Events");
                 AnimationUtility.SetAnimationEvents(animationClip, animationEvents);
@@ -476,7 +541,7 @@ namespace Tools.AbilityComposer.Editor
             }
 
             if (createUndoGroup)
-                BeginSaveUndoGroup("保存 Ability Animation Events");
+                BeginSaveUndoGroup("保存 Ability Animation Events", true, false);
 
             Undo.RecordObject(modelImporter, "保存 Ability Animation Events");
             clipAnimations[clipIndex].events = animationEvents;
@@ -492,27 +557,37 @@ namespace Tools.AbilityComposer.Editor
         // 一次提交当前事件和窗口两类草稿
         private void SaveAll()
         {
-            BeginSaveUndoGroup("一键保存 Ability Composer");
+            BeginSaveUndoGroup("一键保存 Ability Composer", true, true);
             bool savedEvents = ApplyAnimationEvents(false);
             bool savedWindows = SaveAllWindowTracks();
             if (savedEvents || savedWindows)
                 CompleteSaveUndoGroup();
             else
-                m_lastSaveUndoGroup = -1;
+                CancelSaveUndoGroup();
 
             RefreshView();
         }
 
-        // 仅撤销 Composer 最近一次保存并重载资产草稿
-        private void UndoLastSave()
+        // 撤销 Composer 最近一次草稿编辑或资产保存
+        private void UndoLastOperation()
         {
-            if (m_lastSaveUndoGroup < 0)
+            if (m_undoEntries.Count == 0)
                 return;
 
-            Undo.RevertAllDownToGroup(m_lastSaveUndoGroup);
-            m_lastSaveUndoGroup = -1;
-            RestoreAnimationEvents();
-            LoadWindowTrack();
+            ComposerUndoEntry undoEntry = m_undoEntries.Pop();
+            if (undoEntry.Type == ComposerUndoEntryType.EventDraft)
+            {
+                m_timelineData.RestoreEventDraftSnapshot(undoEntry.EventDrafts, undoEntry.SelectedEventId);
+            }
+            else
+            {
+                Undo.RevertAllDownToGroup(undoEntry.UnityUndoGroup);
+                if (undoEntry.RestoreEvents)
+                    RestoreAnimationEvents();
+                if (undoEntry.RestoreWindows)
+                    LoadWindowTrack();
+            }
+
             RefreshView();
         }
 
@@ -540,9 +615,7 @@ namespace Tools.AbilityComposer.Editor
             if (animationClip == null)
                 return;
 
-            m_timelineData.SetAnimationClip(animationClip);
             LoadAnimationEvents();
-            RefreshView();
         }
 
         // 从当前 AnimationClip 读取已保存的 Animation Events
@@ -659,7 +732,7 @@ namespace Tools.AbilityComposer.Editor
         // 刷新主视图文字、按钮状态与时间轴播放头
         private void RefreshView(bool refreshEventMarkers = true)
         {
-            m_composerView.Refresh(m_timelineData, m_previewController.HasPreview, true, m_lastSaveUndoGroup >= 0);
+            m_composerView.Refresh(m_timelineData, m_previewController.HasPreview, true, m_undoEntries.Count > 0);
             m_timelineView.RefreshCurrentFrame();
             if (refreshEventMarkers)
                 m_timelineView.RefreshEventMarkers();
@@ -836,7 +909,7 @@ namespace Tools.AbilityComposer.Editor
                 return false;
 
             if (createUndoGroup)
-                BeginSaveUndoGroup("保存命中窗口轨道");
+                BeginSaveUndoGroup("保存命中窗口轨道", false, true);
 
             AbilityHitWindowTrackData windowTrack = windowConfig.HitWindowTrack;
 
@@ -876,7 +949,7 @@ namespace Tools.AbilityComposer.Editor
                 return false;
 
             if (createUndoGroup)
-                BeginSaveUndoGroup("保存技能推进窗口轨道");
+                BeginSaveUndoGroup("保存技能推进窗口轨道", false, true);
 
             AbilityStepAdvanceWindowTrackData track = windowConfig.StepAdvanceWindowTrack;
 
@@ -912,7 +985,7 @@ namespace Tools.AbilityComposer.Editor
                 return false;
 
             if (createUndoGroup)
-                BeginSaveUndoGroup("保存移动锁定窗口轨道");
+                BeginSaveUndoGroup("保存移动锁定窗口轨道", false, true);
 
             AbilityMovementLockWindowTrackData track = windowConfig.MovementLockWindowTrack;
 
@@ -972,20 +1045,73 @@ namespace Tools.AbilityComposer.Editor
         }
 
         // 创建可被底部撤销按钮定位的一次保存 Undo 组
-        private void BeginSaveUndoGroup(string undoName)
+        private void BeginSaveUndoGroup(string undoName, bool restoreEvents, bool restoreWindows)
         {
-            if (m_lastSaveUndoGroup >= 0)
-                Undo.CollapseUndoOperations(m_lastSaveUndoGroup);
-
             Undo.IncrementCurrentGroup();
-            m_lastSaveUndoGroup = Undo.GetCurrentGroup();
+            m_currentSaveUndoGroup = Undo.GetCurrentGroup();
+            m_currentSaveRestoresEvents = restoreEvents;
+            m_currentSaveRestoresWindows = restoreWindows;
             Undo.SetCurrentGroupName(undoName);
         }
 
-        // 关闭当前保存 Undo 组，限制底部撤销只回退该组
+        // 关闭当前保存 Undo 组并记录到 Composer 撤销历史
         private void CompleteSaveUndoGroup()
         {
-            Undo.CollapseUndoOperations(m_lastSaveUndoGroup);
+            if (m_currentSaveUndoGroup < 0)
+                return;
+
+            Undo.CollapseUndoOperations(m_currentSaveUndoGroup);
+            if (m_currentSaveRestoresEvents)
+                DiscardPendingEventDraftUndoEntries();
+
+            m_undoEntries.Push(new ComposerUndoEntry(m_currentSaveUndoGroup,
+                m_currentSaveRestoresEvents, m_currentSaveRestoresWindows));
+            CancelSaveUndoGroup();
+        }
+
+        // 记录当前事件草稿与选中状态供后续撤销
+        private void RecordEventDraftUndo()
+        {
+            string selectedEventId = m_timelineData.SelectedEvent == null
+                ? null
+                : m_timelineData.SelectedEvent.Id;
+            m_undoEntries.Push(new ComposerUndoEntry(m_timelineData.CreateEventDraftSnapshot(), selectedEventId));
+        }
+
+        // 查找指定稳定标识对应的事件草稿
+        private AbilityEventDraft FindEventDraft(string eventId)
+        {
+            for (int eventIndex = 0; eventIndex < m_timelineData.EventDraftValues.Count; eventIndex++)
+            {
+                AbilityEventDraft eventDraft = m_timelineData.EventDraftValues[eventIndex];
+                if (eventDraft.Id == eventId)
+                    return eventDraft;
+            }
+
+            return null;
+        }
+
+        // 移除已被事件资产保存包含的未保存草稿历史
+        private void DiscardPendingEventDraftUndoEntries()
+        {
+            while (m_undoEntries.Count > 0
+                && m_undoEntries.Peek().Type == ComposerUndoEntryType.EventDraft)
+                m_undoEntries.Pop();
+        }
+
+        // 取消当前尚未提交的资产保存 Undo 组记录
+        private void CancelSaveUndoGroup()
+        {
+            m_currentSaveUndoGroup = -1;
+            m_currentSaveRestoresEvents = false;
+            m_currentSaveRestoresWindows = false;
+        }
+
+        // 切换动画时清空不再适用于新时间轴的撤销历史
+        private void ClearUndoHistory()
+        {
+            m_undoEntries.Clear();
+            CancelSaveUndoGroup();
         }
 
         // 刷新当前预制体依赖的动画候选并校正选择
