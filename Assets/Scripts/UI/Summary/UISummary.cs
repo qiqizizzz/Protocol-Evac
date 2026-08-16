@@ -16,23 +16,23 @@ namespace UI.Summary
 {
     public sealed class UISummary : UIBase
     {
-        private const string RETRY_BUTTON_PATH = "Content/RetryButton";
+        private const string BUTTON_RETRY_PATH = "Content/Btn_retry";
 
         private Button m_retryButton;
 
         protected override void OnInit()
         {
-            m_retryButton = this.FindChildComponent<Button>(RETRY_BUTTON_PATH);
-            m_retryButton.onClick.AddListener(HandleRetryButtonClicked);
+            m_retryButton = this.FindChildComponent<Button>(BUTTON_RETRY_PATH);
+            m_retryButton.onClick.AddListener(OnRetryButtonClicked);
         }
 
         protected override void OnDispose()
         {
-            m_retryButton.onClick.RemoveListener(HandleRetryButtonClicked);
+            m_retryButton.onClick.RemoveListener(OnRetryButtonClicked);
         }
 
         // 发布重新挑战请求
-        private void HandleRetryButtonClicked()
+        private void OnRetryButtonClicked()
         {
             EventManager.PublishEvent(EventDefines.PlayerRetryRequested);
         }

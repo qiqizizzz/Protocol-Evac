@@ -18,9 +18,12 @@ namespace Module.Player.Input
 {
     public class PlayerInputReader
     {
+        private const float MOVE_INPUT_THRESHOLD_SQR = 0.01f;
+
         private PlayerContext m_context;
         private PlayerInputActions m_inputActions;
         private PlayerSprintInterpreter m_sprintInterpreter;
+        private bool m_wasMoveInputActive;
 
         // 初始化玩家输入读取器
         public void Init(PlayerContext context, PlayerInputConfigSO inputConfig)
@@ -48,7 +51,9 @@ namespace Module.Player.Input
         public void Tick()
         {
             //WASD: 移动
-            m_context.Input.MoveInput = m_inputActions.Player.Move.ReadValue<Vector2>();
+            Vector2 moveInput = m_inputActions.Player.Move.ReadValue<Vector2>();
+            RecordHurtMoveCancellation(moveInput);
+            m_context.Input.MoveInput = moveInput;
             //Shift: 短按闪避，长按疾跑
             m_sprintInterpreter.Tick(
                 m_inputActions.Player.Sprint.WasPressedThisFrame(),
@@ -121,6 +126,16 @@ namespace Module.Player.Input
         private void RecordBufferedInput(PlayerBufferedInputType inputType)
         {
             m_context.Input.Buffer.Record(inputType, Time.time);
+        }
+
+        // 仅记录受击锁定窗口结束后新开始的移动输入
+        private void RecordHurtMoveCancellation(Vector2 moveInput)
+        {
+            bool hasMoveInput = moveInput.sqrMagnitude > MOVE_INPUT_THRESHOLD_SQR;
+            if (m_context.Damage.IsHurtCancellationEnabled && hasMoveInput && !m_wasMoveInputActive)
+                m_context.Damage.RequestHurtMoveCancellation();
+
+            m_wasMoveInputActive = hasMoveInput;
         }
         #endregion
     }

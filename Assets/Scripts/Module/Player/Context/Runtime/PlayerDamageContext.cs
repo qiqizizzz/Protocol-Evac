@@ -17,6 +17,8 @@ namespace Module.Player.Context.Runtime
         public float CurrentHealth { get; private set; }
         public bool IsDead { get; private set; }
         public bool HasPendingHurt { get; private set; }
+        public bool IsHurtCancellationEnabled { get; private set; }
+        public bool IsHurtMoveCancellationRequested { get; private set; }
         public DamageReactionType PendingReactionType { get; private set; }
         public Vector3 PendingHitDirection { get; private set; }
         public PlayerHurtAnimationId HurtAnimationId { get; private set; }
@@ -33,6 +35,8 @@ namespace Module.Player.Context.Runtime
             CurrentHealth = maxHealth;
             IsDead = false;
             HasPendingHurt = false;
+            IsHurtCancellationEnabled = false;
+            IsHurtMoveCancellationRequested = false;
             PendingReactionType = DamageReactionType.Light;
             PendingHitDirection = Vector3.zero;
             HurtAnimationId = PlayerHurtAnimationId.None;
@@ -60,6 +64,20 @@ namespace Module.Player.Context.Runtime
             HasPendingHurt = false;
         }
 
+        // 设置受击动画是否已开放输入取消
+        public void SetHurtCancellationEnabled(bool isEnabled)
+        {
+            IsHurtCancellationEnabled = isEnabled;
+            if (!isEnabled)
+                IsHurtMoveCancellationRequested = false;
+        }
+
+        // 记录锁定窗口结束后新产生的移动取消请求
+        public void RequestHurtMoveCancellation()
+        {
+            IsHurtMoveCancellationRequested = true;
+        }
+
         // 写入当前受击状态要播放的动画标识
         public void SetHurtAnimationId(PlayerHurtAnimationId animationId)
         {
@@ -72,6 +90,8 @@ namespace Module.Player.Context.Runtime
             CurrentHealth = 0f;
             IsDead = false;
             HasPendingHurt = false;
+            IsHurtCancellationEnabled = false;
+            IsHurtMoveCancellationRequested = false;
             PendingReactionType = DamageReactionType.Light;
             PendingHitDirection = Vector3.zero;
             HurtAnimationId = PlayerHurtAnimationId.None;

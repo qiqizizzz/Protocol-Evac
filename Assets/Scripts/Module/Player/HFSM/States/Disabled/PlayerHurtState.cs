@@ -46,6 +46,7 @@ namespace Module.Player.HFSM.States.Disabled
         {
             m_reactionType = m_context.Damage.PendingReactionType;
             m_context.Damage.ConsumePendingHurt();
+            m_context.Damage.SetHurtCancellationEnabled(false);
             m_context.Action.IsStateFinished = false;
             m_context.Movement.ClearForcedMoveVelocity();
             m_context.Movement.ClearHorizontalVelocity();
@@ -61,12 +62,12 @@ namespace Module.Player.HFSM.States.Disabled
                 case DamageReactionType.Light:
                     PlayerHurtAnimationId lightAnimationId = ResolveDirectionalAnimation(PlayerHurtAnimationId.LightLeft,
                         PlayerHurtAnimationId.LightRight);
-                    StartSingleHurt(lightAnimationId, m_damageConfig.GetHurtDuration(lightAnimationId));
+                    StartSingleHurt(lightAnimationId, m_damageConfig.GetHurtAnimationDuration(lightAnimationId));
                     break;
                 case DamageReactionType.Heavy:
                     PlayerHurtAnimationId heavyAnimationId = ResolveDirectionalAnimation(PlayerHurtAnimationId.HeavyLeft,
                         PlayerHurtAnimationId.HeavyRight);
-                    StartSingleHurt(heavyAnimationId, m_damageConfig.GetHurtDuration(heavyAnimationId));
+                    StartSingleHurt(heavyAnimationId, m_damageConfig.GetHurtAnimationDuration(heavyAnimationId));
                     SetKnockbackVelocity(m_damageConfig.HeavyHurtKnockbackSpeed);
                     break;
                 case DamageReactionType.KnockUp:
@@ -87,6 +88,7 @@ namespace Module.Player.HFSM.States.Disabled
             m_context.Movement.ClearForcedMoveVelocity();
             m_context.Movement.ClearHorizontalVelocity();
             m_context.Movement.ClearHorizontalMoveIntent();
+            m_context.Damage.SetHurtCancellationEnabled(false);
             m_context.Damage.SetHurtAnimationId(PlayerHurtAnimationId.None);
             RequestGroundedRecoveryAnimation();
         }
@@ -123,7 +125,7 @@ namespace Module.Player.HFSM.States.Disabled
             Vector3 velocity = m_context.Movement.Velocity;
             velocity.y = m_damageConfig.KnockUpVerticalSpeed;
             m_context.Movement.Velocity = velocity;
-            m_hurtTimer.Start(m_damageConfig.GetHurtDuration(PlayerHurtAnimationId.KnockUpStart));
+            m_hurtTimer.Start(m_damageConfig.GetHurtAnimationDuration(PlayerHurtAnimationId.KnockUpStart));
         }
 
         // 推进击飞起始、滞空与落地三个动画阶段
@@ -151,7 +153,7 @@ namespace Module.Player.HFSM.States.Disabled
                 StartHurtAnimation(PlayerHurtAnimationId.KnockUpFall);
                 m_context.Movement.ClearForcedMoveVelocity();
                 m_context.Movement.ClearHorizontalVelocity();
-                m_hurtTimer.Start(m_damageConfig.GetHurtDuration(PlayerHurtAnimationId.KnockUpFall));
+                m_hurtTimer.Start(m_damageConfig.GetHurtAnimationDuration(PlayerHurtAnimationId.KnockUpFall));
                 return;
             }
 
@@ -187,8 +189,12 @@ namespace Module.Player.HFSM.States.Disabled
         {
             bool isMovementLocked = m_damageConfig.IsHurtMovementLocked(
                 m_context.Damage.HurtAnimationId, m_hurtAnimationTimer.NormalizedTime);
+            if (!isMovementLocked && !m_context.Damage.IsHurtCancellationEnabled)
+                m_context.Input.Buffer.ClearAll();
+
             m_context.Input.IsInputLocked = isMovementLocked;
             m_context.Movement.IsMovementLocked = isMovementLocked;
+            m_context.Damage.SetHurtCancellationEnabled(!isMovementLocked);
         }
 
         // 完成受击控制窗口并立即开放状态转换

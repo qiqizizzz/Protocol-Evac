@@ -48,20 +48,21 @@ namespace Module.Player.HFSM.Transition.Rules
                     PlayerTransitionPriority.Move, () => !context.Damage.IsDead && context.Movement.IsGrounded, 20),
 
                 new PlayerTransitionRule(PlayerStateId.DisabledHurt, PlayerStateId.AirborneJump,
-                    PlayerTransitionPriority.Air, () => CanJump(context, airConfig), 30),
+                    PlayerTransitionPriority.Air, () => CanCancelHurt(context) && CanJump(context, airConfig), 30),
 
                 new PlayerTransitionRule(PlayerStateId.DisabledHurt, PlayerStateId.AirborneFall,
                     PlayerTransitionPriority.Air, () => CanExitHurt(context) && !context.Movement.IsGrounded, 20),
 
                 new PlayerTransitionRule(PlayerStateId.DisabledHurt, PlayerStateId.ActionDodge,
-                    PlayerTransitionPriority.Action, () => CanDodge(context, dodgeConfig), 30),
+                    PlayerTransitionPriority.Action, () => CanCancelHurt(context) && CanDodge(context, dodgeConfig), 30),
 
                 new PlayerTransitionRule(PlayerStateId.DisabledHurt, PlayerStateId.Skill,
-                    PlayerTransitionPriority.Skill, () => CanNormalAttack(context, normalAttackConfig), 30),
+                    PlayerTransitionPriority.Skill,
+                    () => CanCancelHurt(context) && CanNormalAttack(context, normalAttackConfig), 30),
 
                 new PlayerTransitionRule(PlayerStateId.DisabledHurt, PlayerStateId.GroundedMove,
                     PlayerTransitionPriority.Move,
-                    () => CanExitHurt(context) && context.Movement.IsGrounded && CanMove(context), 10),
+                    () => CanCancelHurt(context) && context.Movement.IsGrounded && CanCancelHurtWithMove(context), 10),
 
                 new PlayerTransitionRule(PlayerStateId.DisabledHurt, PlayerStateId.GroundedIdle,
                     PlayerTransitionPriority.Move, () => CanExitHurt(context) && context.Movement.IsGrounded)
@@ -76,35 +77,41 @@ namespace Module.Player.HFSM.Transition.Rules
                 && !context.Movement.IsMovementLocked;
         }
 
+        // 判断受击锁定窗口结束后是否允许由实际输入打断动画
+        private static bool CanCancelHurt(PlayerContext context)
+        {
+            return context.Damage.IsHurtCancellationEnabled
+                && !context.Input.IsInputLocked
+                && !context.Movement.IsMovementLocked;
+        }
+
         // 判断受击结束后是否应直接起跳
         private static bool CanJump(PlayerContext context, PlayerAirConfigSO airConfig)
         {
-            return CanExitHurt(context)
-                && context.Movement.IsGrounded
+            return context.Movement.IsGrounded
                 && context.Input.Buffer.Has(PlayerBufferedInputType.Jump, Time.time, airConfig.JumpBufferTime);
         }
 
         // 判断受击结束后是否应直接闪避
         private static bool CanDodge(PlayerContext context, PlayerDodgeConfigSO dodgeConfig)
         {
-            return CanExitHurt(context)
-                && context.Movement.IsGrounded
+            return context.Movement.IsGrounded
                 && context.Input.Buffer.Has(PlayerBufferedInputType.Dodge, Time.time, dodgeConfig.DodgeBufferTime);
         }
 
         // 判断受击结束后是否应直接进入普通攻击
         private static bool CanNormalAttack(PlayerContext context, PlayerNormalAttackConfigSO normalAttackConfig)
         {
-            return CanExitHurt(context)
-                && context.Movement.IsGrounded
+            return context.Movement.IsGrounded
                 && context.Input.Buffer.Has(PlayerBufferedInputType.NormalAttack, Time.time,
                     normalAttackConfig.NormalAttackBufferTime);
         }
 
-        // 判断受击结束后是否应直接恢复地面移动
-        private static bool CanMove(PlayerContext context)
+        // 判断锁定窗口结束后是否由新移动输入取消受击动画
+        private static bool CanCancelHurtWithMove(PlayerContext context)
         {
-            return context.Input.MoveInput.sqrMagnitude > MOVE_INPUT_THRESHOLD_SQR;
+            return context.Damage.IsHurtMoveCancellationRequested
+                && context.Input.MoveInput.sqrMagnitude > MOVE_INPUT_THRESHOLD_SQR;
         }
     }
 }

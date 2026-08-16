@@ -27,6 +27,7 @@ namespace Module.Player.HFSM.States.Disabled
         public override void Enter()
         {
             m_context.Damage.SetHurtAnimationId(PlayerHurtAnimationId.None);
+            m_context.Action.RequestAnimReplay(PlayerStateId.DisabledDead);
             m_context.Input.IsInputLocked = true;
             m_context.Movement.IsMovementLocked = true;
             m_context.Movement.ClearForcedMoveVelocity();
