@@ -284,6 +284,14 @@
     margin-right: 0;
 }
 
+.ac-window-track-toggle-row-secondary {
+    margin-top: 2px;
+}
+
+.ac-window-track-toggle-cell-wide {
+    width: 100%;
+}
+
 .ac-window-track-toggle-button {
     width: 24px;
     min-width: 24px;
@@ -590,6 +598,10 @@
     background-color: rgb(76, 151, 105);
 }
 
+.ac-window-movement-lock-track {
+    background-color: rgb(82, 116, 190);
+}
+
 .ac-timeline-window-marker-selected {
     border-width: 2px;
     border-color: rgb(245, 245, 245);
@@ -612,6 +624,10 @@
 
 .ac-window-step-advance {
     background-color: rgb(76, 151, 105);
+}
+
+.ac-window-movement-lock {
+    background-color: rgb(82, 116, 190);
 }
 
 .ac-timeline-empty-state {

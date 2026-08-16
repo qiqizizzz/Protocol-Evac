@@ -19,3 +19,4 @@ MonoBehaviour:
     StartNormalizedTimeValue: 0.16
     EndNormalizedTimeValue: 0.52
     DamageValue: 18
+    ReactionTypeValue: 1

@@ -7,7 +7,9 @@
  */
 
 using Module.Player.Context.Runtime;
+using Module.Ability.Data.Animation;
 using Module.Player.HFSM.Config.Common;
+using Module.Player.HFSM.Animation.Type;
 using TriInspector;
 using UnityEngine;
 
@@ -78,14 +80,12 @@ namespace Module.Player.HFSM.Config.Move
 
         public PlayerStateClipData SprintRunClipData => GetStateClip(SPRINT_RUN_CLIP_INDEX);
 
-        // 同步移动配置中的急停动画时长
-        protected override bool SyncAdditionalClipDurations()
+        // 返回移动配置中额外维护的急停动画数据项
+        protected override System.Collections.Generic.IEnumerable<IAnimationDurationSyncable> GetAdditionalAnimationDurationItems()
         {
-            bool hasSynced = false;
-            hasSynced |= WalkStopClipPairValue != null && WalkStopClipPairValue.SyncDurationsFromClips();
-            hasSynced |= RunStopClipPairValue != null && RunStopClipPairValue.SyncDurationsFromClips();
-            hasSynced |= SprintStopClipPairValue != null && SprintStopClipPairValue.SyncDurationsFromClips();
-            return hasSynced;
+            yield return WalkStopClipPairValue;
+            yield return RunStopClipPairValue;
+            yield return SprintStopClipPairValue;
         }
 
         // 获取指定急停动作的左右动作对

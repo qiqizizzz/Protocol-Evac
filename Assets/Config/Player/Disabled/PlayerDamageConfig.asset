@@ -1,0 +1,86 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c917f24951e079347bb64031427df0de, type: 3}
+  m_Name: PlayerDamageConfig
+  m_EditorClassIdentifier: 
+  LightHurtAnimationValues:
+  - AnimationClipValue: {fileID: -623603649343465320, guid: b9b2b7e4a4fe57d4bb31ec5d399e2225,
+      type: 3}
+    DurationValue: 3.6666667
+  - AnimationClipValue: {fileID: -623603649343465320, guid: 6a6a5a0c356a49549bae389ea3171bda,
+      type: 3}
+    DurationValue: 3.2333336
+  HeavyHurtAnimationValues:
+  - AnimationClipValue: {fileID: -623603649343465320, guid: d0107548462b76e428a22db76e730638,
+      type: 3}
+    DurationValue: 4.1333337
+  - AnimationClipValue: {fileID: -623603649343465320, guid: 28a29c28813f31143898a3dd88a1c314,
+      type: 3}
+    DurationValue: 3.8000002
+  KnockUpAnimationValues:
+  - AnimationClipValue: {fileID: -623603649343465320, guid: aabd96c765ebc774d966af3f65e86d8a,
+      type: 3}
+    DurationValue: 1
+  - AnimationClipValue: {fileID: -623603649343465320, guid: dff2b757faf0de64bbbbdfcfe88ae92e,
+      type: 3}
+    DurationValue: 1.3333334
+  - AnimationClipValue: {fileID: -623603649343465320, guid: c06221ec7ad96c248883e34b508a883d,
+      type: 3}
+    DurationValue: 1
+  DamageInvulnerabilityDurationValue: 0.25
+  HeavyHurtKnockbackSpeedValue: 4
+  HorizontalKnockbackDurationValue: 0.25
+  KnockUpHorizontalSpeedValue: 2
+  KnockUpVerticalSpeedValue: 6
+  MaxHealthValue: 100
+  LightLeftClipValue: {fileID: -623603649343465320, guid: b9b2b7e4a4fe57d4bb31ec5d399e2225,
+    type: 3}
+  LightLeftDurationValue: 3.6666667
+  LightRightClipValue: {fileID: -623603649343465320, guid: 6a6a5a0c356a49549bae389ea3171bda,
+    type: 3}
+  LightRightDurationValue: 3.2333336
+  HeavyLeftClipValue: {fileID: -623603649343465320, guid: d0107548462b76e428a22db76e730638,
+    type: 3}
+  HeavyLeftDurationValue: 4.1333337
+  HeavyRightClipValue: {fileID: -623603649343465320, guid: 28a29c28813f31143898a3dd88a1c314,
+    type: 3}
+  HeavyRightDurationValue: 3.8000002
+  KnockUpStartClipValue: {fileID: -623603649343465320, guid: aabd96c765ebc774d966af3f65e86d8a,
+    type: 3}
+  KnockUpStartDurationValue: 1
+  KnockUpLoopClipValue: {fileID: -623603649343465320, guid: dff2b757faf0de64bbbbdfcfe88ae92e,
+    type: 3}
+  KnockUpFallClipValue: {fileID: -623603649343465320, guid: c06221ec7ad96c248883e34b508a883d,
+    type: 3}
+  KnockUpFallDurationValue: 1
+  HurtAnimationValues:
+  - AnimationClipValue: {fileID: -623603649343465320, guid: b9b2b7e4a4fe57d4bb31ec5d399e2225,
+      type: 3}
+    DurationValue: 3.6666667
+  - AnimationClipValue: {fileID: -623603649343465320, guid: 6a6a5a0c356a49549bae389ea3171bda,
+      type: 3}
+    DurationValue: 3.2333336
+  - AnimationClipValue: {fileID: -623603649343465320, guid: d0107548462b76e428a22db76e730638,
+      type: 3}
+    DurationValue: 4.1333337
+  - AnimationClipValue: {fileID: -623603649343465320, guid: 28a29c28813f31143898a3dd88a1c314,
+      type: 3}
+    DurationValue: 3.8000002
+  - AnimationClipValue: {fileID: -623603649343465320, guid: aabd96c765ebc774d966af3f65e86d8a,
+      type: 3}
+    DurationValue: 1
+  - AnimationClipValue: {fileID: -623603649343465320, guid: dff2b757faf0de64bbbbdfcfe88ae92e,
+      type: 3}
+    DurationValue: 1.3333334
+  - AnimationClipValue: {fileID: -623603649343465320, guid: c06221ec7ad96c248883e34b508a883d,
+      type: 3}
+    DurationValue: 1

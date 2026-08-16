@@ -43,7 +43,7 @@ namespace Module.Player.HFSM.Animation.Rules
         // 解析地面动画参数
         private static void ResolveGrounded(PlayerContext context, ref PlayerAnimParams animParams)
         {
-            animParams.MoveSpeed = GetHorizontalSpeed(context);
+            animParams.MoveSpeed = GetAnimationMoveSpeed(context);
             animParams.LockOnWeight = context.View.IsLockOn ? 1f : 0f;
             animParams.VerticalSpeed = context.Movement.Velocity.y;
             animParams.IsGrounded = context.Movement.IsGrounded;
@@ -60,6 +60,17 @@ namespace Module.Player.HFSM.Animation.Rules
             Vector3 velocity = context.Movement.Velocity;
             velocity.y = 0f;
             return velocity.magnitude;
+        }
+
+        // 在已有移动意图时使用目标档位，避免状态切换首帧落入待机动画
+        private static float GetAnimationMoveSpeed(PlayerContext context)
+        {
+            if (!context.Movement.IsMovementLocked &&
+                context.Movement.MoveDir.sqrMagnitude > Mathf.Epsilon &&
+                context.Movement.TargetMoveSpeed > 0f)
+                return context.Movement.TargetMoveSpeed;
+
+            return GetHorizontalSpeed(context);
         }
 
         // 获取相对玩家朝向的锁定移动方向

@@ -27,6 +27,7 @@ namespace Module.Combat.Hitbox
         private BoxCollider m_boxCollider;
         private GameObject m_source;
         private float m_damage;
+        private DamageReactionType m_reactionType;
         private bool m_isOpen;
         private bool m_hasWarnedCapacity;
 
@@ -34,8 +35,9 @@ namespace Module.Combat.Hitbox
         /// 开启命中窗口
         /// </summary>
         /// <param name="damage">本次命中伤害值</param>
+        /// <param name="reactionType">本次命中的通用受击反应</param>
         /// <param name="source">伤害来源对象</param>
-        public void Open(float damage, GameObject source)
+        public void Open(float damage, DamageReactionType reactionType, GameObject source)
         {
             if (damage <= 0f)
             {
@@ -50,6 +52,7 @@ namespace Module.Combat.Hitbox
             }
 
             m_damage = damage;
+            m_reactionType = reactionType;
             m_source = source;
             m_hitTargets.Clear();
             m_hasWarnedCapacity = false;
@@ -61,6 +64,7 @@ namespace Module.Combat.Hitbox
         {
             m_isOpen = false;
             m_damage = 0f;
+            m_reactionType = DamageReactionType.Light;
             m_source = null;
             m_hitTargets.Clear();
             m_hasWarnedCapacity = false;
@@ -142,7 +146,7 @@ namespace Module.Combat.Hitbox
             Vector3 hitPoint = hitCollider.ClosestPoint(hitboxCenter);
             Vector3 hitDirection = (hitCollider.bounds.center - m_source.transform.position).normalized;
 
-            DamageData damageData = new DamageData(m_damage, m_source, hitPoint, hitDirection);
+            DamageData damageData = new DamageData(m_damage, m_source, hitPoint, hitDirection, m_reactionType);
             
             damageable.TakeDamage(damageData);
         }

@@ -7,13 +7,14 @@
  */
 
 using System.Collections.Generic;
+using Module.Ability.Data.Animation;
 using TriInspector;
 using UnityEngine;
 using UnityEngine.Serialization;
 
 namespace Module.Ability.Data
 {
-    public abstract class AbilityConfigSO : ScriptableObject
+    public abstract class AbilityConfigSO : AnimationDurationConfigSOBase
     {
         [LabelText("状态动画段落")]
         [ListDrawerSettings(Draggable = false, ShowElementLabels = true)]
@@ -23,8 +24,6 @@ namespace Module.Ability.Data
 
         public IReadOnlyList<AbilityStepData> Steps => StepValues;
         public int StepCount => StepValues?.Length ?? 0;
-
-        private bool HasNoSteps => StepCount == 0;
 
         // 获取指定索引的状态动画段落
         public AbilityStepData GetStep(int index)
@@ -42,27 +41,14 @@ namespace Module.Ability.Data
             return stepData.TotalDuration;
         }
 
-        // 同步全部状态动画段落的动画持续时间
-        [InfoBox("未配置状态动画段落，无法同步动画时长", TriMessageType.Info, visibleIf: nameof(HasNoSteps))]
-        [DisableIf(nameof(HasNoSteps))]
-        [Button("同步全部动画时长")]
-        public bool SyncAllStepDurations()
+        // 返回能力配置内所有可同步时长的动画段落
+        protected override IEnumerable<IAnimationDurationSyncable> GetAnimationDurationItems()
         {
-            if (StepValues == null || StepValues.Length == 0)
-                return false;
+            if (StepValues == null)
+                yield break;
 
-            bool hasSynced = false;
             for (int i = 0; i < StepValues.Length; i++)
-            {
-                AbilityStepData stepData = StepValues[i];
-                if (stepData == null)
-                    continue;
-
-                hasSynced |= stepData.SyncDurationsFromClips();
-            }
-
-            return hasSynced;
+                yield return StepValues[i];
         }
     }
 }
-

@@ -7,12 +7,13 @@
  */
 
 using System.Collections.Generic;
+using Module.Ability.Data.Animation;
 using TriInspector;
 using UnityEngine;
 
 namespace Module.Player.HFSM.Config.Common
 {
-    public abstract class PlayerStateCommonConfigSO : ScriptableObject
+    public abstract class PlayerStateCommonConfigSO : AnimationDurationConfigSOBase
     {
         [LabelText("状态动画段落")]
         [ListDrawerSettings(Draggable = true, ShowElementLabels = true)]
@@ -22,8 +23,6 @@ namespace Module.Player.HFSM.Config.Common
         public IReadOnlyList<PlayerStateClipData> StateClips => StateClipValues;
 
         public int StateClipCount => StateClipValues?.Length ?? 0;
-
-        private bool HasNoStateClips => StateClipCount == 0;
 
         // 获取指定索引的状态动画段落
         public PlayerStateClipData GetStateClip(int index)
@@ -41,32 +40,23 @@ namespace Module.Player.HFSM.Config.Common
             return clipData.StateDuration;
         }
 
-        // 同步全部动画段落的持续时间
-        [InfoBox("未配置状态动画段落，无法同步动画时长", TriMessageType.Info, visibleIf: nameof(HasNoStateClips))]
-        [DisableIf(nameof(HasNoStateClips))]
-        [Button("同步全部动画时长")]
-        public bool SyncAllClipDurations()
+        // 返回玩家状态配置内所有可同步时长的动画段落
+        protected override IEnumerable<IAnimationDurationSyncable> GetAnimationDurationItems()
         {
-            if (StateClipValues == null || StateClipValues.Length == 0)
-                return SyncAdditionalClipDurations();
-
-            bool hasSynced = false;
-            for (int i = 0; i < StateClipValues.Length; i++)
+            if (StateClipValues != null)
             {
-                PlayerStateClipData clipData = StateClipValues[i];
-                if (clipData == null)
-                    continue;
-
-                hasSynced |= clipData.SyncDurationFromClip();
+                for (int i = 0; i < StateClipValues.Length; i++)
+                    yield return StateClipValues[i];
             }
 
-            return hasSynced | SyncAdditionalClipDurations();
+            foreach (IAnimationDurationSyncable animationDurationItem in GetAdditionalAnimationDurationItems())
+                yield return animationDurationItem;
         }
 
-        // 同步派生配置中额外维护的动画时长
-        protected virtual bool SyncAdditionalClipDurations()
+        // 返回派生配置中额外维护的动画数据项
+        protected virtual IEnumerable<IAnimationDurationSyncable> GetAdditionalAnimationDurationItems()
         {
-            return false;
+            yield break;
         }
     }
 }

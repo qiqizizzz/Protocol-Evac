@@ -32,6 +32,7 @@ namespace Module.Player.HFSM.States.Ground
         public override void Enter()
         {
             RefreshWeaponVisibility();
+            UpdateMovementIntent();
         }
 
         // 按当前移动档位持续同步武器表现
@@ -41,6 +42,12 @@ namespace Module.Player.HFSM.States.Ground
         }
 
         public override void FixedTick(float fixedDeltaTime)
+        {
+            UpdateMovementIntent();
+        }
+
+        // 根据当前输入更新本帧的移动方向与目标速度
+        private void UpdateMovementIntent()
         {
             Vector2 moveInput = m_context.Input.MoveInput;
             Vector3 moveDir = PlayerMoveDirectionResolver.Resolve(m_context, moveInput);

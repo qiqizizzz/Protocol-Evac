@@ -9,6 +9,7 @@
 using System;
 using System.Reflection;
 using Module.Ability.Data;
+using Module.Ability.Data.Animation;
 using Module.Ability.Data.Window.StepAdvance;
 using TriInspector;
 using UnityEngine;
@@ -18,7 +19,7 @@ namespace Module.Player.HFSM.Config.Common
     [Serializable]
     [DeclareFoldoutGroup("Animation", Title = "动画与段落", Expanded = true)]
     [DeclareFoldoutGroup("WindowSettings", Title = "窗口", Expanded = true)]
-    public sealed class PlayerStateClipData
+    public sealed class PlayerStateClipData : IAnimationDurationSyncable
     {
         [Group("Animation")]
         [LabelText("动画片段")]
@@ -70,7 +71,7 @@ namespace Module.Player.HFSM.Config.Common
         public AbilityStepAdvanceWindowTrackSO ComboWindowTrack => ComboWindowTrackValue;
 
         // 从动画片段同步状态持续时间
-        public bool SyncDurationFromClip()
+        public bool SyncAnimationDurations()
         {
             if (StateClipValue == null)
                 return false;

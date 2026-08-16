@@ -45,7 +45,7 @@ namespace Module.Ability.Hit
                 return;
 
             Close();
-            m_combatHitbox.Open(activeWindow.Damage, m_damageSource);
+            m_combatHitbox.Open(activeWindow.Damage, activeWindow.ReactionType, m_damageSource);
             m_activeSegmentIndex = segmentIndex;
             m_activeWindowId = activeWindow.Id;
         }

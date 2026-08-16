@@ -8,6 +8,7 @@
 
 using System;
 using Module.Ability.Data.Window.Hit;
+using Module.Ability.Data.Window.MovementLock;
 using Module.Ability.Data.Window.StepAdvance;
 using UnityEngine;
 
@@ -21,12 +22,14 @@ namespace Tools.AbilityComposer.Editor
         [SerializeField] private bool ShowGlobalAnimations;
         [SerializeField] private AbilityHitWindowTrackSO HitWindowTrack;
         [SerializeField] private AbilityStepAdvanceWindowTrackSO StepAdvanceWindowTrack;
+        [SerializeField] private AbilityMovementLockWindowTrackSO MovementLockWindowTrack;
 
         public GameObject PreviewSource => PreviewPrefab;
         public AnimationClip SelectedAnimationClip => AnimationClip;
         public bool IsShowingGlobalAnimations => ShowGlobalAnimations;
         public AbilityHitWindowTrackSO SelectedHitWindowTrack => HitWindowTrack;
         public AbilityStepAdvanceWindowTrackSO SelectedStepAdvanceWindowTrack => StepAdvanceWindowTrack;
+        public AbilityMovementLockWindowTrackSO SelectedMovementLockWindowTrack => MovementLockWindowTrack;
 
         // 更新当前选择的预览 Prefab
         public void SetPreviewSource(GameObject previewPrefab)
@@ -47,10 +50,13 @@ namespace Tools.AbilityComposer.Editor
         }
 
         // 更新当前编辑的窗口轨道资产
-        public void SetWindowTracks(AbilityHitWindowTrackSO hitWindowTrack, AbilityStepAdvanceWindowTrackSO stepAdvanceWindowTrack)
+        public void SetWindowTracks(AbilityHitWindowTrackSO hitWindowTrack,
+            AbilityStepAdvanceWindowTrackSO stepAdvanceWindowTrack,
+            AbilityMovementLockWindowTrackSO movementLockWindowTrack)
         {
             HitWindowTrack = hitWindowTrack;
             StepAdvanceWindowTrack = stepAdvanceWindowTrack;
+            MovementLockWindowTrack = movementLockWindowTrack;
         }
 
     }

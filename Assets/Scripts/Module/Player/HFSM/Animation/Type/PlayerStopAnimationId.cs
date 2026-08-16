@@ -6,7 +6,7 @@
  * └─────────────────────────────────────────────┘
  */
 
-namespace Module.Player.Context.Runtime
+namespace Module.Player.HFSM.Animation.Type
 {
     public enum PlayerStopAnimationId
     {

@@ -65,6 +65,12 @@
                         <ui:Label text="Step" class="ac-window-track-toggle-label" />
                     </ui:VisualElement>
                 </ui:VisualElement>
+                <ui:VisualElement class="ac-window-track-toggle-row ac-window-track-toggle-row-secondary">
+                    <ui:VisualElement class="ac-window-track-toggle-cell ac-window-track-toggle-cell-wide ac-window-track-toggle-cell-last">
+                        <ui:Button name="movement-lock-window-track-toggle" class="ac-window-track-toggle-button" />
+                        <ui:Label text="Move Lock" class="ac-window-track-toggle-label" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
                 <ui:VisualElement class="ac-panel-spacer" />
             </ui:VisualElement>
 

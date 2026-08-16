@@ -69,7 +69,7 @@ namespace Module.Player.HFSM.Transition
                     continue;
 
                 if (rule.TargetId == m_stateMachine.CurrentLeafStateId)
-                    return PlayerStateId.None;
+                    continue;
 
                 return rule.TargetId;
             }

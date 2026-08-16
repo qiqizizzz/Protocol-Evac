@@ -190,12 +190,19 @@ namespace Tools.AbilityComposer.Editor.View.Center.Timeline
             float stepAdvanceWindowHeight = m_timelineData.IsStepAdvanceWindowTrackEnabled
                 ? WINDOW_TRACK_HEIGHT
                 : COLLAPSED_WINDOW_TRACK_HEIGHT;
+            float movementLockWindowTop = stepAdvanceWindowTop + stepAdvanceWindowHeight + WINDOW_TRACK_GAP;
+            float movementLockWindowHeight = m_timelineData.IsMovementLockWindowTrackEnabled
+                ? WINDOW_TRACK_HEIGHT
+                : COLLAPSED_WINDOW_TRACK_HEIGHT;
             CreateWindowTrackBackground(WINDOW_TRACK_START, hitWindowHeight, "ac-window-hit-track");
             CreateWindowTrackBackground(stepAdvanceWindowTop, stepAdvanceWindowHeight, "ac-window-step-advance-track");
+            CreateWindowTrackBackground(movementLockWindowTop, movementLockWindowHeight, "ac-window-movement-lock-track");
             CreateWindowMarkers(m_timelineData.HitWindowDraftValues, WINDOW_TRACK_START,
                 hitWindowHeight, "命中窗口", "ac-window-hit", m_timelineData.IsHitWindowTrackEnabled);
             CreateWindowMarkers(m_timelineData.StepAdvanceWindowDraftValues, stepAdvanceWindowTop,
                 stepAdvanceWindowHeight, "技能推进", "ac-window-step-advance", m_timelineData.IsStepAdvanceWindowTrackEnabled);
+            CreateWindowMarkers(m_timelineData.MovementLockWindowDraftValues, movementLockWindowTop,
+                movementLockWindowHeight, "移动锁定", "ac-window-movement-lock", m_timelineData.IsMovementLockWindowTrackEnabled);
             CreateTimelinePlayhead();
         }
 

@@ -8,6 +8,7 @@
 
 using System;
 using System.Reflection;
+using Module.Ability.Data.Animation;
 using Module.Ability.Data.Window.Hit;
 using Module.Ability.Data.Window.StepAdvance;
 using TriInspector;
@@ -21,7 +22,7 @@ namespace Module.Ability.Data
     [DeclareFoldoutGroup("RecoveryAnimation", Title = "收招阶段", Expanded = true)]
     [DeclareFoldoutGroup("StepSettings", Title = "段落设置", Expanded = true)]
     [DeclareFoldoutGroup("WindowSettings", Title = "窗口", Expanded = true)]
-    public sealed class AbilityStepData
+    public sealed class AbilityStepData : IAnimationDurationSyncable
     {
         [Group("BeginAnimation")]
         [LabelText("动画片段")]
@@ -126,7 +127,7 @@ namespace Module.Ability.Data
         public AbilityHitWindowTrackSO BeginHitWindowTrack => BeginHitWindowTrackValue;
 
         // 从攻击与收招动画片段同步两个阶段的持续时间
-        public bool SyncDurationsFromClips()
+        public bool SyncAnimationDurations()
         {
             bool hasSynced = false;
             if (BeginAnimationClipValue != null)
@@ -145,4 +146,3 @@ namespace Module.Ability.Data
         }
     }
 }
-

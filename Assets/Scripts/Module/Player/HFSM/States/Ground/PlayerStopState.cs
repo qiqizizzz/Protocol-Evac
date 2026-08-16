@@ -7,6 +7,7 @@
  */
 
 using Module.Player.Context;
+using Module.Player.HFSM.Animation.Type;
 using Module.Player.Context.Runtime;
 using Module.Player.HFSM.Config.Move;
 using UnityEngine;

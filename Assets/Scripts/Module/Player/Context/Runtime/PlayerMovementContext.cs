@@ -7,6 +7,7 @@
  */
 
 using UnityEngine;
+using Module.Player.HFSM.Animation.Type;
 
 namespace Module.Player.Context.Runtime
 {

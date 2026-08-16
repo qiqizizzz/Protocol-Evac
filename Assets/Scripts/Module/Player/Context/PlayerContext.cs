@@ -18,6 +18,7 @@ namespace Module.Player.Context
         public PlayerMovementContext Movement { get; }
         public PlayerViewContext View { get; }
         public PlayerActionContext Action { get; }
+        public PlayerDamageContext Damage { get; }
 
         // 创建玩家运行时上下文入口
         public PlayerContext(Transform transform)
@@ -27,6 +28,7 @@ namespace Module.Player.Context
             Movement = new PlayerMovementContext();
             View = new PlayerViewContext();
             Action = new PlayerActionContext();
+            Damage = new PlayerDamageContext();
             ResetRunTimeData();
         }
 
@@ -38,6 +40,7 @@ namespace Module.Player.Context
             View.Reset();
             View.CameraYaw = Transform.eulerAngles.y;
             Action.Reset();
+            Damage.Reset();
         }
     }
 }

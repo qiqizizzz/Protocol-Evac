@@ -7,13 +7,14 @@
  */
 
 using System;
+using Module.Ability.Data.Animation;
 using TriInspector;
 using UnityEngine;
 
 namespace Module.Player.HFSM.Config.Move
 {
     [Serializable]
-    public sealed class PlayerStopClipPairData
+    public sealed class PlayerStopClipPairData : IAnimationDurationSyncable
     {
         [LabelText("左脚动作")]
         [Tooltip("左脚落地时使用的急停动画")]
@@ -60,7 +61,7 @@ namespace Module.Player.HFSM.Config.Move
         }
 
         // 同步急停动画时长显示并校验左右动作配置
-        public bool SyncDurationsFromClips()
+        public bool SyncAnimationDurations()
         {
             bool hasSynced = false;
             if (LeftClipValue != null && !Mathf.Approximately(LeftDurationValue, LeftClipValue.length))

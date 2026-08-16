@@ -10,6 +10,7 @@ using Framework.QTower.Controller;
 using Module.Combat.Hitbox;
 using Module.Player.Config;
 using Module.Player.Context;
+using Module.Player.Damage;
 using Module.Player.Core.View;
 using Module.Player.HFSM.Config.Air;
 using Module.Player.HFSM.Config.Move;
@@ -29,6 +30,7 @@ using Utils.log;
 
 namespace Module.Player.Core
 {
+    [RequireComponent(typeof(PlayerDamageReceiver))]
     public class PlayerController : MonoBehaviour
     {
         #region 路径
@@ -67,6 +69,8 @@ namespace Module.Player.Core
         private PlayerInputReader m_inputReader;
         //Combat
         private CombatHitbox m_combatHitbox;
+        private PlayerDamageReceiver m_damageReceiver;
+        private PlayerDamageController m_damageController;
         //Skill
         private PlayerSkillController m_skillController;
 
@@ -93,6 +97,7 @@ namespace Module.Player.Core
 
             InitCore();
             InitSkill();
+            InitDamage();
             InitHFSM();
             InitAnim();
         }
@@ -120,6 +125,9 @@ namespace Module.Player.Core
 
             if (m_inputReader != null)
                 m_inputReader.UnInit();
+
+            if (m_damageReceiver != null)
+                m_damageReceiver.OnDamageReceived -= HandleDamageReceived;
         }
         #endregion
         
@@ -152,6 +160,31 @@ namespace Module.Player.Core
             m_skillController = m_controllerManager.Register(skillController);
         }
 
+        // 初始化玩家伤害接收与生命控制模块
+        private void InitDamage()
+        {
+            if (Settings.DamageConfig == null)
+            {
+                QLog.Error("DamageConfig 未配置，玩家伤害模块无法正常运行");
+                return;
+            }
+
+            if (Settings.StatsConfig == null)
+            {
+                QLog.Error("StatsConfig 未配置，玩家伤害模块无法正常运行");
+                return;
+            }
+
+            if (m_damageReceiver == null)
+            {
+                QLog.Error("PlayerDamageReceiver 未找到，玩家无法接收 Combat 伤害");
+                return;
+            }
+
+            m_damageController = new PlayerDamageController(m_context, Settings.StatsConfig, Settings.DamageConfig);
+            m_damageReceiver.OnDamageReceived += HandleDamageReceived;
+        }
+
         // 初始化玩家状态机与状态转换
         private void InitHFSM()
         {
@@ -172,7 +205,7 @@ namespace Module.Player.Core
             m_animResolver.Init(m_stateMachine, m_animController.Handlers);
 
             m_animWriter = new PlayerAnimWriter();
-            m_animWriter.Init(m_animator, m_animResolver, m_context);
+            m_animWriter.Init(m_animator, m_stateMachine, m_animResolver, m_context);
 
             Transform rootMotionNode = m_animator.FindChild(MODEL_ROOT_MOTION_NODE_PATH);
             if (rootMotionNode == null)
@@ -194,6 +227,7 @@ namespace Module.Player.Core
             m_characterController = this.GetOwnerComponent<CharacterController>();
             m_animator = this.GetChildComponent<Animator>();
             m_combatHitbox = this.GetChildComponent<CombatHitbox>();
+            m_damageReceiver = this.GetOwnerComponent<PlayerDamageReceiver>();
             m_weaponController = this.GetChildComponent<PlayerWeaponController>();
             m_viewRoot = this.FindChild(VIEW_ROOT_PATH);
             m_playerCamera = this.FindChildComponent<Camera>(PLAYER_CAMERA_PATH);
@@ -228,6 +262,12 @@ namespace Module.Player.Core
             else if (Settings.DodgeConfig.StateClipCount == 0)
                 QLog.Error("DodgeConfig 未配置任何动画段落，闪避无法运行");
 
+            if (Settings.DamageConfig == null)
+                QLog.Warning("DamageConfig 未配置，玩家无法接收伤害");
+
+            if (Settings.StatsConfig == null)
+                QLog.Warning("StatsConfig 未配置，玩家生命初始化无法正常运行");
+
             if (Settings.NormalAttackConfig == null)
                 QLog.Warning("NormalAttackConfig 未配置，普通攻击将无法正常进入");
             else if (Settings.NormalAttackConfig.StepCount == 0)
@@ -235,6 +275,15 @@ namespace Module.Player.Core
 
             if (Settings.ViewConfig == null)
                 QLog.Warning("ViewConfig 未配置，视角模块可能无法正常运行");
+        }
+
+        // 接收 PlayerDamageReceiver 转发的伤害并中断当前技能
+        private void HandleDamageReceived(Module.Combat.Damage.DamageData damageData)
+        {
+            if (m_damageController == null || !m_damageController.TryTakeDamage(damageData))
+                return;
+
+            m_skillController.Close();
         }
 
     }

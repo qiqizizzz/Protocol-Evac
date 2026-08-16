@@ -72,6 +72,7 @@ namespace Tools.AbilityComposer.Editor.View
         public event Action OnDeleteSelectedWindowRequested;
         public event Action<bool> OnHitWindowTrackToggled;
         public event Action<bool> OnStepAdvanceWindowTrackToggled;
+        public event Action<bool> OnMovementLockWindowTrackToggled;
         public event Action<AbilityEventCategory> OnEventCategoryChanged;
         public event Action<string> OnEventReceiverTypeNameChanged;
         public event Action<string> OnEventFunctionNameChanged;
@@ -221,6 +222,7 @@ namespace Tools.AbilityComposer.Editor.View
             m_leftView.OnDeleteSelectedWindowRequested += RequestDeleteSelectedWindow;
             m_leftView.OnHitWindowTrackToggled += RequestHitWindowTrackToggled;
             m_leftView.OnStepAdvanceWindowTrackToggled += RequestStepAdvanceWindowTrackToggled;
+            m_leftView.OnMovementLockWindowTrackToggled += RequestMovementLockWindowTrackToggled;
             m_rightView.OnEventCategoryChanged += RequestEventCategoryChanged;
             m_rightView.OnEventReceiverTypeNameChanged += RequestEventReceiverTypeNameChanged;
             m_rightView.OnEventFunctionNameChanged += RequestEventFunctionNameChanged;
@@ -260,6 +262,7 @@ namespace Tools.AbilityComposer.Editor.View
             m_leftView.OnDeleteSelectedWindowRequested -= RequestDeleteSelectedWindow;
             m_leftView.OnHitWindowTrackToggled -= RequestHitWindowTrackToggled;
             m_leftView.OnStepAdvanceWindowTrackToggled -= RequestStepAdvanceWindowTrackToggled;
+            m_leftView.OnMovementLockWindowTrackToggled -= RequestMovementLockWindowTrackToggled;
             m_rightView.OnEventCategoryChanged -= RequestEventCategoryChanged;
             m_rightView.OnEventReceiverTypeNameChanged -= RequestEventReceiverTypeNameChanged;
             m_rightView.OnEventFunctionNameChanged -= RequestEventFunctionNameChanged;
@@ -457,6 +460,9 @@ namespace Tools.AbilityComposer.Editor.View
 
         // 转发技能推进窗口轨道开关请求
         private void RequestStepAdvanceWindowTrackToggled(bool isEnabled) => OnStepAdvanceWindowTrackToggled?.Invoke(isEnabled);
+
+        // 转发移动锁定窗口轨道开关请求
+        private void RequestMovementLockWindowTrackToggled(bool isEnabled) => OnMovementLockWindowTrackToggled?.Invoke(isEnabled);
 
         // 转发事件分类编辑请求
         private void RequestEventCategoryChanged(AbilityEventCategory category) => OnEventCategoryChanged?.Invoke(category);

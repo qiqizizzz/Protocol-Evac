@@ -13,7 +13,8 @@ namespace Tools.AbilityComposer.Editor.View.Center.Timeline
     public enum AbilityWindowDraftType
     {
         Hit,
-        StepAdvance
+        StepAdvance,
+        MovementLock
     }
 
     public sealed class AbilityWindowDraft

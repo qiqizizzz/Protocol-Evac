@@ -8,9 +8,11 @@
 
 using System.Collections.Generic;
 using Module.Ability.Data.Window.Hit;
+using Module.Ability.Data.Window.MovementLock;
 using Module.Ability.Data.Window.StepAdvance;
 using Tools.AbilityComposer.Editor.View.Center.Event;
 using UnityEngine;
+using Utils.log;
 
 namespace Tools.AbilityComposer.Editor.View.Center.Timeline
 {
@@ -19,6 +21,7 @@ namespace Tools.AbilityComposer.Editor.View.Center.Timeline
         private readonly List<AbilityEventDraft> m_eventDraftValues = new List<AbilityEventDraft>();
         private readonly List<AbilityWindowDraft> m_hitWindowDraftValues = new List<AbilityWindowDraft>();
         private readonly List<AbilityWindowDraft> m_stepAdvanceWindowDraftValues = new List<AbilityWindowDraft>();
+        private readonly List<AbilityWindowDraft> m_movementLockWindowDraftValues = new List<AbilityWindowDraft>();
 
         public AnimationClip Clip { get; private set; }
         public float FrameRate { get; private set; }
@@ -28,13 +31,16 @@ namespace Tools.AbilityComposer.Editor.View.Center.Timeline
         public IReadOnlyList<AbilityEventDraft> EventDraftValues => m_eventDraftValues;
         public IReadOnlyList<AbilityWindowDraft> HitWindowDraftValues => m_hitWindowDraftValues;
         public IReadOnlyList<AbilityWindowDraft> StepAdvanceWindowDraftValues => m_stepAdvanceWindowDraftValues;
+        public IReadOnlyList<AbilityWindowDraft> MovementLockWindowDraftValues => m_movementLockWindowDraftValues;
         public AbilityEventDraft SelectedEvent { get; private set; }
         public AbilityWindowDraft SelectedWindow { get; private set; }
         public AbilityHitWindowTrackSO HitWindowTrack { get; private set; }
         public AbilityStepAdvanceWindowTrackSO StepAdvanceWindowTrack { get; private set; }
+        public AbilityMovementLockWindowTrackSO MovementLockWindowTrack { get; private set; }
         public bool IsWindowInspectorActive { get; private set; }
         public bool IsHitWindowTrackEnabled { get; private set; } = true;
         public bool IsStepAdvanceWindowTrackEnabled { get; private set; } = true;
+        public bool IsMovementLockWindowTrackEnabled { get; private set; } = true;
         public bool HasClip => Clip != null;
         public int LastFrame => Mathf.Max(FrameCount - 1, 0);
         public float CurrentTime => FrameRate > 0f ? CurrentFrame / FrameRate : 0f;
@@ -50,16 +56,20 @@ namespace Tools.AbilityComposer.Editor.View.Center.Timeline
             m_eventDraftValues.Clear();
             m_hitWindowDraftValues.Clear();
             m_stepAdvanceWindowDraftValues.Clear();
+            m_movementLockWindowDraftValues.Clear();
             SelectedEvent = null;
             SelectedWindow = null;
             IsWindowInspectorActive = false;
         }
 
         // 更新当前编辑的窗口轨道资产
-        public void SetWindowTracks(AbilityHitWindowTrackSO hitWindowTrack, AbilityStepAdvanceWindowTrackSO stepAdvanceWindowTrack)
+        public void SetWindowTracks(AbilityHitWindowTrackSO hitWindowTrack,
+            AbilityStepAdvanceWindowTrackSO stepAdvanceWindowTrack,
+            AbilityMovementLockWindowTrackSO movementLockWindowTrack)
         {
             HitWindowTrack = hitWindowTrack;
             StepAdvanceWindowTrack = stepAdvanceWindowTrack;
+            MovementLockWindowTrack = movementLockWindowTrack;
         }
 
         // 设置命中窗口轨道的显示状态
@@ -72,6 +82,12 @@ namespace Tools.AbilityComposer.Editor.View.Center.Timeline
         public void SetStepAdvanceWindowTrackEnabled(bool isEnabled)
         {
             IsStepAdvanceWindowTrackEnabled = isEnabled;
+        }
+
+        // 设置移动锁定窗口轨道的显示状态
+        public void SetMovementLockWindowTrackEnabled(bool isEnabled)
+        {
+            IsMovementLockWindowTrackEnabled = isEnabled;
         }
 
         // 从 AnimationClip 的事件数据重建内存草稿
@@ -207,6 +223,7 @@ namespace Tools.AbilityComposer.Editor.View.Center.Timeline
         {
             m_hitWindowDraftValues.Clear();
             m_stepAdvanceWindowDraftValues.Clear();
+            m_movementLockWindowDraftValues.Clear();
             SelectedWindow = null;
             IsWindowInspectorActive = false;
         }
@@ -273,14 +290,26 @@ namespace Tools.AbilityComposer.Editor.View.Center.Timeline
         // 返回指定类型的窗口草稿列表
         private List<AbilityWindowDraft> GetDraftList(AbilityWindowDraftType type)
         {
-            return type == AbilityWindowDraftType.Hit ? m_hitWindowDraftValues : m_stepAdvanceWindowDraftValues;
+            switch (type)
+            {
+                case AbilityWindowDraftType.Hit:
+                    return m_hitWindowDraftValues;
+                case AbilityWindowDraftType.StepAdvance:
+                    return m_stepAdvanceWindowDraftValues;
+                case AbilityWindowDraftType.MovementLock:
+                    return m_movementLockWindowDraftValues;
+                default:
+                    QLog.Error($"未支持的 Ability 窗口草稿类型：{type}");
+                    return m_hitWindowDraftValues;
+            }
         }
 
-        // 在两条独立轨道中查找窗口草稿
+        // 在三条独立轨道中查找窗口草稿
         private AbilityWindowDraft FindWindow(string windowId)
         {
             AbilityWindowDraft windowDraft = m_hitWindowDraftValues.Find(item => item.Id == windowId);
-            return windowDraft ?? m_stepAdvanceWindowDraftValues.Find(item => item.Id == windowId);
+            windowDraft ??= m_stepAdvanceWindowDraftValues.Find(item => item.Id == windowId);
+            return windowDraft ?? m_movementLockWindowDraftValues.Find(item => item.Id == windowId);
         }
 
         // 返回全部窗口草稿供编辑器统一遍历
@@ -289,6 +318,8 @@ namespace Tools.AbilityComposer.Editor.View.Center.Timeline
             foreach (AbilityWindowDraft windowDraft in m_hitWindowDraftValues)
                 yield return windowDraft;
             foreach (AbilityWindowDraft windowDraft in m_stepAdvanceWindowDraftValues)
+                yield return windowDraft;
+            foreach (AbilityWindowDraft windowDraft in m_movementLockWindowDraftValues)
                 yield return windowDraft;
         }
     }

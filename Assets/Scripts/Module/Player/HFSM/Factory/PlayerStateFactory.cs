@@ -11,6 +11,7 @@ using Module.Player.Context;
 using Module.Player.HFSM;
 using Module.Player.HFSM.States.Action;
 using Module.Player.HFSM.States.Air;
+using Module.Player.HFSM.States.Disabled;
 using Module.Player.HFSM.States.Ground;
 using Module.Player.HFSM.States.Skill;
 using Module.Player.Skill.Core;
@@ -35,6 +36,9 @@ namespace Module.Player.HFSM.Factory
             stateMachine.RegisterState(new PlayerDodgeState(context, settings.DodgeConfig));
             stateMachine.RegisterState(new PlayerSkillState());
             stateMachine.RegisterState(new PlayerNormalAttackState(context, skillController, settings.NormalAttackConfig));
+            stateMachine.RegisterState(new PlayerDisabledState());
+            stateMachine.RegisterState(new PlayerHurtState(context, settings.DamageConfig));
+            stateMachine.RegisterState(new PlayerDeadState(context));
 
             stateMachine.Init(PlayerStateId.Grounded);
             return stateMachine;

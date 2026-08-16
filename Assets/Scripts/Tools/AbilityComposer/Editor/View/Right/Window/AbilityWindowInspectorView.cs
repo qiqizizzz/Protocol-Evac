@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using Framework.QTower.Editor.View;
 using Module.Ability.Data.Window;
 using Module.Ability.Data.Window.Hit;
+using Module.Ability.Data.Window.MovementLock;
 using Module.Ability.Data.Window.StepAdvance;
 using Tools.AbilityComposer.Editor.View.Center.Timeline;
 using UnityEditor.UIElements;
@@ -24,7 +25,8 @@ namespace Tools.AbilityComposer.Editor.View.Right.Window
         private static readonly List<string> S_TypeChoices = new List<string>
         {
             "命中窗口",
-            "技能推进窗口"
+            "技能推进窗口",
+            "移动锁定窗口"
         };
 
         private readonly VisualElement m_rootVisualElement;
@@ -98,13 +100,8 @@ namespace Tools.AbilityComposer.Editor.View.Right.Window
             if (!isVisible)
                 return;
 
-            bool isHitWindow = selectedWindow.Type == AbilityWindowDraftType.Hit;
-            m_windowTrackField.objectType = isHitWindow
-                ? typeof(AbilityHitWindowTrackSO)
-                : typeof(AbilityStepAdvanceWindowTrackSO);
-            m_windowTrackField.SetValueWithoutNotify(isHitWindow
-                ? timelineData.HitWindowTrack
-                : timelineData.StepAdvanceWindowTrack);
+            m_windowTrackField.objectType = GetWindowTrackType(selectedWindow.Type);
+            m_windowTrackField.SetValueWithoutNotify(GetWindowTrack(timelineData, selectedWindow.Type));
 
             SetWindowFieldsEnabled(true);
             m_saveWindowButton.SetEnabled(true);
@@ -167,7 +164,21 @@ namespace Tools.AbilityComposer.Editor.View.Right.Window
         // 转换窗口类型下拉框的选择结果
         private void HandleTypeChanged(ChangeEvent<string> changeEvent)
         {
-            OnTypeChanged?.Invoke(changeEvent.newValue == "技能推进窗口" ? AbilityWindowDraftType.StepAdvance : AbilityWindowDraftType.Hit);
+            AbilityWindowDraftType type;
+            switch (changeEvent.newValue)
+            {
+                case "技能推进窗口":
+                    type = AbilityWindowDraftType.StepAdvance;
+                    break;
+                case "移动锁定窗口":
+                    type = AbilityWindowDraftType.MovementLock;
+                    break;
+                default:
+                    type = AbilityWindowDraftType.Hit;
+                    break;
+            }
+
+            OnTypeChanged?.Invoke(type);
         }
 
         // 提交窗口帧范围编辑
@@ -191,7 +202,43 @@ namespace Tools.AbilityComposer.Editor.View.Right.Window
         // 将枚举类型转换为下拉选项文字
         private string GetTypeChoice(AbilityWindowDraftType type)
         {
-            return type == AbilityWindowDraftType.StepAdvance ? "技能推进窗口" : "命中窗口";
+            switch (type)
+            {
+                case AbilityWindowDraftType.StepAdvance:
+                    return "技能推进窗口";
+                case AbilityWindowDraftType.MovementLock:
+                    return "移动锁定窗口";
+                default:
+                    return "命中窗口";
+            }
+        }
+
+        // 返回窗口类型对应的轨道资产类型
+        private Type GetWindowTrackType(AbilityWindowDraftType type)
+        {
+            switch (type)
+            {
+                case AbilityWindowDraftType.StepAdvance:
+                    return typeof(AbilityStepAdvanceWindowTrackSO);
+                case AbilityWindowDraftType.MovementLock:
+                    return typeof(AbilityMovementLockWindowTrackSO);
+                default:
+                    return typeof(AbilityHitWindowTrackSO);
+            }
+        }
+
+        // 返回当前窗口类型绑定的轨道资产
+        private AbilityWindowTrackBaseSO GetWindowTrack(AbilityTimelineData timelineData, AbilityWindowDraftType type)
+        {
+            switch (type)
+            {
+                case AbilityWindowDraftType.StepAdvance:
+                    return timelineData.StepAdvanceWindowTrack;
+                case AbilityWindowDraftType.MovementLock:
+                    return timelineData.MovementLockWindowTrack;
+                default:
+                    return timelineData.HitWindowTrack;
+            }
         }
     }
 }
