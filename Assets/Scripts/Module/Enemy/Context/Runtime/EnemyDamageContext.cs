@@ -41,6 +41,13 @@ namespace Module.Enemy.Context.Runtime
             HurtRemainingTime = IsHurt ? Mathf.Max(0f, hurtDuration) : 0f;
         }
 
+        // 进入不扣血的起身硬直阶段
+        public void BeginHurt(float hurtDuration)
+        {
+            IsHurt = true;
+            HurtRemainingTime = Mathf.Max(0f, hurtDuration);
+        }
+
         // 推进受击持续时间并返回是否刚结束
         public bool TickHurt(float deltaTime)
         {

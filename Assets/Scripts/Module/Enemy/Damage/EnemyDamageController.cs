@@ -18,28 +18,44 @@ namespace Module.Enemy.Damage
     {
         private readonly EnemyContext m_context;
         private readonly EnemyStatsConfigSO m_statsConfig;
+        private int m_consecutiveHitCount;
+        private float m_lastHitTime;
+        private bool m_requiresGetUp;
 
         // 创建敌人伤害控制器并初始化生命值
         public EnemyDamageController(EnemyContext context, EnemyStatsConfigSO statsConfig)
         {
             m_context = context;
             m_statsConfig = statsConfig;
+            m_consecutiveHitCount = 0;
+            m_lastHitTime = float.NegativeInfinity;
+            m_requiresGetUp = false;
             m_context.Damage.InitHealth(m_statsConfig.MaxHealthValue);
         }
 
         // 尝试应用伤害、受击控制和命中位移
-        public bool TryTakeDamage(DamageData damageData, float hurtDuration)
+        public bool TryTakeDamage(DamageData damageData, float lightHurtDuration, float knockdownHurtDuration,
+            float consecutiveHitInterval, int knockdownHitCount, out bool isKnockdown)
         {
+            isKnockdown = false;
             if (damageData.Damage <= 0f)
             {
                 QLog.Error($"敌人受伤失败，伤害值必须大于 0：{damageData.Damage}");
                 return false;
             }
 
-            if (m_context.Damage.IsDead || m_context.Damage.IsHurt)
+            if (m_context.Damage.IsDead)
                 return false;
 
+            if (Time.time - m_lastHitTime > consecutiveHitInterval)
+                m_consecutiveHitCount = 0;
+
+            m_consecutiveHitCount++;
+            isKnockdown = m_consecutiveHitCount >= knockdownHitCount;
+            float hurtDuration = isKnockdown ? knockdownHurtDuration : lightHurtDuration;
             m_context.Damage.ApplyDamage(damageData.Damage, hurtDuration);
+            m_lastHitTime = Time.time;
+            m_requiresGetUp = !m_context.Damage.IsDead && isKnockdown;
             return true;
         }
 
@@ -61,6 +77,22 @@ namespace Module.Enemy.Damage
             Vector3 horizontalVelocity = damageData.HitDirection * damageData.HorizontalKnockbackSpeed;
             m_context.Movement.SetForcedMove(horizontalVelocity, damageData.HorizontalKnockbackDuration,
                 damageData.VerticalLaunchSpeed);
+        }
+
+        // 消费击倒结束后的起身请求
+        public bool ConsumeGetUpRequest()
+        {
+            if (!m_requiresGetUp)
+                return false;
+
+            m_requiresGetUp = false;
+            return true;
+        }
+
+        // 开始起身阶段的受击控制计时
+        public void BeginGetUp(float getUpDuration)
+        {
+            m_context.Damage.BeginHurt(getUpDuration);
         }
 
         // 推进受击持续时间并返回是否刚完成受击

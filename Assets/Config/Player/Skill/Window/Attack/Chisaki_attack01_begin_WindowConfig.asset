@@ -21,8 +21,8 @@ MonoBehaviour:
       EndNormalizedTimeValue: 0.2631579
       DamageValue: 5
       ReactionTypeValue: 0
-      HorizontalKnockbackSpeedValue: 2.5
-      HorizontalKnockbackDurationValue: 0.2
+      HorizontalKnockbackSpeedValue: 4.5
+      HorizontalKnockbackDurationValue: 0.35
       VerticalLaunchSpeedValue: 0
   UseStepAdvanceWindowValue: 1
   StepAdvanceWindowTrackValue:

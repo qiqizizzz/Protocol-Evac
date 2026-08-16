@@ -82,7 +82,17 @@ namespace Module.Enemy.Core
         private void Update()
         {
             if (m_damageController.Tick(Time.deltaTime))
-                m_context.Action.FinishHurt();
+            {
+                if (m_damageController.ConsumeGetUpRequest())
+                {
+                    m_damageController.BeginGetUp(Settings.AnimationConfig.GetUpAnimationClip.length);
+                    m_context.Action.BeginGetUp(Settings.AnimationConfig.GetUpAnimationClip);
+                }
+                else
+                {
+                    m_context.Action.FinishHurt();
+                }
+            }
 
             if (!m_context.Damage.IsDead && !m_context.Damage.IsHurt)
             {
@@ -195,9 +205,13 @@ namespace Module.Enemy.Core
         // 接收伤害并中断敌人的行为、技能与导航
         private void HandleDamageReceived(Module.Combat.Damage.DamageData damageData)
         {
-            float hurtDuration = m_damageController.CalculateHurtDuration(damageData,
-                Settings.AnimationConfig.HitAnimationClip.length, Settings.AnimationConfig.MinimumHurtDuration);
-            if (!m_damageController.TryTakeDamage(damageData, hurtDuration))
+            float lightHurtDuration = m_damageController.CalculateHurtDuration(damageData,
+                Settings.AnimationConfig.LightHitAnimationClip.length, Settings.AnimationConfig.MinimumHurtDuration);
+            float knockdownHurtDuration = m_damageController.CalculateHurtDuration(damageData,
+                Settings.AnimationConfig.KnockdownAnimationClip.length, Settings.AnimationConfig.MinimumHurtDuration);
+            if (!m_damageController.TryTakeDamage(damageData, lightHurtDuration, knockdownHurtDuration,
+                    Settings.AnimationConfig.ConsecutiveHitInterval, Settings.AnimationConfig.KnockdownHitCount,
+                    out bool isKnockdown))
                 return;
 
             m_behaviorController.Reset();
@@ -212,7 +226,10 @@ namespace Module.Enemy.Core
                 return;
             }
 
-            m_context.Action.BeginHurt(Settings.AnimationConfig.HitAnimationClip);
+            AnimationClip hitAnimationClip = isKnockdown
+                ? Settings.AnimationConfig.KnockdownAnimationClip
+                : Settings.AnimationConfig.LightHitAnimationClip;
+            m_context.Action.BeginHurt(hitAnimationClip);
         }
 
         // 校验敌人配置引用，缺失时在控制台提示
@@ -248,8 +265,14 @@ namespace Module.Enemy.Core
                 if (Settings.AnimationConfig.MoveAnimationClip == null)
                     QLog.Error("EnemyAnimationConfig 未配置移动动画");
 
-                if (Settings.AnimationConfig.HitAnimationClip == null)
-                    QLog.Error("EnemyAnimationConfig 未配置受击动画");
+                if (Settings.AnimationConfig.LightHitAnimationClip == null)
+                    QLog.Error("EnemyAnimationConfig 未配置首段受击动画");
+
+                if (Settings.AnimationConfig.KnockdownAnimationClip == null)
+                    QLog.Error("EnemyAnimationConfig 未配置击倒动画");
+
+                if (Settings.AnimationConfig.GetUpAnimationClip == null)
+                    QLog.Error("EnemyAnimationConfig 未配置起身动画");
             }
 
             if (Settings.NormalAttackConfig == null)

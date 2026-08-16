@@ -103,6 +103,20 @@ namespace Module.Enemy.Context.Runtime
             m_hasIdleAnimRequest = false;
         }
 
+        // 保持受击控制并请求播放起身动画
+        public void BeginGetUp(AnimationClip animationClip)
+        {
+            IsMovementLocked = true;
+            CanRotate = false;
+            IsWeaponVisible = false;
+            IsHurt = true;
+            m_animReplayClip = animationClip;
+            m_animReplayPhase = AbilityStepPhase.Begin;
+            m_animReplayUseRootMotion = false;
+            m_hasAnimReplayRequest = true;
+            m_hasIdleAnimRequest = false;
+        }
+
         // 结束受击动作并请求切回待机动画
         public void FinishHurt()
         {

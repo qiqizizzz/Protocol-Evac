@@ -18,4 +18,10 @@ MonoBehaviour:
     type: 3}
   HitAnimationClipValue: {fileID: -2547592662905567392, guid: 4e1e63e924a6e13428abecd9d1deb2ce,
     type: 3}
+  KnockdownAnimationClipValue: {fileID: 937510309337268382, guid: 8663f9d9be517d340aabeaf78326fcc2,
+    type: 3}
+  GetUpAnimationClipValue: {fileID: 2241212333087754889, guid: 8663f9d9be517d340aabeaf78326fcc2,
+    type: 3}
   MinimumHurtDurationValue: 0.8
+  ConsecutiveHitIntervalValue: 1.2
+  KnockdownHitCountValue: 2

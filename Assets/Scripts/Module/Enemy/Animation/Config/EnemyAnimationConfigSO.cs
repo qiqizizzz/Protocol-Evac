@@ -22,17 +22,37 @@ namespace Module.Enemy.Animation.Config
         [Tooltip("敌人移动时循环播放的动画片段")]
         [SerializeField] private AnimationClip MoveAnimationClipValue;
 
-        [LabelText("受击动画")]
-        [Tooltip("敌人受到攻击时播放的动画片段")]
+        [LabelText("首段受击动画")]
+        [Tooltip("敌人在连续受击的第一次命中时播放的短受击片段")]
         [SerializeField] private AnimationClip HitAnimationClipValue;
+
+        [LabelText("击倒动画")]
+        [Tooltip("敌人在连续受击达到击倒次数后播放的倒地片段")]
+        [SerializeField] private AnimationClip KnockdownAnimationClipValue;
+
+        [LabelText("起身动画")]
+        [Tooltip("敌人完成击倒硬直后播放的起身片段")]
+        [SerializeField] private AnimationClip GetUpAnimationClipValue;
 
         [LabelText("最短受击硬直")]
         [Tooltip("普通受击至少保持受击控制的时长，击退和击飞会按各自位移时长延长")]
         [SerializeField, Min(0f)] private float MinimumHurtDurationValue;
 
+        [LabelText("连续命中判定间隔")]
+        [Tooltip("两次命中间隔不超过该时长时，视为同一轮连续受击")]
+        [SerializeField, Min(0f)] private float ConsecutiveHitIntervalValue;
+
+        [LabelText("触发击倒所需命中次数")]
+        [Tooltip("同一轮连续受击达到该次数后，播放击倒动画")]
+        [SerializeField, Min(2)] private int KnockdownHitCountValue;
+
         public AnimationClip IdleAnimationClip => IdleAnimationClipValue;
         public AnimationClip MoveAnimationClip => MoveAnimationClipValue;
-        public AnimationClip HitAnimationClip => HitAnimationClipValue;
+        public AnimationClip LightHitAnimationClip => HitAnimationClipValue;
+        public AnimationClip KnockdownAnimationClip => KnockdownAnimationClipValue;
+        public AnimationClip GetUpAnimationClip => GetUpAnimationClipValue;
         public float MinimumHurtDuration => MinimumHurtDurationValue;
+        public float ConsecutiveHitInterval => ConsecutiveHitIntervalValue;
+        public int KnockdownHitCount => KnockdownHitCountValue;
     }
 }
