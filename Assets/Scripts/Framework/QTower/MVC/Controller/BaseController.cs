@@ -58,6 +58,21 @@ namespace Framework.QTower.Controller
             m_events.Add(eventName, removeEvent);
         }
 
+        // 注册由控制器托管的无参数事件
+        public void RegisterEvent(string eventName, Action callback)
+        {
+            EventManager.RegisterEvent(eventName, callback);
+            Action removeEvent = () => EventManager.UnregisterEvent(eventName, callback);
+
+            if (m_events.TryGetValue(eventName, out Action registered))
+            {
+                m_events[eventName] = registered + removeEvent;
+                return;
+            }
+
+            m_events.Add(eventName, removeEvent);
+        }
+
         public void UnregisterEvent(string eventName)
         {
             if (!m_events.TryGetValue(eventName, out Action removeEvent))

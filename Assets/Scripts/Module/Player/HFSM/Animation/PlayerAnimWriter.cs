@@ -29,6 +29,7 @@ namespace Module.Player.HFSM.Animation
         private static readonly int S_IsSkillHash = Animator.StringToHash("isSkill");
         private static readonly int S_IsDisabledHash = Animator.StringToHash("isDisabled");
         private static readonly int S_EnterDisabledHash = Animator.StringToHash("enterDisabled");
+        private static readonly int S_IsDeadHash = Animator.StringToHash("isDead");
         private static readonly int S_HurtAnimationIdHash = Animator.StringToHash("hurtAnimationId");
         private static readonly int S_JumpStateHash = Animator.StringToHash("Base Layer.Air.jump_begin");
         private static readonly int S_GroundedLocomotionStateHash = Animator.StringToHash("Base Layer.Grounded_Common.Grounded_Locomotion");
@@ -44,13 +45,13 @@ namespace Module.Player.HFSM.Animation
         private static readonly int S_SkillNormalAttack01RecoveryStateHash = Animator.StringToHash("Base Layer.Skill.NormalAttack.attack01_end");
         private static readonly int S_SkillNormalAttack02RecoveryStateHash = Animator.StringToHash("Base Layer.Skill.NormalAttack.attack02_end");
         private static readonly int S_SkillNormalAttack03RecoveryStateHash = Animator.StringToHash("Base Layer.Skill.NormalAttack.attack03_end");
-        private static readonly int S_DisabledHurtLightLeftStateHash = Animator.StringToHash("Base Layer.Disabled.hurt_light_l");
-        private static readonly int S_DisabledHurtLightRightStateHash = Animator.StringToHash("Base Layer.Disabled.hurt_light_r");
-        private static readonly int S_DisabledHurtHeavyLeftStateHash = Animator.StringToHash("Base Layer.Disabled.hurt_heavy_l");
-        private static readonly int S_DisabledHurtHeavyRightStateHash = Animator.StringToHash("Base Layer.Disabled.hurt_heavy_r");
-        private static readonly int S_DisabledHurtKnockUpStartStateHash = Animator.StringToHash("Base Layer.Disabled.hurt_knock_up_start");
-        private static readonly int S_DisabledHurtKnockUpLoopStateHash = Animator.StringToHash("Base Layer.Disabled.hurt_knock_up_loop");
-        private static readonly int S_DisabledHurtKnockUpFallStateHash = Animator.StringToHash("Base Layer.Disabled.hurt_knock_up_fall");
+        private static readonly int S_DisabledHurtLightLeftStateHash = Animator.StringToHash("Base Layer.Disabled.Hurt_Light.hurt_light_l");
+        private static readonly int S_DisabledHurtLightRightStateHash = Animator.StringToHash("Base Layer.Disabled.Hurt_Light.hurt_light_r");
+        private static readonly int S_DisabledHurtHeavyLeftStateHash = Animator.StringToHash("Base Layer.Disabled.Hurt_Heavy.hurt_heavy_l");
+        private static readonly int S_DisabledHurtHeavyRightStateHash = Animator.StringToHash("Base Layer.Disabled.Hurt_Heavy.hurt_heavy_r");
+        private static readonly int S_DisabledHurtKnockUpStartStateHash = Animator.StringToHash("Base Layer.Disabled.Hurt_KnockUp.hurt_knock_up_start");
+        private static readonly int S_DisabledHurtKnockUpLoopStateHash = Animator.StringToHash("Base Layer.Disabled.Hurt_KnockUp.hurt_knock_up_loop");
+        private static readonly int S_DisabledHurtKnockUpFallStateHash = Animator.StringToHash("Base Layer.Disabled.Hurt_KnockUp.hurt_knock_up_fall");
         private static readonly int S_DisabledDeadStateHash = Animator.StringToHash("Base Layer.Disabled.dead");
         #endregion
 
@@ -108,6 +109,7 @@ namespace Module.Player.HFSM.Animation
             m_animator.SetBool(S_IsActionHash, IsStateActive(PlayerStateId.Action));
             m_animator.SetBool(S_IsSkillHash, isSkillActive);
             m_animator.SetBool(S_IsDisabledHash, isDisabledActive);
+            m_animator.SetBool(S_IsDeadHash, m_context.Damage.IsDead);
             m_animator.SetInteger(S_HurtAnimationIdHash, (int)m_context.Damage.HurtAnimationId);
 
             if (m_isDisabledEnterRequested && IsDisabledAnimatorState())

@@ -49,5 +49,12 @@ namespace Module.Player.Damage
             m_nextDamageAvailableTime = Time.time + m_damageConfig.DamageInvulnerabilityDuration;
             return true;
         }
+
+        // 恢复玩家全部生命并清除伤害冷却
+        public void RestoreFullHealth()
+        {
+            m_context.Damage.InitHealth(m_statsConfig.MaxHealthValue);
+            m_nextDamageAvailableTime = 0f;
+        }
     }
 }

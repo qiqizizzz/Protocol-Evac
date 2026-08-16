@@ -41,6 +41,12 @@ namespace Module.Player.HFSM.Transition.Rules
                 new PlayerTransitionRule(PlayerStateId.None, PlayerStateId.DisabledHurt,
                     PlayerTransitionPriority.Status, () => context.Damage.HasPendingHurt, 10, true),
 
+                new PlayerTransitionRule(PlayerStateId.DisabledDead, PlayerStateId.AirborneFall,
+                    PlayerTransitionPriority.Air, () => !context.Damage.IsDead && !context.Movement.IsGrounded, 20),
+
+                new PlayerTransitionRule(PlayerStateId.DisabledDead, PlayerStateId.GroundedIdle,
+                    PlayerTransitionPriority.Move, () => !context.Damage.IsDead && context.Movement.IsGrounded, 20),
+
                 new PlayerTransitionRule(PlayerStateId.DisabledHurt, PlayerStateId.AirborneJump,
                     PlayerTransitionPriority.Air, () => CanJump(context, airConfig), 30),
 

@@ -17,6 +17,11 @@ MonoBehaviour:
     m_SerializedData: []
   m_GUID: 15f221bc43db8f34b97a3261b4ac126e
   m_SerializeEntries:
+  - m_GUID: 717aebcffa4c12c4383e553f0f639bde
+    m_Address: UISummary
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 8a49fc37f7fcd9542aa05ca3ee21c848
     m_Address: UICombatHUD
     m_ReadOnly: 0

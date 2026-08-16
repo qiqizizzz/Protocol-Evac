@@ -52,6 +52,14 @@ namespace Module.Player.Core.View
         // 更新玩家视角数据
         public override void Tick(float deltaTime)
         {
+            if (m_context.Damage.IsDead)
+            {
+                ClearLockTarget();
+                m_context.Input.LookInput = Vector2.zero;
+                RefreshCameraTransform();
+                return;
+            }
+
             SwitchPlayerView();
             RefreshLockTarget();
             HandleLockOnToggleRequest();

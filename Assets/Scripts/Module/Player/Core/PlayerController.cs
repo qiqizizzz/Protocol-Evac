@@ -7,6 +7,8 @@
  */
 
 using Framework.QTower.Controller;
+using Framework.QTower.Common.Defines;
+using Framework.QTower.Event;
 using Module.Combat.Hitbox;
 using Module.Player.Config;
 using Module.Player.Context;
@@ -102,6 +104,11 @@ namespace Module.Player.Core
             InitAnim();
         }
 
+        private void OnEnable()
+        {
+            EventManager.RegisterEvent(EventDefines.PlayerRetryRequested, HandlePlayerRetryRequested);
+        }
+
         private void Update()
         {
             m_inputReader.Tick();
@@ -117,6 +124,11 @@ namespace Module.Player.Core
         {
             m_stateMachine.FixedTick(Time.fixedDeltaTime);
             m_motor.FixedTick(Time.fixedDeltaTime);
+        }
+
+        private void OnDisable()
+        {
+            EventManager.UnregisterEvent(EventDefines.PlayerRetryRequested, HandlePlayerRetryRequested);
         }
 
         private void OnDestroy()
@@ -284,6 +296,14 @@ namespace Module.Player.Core
                 return;
 
             m_skillController.Close();
+            if (m_context.Damage.IsDead)
+                EventManager.PublishEvent(EventDefines.PlayerDied);
+        }
+
+        // 恢复玩家生命并允许状态机退出死亡状态
+        private void HandlePlayerRetryRequested()
+        {
+            m_damageController.RestoreFullHealth();
         }
 
     }
