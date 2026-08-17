@@ -16,7 +16,7 @@ MonoBehaviour:
   UseHitWindowValue: 1
   HitWindowTrackValue:
     WindowValues:
-    - IdValue: c4350e694fbc4bccaa0ac09f3110a4e3
+    - IdValue: hit_chisaki_attack01_begin_01
       StartNormalizedTimeValue: 0.15789473
       EndNormalizedTimeValue: 0.2631579
       DamageValue: 5
@@ -27,7 +27,7 @@ MonoBehaviour:
   UseStepAdvanceWindowValue: 1
   StepAdvanceWindowTrackValue:
     WindowValues:
-    - IdValue: 44b74a3ebdd64f688aebc671cf4f90b1
+    - IdValue: step_chisaki_attack01_begin_01
       StartNormalizedTimeValue: 0.10526316
       EndNormalizedTimeValue: 1
   UseMovementLockWindowValue: 0
@@ -48,7 +48,7 @@ MonoBehaviour:
       LocalPositionOffsetValue: {x: 0, y: 0, z: 0}
       LocalEulerOffsetValue: {x: 0, y: 0, z: 0}
       FollowTargetValue: 1
-    - IdValue: 49c636bb430d4bdb8790345aa943de78
+    - IdValue: vfx_chisaki_attack01_begin_weapon_trail
       StartNormalizedTimeValue: 0.10526316
       EndNormalizedTimeValue: 0.42
       TriggerTypeValue: 1
@@ -80,7 +80,9 @@ MonoBehaviour:
       EndNormalizedTimeValue: 0.2631579
       TriggerTypeValue: 0
       PlaybackTypeValue: 0
-      AudioClipAValue: {fileID: 8300000, guid: 318f90992d696104e89e970ac6a3f1ec, type: 3}
+      AudioClipValues:
+      - {fileID: 8300000, guid: 318f90992d696104e89e970ac6a3f1ec, type: 3}
+      AudioClipAValue: {fileID: 0}
       AudioClipBValue: {fileID: 0}
       AudioClipCValue: {fileID: 0}
       VolumeValue: 0.9

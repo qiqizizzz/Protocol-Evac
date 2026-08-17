@@ -22,9 +22,12 @@ MonoBehaviour:
   UseMovementLockWindowValue: 1
   MovementLockWindowTrackValue:
     WindowValues:
-    - IdValue: d54b8ec4c7a1436c979873b29190be7a
+    - IdValue: movement_lock_behit_fly_fall_01
       StartNormalizedTimeValue: 0
       EndNormalizedTimeValue: 0.8333333
   UseVfxWindowValue: 0
   VfxWindowTrackValue:
+    WindowValues: []
+  UseAudioWindowValue: 0
+  AudioWindowTrackValue:
     WindowValues: []

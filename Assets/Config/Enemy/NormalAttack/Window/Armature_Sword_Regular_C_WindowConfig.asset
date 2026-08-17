@@ -17,7 +17,7 @@ MonoBehaviour:
   UseHitWindowValue: 1
   HitWindowTrackValue:
     WindowValues:
-    - IdValue: enemy_wanderer_sword_regular_c_01
+    - IdValue: hit_enemy_wanderer_sword_regular_c_01
       StartNormalizedTimeValue: 0.16
       EndNormalizedTimeValue: 0.52
       DamageValue: 18
@@ -58,3 +58,6 @@ MonoBehaviour:
       LocalPositionOffsetValue: {x: 0, y: 1.05, z: 0}
       LocalEulerOffsetValue: {x: 0, y: 0, z: 0}
       FollowTargetValue: 0
+  UseAudioWindowValue: 0
+  AudioWindowTrackValue:
+    WindowValues: []

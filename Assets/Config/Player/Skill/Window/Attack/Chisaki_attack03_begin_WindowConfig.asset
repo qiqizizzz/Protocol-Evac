@@ -16,7 +16,7 @@ MonoBehaviour:
   UseHitWindowValue: 1
   HitWindowTrackValue:
     WindowValues:
-    - IdValue: 5bbe57ca0c8847c189405b45da3fe857
+    - IdValue: hit_chisaki_attack03_begin_01
       StartNormalizedTimeValue: 0.10169491
       EndNormalizedTimeValue: 0.18644068
       DamageValue: 20
@@ -24,7 +24,7 @@ MonoBehaviour:
       HorizontalKnockbackSpeedValue: 5
       HorizontalKnockbackDurationValue: 0.4
       VerticalLaunchSpeedValue: 0
-    - IdValue: 383b478258c0477bbdb3cc5d60797b81
+    - IdValue: hit_chisaki_attack03_begin_02
       StartNormalizedTimeValue: 0.44067797
       EndNormalizedTimeValue: 0.5423729
       DamageValue: 30
@@ -97,7 +97,9 @@ MonoBehaviour:
       EndNormalizedTimeValue: 0.084745765
       TriggerTypeValue: 0
       PlaybackTypeValue: 0
-      AudioClipAValue: {fileID: 8300000, guid: 1cf528da5df363a43a2148a097d9c192, type: 3}
+      AudioClipValues:
+      - {fileID: 8300000, guid: 1cf528da5df363a43a2148a097d9c192, type: 3}
+      AudioClipAValue: {fileID: 0}
       AudioClipBValue: {fileID: 0}
       AudioClipCValue: {fileID: 0}
       VolumeValue: 0.9
