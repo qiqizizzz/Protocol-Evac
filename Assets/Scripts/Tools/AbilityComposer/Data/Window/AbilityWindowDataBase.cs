@@ -28,13 +28,13 @@ namespace Module.Ability.Data.Window
 
         protected AbilityWindowDataBase(float startNormalizedTime, float endNormalizedTime)
         {
-            IdValue = Guid.NewGuid().ToString("N");
+            IdValue = string.Empty;
             SetTimeRange(startNormalizedTime, endNormalizedTime);
         }
 
         protected AbilityWindowDataBase(string id, float startNormalizedTime, float endNormalizedTime)
         {
-            IdValue = string.IsNullOrEmpty(id) ? Guid.NewGuid().ToString("N") : id;
+            IdValue = id ?? string.Empty;
             SetTimeRange(startNormalizedTime, endNormalizedTime);
         }
 

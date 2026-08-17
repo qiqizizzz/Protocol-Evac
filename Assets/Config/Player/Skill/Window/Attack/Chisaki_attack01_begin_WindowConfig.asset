@@ -93,3 +93,21 @@ MonoBehaviour:
       TargetTypeValue: 1
       SocketIdValue: WeaponTrail
       LocalPositionOffsetValue: {x: 0, y: 0, z: 0}
+    - IdValue: audio_chisaki_attack01_hit_01
+      StartNormalizedTimeValue: 0.15789473
+      EndNormalizedTimeValue: 0.2631579
+      TriggerTypeValue: 2
+      PlaybackTypeValue: 0
+      AudioClipValues:
+      - {fileID: 8300000, guid: e3cad8100d5e0a544a949df5ce7e9446, type: 3}
+      AudioClipAValue: {fileID: 0}
+      AudioClipBValue: {fileID: 0}
+      AudioClipCValue: {fileID: 0}
+      VolumeValue: 0.9
+      PitchValue: 1
+      RandomPitchRangeValue: 0.04
+      SpatialValue: 1
+      StopOnWindowEndValue: 0
+      TargetTypeValue: 2
+      SocketIdValue: 
+      LocalPositionOffsetValue: {x: 0, y: 0, z: 0}

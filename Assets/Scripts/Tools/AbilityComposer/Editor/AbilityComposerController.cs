@@ -1253,7 +1253,8 @@ namespace Tools.AbilityComposer.Editor
             {
                 float startNormalizedTime = ConvertStartFrameToNormalizedTime(windowDraft.StartFrame);
                 float endNormalizedTime = ConvertEndBoundaryFrameToNormalizedTime(windowDraft.EndFrame);
-                windowValues.Add(new AbilityHitWindowData(startNormalizedTime, endNormalizedTime, windowDraft.Damage));
+                windowValues.Add(new AbilityHitWindowData(windowDraft.Id, startNormalizedTime, endNormalizedTime,
+                    windowDraft.Damage));
             }
 
             Undo.RecordObject(windowConfig, "保存命中窗口轨道");

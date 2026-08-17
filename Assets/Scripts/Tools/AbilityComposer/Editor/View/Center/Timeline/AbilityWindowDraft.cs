@@ -6,7 +6,6 @@
  * └───────────────────────────────────────────────────────────────────┘
  */
 
-using System;
 using System.Collections.Generic;
 using Module.Ability.Data.Window.Audio;
 using Module.Ability.Data.Window.Vfx;
@@ -58,7 +57,7 @@ namespace Tools.AbilityComposer.Editor.View.Center.Timeline
         // 在指定起始帧和右边界帧创建默认命中窗口草稿
         public AbilityWindowDraft(int startFrame, int endFrame)
         {
-            Id = Guid.NewGuid().ToString("N");
+            Id = string.Empty;
             Type = AbilityWindowDraftType.Hit;
             StartFrame = startFrame;
             EndFrame = endFrame;

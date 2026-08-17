@@ -263,6 +263,7 @@ namespace Tools.AbilityComposer.Editor.View.Center.Timeline
             AbilityWindowDraft windowDraft = new AbilityWindowDraft(clampedStartFrame, clampedEndFrame);
             windowDraft.SetType(type);
             windowDraft.SetDamage(Mathf.Max(0f, damage));
+            windowDraft.SetId(AbilityWindowIdResolver.CreateWindowId(type, Clip, EnumerateWindows()));
             GetDraftList(type).Add(windowDraft);
             SelectedWindow = windowDraft;
             IsWindowInspectorActive = true;
@@ -317,6 +318,9 @@ namespace Tools.AbilityComposer.Editor.View.Center.Timeline
 
             GetDraftList(SelectedWindow.Type).Remove(SelectedWindow);
             SelectedWindow.SetType(type);
+            if (AbilityWindowIdResolver.ShouldRefreshWindowId(SelectedWindow.Id, type))
+                SelectedWindow.SetId(AbilityWindowIdResolver.CreateWindowId(type, Clip, EnumerateWindows()));
+
             GetDraftList(type).Add(SelectedWindow);
         }
 
