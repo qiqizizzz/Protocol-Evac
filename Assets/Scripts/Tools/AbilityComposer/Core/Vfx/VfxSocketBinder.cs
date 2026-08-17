@@ -7,6 +7,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Module.Ability.Vfx
@@ -25,6 +26,20 @@ namespace Module.Ability.Vfx
 
         [SerializeField] private VfxSocket[] Sockets = Array.Empty<VfxSocket>();
 
+        // 收集当前绑定器内所有有效挂点 Id
+        public void CollectSocketIds(List<string> socketIds)
+        {
+            for (int socketIndex = 0; socketIndex < Sockets.Length; socketIndex++)
+            {
+                VfxSocket vfxSocket = Sockets[socketIndex];
+                if (vfxSocket == null || string.IsNullOrEmpty(vfxSocket.Id) || vfxSocket.Transform == null)
+                    continue;
+
+                if (!socketIds.Contains(vfxSocket.Id))
+                    socketIds.Add(vfxSocket.Id);
+            }
+        }
+
         // 按挂点 Id 查找对应 Transform
         public bool TryGetSocket(string socketId, out Transform socket)
         {
@@ -41,6 +56,6 @@ namespace Module.Ability.Vfx
             socket = null;
             return false;
         }
+
     }
 }
-

@@ -95,7 +95,7 @@ namespace Tools.AbilityComposer.Editor.View.Right
         }
 
         // 刷新当前 Event Inspector 页面
-        public void Refresh(AbilityTimelineData timelineData)
+        public void Refresh(AbilityTimelineData timelineData, IReadOnlyList<string> vfxSocketIdChoices)
         {
             if (!m_isControlsReady)
                 return;
@@ -106,6 +106,7 @@ namespace Tools.AbilityComposer.Editor.View.Right
                 OpenTab(InspectorTabType.Event);
 
             m_eventInspectorView.Refresh(timelineData);
+            m_windowInspectorView.SetVfxSocketIdChoices(vfxSocketIdChoices);
             m_windowInspectorView.Refresh(timelineData);
             RefreshTabPresentation();
         }

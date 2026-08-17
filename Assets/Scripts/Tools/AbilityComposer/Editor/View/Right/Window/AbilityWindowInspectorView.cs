@@ -51,7 +51,13 @@ namespace Tools.AbilityComposer.Editor.View.Right.Window
             nameof(AbilityVfxLifeMode.DestroyOnWindowEnd)
         };
 
+        private const string NO_VFX_SOCKET_SELECTED_CHOICE = "未选择挂点";
+        private const string NO_VFX_SOCKET_FOUND_CHOICE = "未找到挂点";
+        private const string CUSTOM_VFX_SOCKET_CHOICE = "手动输入";
+
         private readonly VisualElement m_rootVisualElement;
+        private readonly List<string> m_vfxSocketIdChoices = new List<string>();
+        private readonly List<string> m_vfxSocketChoiceValues = new List<string>();
         private Label m_titleLabel;
         private ObjectField m_windowConfigField;
         private DropdownField m_typeField;
@@ -61,6 +67,7 @@ namespace Tools.AbilityComposer.Editor.View.Right.Window
         private DropdownField m_vfxTriggerTypeField;
         private DropdownField m_vfxTargetTypeField;
         private ObjectField m_vfxPrefabField;
+        private DropdownField m_vfxSocketChoiceField;
         private TextField m_vfxSocketIdField;
         private DropdownField m_vfxLifeModeField;
         private Vector3Field m_vfxPositionOffsetField;
@@ -116,6 +123,8 @@ namespace Tools.AbilityComposer.Editor.View.Right.Window
             m_vfxPrefabField.objectType = typeof(GameObject);
             m_vfxPrefabField.allowSceneObjects = false;
             m_vfxPrefabField.AddToClassList("ac-inspector-field");
+            m_vfxSocketChoiceField = new DropdownField("挂点选择");
+            m_vfxSocketChoiceField.AddToClassList("ac-inspector-field");
             m_vfxSocketIdField = new TextField("挂点 Id");
             m_vfxSocketIdField.isDelayed = true;
             m_vfxSocketIdField.AddToClassList("ac-inspector-field");
@@ -144,6 +153,7 @@ namespace Tools.AbilityComposer.Editor.View.Right.Window
             m_rootVisualElement.Add(m_vfxTriggerTypeField);
             m_rootVisualElement.Add(m_vfxTargetTypeField);
             m_rootVisualElement.Add(m_vfxPrefabField);
+            m_rootVisualElement.Add(m_vfxSocketChoiceField);
             m_rootVisualElement.Add(m_vfxSocketIdField);
             m_rootVisualElement.Add(m_vfxLifeModeField);
             m_rootVisualElement.Add(m_vfxPositionOffsetField);
@@ -178,11 +188,28 @@ namespace Tools.AbilityComposer.Editor.View.Right.Window
             m_vfxTargetTypeField.SetValueWithoutNotify(selectedWindow.VfxTargetType.ToString());
             m_vfxPrefabField.SetValueWithoutNotify(selectedWindow.VfxPrefab);
             m_vfxSocketIdField.SetValueWithoutNotify(selectedWindow.VfxSocketId);
+            RefreshVfxSocketChoiceField(selectedWindow.VfxSocketId);
             m_vfxLifeModeField.SetValueWithoutNotify(selectedWindow.VfxLifeMode.ToString());
             m_vfxPositionOffsetField.SetValueWithoutNotify(selectedWindow.VfxLocalPositionOffset);
             m_vfxEulerOffsetField.SetValueWithoutNotify(selectedWindow.VfxLocalEulerOffset);
             m_vfxFollowTargetToggle.SetValueWithoutNotify(selectedWindow.VfxFollowTarget);
-            RefreshTypeSpecificFields(selectedWindow.Type);
+            RefreshTypeSpecificFields(selectedWindow.Type, selectedWindow.VfxTargetType);
+        }
+
+        // 更新当前预览对象可选的特效挂点 Id
+        public void SetVfxSocketIdChoices(IReadOnlyList<string> socketIdChoices)
+        {
+            m_vfxSocketIdChoices.Clear();
+            for (int socketIndex = 0; socketIndex < socketIdChoices.Count; socketIndex++)
+            {
+                string socketId = socketIdChoices[socketIndex];
+                if (string.IsNullOrEmpty(socketId) || m_vfxSocketIdChoices.Contains(socketId))
+                    continue;
+
+                m_vfxSocketIdChoices.Add(socketId);
+            }
+
+            RefreshVfxSocketChoiceField(m_vfxSocketIdField.value);
         }
 
         protected override void SubscribeViewEvents()
@@ -195,6 +222,7 @@ namespace Tools.AbilityComposer.Editor.View.Right.Window
             m_vfxTriggerTypeField.RegisterValueChangedCallback(HandleVfxTriggerTypeChanged);
             m_vfxTargetTypeField.RegisterValueChangedCallback(HandleVfxTargetTypeChanged);
             m_vfxPrefabField.RegisterValueChangedCallback(HandleVfxPrefabChanged);
+            m_vfxSocketChoiceField.RegisterValueChangedCallback(HandleVfxSocketChoiceChanged);
             m_vfxSocketIdField.RegisterValueChangedCallback(HandleVfxSocketIdChanged);
             m_vfxLifeModeField.RegisterValueChangedCallback(HandleVfxLifeModeChanged);
             m_vfxPositionOffsetField.RegisterValueChangedCallback(HandleVfxPositionOffsetChanged);
@@ -213,6 +241,7 @@ namespace Tools.AbilityComposer.Editor.View.Right.Window
             m_vfxTriggerTypeField.UnregisterValueChangedCallback(HandleVfxTriggerTypeChanged);
             m_vfxTargetTypeField.UnregisterValueChangedCallback(HandleVfxTargetTypeChanged);
             m_vfxPrefabField.UnregisterValueChangedCallback(HandleVfxPrefabChanged);
+            m_vfxSocketChoiceField.UnregisterValueChangedCallback(HandleVfxSocketChoiceChanged);
             m_vfxSocketIdField.UnregisterValueChangedCallback(HandleVfxSocketIdChanged);
             m_vfxLifeModeField.UnregisterValueChangedCallback(HandleVfxLifeModeChanged);
             m_vfxPositionOffsetField.UnregisterValueChangedCallback(HandleVfxPositionOffsetChanged);
@@ -234,6 +263,7 @@ namespace Tools.AbilityComposer.Editor.View.Right.Window
             m_vfxTriggerTypeField.style.display = displayStyle;
             m_vfxTargetTypeField.style.display = displayStyle;
             m_vfxPrefabField.style.display = displayStyle;
+            m_vfxSocketChoiceField.style.display = displayStyle;
             m_vfxSocketIdField.style.display = displayStyle;
             m_vfxLifeModeField.style.display = displayStyle;
             m_vfxPositionOffsetField.style.display = displayStyle;
@@ -252,6 +282,7 @@ namespace Tools.AbilityComposer.Editor.View.Right.Window
             m_vfxTriggerTypeField.SetEnabled(isEnabled);
             m_vfxTargetTypeField.SetEnabled(isEnabled);
             m_vfxPrefabField.SetEnabled(isEnabled);
+            m_vfxSocketChoiceField.SetEnabled(isEnabled && m_vfxSocketIdChoices.Count > 0);
             m_vfxSocketIdField.SetEnabled(isEnabled);
             m_vfxLifeModeField.SetEnabled(isEnabled);
             m_vfxPositionOffsetField.SetEnabled(isEnabled);
@@ -311,7 +342,10 @@ namespace Tools.AbilityComposer.Editor.View.Right.Window
         private void HandleVfxTargetTypeChanged(ChangeEvent<string> changeEvent)
         {
             if (Enum.TryParse(changeEvent.newValue, out AbilityVfxTargetType targetType))
+            {
+                RefreshTypeSpecificFields(AbilityWindowDraftType.Vfx, targetType);
                 OnVfxTargetTypeChanged?.Invoke(targetType);
+            }
         }
 
         // 提交特效窗口预制体编辑
@@ -320,9 +354,23 @@ namespace Tools.AbilityComposer.Editor.View.Right.Window
             OnVfxPrefabChanged?.Invoke(changeEvent.newValue as GameObject);
         }
 
+        // 将挂点候选同步到挂点 Id
+        private void HandleVfxSocketChoiceChanged(ChangeEvent<string> changeEvent)
+        {
+            if (changeEvent.newValue == NO_VFX_SOCKET_FOUND_CHOICE
+                || changeEvent.newValue == CUSTOM_VFX_SOCKET_CHOICE)
+                return;
+
+            string socketId = changeEvent.newValue == NO_VFX_SOCKET_SELECTED_CHOICE
+                ? string.Empty
+                : changeEvent.newValue;
+            ApplyVfxSocketId(socketId);
+        }
+
         // 提交特效窗口挂点 Id 编辑
         private void HandleVfxSocketIdChanged(ChangeEvent<string> changeEvent)
         {
+            RefreshVfxSocketChoiceField(changeEvent.newValue);
             OnVfxSocketIdChanged?.Invoke(changeEvent.newValue);
         }
 
@@ -374,19 +422,74 @@ namespace Tools.AbilityComposer.Editor.View.Right.Window
         }
 
         // 根据窗口类型显示对应参数
-        private void RefreshTypeSpecificFields(AbilityWindowDraftType type)
+        private void RefreshTypeSpecificFields(AbilityWindowDraftType type, AbilityVfxTargetType targetType)
         {
             bool isHit = type == AbilityWindowDraftType.Hit;
             bool isVfx = type == AbilityWindowDraftType.Vfx;
+            bool usesSocket = isVfx && UsesVfxSocket(targetType);
             m_damageField.style.display = isHit ? DisplayStyle.Flex : DisplayStyle.None;
             m_vfxTriggerTypeField.style.display = isVfx ? DisplayStyle.Flex : DisplayStyle.None;
             m_vfxTargetTypeField.style.display = isVfx ? DisplayStyle.Flex : DisplayStyle.None;
             m_vfxPrefabField.style.display = isVfx ? DisplayStyle.Flex : DisplayStyle.None;
-            m_vfxSocketIdField.style.display = isVfx ? DisplayStyle.Flex : DisplayStyle.None;
+            m_vfxSocketChoiceField.style.display = usesSocket ? DisplayStyle.Flex : DisplayStyle.None;
+            m_vfxSocketIdField.style.display = usesSocket ? DisplayStyle.Flex : DisplayStyle.None;
             m_vfxLifeModeField.style.display = isVfx ? DisplayStyle.Flex : DisplayStyle.None;
             m_vfxPositionOffsetField.style.display = isVfx ? DisplayStyle.Flex : DisplayStyle.None;
             m_vfxEulerOffsetField.style.display = isVfx ? DisplayStyle.Flex : DisplayStyle.None;
             m_vfxFollowTargetToggle.style.display = isVfx ? DisplayStyle.Flex : DisplayStyle.None;
+        }
+
+        // 判断当前生成目标是否需要挂点 Id
+        private bool UsesVfxSocket(AbilityVfxTargetType targetType)
+        {
+            return targetType == AbilityVfxTargetType.SourceSocket
+                   || targetType == AbilityVfxTargetType.HitTargetSocket;
+        }
+
+        // 应用候选选择得到的挂点 Id
+        private void ApplyVfxSocketId(string socketId)
+        {
+            m_vfxSocketIdField.SetValueWithoutNotify(socketId);
+            RefreshVfxSocketChoiceField(socketId);
+            OnVfxSocketIdChanged?.Invoke(socketId);
+        }
+
+        // 刷新挂点下拉候选和当前显示项
+        private void RefreshVfxSocketChoiceField(string currentSocketId)
+        {
+            if (m_vfxSocketChoiceField == null)
+                return;
+
+            m_vfxSocketChoiceValues.Clear();
+            if (m_vfxSocketIdChoices.Count == 0)
+            {
+                m_vfxSocketChoiceValues.Add(NO_VFX_SOCKET_FOUND_CHOICE);
+                m_vfxSocketChoiceField.choices = m_vfxSocketChoiceValues;
+                m_vfxSocketChoiceField.SetValueWithoutNotify(NO_VFX_SOCKET_FOUND_CHOICE);
+                m_vfxSocketChoiceField.SetEnabled(false);
+                return;
+            }
+
+            m_vfxSocketChoiceValues.Add(NO_VFX_SOCKET_SELECTED_CHOICE);
+            m_vfxSocketChoiceValues.AddRange(m_vfxSocketIdChoices);
+            if (!string.IsNullOrEmpty(currentSocketId) && !m_vfxSocketIdChoices.Contains(currentSocketId))
+                m_vfxSocketChoiceValues.Add(CUSTOM_VFX_SOCKET_CHOICE);
+
+            m_vfxSocketChoiceField.choices = m_vfxSocketChoiceValues;
+            m_vfxSocketChoiceField.SetValueWithoutNotify(GetVfxSocketChoice(currentSocketId));
+            m_vfxSocketChoiceField.SetEnabled(true);
+        }
+
+        // 将当前挂点 Id 映射到下拉显示项
+        private string GetVfxSocketChoice(string socketId)
+        {
+            if (string.IsNullOrEmpty(socketId))
+                return NO_VFX_SOCKET_SELECTED_CHOICE;
+
+            if (m_vfxSocketIdChoices.Contains(socketId))
+                return socketId;
+
+            return CUSTOM_VFX_SOCKET_CHOICE;
         }
 
     }

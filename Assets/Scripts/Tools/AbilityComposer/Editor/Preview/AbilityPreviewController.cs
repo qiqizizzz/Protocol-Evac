@@ -29,6 +29,7 @@ namespace Tools.AbilityComposer.Editor.Preview
         public bool HasPreview => m_previewInstance != null
                                   && m_previewInstance.scene.IsValid()
                                   && m_previewInstance.scene.isLoaded;
+        public GameObject PreviewRoot => m_previewInstance;
         public GameObject AnimationEventReceiver => m_animationSampleRoot;
 
         /// <summary>

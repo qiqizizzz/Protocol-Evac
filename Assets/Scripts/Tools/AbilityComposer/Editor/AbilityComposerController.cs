@@ -15,6 +15,7 @@ using Module.Ability.Data.Window.Hit;
 using Module.Ability.Data.Window.MovementLock;
 using Module.Ability.Data.Window.StepAdvance;
 using Module.Ability.Data.Window.Vfx;
+using Module.Ability.Vfx;
 using Tools.AbilityComposer.Editor.Preview;
 using Tools.AbilityComposer.Editor.Selection;
 using Tools.AbilityComposer.Editor.View;
@@ -74,6 +75,7 @@ namespace Tools.AbilityComposer.Editor
         private AbilityPreviewController m_previewController;
         private readonly AbilityAnimationClipResolver m_animationClipResolver;
         private readonly Stack<ComposerUndoEntry> m_undoEntries = new Stack<ComposerUndoEntry>();
+        private readonly List<string> m_vfxSocketIdChoices = new List<string>();
         private float m_playbackElapsedTime;
         private int m_playbackStartFrame;
         private int m_currentSaveUndoGroup = -1;
@@ -814,10 +816,27 @@ namespace Tools.AbilityComposer.Editor
         // 刷新主视图文字、按钮状态与时间轴播放头
         private void RefreshView(bool refreshEventMarkers = true)
         {
-            m_composerView.Refresh(m_timelineData, m_previewController.HasPreview, true, m_undoEntries.Count > 0);
+            RefreshVfxSocketIdChoices();
+            m_composerView.Refresh(m_timelineData, m_previewController.HasPreview, true, m_undoEntries.Count > 0,
+                m_vfxSocketIdChoices);
             m_timelineView.RefreshCurrentFrame();
             if (refreshEventMarkers)
                 m_timelineView.RefreshEventMarkers();
+        }
+
+        // 从当前预览实例或预览来源收集特效挂点候选
+        private void RefreshVfxSocketIdChoices()
+        {
+            m_vfxSocketIdChoices.Clear();
+            GameObject socketSource = m_previewController.HasPreview
+                ? m_previewController.PreviewRoot
+                : m_composerData.PreviewSource;
+            if (socketSource == null)
+                return;
+
+            VfxSocketBinder[] socketBinders = socketSource.GetComponentsInChildren<VfxSocketBinder>(true);
+            for (int binderIndex = 0; binderIndex < socketBinders.Length; binderIndex++)
+                socketBinders[binderIndex].CollectSocketIds(m_vfxSocketIdChoices);
         }
 
         // 根据当前临时预览对象刷新可选的 Animation Event Function

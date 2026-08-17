@@ -148,13 +148,14 @@ namespace Tools.AbilityComposer.Editor.View
         }
 
         // 使用当前数据刷新播放控件与状态文字
-        public void Refresh(AbilityTimelineData timelineData, bool hasPreview, bool canEditWindows, bool canUndo)
+        public void Refresh(AbilityTimelineData timelineData, bool hasPreview, bool canEditWindows, bool canUndo,
+            IReadOnlyList<string> vfxSocketIdChoices)
         {
             m_returnPreviousSceneButton.SetEnabled(hasPreview);
             m_saveAllButton.SetEnabled(timelineData.HasClip);
             m_undoButton.SetEnabled(canUndo);
             m_leftView.Refresh(timelineData, hasPreview, canEditWindows);
-            m_rightView.Refresh(timelineData);
+            m_rightView.Refresh(timelineData, vfxSocketIdChoices);
         }
 
         // 更新右侧 Event Inspector 的 Function 下拉候选
