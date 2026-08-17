@@ -39,6 +39,7 @@ namespace Module.Player.HFSM.Animation
         private static readonly int S_StopRunRightStateHash = Animator.StringToHash("Base Layer.Grounded_Common.Grounded_Stop.stop_run_r");
         private static readonly int S_StopSprintLeftStateHash = Animator.StringToHash("Base Layer.Grounded_Common.Grounded_Stop.stop_sprint_l");
         private static readonly int S_StopSprintRightStateHash = Animator.StringToHash("Base Layer.Grounded_Common.Grounded_Stop.stop_sprint_r");
+        private static readonly int S_ActionDodgeStateHash = Animator.StringToHash("Base Layer.Action.dodge");
         private static readonly int S_SkillNormalAttack01StateHash = Animator.StringToHash("Base Layer.Skill.NormalAttack.attack01");
         private static readonly int S_SkillNormalAttack02StateHash = Animator.StringToHash("Base Layer.Skill.NormalAttack.attack02");
         private static readonly int S_SkillNormalAttack03StateHash = Animator.StringToHash("Base Layer.Skill.NormalAttack.attack03");
@@ -136,7 +137,10 @@ namespace Module.Player.HFSM.Animation
             }
 
             if (stateId == PlayerStateId.ActionDodge)
+            {
+                m_animator.Play(S_ActionDodgeStateHash, 0, 0f);
                 return;
+            }
 
             if (stateId == PlayerStateId.GroundedIdle || stateId == PlayerStateId.GroundedMove)
             {

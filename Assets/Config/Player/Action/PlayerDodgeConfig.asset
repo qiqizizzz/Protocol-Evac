@@ -17,6 +17,8 @@ MonoBehaviour:
     StateDurationValue: 1.8333334
     ShowWeaponValue: 0
     UseComboWindowValue: 0
+    ComboWindowTrackValue:
+      WindowValues: []
   DodgeSpeedValue: 3.1818182
   DodgeMoveEndNormalizedTimeValue: 0.4
   DodgeInputThresholdSqrValue: 0.01
