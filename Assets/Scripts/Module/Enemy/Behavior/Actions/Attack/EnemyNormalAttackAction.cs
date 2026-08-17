@@ -10,7 +10,9 @@ using CleverCrow.Fluid.BTs.Tasks;
 using CleverCrow.Fluid.BTs.Tasks.Actions;
 using Module.Enemy.Skill;
 using Module.Enemy.Skill.Core;
+using Module.Enemy.Skill.Data;
 using Module.Enemy.Context;
+using UnityEngine;
 
 namespace Module.Enemy.Behavior.Actions.Attack
 {
@@ -18,14 +20,17 @@ namespace Module.Enemy.Behavior.Actions.Attack
     {
         private readonly EnemySkillController m_skillController;
         private readonly EnemyContext m_context;
+        private readonly EnemyNormalAttackConfigSO m_normalAttackConfig;
 
         private bool m_hasOpenedSkill;
 
         // 创建敌人普通攻击行为节点
-        public EnemyNormalAttackAction(EnemySkillController skillController, EnemyContext context)
+        public EnemyNormalAttackAction(EnemySkillController skillController, EnemyContext context,
+            EnemyNormalAttackConfigSO normalAttackConfig)
         {
             m_skillController = skillController;
             m_context = context;
+            m_normalAttackConfig = normalAttackConfig;
         }
 
         // 尝试打开普通攻击
@@ -33,6 +38,10 @@ namespace Module.Enemy.Behavior.Actions.Attack
         {
             m_context.Movement.StopMove();
             m_hasOpenedSkill = m_skillController.TryOpen(EnemySkillType.NormalAttack);
+            if (!m_hasOpenedSkill)
+                return;
+
+            ApplyAttackLunge();
         }
 
         // 等待技能时间轴完成
@@ -55,6 +64,24 @@ namespace Module.Enemy.Behavior.Actions.Attack
                 m_skillController.Close();
 
             m_hasOpenedSkill = false;
+        }
+
+        // 根据当前目标方向应用普攻起手踏步
+        private void ApplyAttackLunge()
+        {
+            if (m_context.Target.CurrentTarget == null)
+                return;
+
+            if (m_normalAttackConfig.AttackLungeSpeed <= 0f || m_normalAttackConfig.AttackLungeDuration <= 0f)
+                return;
+
+            Vector3 lungeDirection = m_context.Target.CurrentTarget.position - m_context.Transform.position;
+            lungeDirection.y = 0f;
+            if (lungeDirection.sqrMagnitude <= 0.0001f)
+                return;
+
+            m_context.Movement.SetForcedMove(lungeDirection.normalized * m_normalAttackConfig.AttackLungeSpeed,
+                m_normalAttackConfig.AttackLungeDuration, 0f);
         }
     }
 }

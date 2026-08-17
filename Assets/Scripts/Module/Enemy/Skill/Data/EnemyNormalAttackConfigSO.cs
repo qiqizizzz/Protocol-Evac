@@ -31,8 +31,20 @@ namespace Module.Enemy.Skill.Data
         [Tooltip("普通攻击期间是否允许朝向目标旋转")]
         [SerializeField] private bool CanRotateValue;
 
+        [Group("ExecutionSettings")]
+        [LabelText("攻击前冲速度")]
+        [Tooltip("普通攻击开始时朝目标踏步的水平速度")]
+        [SerializeField, Min(0f)] private float AttackLungeSpeedValue;
+
+        [Group("ExecutionSettings")]
+        [LabelText("攻击前冲时长")]
+        [Tooltip("普通攻击开始时朝目标踏步的持续时间")]
+        [SerializeField, Min(0f)] private float AttackLungeDurationValue;
+
         public float Cooldown => CooldownValue;
         public bool LockMovement => LockMovementValue;
         public bool CanRotate => CanRotateValue;
+        public float AttackLungeSpeed => AttackLungeSpeedValue;
+        public float AttackLungeDuration => AttackLungeDurationValue;
     }
 }

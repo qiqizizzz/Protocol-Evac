@@ -16,6 +16,7 @@ using Module.Enemy.Behavior.Conditions.Common;
 using Module.Enemy.Behavior.Conditions.Patrol;
 using Module.Enemy.Context;
 using Module.Enemy.Skill.Core;
+using Module.Enemy.Skill.Data;
 using Module.Navigation.Core;
 using UnityEngine;
 
@@ -27,14 +28,14 @@ namespace Module.Enemy.Behavior.Trees.Wanderer
 
         // 创建流浪者行为树
         public WandererBehaviorTree(GameObject owner, EnemyContext context, EnemySkillController skillController,
-            INavigationController navigationController)
+            INavigationController navigationController, EnemyNormalAttackConfigSO normalAttackConfig)
         {
-            Tree = CreateTree(owner, context, skillController, navigationController);
+            Tree = CreateTree(owner, context, skillController, navigationController, normalAttackConfig);
         }
 
         // 组合流浪者当前可执行的行为分支
         private BehaviorTree CreateTree(GameObject owner, EnemyContext context, EnemySkillController skillController,
-            INavigationController navigationController)
+            INavigationController navigationController, EnemyNormalAttackConfigSO normalAttackConfig)
         {
             return new BehaviorTreeBuilder(owner)
                 .Name("流浪者行为树")
@@ -52,7 +53,7 @@ namespace Module.Enemy.Behavior.Trees.Wanderer
                         {
                             Name = "普通攻击可用"
                         })
-                        .AddNode(new EnemyNormalAttackAction(skillController, context)
+                        .AddNode(new EnemyNormalAttackAction(skillController, context, normalAttackConfig)
                         {
                             Name = "执行普通攻击"
                         })

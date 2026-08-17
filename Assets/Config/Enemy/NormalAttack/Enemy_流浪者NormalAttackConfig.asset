@@ -55,3 +55,5 @@ MonoBehaviour:
   CooldownValue: 0.5
   LockMovementValue: 1
   CanRotateValue: 1
+  AttackLungeSpeedValue: 2.4
+  AttackLungeDurationValue: 0.18

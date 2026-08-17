@@ -22,9 +22,39 @@ MonoBehaviour:
       EndNormalizedTimeValue: 0.52
       DamageValue: 18
       ReactionTypeValue: 1
+      HorizontalKnockbackSpeedValue: 0
+      HorizontalKnockbackDurationValue: 0
+      VerticalLaunchSpeedValue: 0
   UseStepAdvanceWindowValue: 0
   StepAdvanceWindowTrackValue:
     WindowValues: []
   UseMovementLockWindowValue: 0
   MovementLockWindowTrackValue:
     WindowValues: []
+  UseVfxWindowValue: 1
+  VfxWindowTrackValue:
+    WindowValues:
+    - IdValue: vfx_enemy_wanderer_attack_slash_c
+      StartNormalizedTimeValue: 0.16
+      EndNormalizedTimeValue: 0.24
+      TriggerTypeValue: 0
+      TargetTypeValue: 1
+      VfxPrefabValue: {fileID: 8596104229532911095, guid: 0baec54613799274599f65b8d6880fa8,
+        type: 3}
+      SocketIdValue: 
+      LifeModeValue: 0
+      LocalPositionOffsetValue: {x: 0.24, y: 1.28, z: 0.6}
+      LocalEulerOffsetValue: {x: 0, y: 0, z: 14}
+      FollowTargetValue: 1
+    - IdValue: vfx_enemy_wanderer_hit_player_c
+      StartNormalizedTimeValue: 0.16
+      EndNormalizedTimeValue: 0.52
+      TriggerTypeValue: 2
+      TargetTypeValue: 3
+      VfxPrefabValue: {fileID: 6365747057581380401, guid: 92b6dc8cf03aae248b66d07cfe27c83a,
+        type: 3}
+      SocketIdValue: 
+      LifeModeValue: 0
+      LocalPositionOffsetValue: {x: 0, y: 1.05, z: 0}
+      LocalEulerOffsetValue: {x: 0, y: 0, z: 0}
+      FollowTargetValue: 0

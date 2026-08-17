@@ -173,7 +173,7 @@ namespace Module.Enemy.Core
         private void InitBehavior()
         {
             WandererBehaviorTree wandererBehaviorTree = new WandererBehaviorTree(gameObject, m_context,
-                m_skillController, m_navigationController);
+                m_skillController, m_navigationController, Settings.NormalAttackConfig);
             m_behaviorController = new EnemyBehaviorController(wandererBehaviorTree.Tree);
             EnemyBehaviorTree = m_behaviorController.Tree;
         }
