@@ -153,6 +153,8 @@ InitTestScene*.unity*
 # ==========================================
 # Local AI / Design Workspace - 本地 AI 与设计资料
 # ==========================================
+/AGENTS.md
+/PMXHumanoidAvatarMappings.json.bak-codex
 /.agents/skills/
 /.codex/
 /设计文档/
