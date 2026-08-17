@@ -432,7 +432,14 @@ namespace Tools.AbilityComposer.Editor
         // 删除当前选中的窗口草稿
         private void DeleteSelectedWindow()
         {
+            if (m_timelineData.SelectedWindow == null)
+                return;
+
+            AbilityWindowDraftType windowType = m_timelineData.SelectedWindow.Type;
             m_timelineData.DeleteSelectedWindow();
+            if (m_timelineData.WindowConfig != null)
+                SaveWindowTrack(windowType, true);
+
             RefreshView();
         }
 
@@ -1186,26 +1193,34 @@ namespace Tools.AbilityComposer.Editor
         // 将当前选中窗口写回所属类型的轨道数据
         private void SaveWindowTrack()
         {
-            switch (m_timelineData.SelectedWindow.Type)
+            if (m_timelineData.SelectedWindow == null)
+                return;
+
+            SaveWindowTrack(m_timelineData.SelectedWindow.Type, true);
+            RefreshView();
+        }
+
+        // 将指定类型的窗口草稿写回所属轨道数据
+        private void SaveWindowTrack(AbilityWindowDraftType windowType, bool createUndoGroup)
+        {
+            switch (windowType)
             {
                 case AbilityWindowDraftType.Hit:
-                    SaveHitWindowTrack(true);
+                    SaveHitWindowTrack(createUndoGroup);
                     break;
                 case AbilityWindowDraftType.StepAdvance:
-                    SaveStepAdvanceWindowTrack(true);
+                    SaveStepAdvanceWindowTrack(createUndoGroup);
                     break;
                 case AbilityWindowDraftType.MovementLock:
-                    SaveMovementLockWindowTrack(true);
+                    SaveMovementLockWindowTrack(createUndoGroup);
                     break;
                 case AbilityWindowDraftType.Vfx:
-                    SaveVfxWindowTrack(true);
+                    SaveVfxWindowTrack(createUndoGroup);
                     break;
                 case AbilityWindowDraftType.Audio:
-                    SaveAudioWindowTrack(true);
+                    SaveAudioWindowTrack(createUndoGroup);
                     break;
             }
-
-            RefreshView();
         }
 
         // 保存全部已启用或包含草稿的窗口轨道

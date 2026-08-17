@@ -72,6 +72,7 @@ namespace Tools.AbilityComposer.Editor.View.Right
         public event Action<string> OnWindowAudioSocketIdChanged;
         public event Action<UnityEngine.Vector3> OnWindowAudioPositionOffsetChanged;
         public event Action OnSaveWindowRequested;
+        public event Action OnDeleteWindowRequested;
         public event Action OnCloseEventInspectorRequested;
         public event Action OnCloseWindowInspectorRequested;
 
@@ -169,6 +170,7 @@ namespace Tools.AbilityComposer.Editor.View.Right
             m_windowInspectorView.OnAudioSocketIdChanged += RequestWindowAudioSocketIdChanged;
             m_windowInspectorView.OnAudioPositionOffsetChanged += RequestWindowAudioPositionOffsetChanged;
             m_windowInspectorView.OnSaveWindowRequested += RequestSaveWindow;
+            m_windowInspectorView.OnDeleteWindowRequested += RequestDeleteWindow;
         }
 
         protected override void UnsubscribeViewEvents()
@@ -206,6 +208,7 @@ namespace Tools.AbilityComposer.Editor.View.Right
             m_windowInspectorView.OnAudioSocketIdChanged -= RequestWindowAudioSocketIdChanged;
             m_windowInspectorView.OnAudioPositionOffsetChanged -= RequestWindowAudioPositionOffsetChanged;
             m_windowInspectorView.OnSaveWindowRequested -= RequestSaveWindow;
+            m_windowInspectorView.OnDeleteWindowRequested -= RequestDeleteWindow;
             m_isControlsReady = false;
         }
 
@@ -307,6 +310,9 @@ namespace Tools.AbilityComposer.Editor.View.Right
 
         // 转发保存窗口轨道请求
         private void RequestSaveWindow() => OnSaveWindowRequested?.Invoke();
+
+        // 转发删除窗口并保存轨道请求
+        private void RequestDeleteWindow() => OnDeleteWindowRequested?.Invoke();
 
         // 打开指定检查器页签并将其置为当前页
         private void OpenTab(InspectorTabType tabType)

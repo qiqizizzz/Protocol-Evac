@@ -281,6 +281,7 @@ namespace Tools.AbilityComposer.Editor.View
             m_rightView.OnWindowAudioSocketIdChanged += RequestWindowAudioSocketIdChanged;
             m_rightView.OnWindowAudioPositionOffsetChanged += RequestWindowAudioPositionOffsetChanged;
             m_rightView.OnSaveWindowRequested += RequestSaveWindow;
+            m_rightView.OnDeleteWindowRequested += RequestDeleteSelectedWindow;
             m_rightView.OnCloseEventInspectorRequested += RequestCloseEventInspector;
             m_rightView.OnCloseWindowInspectorRequested += RequestCloseWindowInspector;
         }
@@ -344,6 +345,7 @@ namespace Tools.AbilityComposer.Editor.View
             m_rightView.OnWindowAudioSocketIdChanged -= RequestWindowAudioSocketIdChanged;
             m_rightView.OnWindowAudioPositionOffsetChanged -= RequestWindowAudioPositionOffsetChanged;
             m_rightView.OnSaveWindowRequested -= RequestSaveWindow;
+            m_rightView.OnDeleteWindowRequested -= RequestDeleteSelectedWindow;
             m_rightView.OnCloseEventInspectorRequested -= RequestCloseEventInspector;
             m_rightView.OnCloseWindowInspectorRequested -= RequestCloseWindowInspector;
             m_isControlsReady = false;

@@ -114,6 +114,7 @@ namespace Tools.AbilityComposer.Editor.View.Right.Window
         private TextField m_audioSocketIdField;
         private Vector3Field m_audioPositionOffsetField;
         private Button m_saveWindowButton;
+        private Button m_deleteWindowButton;
 
         public event Action<AbilityWindowConfigSO> OnWindowConfigChanged;
         public event Action<AbilityWindowDraftType> OnTypeChanged;
@@ -141,6 +142,7 @@ namespace Tools.AbilityComposer.Editor.View.Right.Window
         public event Action<string> OnAudioSocketIdChanged;
         public event Action<Vector3> OnAudioPositionOffsetChanged;
         public event Action OnSaveWindowRequested;
+        public event Action OnDeleteWindowRequested;
 
         // 注入窗口检查器页面容器
         public AbilityWindowInspectorView(VisualElement rootVisualElement)
@@ -237,6 +239,14 @@ namespace Tools.AbilityComposer.Editor.View.Right.Window
             saveButtonLabel.AddToClassList("ac-button-label");
             saveButtonLabel.AddToClassList("ac-muted-button-label");
             m_saveWindowButton.Add(saveButtonLabel);
+            m_deleteWindowButton = new Button();
+            m_deleteWindowButton.AddToClassList("ac-button");
+            m_deleteWindowButton.AddToClassList("ac-inspector-save-button");
+            Label deleteButtonLabel = new Label("删除窗口");
+            deleteButtonLabel.name = "delete-window-button-label";
+            deleteButtonLabel.AddToClassList("ac-button-label");
+            deleteButtonLabel.AddToClassList("ac-muted-button-label");
+            m_deleteWindowButton.Add(deleteButtonLabel);
             m_rootVisualElement.Add(m_titleLabel);
             m_rootVisualElement.Add(m_windowConfigField);
             m_rootVisualElement.Add(m_typeField);
@@ -266,6 +276,7 @@ namespace Tools.AbilityComposer.Editor.View.Right.Window
             m_rootVisualElement.Add(m_audioPositionOffsetField);
             VisualElement saveRow = new VisualElement();
             saveRow.AddToClassList("ac-inspector-save-row");
+            saveRow.Add(m_deleteWindowButton);
             saveRow.Add(m_saveWindowButton);
             m_rootVisualElement.Add(saveRow);
             SetInspectorVisible(false);
@@ -284,6 +295,7 @@ namespace Tools.AbilityComposer.Editor.View.Right.Window
 
             SetWindowFieldsEnabled(true);
             m_saveWindowButton.SetEnabled(true);
+            m_deleteWindowButton.SetEnabled(true);
 
             m_typeField.SetValueWithoutNotify(GetTypeChoice(selectedWindow.Type));
             m_startFrameField.SetValueWithoutNotify(selectedWindow.StartFrame);
@@ -359,6 +371,7 @@ namespace Tools.AbilityComposer.Editor.View.Right.Window
             m_audioSocketIdField.RegisterValueChangedCallback(HandleAudioSocketIdChanged);
             m_audioPositionOffsetField.RegisterValueChangedCallback(HandleAudioPositionOffsetChanged);
             m_saveWindowButton.clicked += RequestSaveWindow;
+            m_deleteWindowButton.clicked += RequestDeleteWindow;
         }
 
         protected override void UnsubscribeViewEvents()
@@ -390,6 +403,7 @@ namespace Tools.AbilityComposer.Editor.View.Right.Window
             m_audioSocketIdField.UnregisterValueChangedCallback(HandleAudioSocketIdChanged);
             m_audioPositionOffsetField.UnregisterValueChangedCallback(HandleAudioPositionOffsetChanged);
             m_saveWindowButton.clicked -= RequestSaveWindow;
+            m_deleteWindowButton.clicked -= RequestDeleteWindow;
         }
 
         // 切换窗口检查器显示
@@ -707,6 +721,12 @@ namespace Tools.AbilityComposer.Editor.View.Right.Window
         private void RequestSaveWindow()
         {
             OnSaveWindowRequested?.Invoke();
+        }
+
+        // 请求删除当前选中的窗口并写回窗口轨道资产
+        private void RequestDeleteWindow()
+        {
+            OnDeleteWindowRequested?.Invoke();
         }
 
         // 将枚举类型转换为下拉选项文字

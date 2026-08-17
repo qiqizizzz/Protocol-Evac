@@ -149,3 +149,10 @@ InitTestScene*.unity*
 /Assets/Art/Models/Enemy-流浪者/
 /Assets/Art/Textures/Enemy-流浪者/
 /Assets/Prefabs/Character/Enemy_流浪者.prefab
+
+# ==========================================
+# Local AI / Design Workspace - 本地 AI 与设计资料
+# ==========================================
+/.agents/skills/
+/.codex/
+/设计文档/

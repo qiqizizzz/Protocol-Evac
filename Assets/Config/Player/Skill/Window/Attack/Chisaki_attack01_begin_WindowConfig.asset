@@ -21,8 +21,8 @@ MonoBehaviour:
       EndNormalizedTimeValue: 0.2631579
       DamageValue: 5
       ReactionTypeValue: 0
-      HorizontalKnockbackSpeedValue: 4.5
-      HorizontalKnockbackDurationValue: 0.35
+      HorizontalKnockbackSpeedValue: 0
+      HorizontalKnockbackDurationValue: 0
       VerticalLaunchSpeedValue: 0
   UseStepAdvanceWindowValue: 1
   StepAdvanceWindowTrackValue:
@@ -30,7 +30,7 @@ MonoBehaviour:
     - IdValue: step_chisaki_attack01_begin_01
       StartNormalizedTimeValue: 0.10526316
       EndNormalizedTimeValue: 1
-  UseMovementLockWindowValue: 0
+  UseMovementLockWindowValue: 1
   MovementLockWindowTrackValue:
     WindowValues: []
   UseVfxWindowValue: 1
@@ -38,7 +38,7 @@ MonoBehaviour:
     WindowValues:
     - IdValue: vfx_chisaki_attack01_begin_red_slash_arc
       StartNormalizedTimeValue: 0.10526316
-      EndNormalizedTimeValue: 0.18526316
+      EndNormalizedTimeValue: 0.21052632
       TriggerTypeValue: 0
       TargetTypeValue: 0
       VfxPrefabValue: {fileID: 6845443203906786569, guid: b1bcc5221352a694bbc6465bd927167f,
@@ -50,7 +50,7 @@ MonoBehaviour:
       FollowTargetValue: 1
     - IdValue: vfx_chisaki_attack01_begin_weapon_trail
       StartNormalizedTimeValue: 0.10526316
-      EndNormalizedTimeValue: 0.42
+      EndNormalizedTimeValue: 0.42105263
       TriggerTypeValue: 1
       TargetTypeValue: 0
       VfxPrefabValue: {fileID: 3043923254930394474, guid: 876e19651b5e9394687e12dc3b0024e1,
