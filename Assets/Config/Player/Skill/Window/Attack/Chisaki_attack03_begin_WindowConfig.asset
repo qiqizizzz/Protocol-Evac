@@ -112,7 +112,7 @@ MonoBehaviour:
       LocalPositionOffsetValue: {x: 0, y: 0, z: 0}
     - IdValue: e367b404c7e34baaa1cecf98a8397ba1
       StartNormalizedTimeValue: 0.44067797
-      EndNormalizedTimeValue: 0.62711865
+      EndNormalizedTimeValue: 0.7457627
       TriggerTypeValue: 0
       PlaybackTypeValue: 0
       AudioClipValues:
