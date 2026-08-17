@@ -7,6 +7,7 @@
  */
 
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Framework.QTower.Event.ECS
 {
@@ -38,12 +39,21 @@ namespace Framework.QTower.Event.ECS
 
         public void RemoveComponent(int comType)
         {
-            
+            if (Components.ContainsKey(comType))
+            {
+                World.RemoveComponent(Components[comType]);
+                Components[comType].Recycle();
+                Components.Remove(comType);
+            }
         }
 
         public void RemoveAllComponents()
         {
-            
+            List<int> keys = Components.Keys.ToList();
+            for (int i = keys.Count - 1; i >= 0 ; i--)
+            {
+                RemoveComponent(keys[i]);
+            }
         }
 
         public bool HasComponent(int comType)

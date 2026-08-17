@@ -824,13 +824,19 @@ namespace Tools.AbilityComposer.Editor
                 m_timelineView.RefreshEventMarkers();
         }
 
-        // 从当前预览实例或预览来源收集特效挂点候选
+        // 从当前预览实例与预览来源收集特效挂点候选
         private void RefreshVfxSocketIdChoices()
         {
             m_vfxSocketIdChoices.Clear();
-            GameObject socketSource = m_previewController.HasPreview
-                ? m_previewController.PreviewRoot
-                : m_composerData.PreviewSource;
+            if (m_previewController.HasPreview)
+                CollectVfxSocketIdChoices(m_previewController.PreviewRoot);
+
+            CollectVfxSocketIdChoices(m_composerData.PreviewSource);
+        }
+
+        // 从指定对象层级收集特效挂点候选
+        private void CollectVfxSocketIdChoices(GameObject socketSource)
+        {
             if (socketSource == null)
                 return;
 

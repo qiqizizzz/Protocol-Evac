@@ -11,6 +11,8 @@ GameObject:
   - component: {fileID: 3730618011863026410}
   - component: {fileID: 2752082586264406744}
   - component: {fileID: 8036122143564619715}
+  - component: {fileID: 5418898905870798038}
+  - component: {fileID: 8846293069428737995}
   m_Layer: 7
   m_Name: Hero_Chaisaki
   m_TagString: Hero
@@ -74,6 +76,33 @@ CharacterController:
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
   m_Center: {x: 0, y: 0.82, z: 0}
+--- !u!114 &5418898905870798038
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1790880835477353466}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 24d38ff090baefc4c97b3a9154c3a8a9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &8846293069428737995
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1790880835477353466}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c686088ba4533a848b04128315a5c996, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Sockets:
+  - IdValue: WeaponTrail
+    TransformValue: {fileID: 6980034321424114036}
 --- !u!1 &4889568572209777594
 GameObject:
   m_ObjectHideFlags: 0
@@ -242,6 +271,37 @@ Transform:
   m_Children:
   - {fileID: 4693100489103489467}
   m_Father: {fileID: 3730618011863026410}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &8531456055560320694
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6980034321424114036}
+  m_Layer: 0
+  m_Name: VfxSocket_WeaponTrail
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6980034321424114036
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8531456055560320694}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 46.71234, y: -5.8187146, z: 0.039237976}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6841133136256181117}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &6447517674255238294
 PrefabInstance:
@@ -623,7 +683,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
-    m_AddedGameObjects: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: 3c4174fd14063374cb5f927819fdb55d,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6980034321424114036}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 3c4174fd14063374cb5f927819fdb55d,
         type: 3}

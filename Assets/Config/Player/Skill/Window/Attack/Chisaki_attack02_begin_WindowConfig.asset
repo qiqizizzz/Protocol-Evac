@@ -49,3 +49,54 @@ MonoBehaviour:
   UseMovementLockWindowValue: 0
   MovementLockWindowTrackValue:
     WindowValues: []
+  UseVfxWindowValue: 1
+  VfxWindowTrackValue:
+    WindowValues:
+    - IdValue: vfx_chisaki_attack02_begin_weapon_trail
+      StartNormalizedTimeValue: 0.10636364
+      EndNormalizedTimeValue: 0.43636364
+      TriggerTypeValue: 1
+      TargetTypeValue: 0
+      VfxPrefabValue: {fileID: 3600389243222657682, guid: 3fee2e03e4bdc854bb38f7bcbca7c75d,
+        type: 3}
+      SocketIdValue: WeaponTrail
+      LifeModeValue: 2
+      LocalPositionOffsetValue: {x: 0.14, y: 0, z: 0}
+      LocalEulerOffsetValue: {x: 0, y: 0, z: 0}
+      FollowTargetValue: 1
+    - IdValue: vfx_chisaki_attack02_begin_hit_01
+      StartNormalizedTimeValue: 0.13636364
+      EndNormalizedTimeValue: 0.20454545
+      TriggerTypeValue: 2
+      TargetTypeValue: 2
+      VfxPrefabValue: {fileID: 6982263153641847612, guid: 36a3ddd9e9258474aa29a08939eeda45,
+        type: 3}
+      SocketIdValue: 
+      LifeModeValue: 0
+      LocalPositionOffsetValue: {x: 0, y: 0, z: 0}
+      LocalEulerOffsetValue: {x: 0, y: 0, z: 0}
+      FollowTargetValue: 0
+    - IdValue: vfx_chisaki_attack02_begin_hit_02
+      StartNormalizedTimeValue: 0.29545453
+      EndNormalizedTimeValue: 0.3181818
+      TriggerTypeValue: 2
+      TargetTypeValue: 2
+      VfxPrefabValue: {fileID: 6982263153641847612, guid: 36a3ddd9e9258474aa29a08939eeda45,
+        type: 3}
+      SocketIdValue: 
+      LifeModeValue: 0
+      LocalPositionOffsetValue: {x: 0, y: 0, z: 0}
+      LocalEulerOffsetValue: {x: 0, y: 0, z: 0}
+      FollowTargetValue: 0
+    - IdValue: vfx_chisaki_attack02_begin_hit_03
+      StartNormalizedTimeValue: 0.3409091
+      EndNormalizedTimeValue: 0.38636363
+      TriggerTypeValue: 2
+      TargetTypeValue: 2
+      VfxPrefabValue: {fileID: 6982263153641847612, guid: 36a3ddd9e9258474aa29a08939eeda45,
+        type: 3}
+      SocketIdValue: 
+      LifeModeValue: 0
+      LocalPositionOffsetValue: {x: 0, y: 0, z: 0}
+      LocalEulerOffsetValue: {x: 0, y: 0, z: 0}
+      FollowTargetValue: 0
