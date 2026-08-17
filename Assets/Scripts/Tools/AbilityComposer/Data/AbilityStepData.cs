@@ -10,6 +10,7 @@ using System;
 using System.Reflection;
 using Module.Ability.Data.Animation;
 using Module.Ability.Data.Window;
+using Module.Ability.Data.Window.Audio;
 using Module.Ability.Data.Window.Hit;
 using Module.Ability.Data.Window.StepAdvance;
 using Module.Ability.Data.Window.Vfx;
@@ -121,6 +122,10 @@ namespace Module.Ability.Data
         public AbilityVfxWindowTrackData VfxWindowTrack => WindowConfigValue == null
             ? null
             : WindowConfigValue.VfxWindowTrack;
+        public bool UseAudioWindow => WindowConfigValue != null && WindowConfigValue.UseAudioWindow;
+        public AbilityAudioWindowTrackData AudioWindowTrack => WindowConfigValue == null
+            ? null
+            : WindowConfigValue.AudioWindowTrack;
 
         // 更新当前攻击阶段绑定的窗口主体配置
         public void SetWindowConfig(AbilityWindowConfigSO windowConfig)

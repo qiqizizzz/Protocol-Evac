@@ -198,10 +198,15 @@ namespace Tools.AbilityComposer.Editor.View.Center.Timeline
             float vfxWindowHeight = m_timelineData.IsVfxWindowTrackEnabled
                 ? WINDOW_TRACK_HEIGHT
                 : COLLAPSED_WINDOW_TRACK_HEIGHT;
+            float audioWindowTop = vfxWindowTop + vfxWindowHeight + WINDOW_TRACK_GAP;
+            float audioWindowHeight = m_timelineData.IsAudioWindowTrackEnabled
+                ? WINDOW_TRACK_HEIGHT
+                : COLLAPSED_WINDOW_TRACK_HEIGHT;
             CreateWindowTrackBackground(WINDOW_TRACK_START, hitWindowHeight, "ac-window-hit-track");
             CreateWindowTrackBackground(stepAdvanceWindowTop, stepAdvanceWindowHeight, "ac-window-step-advance-track");
             CreateWindowTrackBackground(movementLockWindowTop, movementLockWindowHeight, "ac-window-movement-lock-track");
             CreateWindowTrackBackground(vfxWindowTop, vfxWindowHeight, "ac-window-vfx-track");
+            CreateWindowTrackBackground(audioWindowTop, audioWindowHeight, "ac-window-audio-track");
             CreateWindowMarkers(m_timelineData.HitWindowDraftValues, WINDOW_TRACK_START,
                 hitWindowHeight, "命中窗口", "ac-window-hit", m_timelineData.IsHitWindowTrackEnabled);
             CreateWindowMarkers(m_timelineData.StepAdvanceWindowDraftValues, stepAdvanceWindowTop,
@@ -210,6 +215,8 @@ namespace Tools.AbilityComposer.Editor.View.Center.Timeline
                 movementLockWindowHeight, "移动锁定", "ac-window-movement-lock", m_timelineData.IsMovementLockWindowTrackEnabled);
             CreateWindowMarkers(m_timelineData.VfxWindowDraftValues, vfxWindowTop,
                 vfxWindowHeight, "特效窗口", "ac-window-vfx", m_timelineData.IsVfxWindowTrackEnabled);
+            CreateWindowMarkers(m_timelineData.AudioWindowDraftValues, audioWindowTop,
+                audioWindowHeight, "音效窗口", "ac-window-audio", m_timelineData.IsAudioWindowTrackEnabled);
             CreateTimelinePlayhead();
         }
 

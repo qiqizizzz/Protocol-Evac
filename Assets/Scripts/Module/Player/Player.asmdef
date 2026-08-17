@@ -4,12 +4,11 @@
     "references": [
         "GUID:1e6a16ebd49fdb74fad1843f95457608",
         "GUID:75469ad4d38634e559750d17036d5f7c",
-        "GUID:776d03a35f1b52c4a9aed9f56d7b4229",
         "GUID:2e2028143becd3b47bc14ed467d11a06",
         "GUID:324caed91501a9c47a04ebfd87b68794",
         "GUID:47b93ceb36104063b4d385403b21ee9b",
-        "Ability.Data",
-        "Ability.Core"
+        "GUID:4c3451d287410b4458357d5c39db70bd",
+        "GUID:869a71bd0c8639049a891be0659bba40"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

@@ -8,6 +8,7 @@
 
 using System.Collections.Generic;
 using Module.Ability.Data.Window;
+using Module.Ability.Data.Window.Audio;
 using Module.Ability.Data.Window.Hit;
 using Module.Ability.Data.Window.MovementLock;
 using Module.Ability.Data.Window.StepAdvance;
@@ -25,6 +26,7 @@ namespace Tools.AbilityComposer.Editor.View.Center.Timeline
         private readonly List<AbilityWindowDraft> m_stepAdvanceWindowDraftValues = new List<AbilityWindowDraft>();
         private readonly List<AbilityWindowDraft> m_movementLockWindowDraftValues = new List<AbilityWindowDraft>();
         private readonly List<AbilityWindowDraft> m_vfxWindowDraftValues = new List<AbilityWindowDraft>();
+        private readonly List<AbilityWindowDraft> m_audioWindowDraftValues = new List<AbilityWindowDraft>();
 
         public AnimationClip Clip { get; private set; }
         public float FrameRate { get; private set; }
@@ -36,6 +38,7 @@ namespace Tools.AbilityComposer.Editor.View.Center.Timeline
         public IReadOnlyList<AbilityWindowDraft> StepAdvanceWindowDraftValues => m_stepAdvanceWindowDraftValues;
         public IReadOnlyList<AbilityWindowDraft> MovementLockWindowDraftValues => m_movementLockWindowDraftValues;
         public IReadOnlyList<AbilityWindowDraft> VfxWindowDraftValues => m_vfxWindowDraftValues;
+        public IReadOnlyList<AbilityWindowDraft> AudioWindowDraftValues => m_audioWindowDraftValues;
         public AbilityEventDraft SelectedEvent { get; private set; }
         public AbilityWindowDraft SelectedWindow { get; private set; }
         public AbilityWindowConfigSO WindowConfig { get; private set; }
@@ -43,11 +46,13 @@ namespace Tools.AbilityComposer.Editor.View.Center.Timeline
         public AbilityStepAdvanceWindowTrackData StepAdvanceWindowTrack { get; private set; }
         public AbilityMovementLockWindowTrackData MovementLockWindowTrack { get; private set; }
         public AbilityVfxWindowTrackData VfxWindowTrack { get; private set; }
+        public AbilityAudioWindowTrackData AudioWindowTrack { get; private set; }
         public bool IsWindowInspectorActive { get; private set; }
         public bool IsHitWindowTrackEnabled { get; private set; } = true;
         public bool IsStepAdvanceWindowTrackEnabled { get; private set; } = true;
         public bool IsMovementLockWindowTrackEnabled { get; private set; } = true;
         public bool IsVfxWindowTrackEnabled { get; private set; } = true;
+        public bool IsAudioWindowTrackEnabled { get; private set; } = true;
         public bool HasClip => Clip != null;
         public int LastFrame => Mathf.Max(FrameCount - 1, 0);
         public int LastBoundaryFrame => HasClip ? Mathf.Max(FrameCount, 1) : 0;
@@ -66,6 +71,7 @@ namespace Tools.AbilityComposer.Editor.View.Center.Timeline
             m_stepAdvanceWindowDraftValues.Clear();
             m_movementLockWindowDraftValues.Clear();
             m_vfxWindowDraftValues.Clear();
+            m_audioWindowDraftValues.Clear();
             SelectedEvent = null;
             SelectedWindow = null;
             IsWindowInspectorActive = false;
@@ -79,6 +85,7 @@ namespace Tools.AbilityComposer.Editor.View.Center.Timeline
             StepAdvanceWindowTrack = windowConfig == null ? null : windowConfig.StepAdvanceWindowTrack;
             MovementLockWindowTrack = windowConfig == null ? null : windowConfig.MovementLockWindowTrack;
             VfxWindowTrack = windowConfig == null ? null : windowConfig.VfxWindowTrack;
+            AudioWindowTrack = windowConfig == null ? null : windowConfig.AudioWindowTrack;
         }
 
         // 设置命中窗口轨道的显示状态
@@ -103,6 +110,12 @@ namespace Tools.AbilityComposer.Editor.View.Center.Timeline
         public void SetVfxWindowTrackEnabled(bool isEnabled)
         {
             IsVfxWindowTrackEnabled = isEnabled;
+        }
+
+        // 设置音效窗口轨道的显示状态
+        public void SetAudioWindowTrackEnabled(bool isEnabled)
+        {
+            IsAudioWindowTrackEnabled = isEnabled;
         }
 
         // 从 AnimationClip 的事件数据重建内存草稿
@@ -263,6 +276,7 @@ namespace Tools.AbilityComposer.Editor.View.Center.Timeline
             m_stepAdvanceWindowDraftValues.Clear();
             m_movementLockWindowDraftValues.Clear();
             m_vfxWindowDraftValues.Clear();
+            m_audioWindowDraftValues.Clear();
             SelectedWindow = null;
             IsWindowInspectorActive = false;
         }
@@ -339,6 +353,8 @@ namespace Tools.AbilityComposer.Editor.View.Center.Timeline
                     return m_movementLockWindowDraftValues;
                 case AbilityWindowDraftType.Vfx:
                     return m_vfxWindowDraftValues;
+                case AbilityWindowDraftType.Audio:
+                    return m_audioWindowDraftValues;
                 default:
                     QLog.Error($"未支持的 Ability 窗口草稿类型：{type}");
                     return m_hitWindowDraftValues;
@@ -351,7 +367,8 @@ namespace Tools.AbilityComposer.Editor.View.Center.Timeline
             AbilityWindowDraft windowDraft = m_hitWindowDraftValues.Find(item => item.Id == windowId);
             windowDraft ??= m_stepAdvanceWindowDraftValues.Find(item => item.Id == windowId);
             windowDraft ??= m_movementLockWindowDraftValues.Find(item => item.Id == windowId);
-            return windowDraft ?? m_vfxWindowDraftValues.Find(item => item.Id == windowId);
+            windowDraft ??= m_vfxWindowDraftValues.Find(item => item.Id == windowId);
+            return windowDraft ?? m_audioWindowDraftValues.Find(item => item.Id == windowId);
         }
 
         // 返回全部窗口草稿供编辑器统一遍历
@@ -364,6 +381,8 @@ namespace Tools.AbilityComposer.Editor.View.Center.Timeline
             foreach (AbilityWindowDraft windowDraft in m_movementLockWindowDraftValues)
                 yield return windowDraft;
             foreach (AbilityWindowDraft windowDraft in m_vfxWindowDraftValues)
+                yield return windowDraft;
+            foreach (AbilityWindowDraft windowDraft in m_audioWindowDraftValues)
                 yield return windowDraft;
         }
 
@@ -437,6 +456,123 @@ namespace Tools.AbilityComposer.Editor.View.Center.Timeline
                 return;
 
             SelectedWindow.SetVfxFollowTarget(followTarget);
+        }
+
+        // 更新选中音效窗口的触发方式
+        public void SetSelectedWindowAudioTriggerType(AbilityAudioTriggerType triggerType)
+        {
+            if (SelectedWindow == null)
+                return;
+
+            SelectedWindow.SetAudioTriggerType(triggerType);
+        }
+
+        // 更新选中音效窗口的播放类型
+        public void SetSelectedWindowAudioPlaybackType(AbilityAudioPlaybackType playbackType)
+        {
+            if (SelectedWindow == null)
+                return;
+
+            SelectedWindow.SetAudioPlaybackType(playbackType);
+        }
+
+        // 更新选中音效窗口的资源槽位
+        public void SetSelectedWindowAudioClip(int clipSlotIndex, AudioClip audioClip)
+        {
+            if (SelectedWindow == null)
+                return;
+
+            SelectedWindow.SetAudioClip(clipSlotIndex, audioClip);
+        }
+
+        // 给选中音效窗口新增一个资源槽位
+        public void AddSelectedWindowAudioClip()
+        {
+            if (SelectedWindow == null)
+                return;
+
+            SelectedWindow.AddAudioClip(null);
+        }
+
+        // 删除选中音效窗口的资源槽位
+        public void RemoveSelectedWindowAudioClip(int clipSlotIndex)
+        {
+            if (SelectedWindow == null)
+                return;
+
+            SelectedWindow.RemoveAudioClip(clipSlotIndex);
+        }
+
+        // 更新选中音效窗口的音量
+        public void SetSelectedWindowAudioVolume(float volume)
+        {
+            if (SelectedWindow == null)
+                return;
+
+            SelectedWindow.SetAudioVolume(Mathf.Clamp01(volume));
+        }
+
+        // 更新选中音效窗口的音高
+        public void SetSelectedWindowAudioPitch(float pitch)
+        {
+            if (SelectedWindow == null)
+                return;
+
+            SelectedWindow.SetAudioPitch(Mathf.Max(0.1f, pitch));
+        }
+
+        // 更新选中音效窗口的随机音高范围
+        public void SetSelectedWindowAudioRandomPitchRange(float randomPitchRange)
+        {
+            if (SelectedWindow == null)
+                return;
+
+            SelectedWindow.SetAudioRandomPitchRange(Mathf.Clamp01(randomPitchRange));
+        }
+
+        // 更新选中音效窗口的空间化状态
+        public void SetSelectedWindowAudioSpatial(bool spatial)
+        {
+            if (SelectedWindow == null)
+                return;
+
+            SelectedWindow.SetAudioSpatial(spatial);
+        }
+
+        // 更新选中音效窗口的窗口结束截断状态
+        public void SetSelectedWindowAudioStopOnWindowEnd(bool stopOnWindowEnd)
+        {
+            if (SelectedWindow == null)
+                return;
+
+            SelectedWindow.SetAudioStopOnWindowEnd(stopOnWindowEnd);
+        }
+
+        // 更新选中音效窗口的播放目标
+        public void SetSelectedWindowAudioTargetType(AbilityAudioTargetType targetType)
+        {
+            if (SelectedWindow == null)
+                return;
+
+            SelectedWindow.SetAudioTargetType(targetType);
+        }
+
+        // 更新选中音效窗口的挂点 Id
+        public void SetSelectedWindowAudioSocketId(string socketId)
+        {
+            if (SelectedWindow == null)
+                return;
+
+            SelectedWindow.SetAudioSocketId(socketId);
+        }
+
+        // 更新选中音效窗口的位置偏移
+        public void SetSelectedWindowAudioLocalPositionOffset(Vector3 localPositionOffset)
+        {
+            if (SelectedWindow == null)
+                return;
+
+            SelectedWindow.SetAudioLocalPositionOffset(localPositionOffset);
         }
     }
 }

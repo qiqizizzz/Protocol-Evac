@@ -7,6 +7,7 @@
  */
 
 using Module.Player.Core.View.Config;
+using Module.Player.Audio;
 using Module.Player.HFSM.Config.Action;
 using Module.Player.HFSM.Config.Air;
 using Module.Player.HFSM.Config.Disabled;
@@ -26,6 +27,7 @@ namespace Module.Player.Config
     [DeclareFoldoutGroup("Action", Title = "动作配置", Expanded = true)]
     [DeclareFoldoutGroup("Disabled", Title = "受控配置", Expanded = true)]
     [DeclareFoldoutGroup("Skill", Title = "技能配置", Expanded = true)]
+    [DeclareFoldoutGroup("Audio", Title = "音频配置", Expanded = true)]
     [DeclareFoldoutGroup("View", Title = "视角配置", Expanded = true)]
     public sealed class PlayerSettingsSO : ScriptableObject
     {
@@ -57,6 +59,10 @@ namespace Module.Player.Config
         [LabelText("普通攻击配置")]
         [SerializeField] private PlayerNormalAttackConfigSO NormalAttackConfigValue;
 
+        [Group("Audio")]
+        [LabelText("玩家音效配置")]
+        [SerializeField] private PlayerAudioConfigSO AudioConfigValue;
+
         [Group("View")]
         [LabelText("视角配置")]
         [SerializeField] private PlayerViewConfigSO ViewConfigValue;
@@ -68,6 +74,7 @@ namespace Module.Player.Config
         public PlayerDodgeConfigSO DodgeConfig => DodgeConfigValue;
         public PlayerDamageConfigSO DamageConfig => DamageConfigValue;
         public PlayerNormalAttackConfigSO NormalAttackConfig => NormalAttackConfigValue;
+        public PlayerAudioConfigSO AudioConfig => AudioConfigValue;
         public PlayerViewConfigSO ViewConfig => ViewConfigValue;
     }
 }

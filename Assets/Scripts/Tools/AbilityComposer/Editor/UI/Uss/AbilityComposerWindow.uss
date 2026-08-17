@@ -606,6 +606,10 @@
     background-color: rgb(177, 116, 220);
 }
 
+.ac-window-audio-track {
+    background-color: rgb(216, 190, 67);
+}
+
 .ac-timeline-window-marker-selected {
     border-width: 2px;
     border-color: rgb(245, 245, 245);
@@ -636,6 +640,10 @@
 
 .ac-window-vfx {
     background-color: rgb(177, 116, 220);
+}
+
+.ac-window-audio {
+    background-color: rgb(216, 190, 67);
 }
 
 .ac-timeline-empty-state {

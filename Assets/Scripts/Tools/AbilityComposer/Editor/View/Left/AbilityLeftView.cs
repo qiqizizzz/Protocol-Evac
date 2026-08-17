@@ -33,6 +33,7 @@ namespace Tools.AbilityComposer.Editor.View.Left
         private Button m_stepAdvanceWindowTrackToggle;
         private Button m_movementLockWindowTrackToggle;
         private Button m_vfxWindowTrackToggle;
+        private Button m_audioWindowTrackToggle;
         private bool m_isControlsReady;
 
         public event Action OnJumpFirstFrameRequested;
@@ -49,6 +50,7 @@ namespace Tools.AbilityComposer.Editor.View.Left
         public event Action<bool> OnStepAdvanceWindowTrackToggled;
         public event Action<bool> OnMovementLockWindowTrackToggled;
         public event Action<bool> OnVfxWindowTrackToggled;
+        public event Action<bool> OnAudioWindowTrackToggled;
 
         // 注入左侧区域根节点
         public AbilityLeftView(VisualElement rootVisualElement)
@@ -75,6 +77,7 @@ namespace Tools.AbilityComposer.Editor.View.Left
             m_stepAdvanceWindowTrackToggle = m_rootVisualElement.Q<Button>("step-advance-window-track-toggle");
             m_movementLockWindowTrackToggle = m_rootVisualElement.Q<Button>("movement-lock-window-track-toggle");
             m_vfxWindowTrackToggle = m_rootVisualElement.Q<Button>("vfx-window-track-toggle");
+            m_audioWindowTrackToggle = m_rootVisualElement.Q<Button>("audio-window-track-toggle");
             m_isControlsReady = m_jumpFirstFrameButton != null && m_previousFrameButton != null
                 && m_playToggleButton != null && m_nextFrameButton != null && m_jumpLastFrameButton != null
                 && m_playToggleLabel != null && m_currentFrameField != null && m_lastFrameLabel != null
@@ -83,7 +86,7 @@ namespace Tools.AbilityComposer.Editor.View.Left
                 
             m_isControlsReady = m_isControlsReady && m_hitWindowTrackToggle != null
                 && m_stepAdvanceWindowTrackToggle != null && m_movementLockWindowTrackToggle != null
-                && m_vfxWindowTrackToggle != null;
+                && m_vfxWindowTrackToggle != null && m_audioWindowTrackToggle != null;
             if (!m_isControlsReady)
                 QLog.Error("配置 Ability Composer 左侧视图失败：缺少必要的 UXML 控件");
         }
@@ -105,6 +108,7 @@ namespace Tools.AbilityComposer.Editor.View.Left
             m_stepAdvanceWindowTrackToggle.text = timelineData.IsStepAdvanceWindowTrackEnabled ? "[x]" : "[ ]";
             m_movementLockWindowTrackToggle.text = timelineData.IsMovementLockWindowTrackEnabled ? "[x]" : "[ ]";
             m_vfxWindowTrackToggle.text = timelineData.IsVfxWindowTrackEnabled ? "[x]" : "[ ]";
+            m_audioWindowTrackToggle.text = timelineData.IsAudioWindowTrackEnabled ? "[x]" : "[ ]";
 
             if (!hasAnimationClip)
             {
@@ -138,6 +142,7 @@ namespace Tools.AbilityComposer.Editor.View.Left
             m_stepAdvanceWindowTrackToggle.clicked += RequestStepAdvanceWindowTrackToggle;
             m_movementLockWindowTrackToggle.clicked += RequestMovementLockWindowTrackToggle;
             m_vfxWindowTrackToggle.clicked += RequestVfxWindowTrackToggle;
+            m_audioWindowTrackToggle.clicked += RequestAudioWindowTrackToggle;
         }
 
         protected override void UnsubscribeViewEvents()
@@ -159,6 +164,7 @@ namespace Tools.AbilityComposer.Editor.View.Left
             m_stepAdvanceWindowTrackToggle.clicked -= RequestStepAdvanceWindowTrackToggle;
             m_movementLockWindowTrackToggle.clicked -= RequestMovementLockWindowTrackToggle;
             m_vfxWindowTrackToggle.clicked -= RequestVfxWindowTrackToggle;
+            m_audioWindowTrackToggle.clicked -= RequestAudioWindowTrackToggle;
             m_isControlsReady = false;
         }
 
@@ -207,5 +213,8 @@ namespace Tools.AbilityComposer.Editor.View.Left
 
         // 请求切换特效窗口轨道显示状态
         private void RequestVfxWindowTrackToggle() => OnVfxWindowTrackToggled?.Invoke(!m_vfxWindowTrackToggle.text.StartsWith("[x]"));
+
+        // 请求切换音效窗口轨道显示状态
+        private void RequestAudioWindowTrackToggle() => OnAudioWindowTrackToggled?.Invoke(!m_audioWindowTrackToggle.text.StartsWith("[x]"));
     }
 }

@@ -3,12 +3,10 @@
     "rootNamespace": "",
     "references": [
         "GUID:1e6a16ebd49fdb74fad1843f95457608",
-        "QTower.Editor",
-        "QTower",
-        "GUID:acf43c769833d514296adacabaf21c8f",
-        "GUID:288bd087505822543835be2ef9f6f548",
+        "GUID:a1cb8482d50c0f147a42d41f39b87dd5",
+        "GUID:47b93ceb36104063b4d385403b21ee9b",
         "GUID:869a71bd0c8639049a891be0659bba40",
-        "Ability.Data"
+        "GUID:4c3451d287410b4458357d5c39db70bd"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

@@ -7,6 +7,8 @@
  */
 
 using Module.Ability.Data;
+using Framework.QTower.Common.Sound;
+using Module.Player.Audio;
 using Module.Player.Context;
 using UnityEngine;
 using Utils.log;
@@ -23,6 +25,7 @@ namespace Module.Player.HFSM.Animation
         private Transform m_animatorTransform;
         private Transform m_rootMotionNode;
         private PlayerContext m_context;
+        private PlayerAudioConfigSO m_audioConfig;
         private Vector3 m_animatorAnchorLocalPosition;
         private Quaternion m_animatorAnchorLocalRotation;
         private Vector3 m_rootMotionNodeAnchorLocalPosition;
@@ -30,9 +33,11 @@ namespace Module.Player.HFSM.Animation
         private bool m_hasAnimatorRootMotionDelta;
         private bool m_wasRootMotionMoveEnabled;
         private bool m_isInited;
+        private bool m_hasFootstepAudio;
+        private int m_nextFootstepClipIndex;
 
         // 初始化玩家根运动接收器依赖
-        public void Init(Animator animator, Transform rootMotionNode, PlayerContext context)
+        public void Init(Animator animator, Transform rootMotionNode, PlayerContext context, PlayerAudioConfigSO audioConfig)
         {
             if (animator == null || rootMotionNode == null || context == null)
             {
@@ -44,6 +49,8 @@ namespace Module.Player.HFSM.Animation
             m_animatorTransform = animator.transform;
             m_rootMotionNode = rootMotionNode;
             m_context = context;
+            m_audioConfig = audioConfig;
+            m_hasFootstepAudio = audioConfig != null && audioConfig.FootstepClipCount > 0;
             m_animatorAnchorLocalPosition = m_animatorTransform.localPosition;
             m_animatorAnchorLocalRotation = m_animatorTransform.localRotation;
             m_rootMotionNodeAnchorLocalPosition = m_rootMotionNode.localPosition;
@@ -88,6 +95,7 @@ namespace Module.Player.HFSM.Animation
                 return;
 
             m_context.Movement.RecordPlantedFoot(true);
+            PlayFootstep();
         }
 
         // 接收移动动画右脚落地事件
@@ -97,6 +105,36 @@ namespace Module.Player.HFSM.Animation
                 return;
 
             m_context.Movement.RecordPlantedFoot(false);
+            PlayFootstep();
+        }
+
+        // 播放当前动画落脚对应的脚步音效
+        private void PlayFootstep()
+        {
+            if (!m_hasFootstepAudio)
+                return;
+
+            AudioClip footstepClip = SelectFootstepClip();
+            if (footstepClip == null)
+                return;
+
+            float pitch = m_audioConfig.FootstepPitch;
+            if (m_audioConfig.FootstepRandomPitchRange > 0f)
+                pitch += Random.Range(-m_audioConfig.FootstepRandomPitchRange, m_audioConfig.FootstepRandomPitchRange);
+
+            SoundManager.PlayEffect(footstepClip, m_animatorTransform.position, m_audioConfig.FootstepVolume,
+                pitch, m_audioConfig.FootstepSpatial);
+        }
+
+        // 根据配置选择本次脚步音效
+        private AudioClip SelectFootstepClip()
+        {
+            if (m_audioConfig.RandomFootstep)
+                return m_audioConfig.GetFootstepClip(Random.Range(0, m_audioConfig.FootstepClipCount));
+
+            AudioClip footstepClip = m_audioConfig.GetFootstepClip(m_nextFootstepClipIndex);
+            m_nextFootstepClipIndex = (m_nextFootstepClipIndex + 1) % m_audioConfig.FootstepClipCount;
+            return footstepClip;
         }
 
         // 在动画姿势完成求值后读取未被Unity提取的Generic Root节点位移

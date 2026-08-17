@@ -1,6 +1,6 @@
 ﻿/*
  * ┌──────────────────────────────────┐
- * │  描    述: 音效播放器                      
+ * │  描    述: 全局音效播放器，负责 BGM、一次性音效与循环音效播放
  * │  类    名: SoundManager.cs       
  * │  创    建: By qiqizizzz
  * └──────────────────────────────────┘
@@ -14,126 +14,179 @@ using Utils.log;
 
 namespace Framework.QTower.Common.Sound
 {
-    public class SoundManager
+    public static class SoundManager
     {
         private const string SOUND_ROOT_NAME = "SoundManager";
+        private const string BGM_SOURCE_NAME = "BgmSource";
+        private const string EFFECT_SOURCE_NAME = "EffectSource";
 
-        private readonly Dictionary<string, AudioClip> m_clipDic;
+        private static readonly Dictionary<string, AudioClip> S_ClipDic = new Dictionary<string, AudioClip>();
 
-        private AudioSource m_bgmSource;
-        private bool m_isStop;
-        private float m_totalVolume;
-        private float m_bgmVolume;
-        private float m_voiceVolume;
-        private float m_effectVolume;
+        private static GameObject s_soundRoot;
+        private static Transform s_effectRoot;
+        private static AudioSource s_bgmSource;
+        private static AudioSource s_effectSource;
+        private static bool s_isStop;
+        private static float s_totalVolume = 1f;
+        private static float s_bgmVolume = 1f;
+        private static float s_voiceVolume = 1f;
+        private static float s_effectVolume = 1f;
 
-        public bool IsStop
+        public static bool IsStop
         {
-            get => m_isStop;
+            get => s_isStop;
             set
             {
-                m_isStop = value;
-                if (m_isStop)
-                    m_bgmSource.Pause();
-                else if (!m_bgmSource.isPlaying && m_bgmSource.clip != null)
-                    m_bgmSource.Play();
+                EnsureAudioSources();
+                s_isStop = value;
+                if (s_isStop)
+                    s_bgmSource.Pause();
+                else if (!s_bgmSource.isPlaying && s_bgmSource.clip != null)
+                    s_bgmSource.Play();
             }
         }
 
-        public float TotalVolume
+        public static float TotalVolume
         {
-            get => m_totalVolume;
+            get => s_totalVolume;
             set
             {
-                m_totalVolume = Mathf.Clamp01(value);
+                s_totalVolume = Mathf.Clamp01(value);
                 RefreshBgmVolume();
             }
         }
 
-        public float BgmVolume
+        public static float BgmVolume
         {
-            get => m_bgmVolume;
+            get => s_bgmVolume;
             set
             {
-                m_bgmVolume = Mathf.Clamp01(value);
+                s_bgmVolume = Mathf.Clamp01(value);
                 RefreshBgmVolume();
             }
         }
 
-        public float VoiceVolume
+        public static float VoiceVolume
         {
-            get => m_voiceVolume;
-            set => m_voiceVolume = Mathf.Clamp01(value);
+            get => s_voiceVolume;
+            set => s_voiceVolume = Mathf.Clamp01(value);
         }
 
-        public float EffectVolume
+        public static float EffectVolume
         {
-            get => m_effectVolume;
-            set => m_effectVolume = Mathf.Clamp01(value);
-        }
-
-        // 创建音效管理器并初始化播放节点
-        public SoundManager()
-        {
-            m_clipDic = new Dictionary<string, AudioClip>();
-            m_bgmSource = CreateAudioSource();
-            TotalVolume = 1f;
-            BgmVolume = 1f;
-            VoiceVolume = 1f;
-            EffectVolume = 1f;
-            IsStop = false;
+            get => s_effectVolume;
+            set => s_effectVolume = Mathf.Clamp01(value);
         }
 
         // 播放 Addressables 中配置的背景音乐
-        public void PlayBGM(string res)
+        public static void PlayBGM(string res)
         {
-            if (m_isStop)
+            if (s_isStop)
                 return;
 
             PlayBgmAsync(res).Forget();
         }
 
         // 在指定世界坐标播放 Addressables 中配置的一次性音效
-        public void PlayEffect(string res, Vector3 pos)
+        public static void PlayEffect(string res, Vector3 pos)
         {
-            if (m_isStop)
+            if (s_isStop)
                 return;
 
             PlayEffectAsync(res, pos).Forget();
         }
 
         // 播放非空间化的一次性音效
-        public void PlayEffect(string res)
+        public static void PlayEffect(string res)
         {
             PlayEffect(res, Vector3.zero);
         }
 
-        // 异步加载并播放背景音乐
-        private async UniTaskVoid PlayBgmAsync(string res)
+        // 在指定世界坐标播放一次性音效资源
+        public static AudioSource PlayEffect(AudioClip clip, Vector3 position, float volumeScale = 1f,
+            float pitch = 1f, bool spatial = true)
         {
-            AudioClip clip = await LoadClipAsync(res);
-            if (clip == null || m_isStop)
+            if (s_isStop || clip == null)
+                return null;
+
+            AudioSource audioSource = CreateRuntimeAudioSource(EFFECT_SOURCE_NAME, position, spatial);
+            audioSource.clip = clip;
+            audioSource.loop = false;
+            audioSource.volume = Mathf.Clamp01(volumeScale) * s_effectVolume * s_totalVolume;
+            audioSource.pitch = Mathf.Max(0.01f, pitch);
+            audioSource.Play();
+            Object.Destroy(audioSource.gameObject, clip.length / audioSource.pitch);
+            return audioSource;
+        }
+
+        // 在指定父节点下播放循环音效资源
+        public static AudioSource PlayLoop(AudioClip clip, Transform parent, Vector3 localPosition, float volumeScale = 1f,
+            float pitch = 1f, bool spatial = true)
+        {
+            if (s_isStop || clip == null)
+                return null;
+
+            EnsureAudioSources();
+            GameObject sourceObject = new GameObject(EFFECT_SOURCE_NAME);
+            Transform sourceTransform = sourceObject.transform;
+            if (parent == null)
+            {
+                sourceTransform.SetParent(s_effectRoot, false);
+                sourceTransform.position = localPosition;
+            }
+            else
+            {
+                sourceTransform.SetParent(parent, false);
+                sourceTransform.localPosition = localPosition;
+            }
+
+            sourceTransform.localRotation = Quaternion.identity;
+
+            AudioSource audioSource = ConfigureAudioSource(sourceObject.AddComponent<AudioSource>(), spatial);
+            audioSource.clip = clip;
+            audioSource.loop = true;
+            audioSource.volume = Mathf.Clamp01(volumeScale) * s_effectVolume * s_totalVolume;
+            audioSource.pitch = Mathf.Max(0.01f, pitch);
+            audioSource.Play();
+            return audioSource;
+        }
+
+        // 停止并销毁指定音效播放源
+        public static void Stop(AudioSource audioSource)
+        {
+            if (audioSource == null)
                 return;
 
-            m_bgmSource.clip = clip;
-            m_bgmSource.Play();
+            audioSource.Stop();
+            Object.Destroy(audioSource.gameObject);
+        }
+
+        // 异步加载并播放背景音乐
+        private static async UniTaskVoid PlayBgmAsync(string res)
+        {
+            AudioClip clip = await LoadClipAsync(res);
+            if (clip == null || s_isStop)
+                return;
+
+            EnsureAudioSources();
+            s_bgmSource.clip = clip;
+            s_bgmSource.Play();
         }
 
         // 异步加载并播放一次性音效
-        private async UniTaskVoid PlayEffectAsync(string res, Vector3 pos)
+        private static async UniTaskVoid PlayEffectAsync(string res, Vector3 pos)
         {
             AudioClip clip = await LoadClipAsync(res);
-            if (clip == null || m_isStop)
+            if (clip == null || s_isStop)
                 return;
 
-            float currentVolume = m_effectVolume * m_totalVolume;
-            AudioSource.PlayClipAtPoint(clip, pos, currentVolume);
+            PlayEffect(clip, pos);
         }
 
         // 通过 Addressables 地址加载并缓存音频资源
-        private async UniTask<AudioClip> LoadClipAsync(string res)
+        private static async UniTask<AudioClip> LoadClipAsync(string res)
         {
-            if (m_clipDic.TryGetValue(res, out AudioClip cachedClip))
+            if (S_ClipDic.TryGetValue(res, out AudioClip cachedClip))
                 return cachedClip;
 
             AudioClip clip = await ResManager.LoadAssetAsync<AudioClip>(res);
@@ -143,30 +196,55 @@ namespace Framework.QTower.Common.Sound
                 return null;
             }
 
-            if (!m_clipDic.ContainsKey(res))
-                m_clipDic.Add(res, clip);
+            if (!S_ClipDic.ContainsKey(res))
+                S_ClipDic.Add(res, clip);
 
             return clip;
         }
 
-        // 创建跨场景背景音乐播放节点
-        private AudioSource CreateAudioSource()
+        // 确保全局播放节点已创建
+        private static void EnsureAudioSources()
         {
-            GameObject soundRoot = new GameObject(SOUND_ROOT_NAME);
-            Object.DontDestroyOnLoad(soundRoot);
-            AudioSource audioSource = soundRoot.AddComponent<AudioSource>();
-            audioSource.playOnAwake = false;
-            audioSource.loop = true;
-            return audioSource;
+            if (s_soundRoot != null)
+                return;
+
+            s_soundRoot = new GameObject(SOUND_ROOT_NAME);
+            Object.DontDestroyOnLoad(s_soundRoot);
+            s_bgmSource = ConfigureAudioSource(s_soundRoot.AddComponent<AudioSource>(), false);
+            s_bgmSource.loop = true;
+
+            GameObject effectRootObject = new GameObject("Effects");
+            effectRootObject.transform.SetParent(s_soundRoot.transform, false);
+            s_effectRoot = effectRootObject.transform;
+            s_effectSource = ConfigureAudioSource(effectRootObject.AddComponent<AudioSource>(), false);
         }
 
         // 刷新背景音乐最终音量
-        private void RefreshBgmVolume()
+        private static void RefreshBgmVolume()
         {
-            if (m_bgmSource == null)
-                return;
+            EnsureAudioSources();
+            s_bgmSource.volume = s_bgmVolume * s_totalVolume;
+        }
 
-            m_bgmSource.volume = m_bgmVolume * m_totalVolume;
+        // 创建一次性音效播放节点
+        private static AudioSource CreateRuntimeAudioSource(string sourceName, Vector3 position, bool spatial)
+        {
+            EnsureAudioSources();
+            GameObject sourceObject = new GameObject(sourceName);
+            sourceObject.transform.SetParent(s_effectRoot, false);
+            sourceObject.transform.position = position;
+            return ConfigureAudioSource(sourceObject.AddComponent<AudioSource>(), spatial);
+        }
+
+        // 设置 AudioSource 的通用播放参数
+        private static AudioSource ConfigureAudioSource(AudioSource audioSource, bool spatial)
+        {
+            audioSource.playOnAwake = false;
+            audioSource.spatialBlend = spatial ? 1f : 0f;
+            audioSource.rolloffMode = AudioRolloffMode.Linear;
+            audioSource.minDistance = 1f;
+            audioSource.maxDistance = 18f;
+            return audioSource;
         }
     }
 }

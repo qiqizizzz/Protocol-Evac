@@ -1,9 +1,10 @@
 {
-    "name": "Ability.Core",
+    "name": "AbilityComposer.Core",
     "rootNamespace": "Module.Ability",
     "references": [
         "Ability.Data",
-        "Combat"
+        "Combat",
+        "QTower"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

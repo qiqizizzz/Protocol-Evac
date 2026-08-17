@@ -6,6 +6,7 @@
  * └──────────────────────────────────────────────────────────────────┘
  */
 
+using Module.Ability.Data.Window.Audio;
 using Module.Ability.Data.Window.Hit;
 using Module.Ability.Data.Window.MovementLock;
 using Module.Ability.Data.Window.StepAdvance;
@@ -69,6 +70,17 @@ namespace Module.Ability.Data.Window
         [Tooltip("当前动画的特效窗口轨道数据")]
         [SerializeField] private AbilityVfxWindowTrackData VfxWindowTrackValue = new AbilityVfxWindowTrackData();
 
+        [Group("WindowSettings")]
+        [LabelText("启用音效窗口")]
+        [Tooltip("是否启用当前动画的音效窗口")]
+        [SerializeField] private bool UseAudioWindowValue;
+
+        [Group("WindowSettings")]
+        [ShowIf(nameof(UseAudioWindowValue))]
+        [LabelText("音效窗口数据")]
+        [Tooltip("当前动画的音效窗口轨道数据")]
+        [SerializeField] private AbilityAudioWindowTrackData AudioWindowTrackValue = new AbilityAudioWindowTrackData();
+
         public AnimationClip AnimationClip => AnimationClipValue;
         public bool UseHitWindow => UseHitWindowValue;
         public AbilityHitWindowTrackData HitWindowTrack => HitWindowTrackValue;
@@ -78,6 +90,8 @@ namespace Module.Ability.Data.Window
         public AbilityMovementLockWindowTrackData MovementLockWindowTrack => MovementLockWindowTrackValue;
         public bool UseVfxWindow => UseVfxWindowValue;
         public AbilityVfxWindowTrackData VfxWindowTrack => VfxWindowTrackValue;
+        public bool UseAudioWindow => UseAudioWindowValue;
+        public AbilityAudioWindowTrackData AudioWindowTrack => AudioWindowTrackValue;
 
         // 更新主体配置唯一绑定的动画片段
         public void SetAnimationClip(AnimationClip animationClip)
@@ -111,6 +125,13 @@ namespace Module.Ability.Data.Window
         {
             UseVfxWindowValue = isEnabled;
             VfxWindowTrackValue = windowTrack;
+        }
+
+        // 更新音效窗口启用状态与轨道数据
+        public void SetAudioWindow(bool isEnabled, AbilityAudioWindowTrackData windowTrack)
+        {
+            UseAudioWindowValue = isEnabled;
+            AudioWindowTrackValue = windowTrack;
         }
 
         // 判断指定动画归一化时间是否处于移动锁定窗口

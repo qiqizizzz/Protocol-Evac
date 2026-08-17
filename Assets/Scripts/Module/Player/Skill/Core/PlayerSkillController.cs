@@ -8,6 +8,7 @@
 
 using Framework.QTower.Controller;
 using System.Collections.Generic;
+using Module.Ability.Audio;
 using Module.Ability.Data;
 using Module.Ability.Hit;
 using Module.Ability.Vfx;
@@ -28,6 +29,7 @@ namespace Module.Player.Skill.Core
         private readonly PlayerContext m_context;
         private readonly AbilityHitWindowController m_hitWindowController;
         private readonly AbilityVfxWindowController m_vfxWindowController;
+        private readonly AbilityAudioWindowController m_audioWindowController;
         private readonly CombatHitbox m_combatHitbox;
         private readonly Dictionary<PlayerSkillType, AbilityConfigSO> m_skillConfigs;
         private readonly PlayerSkillTimeline m_timeline;
@@ -50,6 +52,7 @@ namespace Module.Player.Skill.Core
             m_combatHitbox = combatHitbox;
             m_hitWindowController = new AbilityHitWindowController(combatHitbox, damageSource);
             m_vfxWindowController = new AbilityVfxWindowController(damageSource);
+            m_audioWindowController = new AbilityAudioWindowController(damageSource);
             m_skillConfigs = new Dictionary<PlayerSkillType, AbilityConfigSO>();
             m_timeline = new PlayerSkillTimeline();
             m_combatHitbox.OnHitConfirmed += HandleHitConfirmed;
@@ -75,6 +78,7 @@ namespace Module.Player.Skill.Core
             m_timeline.Open(skillType, config, m_context);
             RecordCancelInputState();
             SyncVfxWindow();
+            SyncAudioWindow();
             SyncHitWindow();
         }
 
@@ -84,11 +88,13 @@ namespace Module.Player.Skill.Core
             {
                 SyncHitWindow();
                 SyncVfxWindow();
+                SyncAudioWindow();
                 return;
             }
 
             m_timeline.Tick(deltaTime, m_context);
             SyncVfxWindow();
+            SyncAudioWindow();
             SyncHitWindow();
         }
 
@@ -96,6 +102,7 @@ namespace Module.Player.Skill.Core
         {
             CloseHitWindow();
             m_vfxWindowController.Close();
+            m_audioWindowController.Close();
             m_timeline.Close(m_context);
             ResetCancelInputState();
         }
@@ -212,10 +219,31 @@ namespace Module.Player.Skill.Core
                 m_timeline.CurrentStepIndex);
         }
 
-        // 转发真实命中事件给当前技能特效窗口
+        // 根据当前技能段落与时间轴同步音效窗口
+        private void SyncAudioWindow()
+        {
+            if (!m_timeline.IsRunning || m_timeline.CurrentPhase != AbilityStepPhase.Begin)
+            {
+                m_audioWindowController.Close();
+                return;
+            }
+
+            AbilityStepData stepData = m_timeline.CurrentStep;
+            if (!stepData.UseAudioWindow)
+            {
+                m_audioWindowController.Close();
+                return;
+            }
+
+            m_audioWindowController.Sync(stepData.AudioWindowTrack, m_timeline.NormalizedTime,
+                m_timeline.CurrentStepIndex);
+        }
+
+        // 转发真实命中事件给当前技能表现窗口
         private void HandleHitConfirmed(DamageData damageData, Component hitTarget)
         {
             m_vfxWindowController.PlayHitVfx(damageData, hitTarget);
+            m_audioWindowController.PlayHitAudio(damageData, hitTarget);
         }
     }
 }

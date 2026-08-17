@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.IO;
 using Framework.QTower.Editor.Controller;
 using Module.Ability.Data.Window;
+using Module.Ability.Data.Window.Audio;
 using Module.Ability.Data.Window.Hit;
 using Module.Ability.Data.Window.MovementLock;
 using Module.Ability.Data.Window.StepAdvance;
@@ -181,6 +182,8 @@ namespace Tools.AbilityComposer.Editor
                 callback => m_composerView.OnMovementLockWindowTrackToggled -= callback, HandleMovementLockWindowTrackToggled);
             RegisterEvent<bool>(callback => m_composerView.OnVfxWindowTrackToggled += callback,
                 callback => m_composerView.OnVfxWindowTrackToggled -= callback, HandleVfxWindowTrackToggled);
+            RegisterEvent<bool>(callback => m_composerView.OnAudioWindowTrackToggled += callback,
+                callback => m_composerView.OnAudioWindowTrackToggled -= callback, HandleAudioWindowTrackToggled);
             RegisterEvent<AbilityEventCategory>(callback => m_composerView.OnEventCategoryChanged += callback,
                 callback => m_composerView.OnEventCategoryChanged -= callback, HandleEventCategoryChanged);
             RegisterEvent<string>(callback => m_composerView.OnEventReceiverTypeNameChanged += callback,
@@ -217,6 +220,32 @@ namespace Tools.AbilityComposer.Editor
                 callback => m_composerView.OnWindowVfxEulerOffsetChanged -= callback, HandleWindowVfxEulerOffsetChanged);
             RegisterEvent<bool>(callback => m_composerView.OnWindowVfxFollowTargetChanged += callback,
                 callback => m_composerView.OnWindowVfxFollowTargetChanged -= callback, HandleWindowVfxFollowTargetChanged);
+            RegisterEvent<AbilityAudioTriggerType>(callback => m_composerView.OnWindowAudioTriggerTypeChanged += callback,
+                callback => m_composerView.OnWindowAudioTriggerTypeChanged -= callback, HandleWindowAudioTriggerTypeChanged);
+            RegisterEvent<AbilityAudioPlaybackType>(callback => m_composerView.OnWindowAudioPlaybackTypeChanged += callback,
+                callback => m_composerView.OnWindowAudioPlaybackTypeChanged -= callback, HandleWindowAudioPlaybackTypeChanged);
+            RegisterEvent<int, AudioClip>(callback => m_composerView.OnWindowAudioClipChanged += callback,
+                callback => m_composerView.OnWindowAudioClipChanged -= callback, HandleWindowAudioClipChanged);
+            RegisterEvent(callback => m_composerView.OnWindowAudioClipAddRequested += callback,
+                callback => m_composerView.OnWindowAudioClipAddRequested -= callback, HandleWindowAudioClipAddRequested);
+            RegisterEvent<int>(callback => m_composerView.OnWindowAudioClipRemoveRequested += callback,
+                callback => m_composerView.OnWindowAudioClipRemoveRequested -= callback, HandleWindowAudioClipRemoveRequested);
+            RegisterEvent<float>(callback => m_composerView.OnWindowAudioVolumeChanged += callback,
+                callback => m_composerView.OnWindowAudioVolumeChanged -= callback, HandleWindowAudioVolumeChanged);
+            RegisterEvent<float>(callback => m_composerView.OnWindowAudioPitchChanged += callback,
+                callback => m_composerView.OnWindowAudioPitchChanged -= callback, HandleWindowAudioPitchChanged);
+            RegisterEvent<float>(callback => m_composerView.OnWindowAudioRandomPitchRangeChanged += callback,
+                callback => m_composerView.OnWindowAudioRandomPitchRangeChanged -= callback, HandleWindowAudioRandomPitchRangeChanged);
+            RegisterEvent<bool>(callback => m_composerView.OnWindowAudioSpatialChanged += callback,
+                callback => m_composerView.OnWindowAudioSpatialChanged -= callback, HandleWindowAudioSpatialChanged);
+            RegisterEvent<bool>(callback => m_composerView.OnWindowAudioStopOnWindowEndChanged += callback,
+                callback => m_composerView.OnWindowAudioStopOnWindowEndChanged -= callback, HandleWindowAudioStopOnWindowEndChanged);
+            RegisterEvent<AbilityAudioTargetType>(callback => m_composerView.OnWindowAudioTargetTypeChanged += callback,
+                callback => m_composerView.OnWindowAudioTargetTypeChanged -= callback, HandleWindowAudioTargetTypeChanged);
+            RegisterEvent<string>(callback => m_composerView.OnWindowAudioSocketIdChanged += callback,
+                callback => m_composerView.OnWindowAudioSocketIdChanged -= callback, HandleWindowAudioSocketIdChanged);
+            RegisterEvent<Vector3>(callback => m_composerView.OnWindowAudioPositionOffsetChanged += callback,
+                callback => m_composerView.OnWindowAudioPositionOffsetChanged -= callback, HandleWindowAudioPositionOffsetChanged);
             RegisterEvent(callback => m_composerView.OnSaveWindowRequested += callback,
                 callback => m_composerView.OnSaveWindowRequested -= callback, SaveWindowTrack);
             RegisterEvent(callback => m_composerView.OnSaveEventRequested += callback,
@@ -435,6 +464,13 @@ namespace Tools.AbilityComposer.Editor
             RefreshView();
         }
 
+        // 更新音效窗口轨道启用状态
+        private void HandleAudioWindowTrackToggled(bool isEnabled)
+        {
+            m_timelineData.SetAudioWindowTrackEnabled(isEnabled);
+            RefreshView();
+        }
+
         // 选中时间轴上的窗口区间
         private void HandleWindowSelected(string windowId)
         {
@@ -538,6 +574,97 @@ namespace Tools.AbilityComposer.Editor
         private void HandleWindowVfxFollowTargetChanged(bool followTarget)
         {
             m_timelineData.SetSelectedWindowVfxFollowTarget(followTarget);
+            RefreshView();
+        }
+
+        // 更新选中音效窗口的触发方式
+        private void HandleWindowAudioTriggerTypeChanged(AbilityAudioTriggerType triggerType)
+        {
+            m_timelineData.SetSelectedWindowAudioTriggerType(triggerType);
+            RefreshView();
+        }
+
+        // 更新选中音效窗口的播放类型
+        private void HandleWindowAudioPlaybackTypeChanged(AbilityAudioPlaybackType playbackType)
+        {
+            m_timelineData.SetSelectedWindowAudioPlaybackType(playbackType);
+            RefreshView();
+        }
+
+        // 更新选中音效窗口的资源槽位
+        private void HandleWindowAudioClipChanged(int clipSlotIndex, AudioClip audioClip)
+        {
+            m_timelineData.SetSelectedWindowAudioClip(clipSlotIndex, audioClip);
+            RefreshView();
+        }
+
+        // 给选中音效窗口新增资源槽位
+        private void HandleWindowAudioClipAddRequested()
+        {
+            m_timelineData.AddSelectedWindowAudioClip();
+            RefreshView();
+        }
+
+        // 删除选中音效窗口的资源槽位
+        private void HandleWindowAudioClipRemoveRequested(int clipSlotIndex)
+        {
+            m_timelineData.RemoveSelectedWindowAudioClip(clipSlotIndex);
+            RefreshView();
+        }
+
+        // 更新选中音效窗口的音量
+        private void HandleWindowAudioVolumeChanged(float volume)
+        {
+            m_timelineData.SetSelectedWindowAudioVolume(volume);
+            RefreshView();
+        }
+
+        // 更新选中音效窗口的音高
+        private void HandleWindowAudioPitchChanged(float pitch)
+        {
+            m_timelineData.SetSelectedWindowAudioPitch(pitch);
+            RefreshView();
+        }
+
+        // 更新选中音效窗口的随机音高范围
+        private void HandleWindowAudioRandomPitchRangeChanged(float randomPitchRange)
+        {
+            m_timelineData.SetSelectedWindowAudioRandomPitchRange(randomPitchRange);
+            RefreshView();
+        }
+
+        // 更新选中音效窗口的空间化状态
+        private void HandleWindowAudioSpatialChanged(bool spatial)
+        {
+            m_timelineData.SetSelectedWindowAudioSpatial(spatial);
+            RefreshView();
+        }
+
+        // 更新选中音效窗口的窗口结束截断状态
+        private void HandleWindowAudioStopOnWindowEndChanged(bool stopOnWindowEnd)
+        {
+            m_timelineData.SetSelectedWindowAudioStopOnWindowEnd(stopOnWindowEnd);
+            RefreshView();
+        }
+
+        // 更新选中音效窗口的播放目标
+        private void HandleWindowAudioTargetTypeChanged(AbilityAudioTargetType targetType)
+        {
+            m_timelineData.SetSelectedWindowAudioTargetType(targetType);
+            RefreshView();
+        }
+
+        // 更新选中音效窗口的挂点 Id
+        private void HandleWindowAudioSocketIdChanged(string socketId)
+        {
+            m_timelineData.SetSelectedWindowAudioSocketId(socketId);
+            RefreshView();
+        }
+
+        // 更新选中音效窗口的位置偏移
+        private void HandleWindowAudioPositionOffsetChanged(Vector3 positionOffset)
+        {
+            m_timelineData.SetSelectedWindowAudioLocalPositionOffset(positionOffset);
             RefreshView();
         }
 
@@ -881,6 +1008,9 @@ namespace Tools.AbilityComposer.Editor
             AbilityVfxWindowTrackData vfxTrack = windowConfig.UseVfxWindow
                 ? windowConfig.VfxWindowTrack
                 : null;
+            AbilityAudioWindowTrackData audioTrack = windowConfig.UseAudioWindow
+                ? windowConfig.AudioWindowTrack
+                : null;
 
             if (windowConfig != null && windowConfig.AnimationClip != m_timelineData.Clip)
             {
@@ -941,6 +1071,29 @@ namespace Tools.AbilityComposer.Editor
                     windowDraft.SetVfxLocalPositionOffset(windowData.LocalPositionOffset);
                     windowDraft.SetVfxLocalEulerOffset(windowData.LocalEulerOffset);
                     windowDraft.SetVfxFollowTarget(windowData.FollowTarget);
+                }
+            }
+
+            if (audioTrack != null)
+            {
+                foreach (AbilityAudioWindowData windowData in audioTrack.Windows)
+                {
+                    int startFrame = ConvertStartNormalizedTimeToFrame(windowData.StartNormalizedTime);
+                    int endFrame = ConvertEndNormalizedTimeToBoundaryFrame(windowData.EndNormalizedTime);
+                    AbilityWindowDraft windowDraft = m_timelineData.AddWindow(AbilityWindowDraftType.Audio,
+                        startFrame, endFrame, 0f);
+                    windowDraft.SetId(windowData.Id);
+                    windowDraft.SetAudioTriggerType(windowData.TriggerType);
+                    windowDraft.SetAudioPlaybackType(windowData.PlaybackType);
+                    windowDraft.SetAudioClips(windowData.AudioClips);
+                    windowDraft.SetAudioVolume(windowData.Volume);
+                    windowDraft.SetAudioPitch(windowData.Pitch);
+                    windowDraft.SetAudioRandomPitchRange(windowData.RandomPitchRange);
+                    windowDraft.SetAudioSpatial(windowData.Spatial);
+                    windowDraft.SetAudioStopOnWindowEnd(windowData.StopOnWindowEnd);
+                    windowDraft.SetAudioTargetType(windowData.TargetType);
+                    windowDraft.SetAudioSocketId(windowData.SocketId);
+                    windowDraft.SetAudioLocalPositionOffset(windowData.LocalPositionOffset);
                 }
             }
 
@@ -1047,6 +1200,9 @@ namespace Tools.AbilityComposer.Editor
                 case AbilityWindowDraftType.Vfx:
                     SaveVfxWindowTrack(true);
                     break;
+                case AbilityWindowDraftType.Audio:
+                    SaveAudioWindowTrack(true);
+                    break;
             }
 
             RefreshView();
@@ -1061,6 +1217,7 @@ namespace Tools.AbilityComposer.Editor
             bool hasStepAdvanceWindowTrack = windowConfig != null && windowConfig.UseStepAdvanceWindow;
             bool hasMovementLockWindowTrack = windowConfig != null && windowConfig.UseMovementLockWindow;
             bool hasVfxWindowTrack = windowConfig != null && windowConfig.UseVfxWindow;
+            bool hasAudioWindowTrack = windowConfig != null && windowConfig.UseAudioWindow;
 
             if (hasHitWindowTrack || m_timelineData.HitWindowDraftValues.Count > 0)
                 savedWindowTrack |= SaveHitWindowTrack(false);
@@ -1070,6 +1227,8 @@ namespace Tools.AbilityComposer.Editor
                 savedWindowTrack |= SaveMovementLockWindowTrack(false);
             if (hasVfxWindowTrack || m_timelineData.VfxWindowDraftValues.Count > 0)
                 savedWindowTrack |= SaveVfxWindowTrack(false);
+            if (hasAudioWindowTrack || m_timelineData.AudioWindowDraftValues.Count > 0)
+                savedWindowTrack |= SaveAudioWindowTrack(false);
 
             return savedWindowTrack;
         }
@@ -1210,6 +1369,46 @@ namespace Tools.AbilityComposer.Editor
             Undo.RecordObject(windowConfig, "保存特效窗口轨道");
             track.SetWindows(values);
             windowConfig.SetVfxWindow(true, track);
+            EditorUtility.SetDirty(windowConfig);
+            m_composerData.SetWindowConfig(windowConfig);
+            m_timelineData.SetWindowConfig(windowConfig);
+            AssetDatabase.SaveAssets();
+            if (createUndoGroup)
+                CompleteSaveUndoGroup();
+
+            return true;
+        }
+
+        // 将当前音效窗口草稿写回对应轨道数据
+        private bool SaveAudioWindowTrack(bool createUndoGroup)
+        {
+            if (!m_timelineData.HasClip)
+                return false;
+
+            AbilityWindowConfigSO windowConfig = GetOrCreateWindowConfig();
+            if (windowConfig == null)
+                return false;
+
+            if (createUndoGroup)
+                BeginSaveUndoGroup("保存音效窗口轨道", false, true);
+
+            AbilityAudioWindowTrackData track = windowConfig.AudioWindowTrack;
+
+            List<AbilityAudioWindowData> values = new List<AbilityAudioWindowData>();
+            foreach (AbilityWindowDraft draft in m_timelineData.AudioWindowDraftValues)
+            {
+                float start = ConvertStartFrameToNormalizedTime(draft.StartFrame);
+                float end = ConvertEndBoundaryFrameToNormalizedTime(draft.EndFrame);
+                values.Add(new AbilityAudioWindowData(draft.Id, start, end, draft.AudioTriggerType,
+                    draft.AudioPlaybackType, draft.AudioClips, draft.AudioVolume, draft.AudioPitch,
+                    draft.AudioRandomPitchRange, draft.AudioSpatial,
+                    draft.AudioStopOnWindowEnd, draft.AudioTargetType, draft.AudioSocketId,
+                    draft.AudioLocalPositionOffset));
+            }
+
+            Undo.RecordObject(windowConfig, "保存音效窗口轨道");
+            track.SetWindows(values);
+            windowConfig.SetAudioWindow(true, track);
             EditorUtility.SetDirty(windowConfig);
             m_composerData.SetWindowConfig(windowConfig);
             m_timelineData.SetWindowConfig(windowConfig);

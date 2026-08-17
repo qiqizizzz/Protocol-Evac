@@ -5,7 +5,7 @@
         "GUID:1e6a16ebd49fdb74fad1843f95457608",
         "GUID:324caed91501a9c47a04ebfd87b68794",
         "Ability.Data",
-        "Ability.Core",
+        "AbilityComposer.Core",
         "Combat",
         "Fluid.BehaviorTree",
         "Navigation"

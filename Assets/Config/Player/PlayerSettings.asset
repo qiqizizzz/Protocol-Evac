@@ -20,4 +20,5 @@ MonoBehaviour:
   DamageConfigValue: {fileID: 11400000, guid: 0f6984f94b54478469c7e3402acfd4a4, type: 2}
   NormalAttackConfigValue: {fileID: 11400000, guid: 8f2ef84f717a18e4fa32220d4f11a568,
     type: 2}
+  AudioConfigValue: {fileID: 11400000, guid: 2818bc905a263e74cbdd1dfb2d92ce9c, type: 2}
   ViewConfigValue: {fileID: 11400000, guid: 0cd196151569e14499d7801fe9fda3af, type: 2}

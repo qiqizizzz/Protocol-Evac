@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using Framework.QTower.Editor.View;
 using Module.Ability.Data.Window;
+using Module.Ability.Data.Window.Audio;
 using Module.Ability.Data.Window.Vfx;
 using Tools.AbilityComposer.Editor.View.Center.Event;
 using Tools.AbilityComposer.Editor.View.Center.Timeline;
@@ -57,6 +58,19 @@ namespace Tools.AbilityComposer.Editor.View.Right
         public event Action<UnityEngine.Vector3> OnWindowVfxPositionOffsetChanged;
         public event Action<UnityEngine.Vector3> OnWindowVfxEulerOffsetChanged;
         public event Action<bool> OnWindowVfxFollowTargetChanged;
+        public event Action<AbilityAudioTriggerType> OnWindowAudioTriggerTypeChanged;
+        public event Action<AbilityAudioPlaybackType> OnWindowAudioPlaybackTypeChanged;
+        public event Action<int, UnityEngine.AudioClip> OnWindowAudioClipChanged;
+        public event Action OnWindowAudioClipAddRequested;
+        public event Action<int> OnWindowAudioClipRemoveRequested;
+        public event Action<float> OnWindowAudioVolumeChanged;
+        public event Action<float> OnWindowAudioPitchChanged;
+        public event Action<float> OnWindowAudioRandomPitchRangeChanged;
+        public event Action<bool> OnWindowAudioSpatialChanged;
+        public event Action<bool> OnWindowAudioStopOnWindowEndChanged;
+        public event Action<AbilityAudioTargetType> OnWindowAudioTargetTypeChanged;
+        public event Action<string> OnWindowAudioSocketIdChanged;
+        public event Action<UnityEngine.Vector3> OnWindowAudioPositionOffsetChanged;
         public event Action OnSaveWindowRequested;
         public event Action OnCloseEventInspectorRequested;
         public event Action OnCloseWindowInspectorRequested;
@@ -141,6 +155,19 @@ namespace Tools.AbilityComposer.Editor.View.Right
             m_windowInspectorView.OnVfxPositionOffsetChanged += RequestWindowVfxPositionOffsetChanged;
             m_windowInspectorView.OnVfxEulerOffsetChanged += RequestWindowVfxEulerOffsetChanged;
             m_windowInspectorView.OnVfxFollowTargetChanged += RequestWindowVfxFollowTargetChanged;
+            m_windowInspectorView.OnAudioTriggerTypeChanged += RequestWindowAudioTriggerTypeChanged;
+            m_windowInspectorView.OnAudioPlaybackTypeChanged += RequestWindowAudioPlaybackTypeChanged;
+            m_windowInspectorView.OnAudioClipChanged += RequestWindowAudioClipChanged;
+            m_windowInspectorView.OnAudioClipAddRequested += RequestWindowAudioClipAdd;
+            m_windowInspectorView.OnAudioClipRemoveRequested += RequestWindowAudioClipRemove;
+            m_windowInspectorView.OnAudioVolumeChanged += RequestWindowAudioVolumeChanged;
+            m_windowInspectorView.OnAudioPitchChanged += RequestWindowAudioPitchChanged;
+            m_windowInspectorView.OnAudioRandomPitchRangeChanged += RequestWindowAudioRandomPitchRangeChanged;
+            m_windowInspectorView.OnAudioSpatialChanged += RequestWindowAudioSpatialChanged;
+            m_windowInspectorView.OnAudioStopOnWindowEndChanged += RequestWindowAudioStopOnWindowEndChanged;
+            m_windowInspectorView.OnAudioTargetTypeChanged += RequestWindowAudioTargetTypeChanged;
+            m_windowInspectorView.OnAudioSocketIdChanged += RequestWindowAudioSocketIdChanged;
+            m_windowInspectorView.OnAudioPositionOffsetChanged += RequestWindowAudioPositionOffsetChanged;
             m_windowInspectorView.OnSaveWindowRequested += RequestSaveWindow;
         }
 
@@ -165,6 +192,19 @@ namespace Tools.AbilityComposer.Editor.View.Right
             m_windowInspectorView.OnVfxPositionOffsetChanged -= RequestWindowVfxPositionOffsetChanged;
             m_windowInspectorView.OnVfxEulerOffsetChanged -= RequestWindowVfxEulerOffsetChanged;
             m_windowInspectorView.OnVfxFollowTargetChanged -= RequestWindowVfxFollowTargetChanged;
+            m_windowInspectorView.OnAudioTriggerTypeChanged -= RequestWindowAudioTriggerTypeChanged;
+            m_windowInspectorView.OnAudioPlaybackTypeChanged -= RequestWindowAudioPlaybackTypeChanged;
+            m_windowInspectorView.OnAudioClipChanged -= RequestWindowAudioClipChanged;
+            m_windowInspectorView.OnAudioClipAddRequested -= RequestWindowAudioClipAdd;
+            m_windowInspectorView.OnAudioClipRemoveRequested -= RequestWindowAudioClipRemove;
+            m_windowInspectorView.OnAudioVolumeChanged -= RequestWindowAudioVolumeChanged;
+            m_windowInspectorView.OnAudioPitchChanged -= RequestWindowAudioPitchChanged;
+            m_windowInspectorView.OnAudioRandomPitchRangeChanged -= RequestWindowAudioRandomPitchRangeChanged;
+            m_windowInspectorView.OnAudioSpatialChanged -= RequestWindowAudioSpatialChanged;
+            m_windowInspectorView.OnAudioStopOnWindowEndChanged -= RequestWindowAudioStopOnWindowEndChanged;
+            m_windowInspectorView.OnAudioTargetTypeChanged -= RequestWindowAudioTargetTypeChanged;
+            m_windowInspectorView.OnAudioSocketIdChanged -= RequestWindowAudioSocketIdChanged;
+            m_windowInspectorView.OnAudioPositionOffsetChanged -= RequestWindowAudioPositionOffsetChanged;
             m_windowInspectorView.OnSaveWindowRequested -= RequestSaveWindow;
             m_isControlsReady = false;
         }
@@ -225,6 +265,45 @@ namespace Tools.AbilityComposer.Editor.View.Right
 
         // 转发特效窗口跟随目标编辑请求
         private void RequestWindowVfxFollowTargetChanged(bool followTarget) => OnWindowVfxFollowTargetChanged?.Invoke(followTarget);
+
+        // 转发音效窗口触发方式编辑请求
+        private void RequestWindowAudioTriggerTypeChanged(AbilityAudioTriggerType triggerType) => OnWindowAudioTriggerTypeChanged?.Invoke(triggerType);
+
+        // 转发音效窗口播放类型编辑请求
+        private void RequestWindowAudioPlaybackTypeChanged(AbilityAudioPlaybackType playbackType) => OnWindowAudioPlaybackTypeChanged?.Invoke(playbackType);
+
+        // 转发音效窗口资源编辑请求
+        private void RequestWindowAudioClipChanged(int clipSlotIndex, UnityEngine.AudioClip audioClip) => OnWindowAudioClipChanged?.Invoke(clipSlotIndex, audioClip);
+
+        // 转发音效窗口资源新增请求
+        private void RequestWindowAudioClipAdd() => OnWindowAudioClipAddRequested?.Invoke();
+
+        // 转发音效窗口资源删除请求
+        private void RequestWindowAudioClipRemove(int clipSlotIndex) => OnWindowAudioClipRemoveRequested?.Invoke(clipSlotIndex);
+
+        // 转发音效窗口音量编辑请求
+        private void RequestWindowAudioVolumeChanged(float volume) => OnWindowAudioVolumeChanged?.Invoke(volume);
+
+        // 转发音效窗口音高编辑请求
+        private void RequestWindowAudioPitchChanged(float pitch) => OnWindowAudioPitchChanged?.Invoke(pitch);
+
+        // 转发音效窗口随机音高范围编辑请求
+        private void RequestWindowAudioRandomPitchRangeChanged(float randomPitchRange) => OnWindowAudioRandomPitchRangeChanged?.Invoke(randomPitchRange);
+
+        // 转发音效窗口空间化编辑请求
+        private void RequestWindowAudioSpatialChanged(bool spatial) => OnWindowAudioSpatialChanged?.Invoke(spatial);
+
+        // 转发音效窗口结束截断编辑请求
+        private void RequestWindowAudioStopOnWindowEndChanged(bool stopOnWindowEnd) => OnWindowAudioStopOnWindowEndChanged?.Invoke(stopOnWindowEnd);
+
+        // 转发音效窗口播放目标编辑请求
+        private void RequestWindowAudioTargetTypeChanged(AbilityAudioTargetType targetType) => OnWindowAudioTargetTypeChanged?.Invoke(targetType);
+
+        // 转发音效窗口挂点 Id 编辑请求
+        private void RequestWindowAudioSocketIdChanged(string socketId) => OnWindowAudioSocketIdChanged?.Invoke(socketId);
+
+        // 转发音效窗口位置偏移编辑请求
+        private void RequestWindowAudioPositionOffsetChanged(UnityEngine.Vector3 positionOffset) => OnWindowAudioPositionOffsetChanged?.Invoke(positionOffset);
 
         // 转发保存窗口轨道请求
         private void RequestSaveWindow() => OnSaveWindowRequested?.Invoke();

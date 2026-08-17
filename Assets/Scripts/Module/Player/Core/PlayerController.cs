@@ -233,7 +233,7 @@ namespace Module.Player.Core
             if (m_rootMotionReceiver == null)
                 m_rootMotionReceiver = m_animator.gameObject.AddComponent<PlayerRootMotionReceiver>();
 
-            m_rootMotionReceiver.Init(m_animator, rootMotionNode, m_context);
+            m_rootMotionReceiver.Init(m_animator, rootMotionNode, m_context, Settings.AudioConfig);
         }
 
         #endregion
@@ -290,6 +290,9 @@ namespace Module.Player.Core
                 QLog.Warning("NormalAttackConfig 未配置，普通攻击将无法正常进入");
             else if (Settings.NormalAttackConfig.StepCount == 0)
                 QLog.Error("NormalAttackConfig 未配置任何动画段落，普通攻击无法运行");
+
+            if (Settings.AudioConfig == null)
+                QLog.Warning("AudioConfig 未配置，玩家动画事件音效将不会播放");
 
             if (Settings.ViewConfig == null)
                 QLog.Warning("ViewConfig 未配置，视角模块可能无法正常运行");
