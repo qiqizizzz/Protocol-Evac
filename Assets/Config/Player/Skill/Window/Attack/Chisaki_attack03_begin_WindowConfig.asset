@@ -41,6 +41,18 @@ MonoBehaviour:
   UseVfxWindowValue: 1
   VfxWindowTrackValue:
     WindowValues:
+    - IdValue: vfx_chisaki_attack03_begin_red_slash_arc
+      StartNormalizedTimeValue: 0.07169491
+      EndNormalizedTimeValue: 0.15169491
+      TriggerTypeValue: 0
+      TargetTypeValue: 0
+      VfxPrefabValue: {fileID: 6534121444237867268, guid: cb9924cb120f8644d92fdec135ceda3d,
+        type: 3}
+      SocketIdValue: WeaponTrail
+      LifeModeValue: 0
+      LocalPositionOffsetValue: {x: 0, y: 0, z: 0}
+      LocalEulerOffsetValue: {x: 0, y: 0, z: 18}
+      FollowTargetValue: 1
     - IdValue: vfx_chisaki_attack03_begin_weapon_trail
       StartNormalizedTimeValue: 0.07169491
       EndNormalizedTimeValue: 0.62
