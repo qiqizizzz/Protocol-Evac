@@ -58,6 +58,24 @@ MonoBehaviour:
       LocalPositionOffsetValue: {x: 0, y: 1.05, z: 0}
       LocalEulerOffsetValue: {x: 0, y: 0, z: 0}
       FollowTargetValue: 0
-  UseAudioWindowValue: 0
+  UseAudioWindowValue: 1
   AudioWindowTrackValue:
-    WindowValues: []
+    WindowValues:
+    - IdValue: audio_enemy_wanderer_sword_regular_c_slash
+      StartNormalizedTimeValue: 0.16
+      EndNormalizedTimeValue: 0.24
+      TriggerTypeValue: 0
+      PlaybackTypeValue: 0
+      AudioClipValues:
+      - {fileID: 8300000, guid: 1cf528da5df363a43a2148a097d9c192, type: 3}
+      AudioClipAValue: {fileID: 0}
+      AudioClipBValue: {fileID: 0}
+      AudioClipCValue: {fileID: 0}
+      VolumeValue: 0.85
+      PitchValue: 0.92
+      RandomPitchRangeValue: 0.06
+      SpatialValue: 1
+      StopOnWindowEndValue: 0
+      TargetTypeValue: 0
+      SocketIdValue: 
+      LocalPositionOffsetValue: {x: 0.24, y: 1.28, z: 0.6}

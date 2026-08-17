@@ -110,3 +110,21 @@ MonoBehaviour:
       TargetTypeValue: 1
       SocketIdValue: WeaponTrail
       LocalPositionOffsetValue: {x: 0, y: 0, z: 0}
+    - IdValue: e367b404c7e34baaa1cecf98a8397ba1
+      StartNormalizedTimeValue: 0.44067797
+      EndNormalizedTimeValue: 0.62711865
+      TriggerTypeValue: 0
+      PlaybackTypeValue: 0
+      AudioClipValues:
+      - {fileID: 8300000, guid: d9914ace8d8344447bf640191b15e2e7, type: 3}
+      AudioClipAValue: {fileID: 0}
+      AudioClipBValue: {fileID: 0}
+      AudioClipCValue: {fileID: 0}
+      VolumeValue: 0.879
+      PitchValue: 1
+      RandomPitchRangeValue: 0.101
+      SpatialValue: 1
+      StopOnWindowEndValue: 1
+      TargetTypeValue: 1
+      SocketIdValue: WeaponTrail
+      LocalPositionOffsetValue: {x: 0, y: 0, z: 0}
