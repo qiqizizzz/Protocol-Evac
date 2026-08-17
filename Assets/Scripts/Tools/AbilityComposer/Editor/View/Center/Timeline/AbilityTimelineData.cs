@@ -50,6 +50,7 @@ namespace Tools.AbilityComposer.Editor.View.Center.Timeline
         public bool IsVfxWindowTrackEnabled { get; private set; } = true;
         public bool HasClip => Clip != null;
         public int LastFrame => Mathf.Max(FrameCount - 1, 0);
+        public int LastBoundaryFrame => HasClip ? Mathf.Max(FrameCount, 1) : 0;
         public float CurrentTime => FrameRate > 0f ? CurrentFrame / FrameRate : 0f;
 
         // 切换当前时间轴编辑的动画片段
@@ -238,14 +239,14 @@ namespace Tools.AbilityComposer.Editor.View.Center.Timeline
         public AbilityWindowDraft AddWindow(int frame)
         {
             int startFrame = Mathf.Clamp(frame, 0, LastFrame);
-            return AddWindow(AbilityWindowDraftType.Hit, startFrame, Mathf.Clamp(startFrame + 1, 0, LastFrame), 1f);
+            return AddWindow(AbilityWindowDraftType.Hit, startFrame, Mathf.Clamp(startFrame + 1, 1, LastBoundaryFrame), 1f);
         }
 
         // 从外部能力数据加载一条窗口草稿
         public AbilityWindowDraft AddWindow(AbilityWindowDraftType type, int startFrame, int endFrame, float damage)
         {
             int clampedStartFrame = Mathf.Clamp(startFrame, 0, LastFrame);
-            int clampedEndFrame = Mathf.Clamp(endFrame, clampedStartFrame, LastFrame);
+            int clampedEndFrame = Mathf.Clamp(endFrame, clampedStartFrame + 1, LastBoundaryFrame);
             AbilityWindowDraft windowDraft = new AbilityWindowDraft(clampedStartFrame, clampedEndFrame);
             windowDraft.SetType(type);
             windowDraft.SetDamage(Mathf.Max(0f, damage));
@@ -312,7 +313,7 @@ namespace Tools.AbilityComposer.Editor.View.Center.Timeline
                 return;
 
             int clampedStartFrame = Mathf.Clamp(startFrame, 0, LastFrame);
-            int clampedEndFrame = Mathf.Clamp(endFrame, clampedStartFrame, LastFrame);
+            int clampedEndFrame = Mathf.Clamp(endFrame, clampedStartFrame + 1, LastBoundaryFrame);
             SelectedWindow.SetFrames(clampedStartFrame, clampedEndFrame);
         }
 

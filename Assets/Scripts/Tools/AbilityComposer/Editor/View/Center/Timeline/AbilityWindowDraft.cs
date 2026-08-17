@@ -37,7 +37,7 @@ namespace Tools.AbilityComposer.Editor.View.Center.Timeline
         public Vector3 VfxLocalEulerOffset { get; private set; }
         public bool VfxFollowTarget { get; private set; }
 
-        // 在指定帧创建默认命中窗口草稿
+        // 在指定起始帧和右边界帧创建默认命中窗口草稿
         public AbilityWindowDraft(int startFrame, int endFrame)
         {
             Id = Guid.NewGuid().ToString("N");
@@ -65,7 +65,7 @@ namespace Tools.AbilityComposer.Editor.View.Center.Timeline
                 Id = id;
         }
 
-        // 更新窗口左右边界
+        // 更新窗口起始帧和右边界帧
         public void SetFrames(int startFrame, int endFrame)
         {
             StartFrame = startFrame;

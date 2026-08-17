@@ -331,7 +331,7 @@ namespace Tools.AbilityComposer.Editor.View.Center.Timeline
                 }
 
                 windowMarker.style.left = FrameToPixel(windowDraft.StartFrame);
-                windowMarker.style.width = Mathf.Max(m_pixelsPerFrame, FrameToPixel(windowDraft.EndFrame) - FrameToPixel(windowDraft.StartFrame) + m_pixelsPerFrame);
+                windowMarker.style.width = CalculateWindowMarkerWidth(windowDraft.StartFrame, windowDraft.EndFrame);
                 windowMarker.style.top = top;
                 windowMarker.style.height = height;
                 windowMarker.style.minHeight = height;
@@ -373,22 +373,25 @@ namespace Tools.AbilityComposer.Editor.View.Center.Timeline
             if (m_draggingWindow == null || pointerEvent.pointerId != m_draggingWindowPointerId)
                 return;
 
-            int pointerFrame = GetFrameFromPointerPosition(pointerEvent.position);
+            int pointerFrame = m_windowDragMode == WindowDragMode.ResizeEnd
+                ? GetBoundaryFrameFromPointerPosition(pointerEvent.position)
+                : GetFrameFromPointerPosition(pointerEvent.position);
             int startFrame = m_draggingWindowStartFrame;
             int endFrame = m_draggingWindowEndFrame;
             if (m_windowDragMode == WindowDragMode.ResizeStart)
             {
-                startFrame = Mathf.Clamp(pointerFrame, 0, endFrame);
+                startFrame = Mathf.Clamp(pointerFrame, 0, endFrame - 1);
             }
             else if (m_windowDragMode == WindowDragMode.ResizeEnd)
             {
-                endFrame = Mathf.Clamp(pointerFrame, startFrame, m_timelineData.LastFrame);
+                endFrame = Mathf.Clamp(pointerFrame, startFrame + 1, m_timelineData.LastBoundaryFrame);
             }
             else
             {
                 int windowLength = endFrame - startFrame;
                 int frameOffset = pointerFrame - m_draggingWindowPointerFrame;
-                startFrame = Mathf.Clamp(m_draggingWindowStartFrame + frameOffset, 0, m_timelineData.LastFrame - windowLength);
+                int maxStartFrame = Mathf.Max(0, m_timelineData.LastBoundaryFrame - windowLength);
+                startFrame = Mathf.Clamp(m_draggingWindowStartFrame + frameOffset, 0, maxStartFrame);
                 endFrame = startFrame + windowLength;
             }
 
@@ -402,18 +405,21 @@ namespace Tools.AbilityComposer.Editor.View.Center.Timeline
             if (m_draggingWindow == null || pointerEvent.pointerId != m_draggingWindowPointerId)
                 return;
 
-            int pointerFrame = GetFrameFromPointerPosition(pointerEvent.position);
+            int pointerFrame = m_windowDragMode == WindowDragMode.ResizeEnd
+                ? GetBoundaryFrameFromPointerPosition(pointerEvent.position)
+                : GetFrameFromPointerPosition(pointerEvent.position);
             int startFrame = m_draggingWindowStartFrame;
             int endFrame = m_draggingWindowEndFrame;
             if (m_windowDragMode == WindowDragMode.ResizeStart)
-                startFrame = Mathf.Clamp(pointerFrame, 0, endFrame);
+                startFrame = Mathf.Clamp(pointerFrame, 0, endFrame - 1);
             else if (m_windowDragMode == WindowDragMode.ResizeEnd)
-                endFrame = Mathf.Clamp(pointerFrame, startFrame, m_timelineData.LastFrame);
+                endFrame = Mathf.Clamp(pointerFrame, startFrame + 1, m_timelineData.LastBoundaryFrame);
             else
             {
                 int windowLength = endFrame - startFrame;
                 int frameOffset = pointerFrame - m_draggingWindowPointerFrame;
-                startFrame = Mathf.Clamp(m_draggingWindowStartFrame + frameOffset, 0, m_timelineData.LastFrame - windowLength);
+                int maxStartFrame = Mathf.Max(0, m_timelineData.LastBoundaryFrame - windowLength);
+                startFrame = Mathf.Clamp(m_draggingWindowStartFrame + frameOffset, 0, maxStartFrame);
                 endFrame = startFrame + windowLength;
             }
 
@@ -434,7 +440,13 @@ namespace Tools.AbilityComposer.Editor.View.Center.Timeline
                 return;
 
             windowMarker.style.left = FrameToPixel(startFrame);
-            windowMarker.style.width = Mathf.Max(m_pixelsPerFrame, FrameToPixel(endFrame) - FrameToPixel(startFrame) + m_pixelsPerFrame);
+            windowMarker.style.width = CalculateWindowMarkerWidth(startFrame, endFrame);
+        }
+
+        // 计算窗口右边界帧对应的显示宽度
+        private float CalculateWindowMarkerWidth(int startFrame, int endFrame)
+        {
+            return Mathf.Max(m_pixelsPerFrame, FrameToPixel(endFrame) - FrameToPixel(startFrame));
         }
 
         // 为选中标记设置不受 Button 悬停样式覆盖的白色内边框
@@ -552,6 +564,14 @@ namespace Tools.AbilityComposer.Editor.View.Center.Timeline
             return Mathf.Clamp(PixelToFrame(localPositionX), 0, m_timelineData.LastFrame);
         }
 
+        // 将屏幕坐标转换为窗口右边界帧号
+        private int GetBoundaryFrameFromPointerPosition(Vector3 pointerPosition)
+        {
+            Vector2 panelPosition = new Vector2(pointerPosition.x, pointerPosition.y);
+            float localPositionX = m_timelineContent.WorldToLocal(panelPosition).x;
+            return Mathf.Clamp(PixelToFrame(localPositionX), 0, m_timelineData.LastBoundaryFrame);
+        }
+
         // 使用 Ctrl 加滚轮调整时间轴缩放，并以鼠标位置为锚点
         private void HandleTimelineWheel(WheelEvent wheelEvent)
         {
@@ -560,7 +580,7 @@ namespace Tools.AbilityComposer.Editor.View.Center.Timeline
 
             float viewportX = m_scrollView.contentViewport.WorldToLocal(wheelEvent.mousePosition).x;
             float localX = m_timelineContent.WorldToLocal(wheelEvent.mousePosition).x;
-            float anchorFrame = PixelToFrame(localX);
+            float anchorFrame = Mathf.Clamp(PixelToFrame(localX), 0, m_timelineData.LastFrame);
             float zoomFactor = wheelEvent.delta.y < 0f ? 1.15f : 1f / 1.15f;
             SetPixelsPerFrame(m_pixelsPerFrame * zoomFactor, new ZoomAnchor(anchorFrame, viewportX));
             wheelEvent.StopPropagation();

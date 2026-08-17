@@ -867,8 +867,8 @@ namespace Tools.AbilityComposer.Editor
             {
                 foreach (AbilityHitWindowData windowData in hitTrack.Windows)
                 {
-                    int startFrame = Mathf.RoundToInt(windowData.StartNormalizedTime * m_timelineData.LastFrame);
-                    int endFrame = Mathf.RoundToInt(windowData.EndNormalizedTime * m_timelineData.LastFrame);
+                    int startFrame = ConvertStartNormalizedTimeToFrame(windowData.StartNormalizedTime);
+                    int endFrame = ConvertEndNormalizedTimeToBoundaryFrame(windowData.EndNormalizedTime);
                     AbilityWindowDraft windowDraft = m_timelineData.AddWindow(AbilityWindowDraftType.Hit,
                         startFrame, endFrame, windowData.Damage);
                     windowDraft.SetId(windowData.Id);
@@ -879,8 +879,8 @@ namespace Tools.AbilityComposer.Editor
             {
                 foreach (AbilityStepAdvanceWindowData windowData in stepAdvanceTrack.Windows)
                 {
-                    int startFrame = Mathf.RoundToInt(windowData.StartNormalizedTime * m_timelineData.LastFrame);
-                    int endFrame = Mathf.RoundToInt(windowData.EndNormalizedTime * m_timelineData.LastFrame);
+                    int startFrame = ConvertStartNormalizedTimeToFrame(windowData.StartNormalizedTime);
+                    int endFrame = ConvertEndNormalizedTimeToBoundaryFrame(windowData.EndNormalizedTime);
                     AbilityWindowDraft windowDraft = m_timelineData.AddWindow(AbilityWindowDraftType.StepAdvance,
                         startFrame, endFrame, 0f);
                     windowDraft.SetId(windowData.Id);
@@ -891,8 +891,8 @@ namespace Tools.AbilityComposer.Editor
             {
                 foreach (AbilityMovementLockWindowData windowData in movementLockTrack.Windows)
                 {
-                    int startFrame = Mathf.RoundToInt(windowData.StartNormalizedTime * m_timelineData.LastFrame);
-                    int endFrame = Mathf.RoundToInt(windowData.EndNormalizedTime * m_timelineData.LastFrame);
+                    int startFrame = ConvertStartNormalizedTimeToFrame(windowData.StartNormalizedTime);
+                    int endFrame = ConvertEndNormalizedTimeToBoundaryFrame(windowData.EndNormalizedTime);
                     AbilityWindowDraft windowDraft = m_timelineData.AddWindow(AbilityWindowDraftType.MovementLock,
                         startFrame, endFrame, 0f);
                     windowDraft.SetId(windowData.Id);
@@ -903,8 +903,8 @@ namespace Tools.AbilityComposer.Editor
             {
                 foreach (AbilityVfxWindowData windowData in vfxTrack.Windows)
                 {
-                    int startFrame = Mathf.RoundToInt(windowData.StartNormalizedTime * m_timelineData.LastFrame);
-                    int endFrame = Mathf.RoundToInt(windowData.EndNormalizedTime * m_timelineData.LastFrame);
+                    int startFrame = ConvertStartNormalizedTimeToFrame(windowData.StartNormalizedTime);
+                    int endFrame = ConvertEndNormalizedTimeToBoundaryFrame(windowData.EndNormalizedTime);
                     AbilityWindowDraft windowDraft = m_timelineData.AddWindow(AbilityWindowDraftType.Vfx,
                         startFrame, endFrame, 0f);
                     windowDraft.SetId(windowData.Id);
@@ -920,6 +920,46 @@ namespace Tools.AbilityComposer.Editor
             }
 
             m_timelineData.ClearWindowSelection();
+        }
+
+        // 将运行时归一化起始时间转换为编辑器起始帧
+        private int ConvertStartNormalizedTimeToFrame(float normalizedTime)
+        {
+            if (!m_timelineData.HasClip)
+                return 0;
+
+            int frame = Mathf.RoundToInt(normalizedTime * m_timelineData.LastFrame);
+            return Mathf.Clamp(frame, 0, m_timelineData.LastFrame);
+        }
+
+        // 将运行时归一化结束时间转换为编辑器右边界帧
+        private int ConvertEndNormalizedTimeToBoundaryFrame(float normalizedTime)
+        {
+            if (!m_timelineData.HasClip)
+                return 0;
+
+            int runtimeEndFrame = Mathf.RoundToInt(normalizedTime * m_timelineData.LastFrame);
+            return Mathf.Clamp(runtimeEndFrame + 1, 1, m_timelineData.LastBoundaryFrame);
+        }
+
+        // 将编辑器起始帧转换为运行时归一化起始时间
+        private float ConvertStartFrameToNormalizedTime(int startFrame)
+        {
+            if (m_timelineData.LastFrame <= 0)
+                return 0f;
+
+            int runtimeStartFrame = Mathf.Clamp(startFrame, 0, m_timelineData.LastFrame);
+            return runtimeStartFrame / (float)m_timelineData.LastFrame;
+        }
+
+        // 将编辑器右边界帧转换为运行时归一化结束时间
+        private float ConvertEndBoundaryFrameToNormalizedTime(int endBoundaryFrame)
+        {
+            if (m_timelineData.LastFrame <= 0)
+                return 0f;
+
+            int runtimeEndFrame = Mathf.Clamp(endBoundaryFrame - 1, 0, m_timelineData.LastFrame);
+            return runtimeEndFrame / (float)m_timelineData.LastFrame;
         }
 
         // 查找当前动画唯一绑定的窗口主体配置
@@ -1027,12 +1067,8 @@ namespace Tools.AbilityComposer.Editor
             List<AbilityHitWindowData> windowValues = new List<AbilityHitWindowData>();
             foreach (AbilityWindowDraft windowDraft in m_timelineData.HitWindowDraftValues)
             {
-                float startNormalizedTime = m_timelineData.LastFrame > 0
-                    ? windowDraft.StartFrame / (float)m_timelineData.LastFrame
-                    : 0f;
-                float endNormalizedTime = m_timelineData.LastFrame > 0
-                    ? windowDraft.EndFrame / (float)m_timelineData.LastFrame
-                    : 0f;
+                float startNormalizedTime = ConvertStartFrameToNormalizedTime(windowDraft.StartFrame);
+                float endNormalizedTime = ConvertEndBoundaryFrameToNormalizedTime(windowDraft.EndFrame);
                 windowValues.Add(new AbilityHitWindowData(startNormalizedTime, endNormalizedTime, windowDraft.Damage));
             }
 
@@ -1067,8 +1103,8 @@ namespace Tools.AbilityComposer.Editor
             List<AbilityStepAdvanceWindowData> values = new List<AbilityStepAdvanceWindowData>();
             foreach (AbilityWindowDraft draft in m_timelineData.StepAdvanceWindowDraftValues)
             {
-                float start = m_timelineData.LastFrame > 0 ? draft.StartFrame / (float)m_timelineData.LastFrame : 0f;
-                float end = m_timelineData.LastFrame > 0 ? draft.EndFrame / (float)m_timelineData.LastFrame : 0f;
+                float start = ConvertStartFrameToNormalizedTime(draft.StartFrame);
+                float end = ConvertEndBoundaryFrameToNormalizedTime(draft.EndFrame);
                 values.Add(new AbilityStepAdvanceWindowData(draft.Id, start, end));
             }
 
@@ -1103,8 +1139,8 @@ namespace Tools.AbilityComposer.Editor
             List<AbilityMovementLockWindowData> values = new List<AbilityMovementLockWindowData>();
             foreach (AbilityWindowDraft draft in m_timelineData.MovementLockWindowDraftValues)
             {
-                float start = m_timelineData.LastFrame > 0 ? draft.StartFrame / (float)m_timelineData.LastFrame : 0f;
-                float end = m_timelineData.LastFrame > 0 ? draft.EndFrame / (float)m_timelineData.LastFrame : 0f;
+                float start = ConvertStartFrameToNormalizedTime(draft.StartFrame);
+                float end = ConvertEndBoundaryFrameToNormalizedTime(draft.EndFrame);
                 values.Add(new AbilityMovementLockWindowData(draft.Id, start, end));
             }
 
@@ -1139,8 +1175,8 @@ namespace Tools.AbilityComposer.Editor
             List<AbilityVfxWindowData> values = new List<AbilityVfxWindowData>();
             foreach (AbilityWindowDraft draft in m_timelineData.VfxWindowDraftValues)
             {
-                float start = m_timelineData.LastFrame > 0 ? draft.StartFrame / (float)m_timelineData.LastFrame : 0f;
-                float end = m_timelineData.LastFrame > 0 ? draft.EndFrame / (float)m_timelineData.LastFrame : 0f;
+                float start = ConvertStartFrameToNormalizedTime(draft.StartFrame);
+                float end = ConvertEndBoundaryFrameToNormalizedTime(draft.EndFrame);
                 values.Add(new AbilityVfxWindowData(draft.Id, start, end, draft.VfxTriggerType,
                     draft.VfxTargetType, draft.VfxPrefab, draft.VfxSocketId, draft.VfxLifeMode,
                     draft.VfxLocalPositionOffset, draft.VfxLocalEulerOffset, draft.VfxFollowTarget));
