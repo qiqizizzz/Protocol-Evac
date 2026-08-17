@@ -11,6 +11,7 @@ using Module.Ability.Data.Window;
 using Module.Ability.Data.Window.Hit;
 using Module.Ability.Data.Window.MovementLock;
 using Module.Ability.Data.Window.StepAdvance;
+using Module.Ability.Data.Window.Vfx;
 using Tools.AbilityComposer.Editor.View.Center.Event;
 using UnityEngine;
 using Utils.log;
@@ -23,6 +24,7 @@ namespace Tools.AbilityComposer.Editor.View.Center.Timeline
         private readonly List<AbilityWindowDraft> m_hitWindowDraftValues = new List<AbilityWindowDraft>();
         private readonly List<AbilityWindowDraft> m_stepAdvanceWindowDraftValues = new List<AbilityWindowDraft>();
         private readonly List<AbilityWindowDraft> m_movementLockWindowDraftValues = new List<AbilityWindowDraft>();
+        private readonly List<AbilityWindowDraft> m_vfxWindowDraftValues = new List<AbilityWindowDraft>();
 
         public AnimationClip Clip { get; private set; }
         public float FrameRate { get; private set; }
@@ -33,16 +35,19 @@ namespace Tools.AbilityComposer.Editor.View.Center.Timeline
         public IReadOnlyList<AbilityWindowDraft> HitWindowDraftValues => m_hitWindowDraftValues;
         public IReadOnlyList<AbilityWindowDraft> StepAdvanceWindowDraftValues => m_stepAdvanceWindowDraftValues;
         public IReadOnlyList<AbilityWindowDraft> MovementLockWindowDraftValues => m_movementLockWindowDraftValues;
+        public IReadOnlyList<AbilityWindowDraft> VfxWindowDraftValues => m_vfxWindowDraftValues;
         public AbilityEventDraft SelectedEvent { get; private set; }
         public AbilityWindowDraft SelectedWindow { get; private set; }
         public AbilityWindowConfigSO WindowConfig { get; private set; }
         public AbilityHitWindowTrackData HitWindowTrack { get; private set; }
         public AbilityStepAdvanceWindowTrackData StepAdvanceWindowTrack { get; private set; }
         public AbilityMovementLockWindowTrackData MovementLockWindowTrack { get; private set; }
+        public AbilityVfxWindowTrackData VfxWindowTrack { get; private set; }
         public bool IsWindowInspectorActive { get; private set; }
         public bool IsHitWindowTrackEnabled { get; private set; } = true;
         public bool IsStepAdvanceWindowTrackEnabled { get; private set; } = true;
         public bool IsMovementLockWindowTrackEnabled { get; private set; } = true;
+        public bool IsVfxWindowTrackEnabled { get; private set; } = true;
         public bool HasClip => Clip != null;
         public int LastFrame => Mathf.Max(FrameCount - 1, 0);
         public float CurrentTime => FrameRate > 0f ? CurrentFrame / FrameRate : 0f;
@@ -59,6 +64,7 @@ namespace Tools.AbilityComposer.Editor.View.Center.Timeline
             m_hitWindowDraftValues.Clear();
             m_stepAdvanceWindowDraftValues.Clear();
             m_movementLockWindowDraftValues.Clear();
+            m_vfxWindowDraftValues.Clear();
             SelectedEvent = null;
             SelectedWindow = null;
             IsWindowInspectorActive = false;
@@ -71,6 +77,7 @@ namespace Tools.AbilityComposer.Editor.View.Center.Timeline
             HitWindowTrack = windowConfig == null ? null : windowConfig.HitWindowTrack;
             StepAdvanceWindowTrack = windowConfig == null ? null : windowConfig.StepAdvanceWindowTrack;
             MovementLockWindowTrack = windowConfig == null ? null : windowConfig.MovementLockWindowTrack;
+            VfxWindowTrack = windowConfig == null ? null : windowConfig.VfxWindowTrack;
         }
 
         // 设置命中窗口轨道的显示状态
@@ -89,6 +96,12 @@ namespace Tools.AbilityComposer.Editor.View.Center.Timeline
         public void SetMovementLockWindowTrackEnabled(bool isEnabled)
         {
             IsMovementLockWindowTrackEnabled = isEnabled;
+        }
+
+        // 设置特效窗口轨道的显示状态
+        public void SetVfxWindowTrackEnabled(bool isEnabled)
+        {
+            IsVfxWindowTrackEnabled = isEnabled;
         }
 
         // 从 AnimationClip 的事件数据重建内存草稿
@@ -248,6 +261,7 @@ namespace Tools.AbilityComposer.Editor.View.Center.Timeline
             m_hitWindowDraftValues.Clear();
             m_stepAdvanceWindowDraftValues.Clear();
             m_movementLockWindowDraftValues.Clear();
+            m_vfxWindowDraftValues.Clear();
             SelectedWindow = null;
             IsWindowInspectorActive = false;
         }
@@ -322,6 +336,8 @@ namespace Tools.AbilityComposer.Editor.View.Center.Timeline
                     return m_stepAdvanceWindowDraftValues;
                 case AbilityWindowDraftType.MovementLock:
                     return m_movementLockWindowDraftValues;
+                case AbilityWindowDraftType.Vfx:
+                    return m_vfxWindowDraftValues;
                 default:
                     QLog.Error($"未支持的 Ability 窗口草稿类型：{type}");
                     return m_hitWindowDraftValues;
@@ -333,7 +349,8 @@ namespace Tools.AbilityComposer.Editor.View.Center.Timeline
         {
             AbilityWindowDraft windowDraft = m_hitWindowDraftValues.Find(item => item.Id == windowId);
             windowDraft ??= m_stepAdvanceWindowDraftValues.Find(item => item.Id == windowId);
-            return windowDraft ?? m_movementLockWindowDraftValues.Find(item => item.Id == windowId);
+            windowDraft ??= m_movementLockWindowDraftValues.Find(item => item.Id == windowId);
+            return windowDraft ?? m_vfxWindowDraftValues.Find(item => item.Id == windowId);
         }
 
         // 返回全部窗口草稿供编辑器统一遍历
@@ -345,6 +362,80 @@ namespace Tools.AbilityComposer.Editor.View.Center.Timeline
                 yield return windowDraft;
             foreach (AbilityWindowDraft windowDraft in m_movementLockWindowDraftValues)
                 yield return windowDraft;
+            foreach (AbilityWindowDraft windowDraft in m_vfxWindowDraftValues)
+                yield return windowDraft;
+        }
+
+        // 更新选中特效窗口的触发方式
+        public void SetSelectedWindowVfxTriggerType(AbilityVfxTriggerType triggerType)
+        {
+            if (SelectedWindow == null)
+                return;
+
+            SelectedWindow.SetVfxTriggerType(triggerType);
+        }
+
+        // 更新选中特效窗口的生成目标
+        public void SetSelectedWindowVfxTargetType(AbilityVfxTargetType targetType)
+        {
+            if (SelectedWindow == null)
+                return;
+
+            SelectedWindow.SetVfxTargetType(targetType);
+        }
+
+        // 更新选中特效窗口的预制体
+        public void SetSelectedWindowVfxPrefab(GameObject vfxPrefab)
+        {
+            if (SelectedWindow == null)
+                return;
+
+            SelectedWindow.SetVfxPrefab(vfxPrefab);
+        }
+
+        // 更新选中特效窗口的挂点 Id
+        public void SetSelectedWindowVfxSocketId(string socketId)
+        {
+            if (SelectedWindow == null)
+                return;
+
+            SelectedWindow.SetVfxSocketId(socketId);
+        }
+
+        // 更新选中特效窗口的生命周期模式
+        public void SetSelectedWindowVfxLifeMode(AbilityVfxLifeMode lifeMode)
+        {
+            if (SelectedWindow == null)
+                return;
+
+            SelectedWindow.SetVfxLifeMode(lifeMode);
+        }
+
+        // 更新选中特效窗口的位置偏移
+        public void SetSelectedWindowVfxLocalPositionOffset(Vector3 localPositionOffset)
+        {
+            if (SelectedWindow == null)
+                return;
+
+            SelectedWindow.SetVfxLocalPositionOffset(localPositionOffset);
+        }
+
+        // 更新选中特效窗口的旋转偏移
+        public void SetSelectedWindowVfxLocalEulerOffset(Vector3 localEulerOffset)
+        {
+            if (SelectedWindow == null)
+                return;
+
+            SelectedWindow.SetVfxLocalEulerOffset(localEulerOffset);
+        }
+
+        // 更新选中特效窗口的跟随状态
+        public void SetSelectedWindowVfxFollowTarget(bool followTarget)
+        {
+            if (SelectedWindow == null)
+                return;
+
+            SelectedWindow.SetVfxFollowTarget(followTarget);
         }
     }
 }

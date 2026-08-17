@@ -1,6 +1,6 @@
 /*
  * ┌──────────────────────────────────────────────────────────────────┐
- * │  描    述: Ability Composer 左侧视图，管理播放控制与事件操作入口
+ * │  描    述: Ability Composer 左侧视图，管理播放控制、事件与窗口轨道入口
  * │  类    名: AbilityLeftView.cs
  * │  创    建: By qiqizizzz
  * └──────────────────────────────────────────────────────────────────┘
@@ -32,6 +32,7 @@ namespace Tools.AbilityComposer.Editor.View.Left
         private Button m_hitWindowTrackToggle;
         private Button m_stepAdvanceWindowTrackToggle;
         private Button m_movementLockWindowTrackToggle;
+        private Button m_vfxWindowTrackToggle;
         private bool m_isControlsReady;
 
         public event Action OnJumpFirstFrameRequested;
@@ -47,6 +48,7 @@ namespace Tools.AbilityComposer.Editor.View.Left
         public event Action<bool> OnHitWindowTrackToggled;
         public event Action<bool> OnStepAdvanceWindowTrackToggled;
         public event Action<bool> OnMovementLockWindowTrackToggled;
+        public event Action<bool> OnVfxWindowTrackToggled;
 
         // 注入左侧区域根节点
         public AbilityLeftView(VisualElement rootVisualElement)
@@ -72,6 +74,7 @@ namespace Tools.AbilityComposer.Editor.View.Left
             m_hitWindowTrackToggle = m_rootVisualElement.Q<Button>("hit-window-track-toggle");
             m_stepAdvanceWindowTrackToggle = m_rootVisualElement.Q<Button>("step-advance-window-track-toggle");
             m_movementLockWindowTrackToggle = m_rootVisualElement.Q<Button>("movement-lock-window-track-toggle");
+            m_vfxWindowTrackToggle = m_rootVisualElement.Q<Button>("vfx-window-track-toggle");
             m_isControlsReady = m_jumpFirstFrameButton != null && m_previousFrameButton != null
                 && m_playToggleButton != null && m_nextFrameButton != null && m_jumpLastFrameButton != null
                 && m_playToggleLabel != null && m_currentFrameField != null && m_lastFrameLabel != null
@@ -79,7 +82,8 @@ namespace Tools.AbilityComposer.Editor.View.Left
                 && m_addWindowButton != null && m_deleteWindowButton != null;
                 
             m_isControlsReady = m_isControlsReady && m_hitWindowTrackToggle != null
-                && m_stepAdvanceWindowTrackToggle != null && m_movementLockWindowTrackToggle != null;
+                && m_stepAdvanceWindowTrackToggle != null && m_movementLockWindowTrackToggle != null
+                && m_vfxWindowTrackToggle != null;
             if (!m_isControlsReady)
                 QLog.Error("配置 Ability Composer 左侧视图失败：缺少必要的 UXML 控件");
         }
@@ -100,6 +104,7 @@ namespace Tools.AbilityComposer.Editor.View.Left
             m_hitWindowTrackToggle.text = timelineData.IsHitWindowTrackEnabled ? "[x]" : "[ ]";
             m_stepAdvanceWindowTrackToggle.text = timelineData.IsStepAdvanceWindowTrackEnabled ? "[x]" : "[ ]";
             m_movementLockWindowTrackToggle.text = timelineData.IsMovementLockWindowTrackEnabled ? "[x]" : "[ ]";
+            m_vfxWindowTrackToggle.text = timelineData.IsVfxWindowTrackEnabled ? "[x]" : "[ ]";
 
             if (!hasAnimationClip)
             {
@@ -132,6 +137,7 @@ namespace Tools.AbilityComposer.Editor.View.Left
             m_hitWindowTrackToggle.clicked += RequestHitWindowTrackToggle;
             m_stepAdvanceWindowTrackToggle.clicked += RequestStepAdvanceWindowTrackToggle;
             m_movementLockWindowTrackToggle.clicked += RequestMovementLockWindowTrackToggle;
+            m_vfxWindowTrackToggle.clicked += RequestVfxWindowTrackToggle;
         }
 
         protected override void UnsubscribeViewEvents()
@@ -152,6 +158,7 @@ namespace Tools.AbilityComposer.Editor.View.Left
             m_hitWindowTrackToggle.clicked -= RequestHitWindowTrackToggle;
             m_stepAdvanceWindowTrackToggle.clicked -= RequestStepAdvanceWindowTrackToggle;
             m_movementLockWindowTrackToggle.clicked -= RequestMovementLockWindowTrackToggle;
+            m_vfxWindowTrackToggle.clicked -= RequestVfxWindowTrackToggle;
             m_isControlsReady = false;
         }
 
@@ -197,5 +204,8 @@ namespace Tools.AbilityComposer.Editor.View.Left
 
         // 请求切换移动锁定窗口轨道显示状态
         private void RequestMovementLockWindowTrackToggle() => OnMovementLockWindowTrackToggled?.Invoke(!m_movementLockWindowTrackToggle.text.StartsWith("[x]"));
+
+        // 请求切换特效窗口轨道显示状态
+        private void RequestVfxWindowTrackToggle() => OnVfxWindowTrackToggled?.Invoke(!m_vfxWindowTrackToggle.text.StartsWith("[x]"));
     }
 }

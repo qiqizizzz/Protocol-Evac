@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using Framework.QTower.Editor.View;
 using Module.Ability.Data.Window;
+using Module.Ability.Data.Window.Vfx;
 using Tools.AbilityComposer.Editor.View.Center.Event;
 using Tools.AbilityComposer.Editor.View.Center.Timeline;
 using Tools.AbilityComposer.Editor.View.Right.Event;
@@ -48,6 +49,14 @@ namespace Tools.AbilityComposer.Editor.View.Right
         public event Action<AbilityWindowConfigSO> OnWindowConfigChanged;
         public event Action<int, int> OnWindowFramesChanged;
         public event Action<float> OnWindowDamageChanged;
+        public event Action<AbilityVfxTriggerType> OnWindowVfxTriggerTypeChanged;
+        public event Action<AbilityVfxTargetType> OnWindowVfxTargetTypeChanged;
+        public event Action<UnityEngine.GameObject> OnWindowVfxPrefabChanged;
+        public event Action<string> OnWindowVfxSocketIdChanged;
+        public event Action<AbilityVfxLifeMode> OnWindowVfxLifeModeChanged;
+        public event Action<UnityEngine.Vector3> OnWindowVfxPositionOffsetChanged;
+        public event Action<UnityEngine.Vector3> OnWindowVfxEulerOffsetChanged;
+        public event Action<bool> OnWindowVfxFollowTargetChanged;
         public event Action OnSaveWindowRequested;
         public event Action OnCloseEventInspectorRequested;
         public event Action OnCloseWindowInspectorRequested;
@@ -123,6 +132,14 @@ namespace Tools.AbilityComposer.Editor.View.Right
             m_windowInspectorView.OnWindowConfigChanged += RequestWindowConfigChanged;
             m_windowInspectorView.OnFramesChanged += RequestWindowFramesChanged;
             m_windowInspectorView.OnDamageChanged += RequestWindowDamageChanged;
+            m_windowInspectorView.OnVfxTriggerTypeChanged += RequestWindowVfxTriggerTypeChanged;
+            m_windowInspectorView.OnVfxTargetTypeChanged += RequestWindowVfxTargetTypeChanged;
+            m_windowInspectorView.OnVfxPrefabChanged += RequestWindowVfxPrefabChanged;
+            m_windowInspectorView.OnVfxSocketIdChanged += RequestWindowVfxSocketIdChanged;
+            m_windowInspectorView.OnVfxLifeModeChanged += RequestWindowVfxLifeModeChanged;
+            m_windowInspectorView.OnVfxPositionOffsetChanged += RequestWindowVfxPositionOffsetChanged;
+            m_windowInspectorView.OnVfxEulerOffsetChanged += RequestWindowVfxEulerOffsetChanged;
+            m_windowInspectorView.OnVfxFollowTargetChanged += RequestWindowVfxFollowTargetChanged;
             m_windowInspectorView.OnSaveWindowRequested += RequestSaveWindow;
         }
 
@@ -139,6 +156,14 @@ namespace Tools.AbilityComposer.Editor.View.Right
             m_windowInspectorView.OnWindowConfigChanged -= RequestWindowConfigChanged;
             m_windowInspectorView.OnFramesChanged -= RequestWindowFramesChanged;
             m_windowInspectorView.OnDamageChanged -= RequestWindowDamageChanged;
+            m_windowInspectorView.OnVfxTriggerTypeChanged -= RequestWindowVfxTriggerTypeChanged;
+            m_windowInspectorView.OnVfxTargetTypeChanged -= RequestWindowVfxTargetTypeChanged;
+            m_windowInspectorView.OnVfxPrefabChanged -= RequestWindowVfxPrefabChanged;
+            m_windowInspectorView.OnVfxSocketIdChanged -= RequestWindowVfxSocketIdChanged;
+            m_windowInspectorView.OnVfxLifeModeChanged -= RequestWindowVfxLifeModeChanged;
+            m_windowInspectorView.OnVfxPositionOffsetChanged -= RequestWindowVfxPositionOffsetChanged;
+            m_windowInspectorView.OnVfxEulerOffsetChanged -= RequestWindowVfxEulerOffsetChanged;
+            m_windowInspectorView.OnVfxFollowTargetChanged -= RequestWindowVfxFollowTargetChanged;
             m_windowInspectorView.OnSaveWindowRequested -= RequestSaveWindow;
             m_isControlsReady = false;
         }
@@ -175,6 +200,30 @@ namespace Tools.AbilityComposer.Editor.View.Right
 
         // 转发窗口伤害编辑请求
         private void RequestWindowDamageChanged(float damage) => OnWindowDamageChanged?.Invoke(damage);
+
+        // 转发特效窗口触发方式编辑请求
+        private void RequestWindowVfxTriggerTypeChanged(AbilityVfxTriggerType triggerType) => OnWindowVfxTriggerTypeChanged?.Invoke(triggerType);
+
+        // 转发特效窗口目标编辑请求
+        private void RequestWindowVfxTargetTypeChanged(AbilityVfxTargetType targetType) => OnWindowVfxTargetTypeChanged?.Invoke(targetType);
+
+        // 转发特效窗口预制体编辑请求
+        private void RequestWindowVfxPrefabChanged(UnityEngine.GameObject vfxPrefab) => OnWindowVfxPrefabChanged?.Invoke(vfxPrefab);
+
+        // 转发特效窗口挂点 Id 编辑请求
+        private void RequestWindowVfxSocketIdChanged(string socketId) => OnWindowVfxSocketIdChanged?.Invoke(socketId);
+
+        // 转发特效窗口生命周期编辑请求
+        private void RequestWindowVfxLifeModeChanged(AbilityVfxLifeMode lifeMode) => OnWindowVfxLifeModeChanged?.Invoke(lifeMode);
+
+        // 转发特效窗口位置偏移编辑请求
+        private void RequestWindowVfxPositionOffsetChanged(UnityEngine.Vector3 positionOffset) => OnWindowVfxPositionOffsetChanged?.Invoke(positionOffset);
+
+        // 转发特效窗口旋转偏移编辑请求
+        private void RequestWindowVfxEulerOffsetChanged(UnityEngine.Vector3 eulerOffset) => OnWindowVfxEulerOffsetChanged?.Invoke(eulerOffset);
+
+        // 转发特效窗口跟随目标编辑请求
+        private void RequestWindowVfxFollowTargetChanged(bool followTarget) => OnWindowVfxFollowTargetChanged?.Invoke(followTarget);
 
         // 转发保存窗口轨道请求
         private void RequestSaveWindow() => OnSaveWindowRequested?.Invoke();

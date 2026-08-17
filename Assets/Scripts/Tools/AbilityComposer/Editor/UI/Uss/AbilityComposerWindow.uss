@@ -602,6 +602,10 @@
     background-color: rgb(82, 116, 190);
 }
 
+.ac-window-vfx-track {
+    background-color: rgb(177, 116, 220);
+}
+
 .ac-timeline-window-marker-selected {
     border-width: 2px;
     border-color: rgb(245, 245, 245);
@@ -628,6 +632,10 @@
 
 .ac-window-movement-lock {
     background-color: rgb(82, 116, 190);
+}
+
+.ac-window-vfx {
+    background-color: rgb(177, 116, 220);
 }
 
 .ac-timeline-empty-state {

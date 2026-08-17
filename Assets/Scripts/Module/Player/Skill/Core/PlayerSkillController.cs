@@ -10,6 +10,8 @@ using Framework.QTower.Controller;
 using System.Collections.Generic;
 using Module.Ability.Data;
 using Module.Ability.Hit;
+using Module.Ability.Vfx;
+using Module.Combat.Damage;
 using Module.Combat.Hitbox;
 using Module.Player.Context;
 using Module.Player.Skill;
@@ -25,6 +27,8 @@ namespace Module.Player.Skill.Core
 
         private readonly PlayerContext m_context;
         private readonly AbilityHitWindowController m_hitWindowController;
+        private readonly AbilityVfxWindowController m_vfxWindowController;
+        private readonly CombatHitbox m_combatHitbox;
         private readonly Dictionary<PlayerSkillType, AbilityConfigSO> m_skillConfigs;
         private readonly PlayerSkillTimeline m_timeline;
 
@@ -43,9 +47,12 @@ namespace Module.Player.Skill.Core
         public PlayerSkillController(PlayerContext context, CombatHitbox combatHitbox, GameObject damageSource)
         {
             m_context = context;
+            m_combatHitbox = combatHitbox;
             m_hitWindowController = new AbilityHitWindowController(combatHitbox, damageSource);
+            m_vfxWindowController = new AbilityVfxWindowController(damageSource);
             m_skillConfigs = new Dictionary<PlayerSkillType, AbilityConfigSO>();
             m_timeline = new PlayerSkillTimeline();
+            m_combatHitbox.OnHitConfirmed += HandleHitConfirmed;
         }
 
         #region 生命周期
@@ -67,6 +74,7 @@ namespace Module.Player.Skill.Core
 
             m_timeline.Open(skillType, config, m_context);
             RecordCancelInputState();
+            SyncVfxWindow();
             SyncHitWindow();
         }
 
@@ -75,16 +83,19 @@ namespace Module.Player.Skill.Core
             if (TryFinishEarlyByPlayerInput())
             {
                 SyncHitWindow();
+                SyncVfxWindow();
                 return;
             }
 
             m_timeline.Tick(deltaTime, m_context);
+            SyncVfxWindow();
             SyncHitWindow();
         }
 
         public void Close()
         {
             CloseHitWindow();
+            m_vfxWindowController.Close();
             m_timeline.Close(m_context);
             ResetCancelInputState();
         }
@@ -92,6 +103,9 @@ namespace Module.Player.Skill.Core
         // 销毁时关闭当前技能
         protected override void OnDestroy()
         {
+            if (m_combatHitbox != null)
+                m_combatHitbox.OnHitConfirmed -= HandleHitConfirmed;
+
             Close();
         }
         #endregion
@@ -176,6 +190,32 @@ namespace Module.Player.Skill.Core
         private void CloseHitWindow()
         {
             m_hitWindowController.Close();
+        }
+
+        // 根据当前技能段落与时间轴同步特效窗口
+        private void SyncVfxWindow()
+        {
+            if (!m_timeline.IsRunning || m_timeline.CurrentPhase != AbilityStepPhase.Begin)
+            {
+                m_vfxWindowController.Close();
+                return;
+            }
+
+            AbilityStepData stepData = m_timeline.CurrentStep;
+            if (!stepData.UseVfxWindow)
+            {
+                m_vfxWindowController.Close();
+                return;
+            }
+
+            m_vfxWindowController.Sync(stepData.VfxWindowTrack, m_timeline.NormalizedTime,
+                m_timeline.CurrentStepIndex);
+        }
+
+        // 转发真实命中事件给当前技能特效窗口
+        private void HandleHitConfirmed(DamageData damageData, Component hitTarget)
+        {
+            m_vfxWindowController.PlayHitVfx(damageData, hitTarget);
         }
     }
 }

@@ -12,8 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2955d192f35746e49b1abec8b67d72f6, type: 3}
   m_Name: Behit_Fly_Fall_WindowConfig
   m_EditorClassIdentifier: 
-  AnimationClipValue: {fileID: -623603649343465320, guid: c06221ec7ad96c248883e34b508a883d,
-    type: 3}
+  AnimationClipValue: {fileID: 7400000, guid: fbe12e2481d5d9648bf5754feb4a6845, type: 2}
   UseHitWindowValue: 0
   HitWindowTrackValue:
     WindowValues: []
@@ -26,3 +25,6 @@ MonoBehaviour:
     - IdValue: d54b8ec4c7a1436c979873b29190be7a
       StartNormalizedTimeValue: 0
       EndNormalizedTimeValue: 0.8333333
+  UseVfxWindowValue: 0
+  VfxWindowTrackValue:
+    WindowValues: []

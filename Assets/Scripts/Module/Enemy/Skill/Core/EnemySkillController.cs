@@ -1,6 +1,6 @@
 /*
  * ┌───────────────────────────────────────────────────────┐
- * │  描    述: 敌人技能控制器，负责配置注册、冷却与命中窗口
+ * │  描    述: 敌人技能控制器，负责配置注册、冷却、命中与特效窗口
  * │  类    名: EnemySkillController.cs
  * │  创    建: By qiqizizzz
  * └───────────────────────────────────────────────────────┘
@@ -9,6 +9,8 @@
 using System.Collections.Generic;
 using Module.Ability.Data;
 using Module.Ability.Hit;
+using Module.Ability.Vfx;
+using Module.Combat.Damage;
 using Module.Combat.Hitbox;
 using Module.Enemy.Context.Runtime;
 using Module.Enemy.Skill.Data;
@@ -21,6 +23,8 @@ namespace Module.Enemy.Skill.Core
     {
         private readonly EnemyActionContext m_actionContext;
         private readonly AbilityHitWindowController m_hitWindowController;
+        private readonly AbilityVfxWindowController m_vfxWindowController;
+        private readonly CombatHitbox m_combatHitbox;
         private readonly Dictionary<EnemySkillType, AbilityConfigSO> m_skillConfigs;
         private readonly Dictionary<EnemySkillType, float> m_cooldownRemainingTimes;
         private readonly List<EnemySkillType> m_registeredSkillTypes;
@@ -40,11 +44,14 @@ namespace Module.Enemy.Skill.Core
         public EnemySkillController(EnemyActionContext actionContext, CombatHitbox combatHitbox, GameObject damageSource)
         {
             m_actionContext = actionContext;
+            m_combatHitbox = combatHitbox;
             m_hitWindowController = new AbilityHitWindowController(combatHitbox, damageSource);
+            m_vfxWindowController = new AbilityVfxWindowController(damageSource);
             m_skillConfigs = new Dictionary<EnemySkillType, AbilityConfigSO>();
             m_cooldownRemainingTimes = new Dictionary<EnemySkillType, float>();
             m_registeredSkillTypes = new List<EnemySkillType>();
             m_timeline = new EnemySkillTimeline();
+            m_combatHitbox.OnHitConfirmed += HandleHitConfirmed;
         }
 
         // 推进技能时间轴、冷却与命中窗口
@@ -59,6 +66,7 @@ namespace Module.Enemy.Skill.Core
                 StartCooldown(skillType.Value);
 
             SyncHitWindow();
+            SyncVfxWindow();
         }
 
         // 注册敌人技能配置
@@ -102,6 +110,7 @@ namespace Module.Enemy.Skill.Core
             ApplyControlSettings(skillType, config);
             m_timeline.Open(skillType, config, m_actionContext);
             SyncHitWindow();
+            SyncVfxWindow();
             return m_timeline.IsRunning;
         }
 
@@ -117,9 +126,17 @@ namespace Module.Enemy.Skill.Core
             EnemySkillType? skillType = m_timeline.CurrentSkillType;
             bool wasRunning = m_timeline.IsRunning;
             m_hitWindowController.Close();
+            m_vfxWindowController.Close();
             m_timeline.Close(m_actionContext);
             if (wasRunning && skillType.HasValue)
                 StartCooldown(skillType.Value);
+        }
+
+        // 释放敌人技能控制器持有的运行时订阅
+        public void UnInit()
+        {
+            m_combatHitbox.OnHitConfirmed -= HandleHitConfirmed;
+            Close();
         }
 
         // 查询指定技能是否处于冷却
@@ -180,6 +197,32 @@ namespace Module.Enemy.Skill.Core
 
             m_hitWindowController.Sync(stepData.BeginHitWindowTrack, m_timeline.NormalizedTime,
                 m_timeline.CurrentStepIndex);
+        }
+
+        // 根据当前技能阶段同步特效窗口
+        private void SyncVfxWindow()
+        {
+            if (!m_timeline.IsRunning || m_timeline.CurrentPhase != AbilityStepPhase.Begin)
+            {
+                m_vfxWindowController.Close();
+                return;
+            }
+
+            AbilityStepData stepData = m_timeline.CurrentStep;
+            if (!stepData.UseVfxWindow)
+            {
+                m_vfxWindowController.Close();
+                return;
+            }
+
+            m_vfxWindowController.Sync(stepData.VfxWindowTrack, m_timeline.NormalizedTime,
+                m_timeline.CurrentStepIndex);
+        }
+
+        // 转发真实命中事件给当前技能特效窗口
+        private void HandleHitConfirmed(DamageData damageData, Component hitTarget)
+        {
+            m_vfxWindowController.PlayHitVfx(damageData, hitTarget);
         }
     }
 }

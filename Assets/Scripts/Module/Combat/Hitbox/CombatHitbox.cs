@@ -7,6 +7,7 @@
  */
 
 using System.Collections.Generic;
+using System;
 using Module.Combat.Damage;
 using UnityEngine;
 using Utils.log;
@@ -33,6 +34,8 @@ namespace Module.Combat.Hitbox
         private float m_verticalLaunchSpeed;
         private bool m_isOpen;
         private bool m_hasWarnedCapacity;
+
+        public event Action<DamageData, Component> OnHitConfirmed;
 
         /// <summary>
         /// 开启命中窗口
@@ -171,6 +174,8 @@ namespace Module.Combat.Hitbox
                 m_horizontalKnockbackSpeed, m_horizontalKnockbackDuration, m_verticalLaunchSpeed);
             
             damageable.TakeDamage(damageData);
+            if (damageable is Component hitTarget)
+                OnHitConfirmed?.Invoke(damageData, hitTarget);
         }
 
         private void OnDrawGizmosSelected()

@@ -124,7 +124,7 @@ namespace Module.Enemy.Core
         private void OnDestroy()
         {
             m_behaviorController.Reset();
-            m_skillController.Close();
+            m_skillController.UnInit();
             m_animWriter.UnInit();
             m_navigationController.Reset();
             if (m_damageReceiver != null)

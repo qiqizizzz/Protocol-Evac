@@ -12,8 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2955d192f35746e49b1abec8b67d72f6, type: 3}
   m_Name: Behit_B_R_WindowConfig
   m_EditorClassIdentifier: 
-  AnimationClipValue: {fileID: -623603649343465320, guid: 28a29c28813f31143898a3dd88a1c314,
-    type: 3}
+  AnimationClipValue: {fileID: 7400000, guid: a6d7d0372e131444389332cdca70a325, type: 2}
   UseHitWindowValue: 0
   HitWindowTrackValue:
     WindowValues: []
@@ -26,3 +25,6 @@ MonoBehaviour:
     - IdValue: 0dc26ee5d5004f57b47f29e0a46842b8
       StartNormalizedTimeValue: 0
       EndNormalizedTimeValue: 0.30701753
+  UseVfxWindowValue: 0
+  VfxWindowTrackValue:
+    WindowValues: []

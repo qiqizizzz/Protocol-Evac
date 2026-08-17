@@ -1,6 +1,6 @@
 /*
  * ┌──────────────────────────────────────────────────────────────────┐
- * │  描    述: Ability 动画窗口主体配置，聚合动画与三类窗口轨道
+ * │  描    述: Ability 动画窗口主体配置，聚合动画与多类窗口轨道
  * │  类    名: AbilityWindowConfigSO.cs
  * │  创    建: By qiqizizzz
  * └──────────────────────────────────────────────────────────────────┘
@@ -9,6 +9,7 @@
 using Module.Ability.Data.Window.Hit;
 using Module.Ability.Data.Window.MovementLock;
 using Module.Ability.Data.Window.StepAdvance;
+using Module.Ability.Data.Window.Vfx;
 using TriInspector;
 using UnityEngine;
 
@@ -57,6 +58,17 @@ namespace Module.Ability.Data.Window
         [Tooltip("当前动画的移动锁定窗口轨道数据")]
         [SerializeField] private AbilityMovementLockWindowTrackData MovementLockWindowTrackValue = new AbilityMovementLockWindowTrackData();
 
+        [Group("WindowSettings")]
+        [LabelText("启用特效窗口")]
+        [Tooltip("是否启用当前动画的特效窗口")]
+        [SerializeField] private bool UseVfxWindowValue;
+
+        [Group("WindowSettings")]
+        [ShowIf(nameof(UseVfxWindowValue))]
+        [LabelText("特效窗口数据")]
+        [Tooltip("当前动画的特效窗口轨道数据")]
+        [SerializeField] private AbilityVfxWindowTrackData VfxWindowTrackValue = new AbilityVfxWindowTrackData();
+
         public AnimationClip AnimationClip => AnimationClipValue;
         public bool UseHitWindow => UseHitWindowValue;
         public AbilityHitWindowTrackData HitWindowTrack => HitWindowTrackValue;
@@ -64,6 +76,8 @@ namespace Module.Ability.Data.Window
         public AbilityStepAdvanceWindowTrackData StepAdvanceWindowTrack => StepAdvanceWindowTrackValue;
         public bool UseMovementLockWindow => UseMovementLockWindowValue;
         public AbilityMovementLockWindowTrackData MovementLockWindowTrack => MovementLockWindowTrackValue;
+        public bool UseVfxWindow => UseVfxWindowValue;
+        public AbilityVfxWindowTrackData VfxWindowTrack => VfxWindowTrackValue;
 
         // 更新主体配置唯一绑定的动画片段
         public void SetAnimationClip(AnimationClip animationClip)
@@ -90,6 +104,13 @@ namespace Module.Ability.Data.Window
         {
             UseMovementLockWindowValue = isEnabled;
             MovementLockWindowTrackValue = windowTrack;
+        }
+
+        // 更新特效窗口启用状态与轨道数据
+        public void SetVfxWindow(bool isEnabled, AbilityVfxWindowTrackData windowTrack)
+        {
+            UseVfxWindowValue = isEnabled;
+            VfxWindowTrackValue = windowTrack;
         }
 
         // 判断指定动画归一化时间是否处于移动锁定窗口

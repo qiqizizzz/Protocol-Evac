@@ -12,6 +12,7 @@ using Module.Ability.Data.Animation;
 using Module.Ability.Data.Window;
 using Module.Ability.Data.Window.Hit;
 using Module.Ability.Data.Window.StepAdvance;
+using Module.Ability.Data.Window.Vfx;
 using TriInspector;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -116,6 +117,10 @@ namespace Module.Ability.Data
         public AbilityHitWindowTrackData BeginHitWindowTrack => WindowConfigValue == null
             ? null
             : WindowConfigValue.HitWindowTrack;
+        public bool UseVfxWindow => WindowConfigValue != null && WindowConfigValue.UseVfxWindow;
+        public AbilityVfxWindowTrackData VfxWindowTrack => WindowConfigValue == null
+            ? null
+            : WindowConfigValue.VfxWindowTrack;
 
         // 更新当前攻击阶段绑定的窗口主体配置
         public void SetWindowConfig(AbilityWindowConfigSO windowConfig)

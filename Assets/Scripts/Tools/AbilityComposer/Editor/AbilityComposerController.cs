@@ -14,6 +14,7 @@ using Module.Ability.Data.Window;
 using Module.Ability.Data.Window.Hit;
 using Module.Ability.Data.Window.MovementLock;
 using Module.Ability.Data.Window.StepAdvance;
+using Module.Ability.Data.Window.Vfx;
 using Tools.AbilityComposer.Editor.Preview;
 using Tools.AbilityComposer.Editor.Selection;
 using Tools.AbilityComposer.Editor.View;
@@ -176,6 +177,8 @@ namespace Tools.AbilityComposer.Editor
                 callback => m_composerView.OnStepAdvanceWindowTrackToggled -= callback, HandleStepAdvanceWindowTrackToggled);
             RegisterEvent<bool>(callback => m_composerView.OnMovementLockWindowTrackToggled += callback,
                 callback => m_composerView.OnMovementLockWindowTrackToggled -= callback, HandleMovementLockWindowTrackToggled);
+            RegisterEvent<bool>(callback => m_composerView.OnVfxWindowTrackToggled += callback,
+                callback => m_composerView.OnVfxWindowTrackToggled -= callback, HandleVfxWindowTrackToggled);
             RegisterEvent<AbilityEventCategory>(callback => m_composerView.OnEventCategoryChanged += callback,
                 callback => m_composerView.OnEventCategoryChanged -= callback, HandleEventCategoryChanged);
             RegisterEvent<string>(callback => m_composerView.OnEventReceiverTypeNameChanged += callback,
@@ -196,6 +199,22 @@ namespace Tools.AbilityComposer.Editor
                 callback => m_composerView.OnWindowFramesChanged -= callback, HandleWindowFramesChanged);
             RegisterEvent<float>(callback => m_composerView.OnWindowDamageChanged += callback,
                 callback => m_composerView.OnWindowDamageChanged -= callback, HandleWindowDamageChanged);
+            RegisterEvent<AbilityVfxTriggerType>(callback => m_composerView.OnWindowVfxTriggerTypeChanged += callback,
+                callback => m_composerView.OnWindowVfxTriggerTypeChanged -= callback, HandleWindowVfxTriggerTypeChanged);
+            RegisterEvent<AbilityVfxTargetType>(callback => m_composerView.OnWindowVfxTargetTypeChanged += callback,
+                callback => m_composerView.OnWindowVfxTargetTypeChanged -= callback, HandleWindowVfxTargetTypeChanged);
+            RegisterEvent<GameObject>(callback => m_composerView.OnWindowVfxPrefabChanged += callback,
+                callback => m_composerView.OnWindowVfxPrefabChanged -= callback, HandleWindowVfxPrefabChanged);
+            RegisterEvent<string>(callback => m_composerView.OnWindowVfxSocketIdChanged += callback,
+                callback => m_composerView.OnWindowVfxSocketIdChanged -= callback, HandleWindowVfxSocketIdChanged);
+            RegisterEvent<AbilityVfxLifeMode>(callback => m_composerView.OnWindowVfxLifeModeChanged += callback,
+                callback => m_composerView.OnWindowVfxLifeModeChanged -= callback, HandleWindowVfxLifeModeChanged);
+            RegisterEvent<Vector3>(callback => m_composerView.OnWindowVfxPositionOffsetChanged += callback,
+                callback => m_composerView.OnWindowVfxPositionOffsetChanged -= callback, HandleWindowVfxPositionOffsetChanged);
+            RegisterEvent<Vector3>(callback => m_composerView.OnWindowVfxEulerOffsetChanged += callback,
+                callback => m_composerView.OnWindowVfxEulerOffsetChanged -= callback, HandleWindowVfxEulerOffsetChanged);
+            RegisterEvent<bool>(callback => m_composerView.OnWindowVfxFollowTargetChanged += callback,
+                callback => m_composerView.OnWindowVfxFollowTargetChanged -= callback, HandleWindowVfxFollowTargetChanged);
             RegisterEvent(callback => m_composerView.OnSaveWindowRequested += callback,
                 callback => m_composerView.OnSaveWindowRequested -= callback, SaveWindowTrack);
             RegisterEvent(callback => m_composerView.OnSaveEventRequested += callback,
@@ -407,6 +426,13 @@ namespace Tools.AbilityComposer.Editor
             RefreshView();
         }
 
+        // 更新特效窗口轨道启用状态
+        private void HandleVfxWindowTrackToggled(bool isEnabled)
+        {
+            m_timelineData.SetVfxWindowTrackEnabled(isEnabled);
+            RefreshView();
+        }
+
         // 选中时间轴上的窗口区间
         private void HandleWindowSelected(string windowId)
         {
@@ -454,6 +480,62 @@ namespace Tools.AbilityComposer.Editor
         private void HandleWindowDamageChanged(float damage)
         {
             m_timelineData.SetSelectedWindowDamage(damage);
+            RefreshView();
+        }
+
+        // 更新选中特效窗口的触发方式
+        private void HandleWindowVfxTriggerTypeChanged(AbilityVfxTriggerType triggerType)
+        {
+            m_timelineData.SetSelectedWindowVfxTriggerType(triggerType);
+            RefreshView();
+        }
+
+        // 更新选中特效窗口的生成目标
+        private void HandleWindowVfxTargetTypeChanged(AbilityVfxTargetType targetType)
+        {
+            m_timelineData.SetSelectedWindowVfxTargetType(targetType);
+            RefreshView();
+        }
+
+        // 更新选中特效窗口的预制体
+        private void HandleWindowVfxPrefabChanged(GameObject vfxPrefab)
+        {
+            m_timelineData.SetSelectedWindowVfxPrefab(vfxPrefab);
+            RefreshView();
+        }
+
+        // 更新选中特效窗口的挂点 Id
+        private void HandleWindowVfxSocketIdChanged(string socketId)
+        {
+            m_timelineData.SetSelectedWindowVfxSocketId(socketId);
+            RefreshView();
+        }
+
+        // 更新选中特效窗口的生命周期
+        private void HandleWindowVfxLifeModeChanged(AbilityVfxLifeMode lifeMode)
+        {
+            m_timelineData.SetSelectedWindowVfxLifeMode(lifeMode);
+            RefreshView();
+        }
+
+        // 更新选中特效窗口的位置偏移
+        private void HandleWindowVfxPositionOffsetChanged(Vector3 positionOffset)
+        {
+            m_timelineData.SetSelectedWindowVfxLocalPositionOffset(positionOffset);
+            RefreshView();
+        }
+
+        // 更新选中特效窗口的旋转偏移
+        private void HandleWindowVfxEulerOffsetChanged(Vector3 eulerOffset)
+        {
+            m_timelineData.SetSelectedWindowVfxLocalEulerOffset(eulerOffset);
+            RefreshView();
+        }
+
+        // 更新选中特效窗口的跟随目标状态
+        private void HandleWindowVfxFollowTargetChanged(bool followTarget)
+        {
+            m_timelineData.SetSelectedWindowVfxFollowTarget(followTarget);
             RefreshView();
         }
 
@@ -771,6 +853,9 @@ namespace Tools.AbilityComposer.Editor
             AbilityMovementLockWindowTrackData movementLockTrack = windowConfig.UseMovementLockWindow
                 ? windowConfig.MovementLockWindowTrack
                 : null;
+            AbilityVfxWindowTrackData vfxTrack = windowConfig.UseVfxWindow
+                ? windowConfig.VfxWindowTrack
+                : null;
 
             if (windowConfig != null && windowConfig.AnimationClip != m_timelineData.Clip)
             {
@@ -811,6 +896,26 @@ namespace Tools.AbilityComposer.Editor
                     AbilityWindowDraft windowDraft = m_timelineData.AddWindow(AbilityWindowDraftType.MovementLock,
                         startFrame, endFrame, 0f);
                     windowDraft.SetId(windowData.Id);
+                }
+            }
+
+            if (vfxTrack != null)
+            {
+                foreach (AbilityVfxWindowData windowData in vfxTrack.Windows)
+                {
+                    int startFrame = Mathf.RoundToInt(windowData.StartNormalizedTime * m_timelineData.LastFrame);
+                    int endFrame = Mathf.RoundToInt(windowData.EndNormalizedTime * m_timelineData.LastFrame);
+                    AbilityWindowDraft windowDraft = m_timelineData.AddWindow(AbilityWindowDraftType.Vfx,
+                        startFrame, endFrame, 0f);
+                    windowDraft.SetId(windowData.Id);
+                    windowDraft.SetVfxTriggerType(windowData.TriggerType);
+                    windowDraft.SetVfxTargetType(windowData.TargetType);
+                    windowDraft.SetVfxPrefab(windowData.VfxPrefab);
+                    windowDraft.SetVfxSocketId(windowData.SocketId);
+                    windowDraft.SetVfxLifeMode(windowData.LifeMode);
+                    windowDraft.SetVfxLocalPositionOffset(windowData.LocalPositionOffset);
+                    windowDraft.SetVfxLocalEulerOffset(windowData.LocalEulerOffset);
+                    windowDraft.SetVfxFollowTarget(windowData.FollowTarget);
                 }
             }
 
@@ -874,6 +979,9 @@ namespace Tools.AbilityComposer.Editor
                 case AbilityWindowDraftType.MovementLock:
                     SaveMovementLockWindowTrack(true);
                     break;
+                case AbilityWindowDraftType.Vfx:
+                    SaveVfxWindowTrack(true);
+                    break;
             }
 
             RefreshView();
@@ -887,6 +995,7 @@ namespace Tools.AbilityComposer.Editor
             bool hasHitWindowTrack = windowConfig != null && windowConfig.UseHitWindow;
             bool hasStepAdvanceWindowTrack = windowConfig != null && windowConfig.UseStepAdvanceWindow;
             bool hasMovementLockWindowTrack = windowConfig != null && windowConfig.UseMovementLockWindow;
+            bool hasVfxWindowTrack = windowConfig != null && windowConfig.UseVfxWindow;
 
             if (hasHitWindowTrack || m_timelineData.HitWindowDraftValues.Count > 0)
                 savedWindowTrack |= SaveHitWindowTrack(false);
@@ -894,6 +1003,8 @@ namespace Tools.AbilityComposer.Editor
                 savedWindowTrack |= SaveStepAdvanceWindowTrack(false);
             if (hasMovementLockWindowTrack || m_timelineData.MovementLockWindowDraftValues.Count > 0)
                 savedWindowTrack |= SaveMovementLockWindowTrack(false);
+            if (hasVfxWindowTrack || m_timelineData.VfxWindowDraftValues.Count > 0)
+                savedWindowTrack |= SaveVfxWindowTrack(false);
 
             return savedWindowTrack;
         }
@@ -1000,6 +1111,44 @@ namespace Tools.AbilityComposer.Editor
             Undo.RecordObject(windowConfig, "保存移动锁定窗口轨道");
             track.SetWindows(values);
             windowConfig.SetMovementLockWindow(true, track);
+            EditorUtility.SetDirty(windowConfig);
+            m_composerData.SetWindowConfig(windowConfig);
+            m_timelineData.SetWindowConfig(windowConfig);
+            AssetDatabase.SaveAssets();
+            if (createUndoGroup)
+                CompleteSaveUndoGroup();
+
+            return true;
+        }
+
+        // 将当前特效窗口草稿写回对应轨道数据
+        private bool SaveVfxWindowTrack(bool createUndoGroup)
+        {
+            if (!m_timelineData.HasClip)
+                return false;
+
+            AbilityWindowConfigSO windowConfig = GetOrCreateWindowConfig();
+            if (windowConfig == null)
+                return false;
+
+            if (createUndoGroup)
+                BeginSaveUndoGroup("保存特效窗口轨道", false, true);
+
+            AbilityVfxWindowTrackData track = windowConfig.VfxWindowTrack;
+
+            List<AbilityVfxWindowData> values = new List<AbilityVfxWindowData>();
+            foreach (AbilityWindowDraft draft in m_timelineData.VfxWindowDraftValues)
+            {
+                float start = m_timelineData.LastFrame > 0 ? draft.StartFrame / (float)m_timelineData.LastFrame : 0f;
+                float end = m_timelineData.LastFrame > 0 ? draft.EndFrame / (float)m_timelineData.LastFrame : 0f;
+                values.Add(new AbilityVfxWindowData(draft.Id, start, end, draft.VfxTriggerType,
+                    draft.VfxTargetType, draft.VfxPrefab, draft.VfxSocketId, draft.VfxLifeMode,
+                    draft.VfxLocalPositionOffset, draft.VfxLocalEulerOffset, draft.VfxFollowTarget));
+            }
+
+            Undo.RecordObject(windowConfig, "保存特效窗口轨道");
+            track.SetWindows(values);
+            windowConfig.SetVfxWindow(true, track);
             EditorUtility.SetDirty(windowConfig);
             m_composerData.SetWindowConfig(windowConfig);
             m_timelineData.SetWindowConfig(windowConfig);
