@@ -6,11 +6,15 @@
  * └──────────────────────────────────┘
  */
 
+using System.Collections.Generic;
+
 namespace Framework.QTower.Event.ECS
 {
     public class ECSSystem
     {
         public WorldBase World;
+        public List<int> Entities = new List<int>();
+        public Dictionary<int,bool> EntityDict = new Dictionary<int,bool>();    
 
         public virtual int SysType
         {

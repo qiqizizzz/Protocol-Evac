@@ -33,3 +33,17 @@ MonoBehaviour:
   UseMovementLockWindowValue: 0
   MovementLockWindowTrackValue:
     WindowValues: []
+  UseVfxWindowValue: 1
+  VfxWindowTrackValue:
+    WindowValues:
+    - IdValue: 49c636bb430d4bdb8790345aa943de78
+      StartNormalizedTimeValue: 0.10526316
+      EndNormalizedTimeValue: 1
+      TriggerTypeValue: 1
+      TargetTypeValue: 0
+      VfxPrefabValue: {fileID: 0}
+      SocketIdValue: WeaponTrail
+      LifeModeValue: 2
+      LocalPositionOffsetValue: {x: 0.14, y: 0, z: 0}
+      LocalEulerOffsetValue: {x: 0, y: 0, z: 0}
+      FollowTargetValue: 1
