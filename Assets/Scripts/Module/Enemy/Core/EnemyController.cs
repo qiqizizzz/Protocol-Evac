@@ -222,7 +222,7 @@ namespace Module.Enemy.Core
             m_damageController.ApplyHitMotion(damageData);
             if (m_context.Damage.IsDead)
             {
-                m_context.Action.BeginDead();
+                m_context.Action.BeginDead(Settings.AnimationConfig.DeathAnimationClip);
                 return;
             }
 
@@ -273,6 +273,9 @@ namespace Module.Enemy.Core
 
                 if (Settings.AnimationConfig.GetUpAnimationClip == null)
                     QLog.Error("EnemyAnimationConfig 未配置起身动画");
+
+                if (Settings.AnimationConfig.DeathAnimationClip == null)
+                    QLog.Error("EnemyAnimationConfig 未配置死亡动画");
             }
 
             if (Settings.NormalAttackConfig == null)

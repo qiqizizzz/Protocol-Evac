@@ -1,6 +1,6 @@
 /*
  * ┌───────────────────────────────────────────────────────────┐
- * │  描    述: 敌人基础动画配置，保存待机、移动与受击片段
+ * │  描    述: 敌人基础动画配置，保存待机、移动、受击与死亡片段
  * │  类    名: EnemyAnimationConfigSO.cs
  * │  创    建: By qiqizizzz
  * └───────────────────────────────────────────────────────────┘
@@ -34,6 +34,10 @@ namespace Module.Enemy.Animation.Config
         [Tooltip("敌人完成击倒硬直后播放的起身片段")]
         [SerializeField] private AnimationClip GetUpAnimationClipValue;
 
+        [LabelText("死亡动画")]
+        [Tooltip("敌人生命归零后播放并停留的死亡片段")]
+        [SerializeField] private AnimationClip DeathAnimationClipValue;
+
         [LabelText("最短受击硬直")]
         [Tooltip("普通受击至少保持受击控制的时长，击退和击飞会按各自位移时长延长")]
         [SerializeField, Min(0f)] private float MinimumHurtDurationValue;
@@ -51,6 +55,7 @@ namespace Module.Enemy.Animation.Config
         public AnimationClip LightHitAnimationClip => HitAnimationClipValue;
         public AnimationClip KnockdownAnimationClip => KnockdownAnimationClipValue;
         public AnimationClip GetUpAnimationClip => GetUpAnimationClipValue;
+        public AnimationClip DeathAnimationClip => DeathAnimationClipValue;
         public float MinimumHurtDuration => MinimumHurtDurationValue;
         public float ConsecutiveHitInterval => ConsecutiveHitIntervalValue;
         public int KnockdownHitCount => KnockdownHitCountValue;

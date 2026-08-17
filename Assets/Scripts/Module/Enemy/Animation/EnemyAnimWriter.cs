@@ -73,7 +73,7 @@ namespace Module.Enemy.Animation
             {
                 PlayLocomotion();
             }
-            else if (!m_context.Action.IsHurt && !m_context.Action.CurrentSkillType.HasValue
+            else if (!m_context.Action.IsDead && !m_context.Action.IsHurt && !m_context.Action.CurrentSkillType.HasValue
                      && m_isLocomotionMoving != m_context.Movement.IsMoving)
             {
                 PlayLocomotion();

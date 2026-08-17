@@ -130,8 +130,8 @@ namespace Module.Enemy.Context.Runtime
             m_hasIdleAnimRequest = true;
         }
 
-        // 锁定敌人全部行为，保留当前受击表现
-        public void BeginDead()
+        // 锁定敌人全部行为并请求播放死亡动画
+        public void BeginDead(AnimationClip animationClip)
         {
             CurrentSkillType = null;
             SkillStepIndex = -1;
@@ -141,6 +141,10 @@ namespace Module.Enemy.Context.Runtime
             IsWeaponVisible = false;
             IsHurt = false;
             IsDead = true;
+            m_animReplayClip = animationClip;
+            m_animReplayPhase = AbilityStepPhase.Begin;
+            m_animReplayUseRootMotion = false;
+            m_hasAnimReplayRequest = true;
             m_hasIdleAnimRequest = false;
         }
 
