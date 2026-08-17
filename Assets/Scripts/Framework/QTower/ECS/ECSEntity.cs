@@ -15,10 +15,25 @@ namespace Framework.QTower.Event.ECS
         public int EntityId;
         public bool IsActive = true;
         public Dictionary<int, ECSComponent> Components = new Dictionary<int, ECSComponent>();
+        public WorldBase World;
 
-        public void AddComponent<T>(int comType) where T : ECSComponent
+        public ECSEntity(WorldBase world)
         {
-            
+            World = world;
+        }
+        
+        public T AddComponent<T>(int comType) where T : ECSComponent, new()
+        {
+            if (Components.ContainsKey(comType))
+            {
+                return (T) Components[comType];
+            }
+
+            ECSComponent com = new T();
+            com.EntityId = EntityId;
+            Components.Add(comType, com);
+            World.AddComponent(com);
+            return com as T;
         }
 
         public void RemoveComponent(int comType)
