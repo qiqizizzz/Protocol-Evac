@@ -54,14 +54,14 @@ MonoBehaviour:
     WindowValues:
     - IdValue: vfx_chisaki_attack02_begin_weapon_trail
       StartNormalizedTimeValue: 0.10636364
-      EndNormalizedTimeValue: 0.43636364
+      EndNormalizedTimeValue: 0.46
       TriggerTypeValue: 1
       TargetTypeValue: 0
-      VfxPrefabValue: {fileID: 3600389243222657682, guid: 3fee2e03e4bdc854bb38f7bcbca7c75d,
+      VfxPrefabValue: {fileID: 3043923254930394474, guid: 876e19651b5e9394687e12dc3b0024e1,
         type: 3}
       SocketIdValue: WeaponTrail
       LifeModeValue: 2
-      LocalPositionOffsetValue: {x: 0.14, y: 0, z: 0}
+      LocalPositionOffsetValue: {x: 0, y: 0, z: 0}
       LocalEulerOffsetValue: {x: 0, y: 0, z: 0}
       FollowTargetValue: 1
     - IdValue: vfx_chisaki_attack02_begin_hit_01
@@ -69,7 +69,7 @@ MonoBehaviour:
       EndNormalizedTimeValue: 0.20454545
       TriggerTypeValue: 2
       TargetTypeValue: 2
-      VfxPrefabValue: {fileID: 6982263153641847612, guid: 36a3ddd9e9258474aa29a08939eeda45,
+      VfxPrefabValue: {fileID: 194106680688263497, guid: 1e1179d358f583b4ba8b45e18f497218,
         type: 3}
       SocketIdValue: 
       LifeModeValue: 0
@@ -81,7 +81,7 @@ MonoBehaviour:
       EndNormalizedTimeValue: 0.3181818
       TriggerTypeValue: 2
       TargetTypeValue: 2
-      VfxPrefabValue: {fileID: 6982263153641847612, guid: 36a3ddd9e9258474aa29a08939eeda45,
+      VfxPrefabValue: {fileID: 194106680688263497, guid: 1e1179d358f583b4ba8b45e18f497218,
         type: 3}
       SocketIdValue: 
       LifeModeValue: 0
@@ -93,7 +93,7 @@ MonoBehaviour:
       EndNormalizedTimeValue: 0.38636363
       TriggerTypeValue: 2
       TargetTypeValue: 2
-      VfxPrefabValue: {fileID: 6982263153641847612, guid: 36a3ddd9e9258474aa29a08939eeda45,
+      VfxPrefabValue: {fileID: 194106680688263497, guid: 1e1179d358f583b4ba8b45e18f497218,
         type: 3}
       SocketIdValue: 
       LifeModeValue: 0

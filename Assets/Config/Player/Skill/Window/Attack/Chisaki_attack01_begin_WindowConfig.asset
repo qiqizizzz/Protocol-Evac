@@ -38,14 +38,14 @@ MonoBehaviour:
     WindowValues:
     - IdValue: 49c636bb430d4bdb8790345aa943de78
       StartNormalizedTimeValue: 0.10526316
-      EndNormalizedTimeValue: 1
+      EndNormalizedTimeValue: 0.42
       TriggerTypeValue: 1
       TargetTypeValue: 0
-      VfxPrefabValue: {fileID: 5503505460791601945, guid: 74c549d1b06b6b140a1fd9536eea637f,
+      VfxPrefabValue: {fileID: 3043923254930394474, guid: 876e19651b5e9394687e12dc3b0024e1,
         type: 3}
       SocketIdValue: WeaponTrail
       LifeModeValue: 2
-      LocalPositionOffsetValue: {x: 0.14, y: 0, z: 0}
+      LocalPositionOffsetValue: {x: 0, y: 0, z: 0}
       LocalEulerOffsetValue: {x: 0, y: 0, z: 0}
       FollowTargetValue: 1
     - IdValue: vfx_chisaki_attack01_begin_hit_01
@@ -53,7 +53,7 @@ MonoBehaviour:
       EndNormalizedTimeValue: 0.2631579
       TriggerTypeValue: 2
       TargetTypeValue: 2
-      VfxPrefabValue: {fileID: 6982263153641847612, guid: 36a3ddd9e9258474aa29a08939eeda45,
+      VfxPrefabValue: {fileID: 194106680688263497, guid: 1e1179d358f583b4ba8b45e18f497218,
         type: 3}
       SocketIdValue: 
       LifeModeValue: 0
