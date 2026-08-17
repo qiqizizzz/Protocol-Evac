@@ -54,4 +54,6 @@ MonoBehaviour:
       type: 2}
   NormalAttackBufferTimeValue: 0.25
   LockMovementValue: 1
+  CanTurnDuringAttackValue: 1
+  ComboRecoveryBufferTimeValue: 0.18
   NormalAttackExitBlendDurationValue: 0.15

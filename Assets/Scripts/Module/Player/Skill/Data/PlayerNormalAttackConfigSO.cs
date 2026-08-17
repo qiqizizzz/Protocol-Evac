@@ -22,6 +22,12 @@ namespace Module.Player.Skill.Data
         [Tooltip("普攻期间是否锁定移动")]
         [SerializeField] private bool LockMovementValue = true;
 
+        [Tooltip("普攻期间是否允许通过移动输入修正角色朝向")]
+        [SerializeField] private bool CanTurnDuringAttackValue = true;
+
+        [Tooltip("普攻进入收招后允许接下一段的额外缓冲时间")]
+        [SerializeField, Min(0f)] private float ComboRecoveryBufferTimeValue = 0.18f;
+
         [Header("退出过渡")]
         [Tooltip("普攻退出时回到 Idle/Move 的混合时长")]
         [SerializeField] private float NormalAttackExitBlendDurationValue = 0.15f;
@@ -32,11 +38,16 @@ namespace Module.Player.Skill.Data
 
         public bool LockMovement => LockMovementValue;
 
+        public bool CanTurnDuringAttack => CanTurnDuringAttackValue;
+
+        public float ComboRecoveryBufferTime => ComboRecoveryBufferTimeValue;
+
         public float NormalAttackExitBlendDuration => NormalAttackExitBlendDurationValue;
 
         private void OnValidate()
         {
             NormalAttackBufferTimeValue = Mathf.Max(0f, NormalAttackBufferTimeValue);
+            ComboRecoveryBufferTimeValue = Mathf.Max(0f, ComboRecoveryBufferTimeValue);
             NormalAttackExitBlendDurationValue = Mathf.Max(0f, NormalAttackExitBlendDurationValue);
         }
 

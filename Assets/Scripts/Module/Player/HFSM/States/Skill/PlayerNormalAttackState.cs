@@ -8,6 +8,7 @@
 
 using Module.Ability.Data;
 using Module.Player.Context;
+using Module.Player.Core;
 using Module.Player.Input.Buffer;
 using Module.Player.Skill;
 using Module.Player.Skill.Core;
@@ -53,6 +54,7 @@ namespace Module.Player.HFSM.States.Skill
             m_skillController.Close();
             m_context.Action.IsStateFinished = false;
             m_context.Movement.IsMovementLocked = false;
+            m_context.Movement.ClearTurnDirection();
             m_context.Action.NormalAttackIndex = 0;
             m_context.Action.NormalAttackPhase = AbilityStepPhase.Begin;
 
@@ -68,6 +70,8 @@ namespace Module.Player.HFSM.States.Skill
 
         public override void Tick(float deltaTime)
         {
+            UpdateAttackTurnDirection();
+
             if (!m_skillController.IsRunning)
             {
                 m_context.Action.IsStateFinished = true;
@@ -78,6 +82,25 @@ namespace Module.Player.HFSM.States.Skill
                 m_skillController.RequestNextStep();
 
             m_context.Action.IsStateFinished = m_skillController.IsFinished;
+        }
+
+        // 根据移动输入更新普攻期间的身体朝向修正
+        private void UpdateAttackTurnDirection()
+        {
+            if (!m_normalAttackConfig.CanTurnDuringAttack)
+            {
+                m_context.Movement.ClearTurnDirection();
+                return;
+            }
+
+            if (m_context.Input.MoveInput.sqrMagnitude <= MOVE_INPUT_THRESHOLD_SQR)
+            {
+                m_context.Movement.ClearTurnDirection();
+                return;
+            }
+
+            Vector3 turnDirection = PlayerMoveDirectionResolver.Resolve(m_context, m_context.Input.MoveInput);
+            m_context.Movement.SetTurnDirection(turnDirection);
         }
 
         // 判断当前普攻是否允许推进下一段

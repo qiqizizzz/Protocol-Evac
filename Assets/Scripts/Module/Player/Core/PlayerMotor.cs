@@ -46,6 +46,7 @@ namespace Module.Player.Core
             Vector3 rootMotionDeltaPosition = m_context.Action.ConsumeRootMotionDeltaPosition();
             if (rootMotionDeltaPosition.sqrMagnitude > 0f && !m_context.Movement.HasForcedMoveVelocity)
             {
+                RotateByTurnRequest(fixedDeltaTime);
                 ApplyRootMotionMove(rootMotionDeltaPosition, ref velocity, fixedDeltaTime);
                 return;
             }
@@ -85,6 +86,8 @@ namespace Module.Player.Core
                     RotateByDirection(m_context.Movement.ForcedMoveVelocity, fixedDeltaTime);
                 else if (m_context.View.IsLockOn)
                     RotateByDirection(m_context.View.LockTarget.position - m_context.Transform.position, fixedDeltaTime);
+                else if (m_context.Movement.HasTurnRequest)
+                    RotateByDirection(m_context.Movement.TurnDirection, fixedDeltaTime);
                 else if (!m_context.Movement.IsMovementLocked)
                     RotateByDirection(m_context.Movement.MoveDir, fixedDeltaTime);
             }
@@ -103,6 +106,18 @@ namespace Module.Player.Core
             m_context.Movement.HasGroundedChecked = true;
             if (m_context.Movement.IsGrounded)
                 m_context.Movement.LastGroundedTime = Time.time;
+        }
+
+        // 在根运动位移前处理攻击等状态提交的身体转向请求
+        private void RotateByTurnRequest(float fixedDeltaTime)
+        {
+            if (m_context.View.ViewMode != PlayerViewMode.ThirdPerson || m_context.View.IsLockOn)
+                return;
+
+            if (!m_context.Movement.HasTurnRequest)
+                return;
+
+            RotateByDirection(m_context.Movement.TurnDirection, fixedDeltaTime);
         }
 
         // 使用动画根运动驱动本次固定帧位移

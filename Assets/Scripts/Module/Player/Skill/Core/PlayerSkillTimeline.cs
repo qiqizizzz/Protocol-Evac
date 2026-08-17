@@ -61,9 +61,15 @@ namespace Module.Player.Skill.Core
                 return;
 
             float previousNormalizedTime = m_stepTimer.NormalizedTime;
+            if (CurrentPhase == AbilityStepPhase.Recovery)
+                UpdateRecoveryStepAdvanceBuffer();
+
             m_stepTimer.Tick(deltaTime);
             if (CurrentPhase == AbilityStepPhase.Begin)
                 UpdateStepAdvanceBuffer(previousNormalizedTime, m_stepTimer.NormalizedTime);
+
+            if (CurrentPhase == AbilityStepPhase.Recovery && TryAdvanceStep(context))
+                return;
 
             if (!m_stepTimer.IsFinished)
                 return;
@@ -92,7 +98,10 @@ namespace Module.Player.Skill.Core
         // 记录进入下一段的请求，等待推进窗口满足后执行
         public void RequestNextStep()
         {
-            if (!IsRunning || CurrentPhase != AbilityStepPhase.Begin)
+            if (!IsRunning)
+                return;
+
+            if (CurrentPhase != AbilityStepPhase.Begin && CurrentPhase != AbilityStepPhase.Recovery)
                 return;
 
             m_isStepAdvanceRequested = true;
@@ -197,6 +206,35 @@ namespace Module.Player.Skill.Core
 
             m_isStepAdvanceBuffered = true;
             m_isStepAdvanceRequested = false;
+        }
+
+        // 刷新收招开头额外接段缓冲
+        private void UpdateRecoveryStepAdvanceBuffer()
+        {
+            if (!m_isStepAdvanceRequested || m_isStepAdvanceBuffered)
+                return;
+
+            if (!IsNormalAttackRecoveryAdvanceBufferActive())
+            {
+                m_isStepAdvanceRequested = false;
+                return;
+            }
+
+            m_isStepAdvanceBuffered = true;
+            m_isStepAdvanceRequested = false;
+        }
+
+        // 判断当前是否处于普攻收招接段缓冲时间
+        private bool IsNormalAttackRecoveryAdvanceBufferActive()
+        {
+            if (CurrentSkillType != PlayerSkillType.NormalAttack)
+                return false;
+
+            PlayerNormalAttackConfigSO normalAttackConfig = (PlayerNormalAttackConfigSO)m_currentConfig;
+            if (normalAttackConfig.ComboRecoveryBufferTime <= 0f)
+                return false;
+
+            return m_stepTimer.ElapsedTime <= normalAttackConfig.ComboRecoveryBufferTime;
         }
 
         // 尝试推进到下一段技能

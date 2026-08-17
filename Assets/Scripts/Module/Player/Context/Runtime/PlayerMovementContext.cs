@@ -17,6 +17,8 @@ namespace Module.Player.Context.Runtime
         public float TargetMoveSpeed { get; set; }
         public Vector3 Velocity { get; set; }
         public Vector3 StopDirection { get; private set; }
+        public Vector3 TurnDirection { get; private set; }
+        public bool HasTurnRequest { get; private set; }
         public bool HasForcedMoveVelocity { get; private set; }
         public Vector3 ForcedMoveVelocity { get; private set; }
         public PlayerStopAnimationId StopAnimationId { get; set; }
@@ -40,6 +42,8 @@ namespace Module.Player.Context.Runtime
             TargetMoveSpeed = 0f;
             Velocity = Vector3.zero;
             StopDirection = Vector3.zero;
+            TurnDirection = Vector3.zero;
+            HasTurnRequest = false;
             HasForcedMoveVelocity = false;
             ForcedMoveVelocity = Vector3.zero;
             StopAnimationId = PlayerStopAnimationId.None;
@@ -63,6 +67,23 @@ namespace Module.Player.Context.Runtime
         {
             HasForcedMoveVelocity = false;
             ForcedMoveVelocity = Vector3.zero;
+        }
+
+        // 设置仅用于身体朝向修正的水平转向方向
+        public void SetTurnDirection(Vector3 direction)
+        {
+            direction.y = 0f;
+            TurnDirection = direction.sqrMagnitude > 0.0001f
+                ? direction.normalized
+                : Vector3.zero;
+            HasTurnRequest = TurnDirection.sqrMagnitude > 0f;
+        }
+
+        // 清空身体朝向修正请求
+        public void ClearTurnDirection()
+        {
+            TurnDirection = Vector3.zero;
+            HasTurnRequest = false;
         }
 
         // 清空当前水平速度并保留竖直速度
