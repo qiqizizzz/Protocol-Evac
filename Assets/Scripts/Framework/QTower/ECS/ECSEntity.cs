@@ -7,7 +7,6 @@
  */
 
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Framework.QTower.Event.ECS
 {
@@ -23,6 +22,7 @@ namespace Framework.QTower.Event.ECS
             World = world;
         }
         
+        // 为实体添加指定类型的组件
         public T AddComponent<T>(int comType) where T : ECSComponent, new()
         {
             if (Components.ContainsKey(comType))
@@ -33,34 +33,41 @@ namespace Framework.QTower.Event.ECS
             ECSComponent com = new T();
             com.EntityId = EntityId;
             Components.Add(comType, com);
-            World.AddComponent(com);
+            com.OnAdd();
+            World.RefreshEntitySystems(this);
             return com as T;
         }
 
+        // 从实体移除指定类型的组件
         public void RemoveComponent(int comType)
         {
             if (Components.ContainsKey(comType))
             {
-                World.RemoveComponent(Components[comType]);
-                Components[comType].Recycle();
+                ECSComponent com = Components[comType];
+                com.OnRemove();
                 Components.Remove(comType);
+                com.Recycle();
+                World.RefreshEntitySystems(this);
             }
         }
 
+        // 移除实体上的全部组件
         public void RemoveAllComponents()
         {
-            List<int> keys = Components.Keys.ToList();
+            List<int> keys = new List<int>(Components.Keys);
             for (int i = keys.Count - 1; i >= 0 ; i--)
             {
                 RemoveComponent(keys[i]);
             }
         }
 
+        // 判断实体是否持有指定组件
         public bool HasComponent(int comType)
         {
             return Components.ContainsKey(comType);
         }
 
+        // 获取实体上的指定组件
         public T GetComponent<T>(int comType) where T : ECSComponent
         {
             if (Components.ContainsKey(comType))

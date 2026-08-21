@@ -21,9 +21,58 @@ namespace Framework.QTower.Event.ECS
             get { return 0; }
         }
         
+        public virtual int[] RequireComponents
+        {
+            get { return null; }
+        }
+        
         public ECSSystem(WorldBase world)
         {
             World = world;
+        }
+
+        // 判断实体是否满足系统组件需求
+        public bool Match(ECSEntity entity)
+        {
+            if (entity == null || !entity.IsActive)
+                return false;
+
+            int[] requireComponents = RequireComponents;
+            if (requireComponents == null || requireComponents.Length == 0)
+                return true;
+
+            for (int i = 0; i < requireComponents.Length; i++)
+            {
+                if (!entity.HasComponent(requireComponents[i]))
+                    return false;
+            }
+            
+            return true;
+        }
+
+        // 将实体加入系统实体列表
+        public void AddEntity(int entityId)
+        {
+            if (EntityDict.ContainsKey(entityId))
+                return;
+
+            EntityDict.Add(entityId, true);
+            Entities.Add(entityId);
+        }
+
+        // 从系统实体列表移除实体
+        public void RemoveEntity(int entityId)
+        {
+            if (!EntityDict.ContainsKey(entityId))
+                return;
+
+            EntityDict.Remove(entityId);
+            Entities.Remove(entityId);
+        }
+
+        // 执行系统逻辑
+        public virtual void Tick(float deltaTime)
+        {
         }
     }
 }
