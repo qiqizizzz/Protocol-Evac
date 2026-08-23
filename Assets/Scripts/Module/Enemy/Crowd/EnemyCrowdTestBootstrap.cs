@@ -10,6 +10,8 @@ using System.Collections.Generic;
 using Framework.QTower.Event.ECS;
 using Module.Enemy.Crowd.ECS;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
+using Utils.log;
 
 namespace Module.Enemy.Crowd
 {
@@ -24,6 +26,9 @@ namespace Module.Enemy.Crowd
         private const float START_X = -7f;
         private const float GOAL_X = 7f;
         private const float LANE_STEP = 1.25f;
+        private const float AGENT_GROUND_Y = 0f;
+        private const string AGENT_PREFAB_ADDRESS = "mini_male";
+        private const string AGENT_MOVING_PARAMETER = "isMoving";
 
         private readonly List<AgentBinding> m_agents = new List<AgentBinding>();
         private int m_nextObstacleEntityId = 2000;
@@ -33,6 +38,7 @@ namespace Module.Enemy.Crowd
         {
             public int EntityId;
             public Transform Transform;
+            public Animator Animator;
             public float LaneZ;
             public bool MovingToRight;
         }
@@ -89,18 +95,29 @@ namespace Module.Enemy.Crowd
         // 生成一个群体代理并注册到 ECS
         private void SpawnAgent(int entityId, float laneZ)
         {
-            Vector3 spawnPosition = new Vector3(START_X, AGENT_RADIUS, laneZ);
-            GameObject agent = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            Vector3 spawnPosition = new Vector3(START_X, AGENT_GROUND_Y, laneZ);
+            GameObject agent = Addressables.InstantiateAsync(AGENT_PREFAB_ADDRESS, spawnPosition, Quaternion.identity)
+                .WaitForCompletion();
+            if (agent == null)
+            {
+                QLog.Error($"测试代理资源加载失败：{AGENT_PREFAB_ADDRESS}");
+                return;
+            }
+
             agent.name = $"CrowdAgent_{entityId}";
-            agent.transform.position = spawnPosition;
-            agent.transform.localScale = Vector3.one * (AGENT_RADIUS * 2f);
-            Paint(agent, new Color(0.20f, 0.70f, 0.85f));
+            if (!agent.TryGetComponent<Animator>(out Animator animator))
+            {
+                QLog.Error($"测试代理 prefab 缺少 Animator：{AGENT_PREFAB_ADDRESS}");
+                Addressables.ReleaseInstance(agent);
+                return;
+            }
 
             m_world.CreateCrowdAgent(entityId, spawnPosition, AGENT_RADIUS, AGENT_AVOIDANCE_RADIUS, 1f);
             m_agents.Add(new AgentBinding
             {
                 EntityId = entityId,
                 Transform = agent.transform,
+                Animator = animator,
                 LaneZ = laneZ,
                 MovingToRight = true
             });
@@ -167,14 +184,38 @@ namespace Module.Enemy.Crowd
                 EnemyCrowdAvoidanceResultComponent result =
                     entity.GetComponent<EnemyCrowdAvoidanceResultComponent>(EnemyCrowdComponentType.AvoidanceResult);
                 if (result == null || !result.HasAdjustedDirection)
+                {
+                    if (binding.Animator != null)
+                        binding.Animator.SetBool(AGENT_MOVING_PARAMETER, false);
+
                     continue;
+                }
 
                 binding.Transform.position += result.AdjustedDirection * AGENT_SPEED * deltaTime;
+                if (binding.Animator != null)
+                    binding.Animator.SetBool(AGENT_MOVING_PARAMETER, true);
+
                 m_agents[i] = binding;
             }
         }
 
-        // 给运行时生成的物体上色
+        // 释放 Addressables 生成的测试代理
+        private void OnDestroy()
+        {
+            for (int i = 0; i < m_agents.Count; i++)
+            {
+                AgentBinding binding = m_agents[i];
+                if (binding.Transform == null)
+                    continue;
+
+                Addressables.ReleaseInstance(binding.Transform.gameObject);
+            }
+
+            m_agents.Clear();
+            m_world = null;
+        }
+
+        // 给测试场景中的障碍物设置显示颜色
         private void Paint(GameObject target, Color color)
         {
             Renderer renderer = target.GetComponent<Renderer>();

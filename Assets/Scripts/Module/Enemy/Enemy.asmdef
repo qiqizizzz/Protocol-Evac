@@ -9,7 +9,9 @@
         "AbilityComposer.Core",
         "Combat",
         "Fluid.BehaviorTree",
-        "Navigation"
+        "Navigation",
+        "Unity.Addressables",
+        "Unity.ResourceManager"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
