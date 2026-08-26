@@ -12,22 +12,21 @@ namespace Framework.QTower.ECS.Crowd.Data
 {
     public struct CrowdAgentData
     {
-        // ==================== 身份与目标 ====================
         public int EntityId;
         public int GroupId;
         public int TargetEntityId;
         public Vector3 TargetPosition;
 
-        // ==================== 运动状态 ====================
+        //运动状态
         public Vector3 Position;
         public Vector3 Velocity;
         public Vector3 Acceleration;
         public Vector3 Forward;
 
-        // ==================== Steering 输出 ====================
+        //Steering 输出
         public Vector3 SteeringForce;
 
-        // ==================== 运动约束 ====================
+        //运动约束
         public float Radius;
         public float Mass;
         public float MaxSpeed;
