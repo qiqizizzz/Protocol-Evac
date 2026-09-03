@@ -74,5 +74,15 @@ namespace Framework.QTower.Event.ECS
         public virtual void Tick(float deltaTime)
         {
         }
+
+        // 执行系统的固定步长逻辑
+        public virtual void FixedTick(float fixedDeltaTime)
+        {
+        }
+
+        // 执行系统的表现同步逻辑
+        public virtual void LateTick(float deltaTime)
+        {
+        }
     }
 }

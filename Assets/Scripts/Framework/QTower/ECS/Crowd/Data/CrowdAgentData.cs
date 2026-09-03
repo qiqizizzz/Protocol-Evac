@@ -16,6 +16,7 @@ namespace Framework.QTower.ECS.Crowd.Data
         public int GroupId;
         public int TargetEntityId;
         public Vector3 TargetPosition;
+        public bool HasTarget;
 
         //运动状态
         public Vector3 Position;
@@ -35,4 +36,3 @@ namespace Framework.QTower.ECS.Crowd.Data
         public float SlowingRadius;
     }
 }
-

@@ -17,8 +17,9 @@ namespace Framework.QTower.ECS.Crowd.Command
         public override CrowdCommandType CommandType => CrowdCommandType.Move;
         public Vector3 TargetPosition { get; }
 
-        public CrowdMoveCommand(int commandId, int groupId, Vector3 targetPosition, int priority = 0)
-            : base(commandId, groupId, priority)
+        public CrowdMoveCommand(int commandId, int groupId, Vector3 targetPosition, int priority = 0,
+            int targetEntityId = -1)
+            : base(commandId, groupId, priority, targetEntityId)
         {
             TargetPosition = targetPosition;
         }
@@ -30,10 +31,10 @@ namespace Framework.QTower.ECS.Crowd.Command
                 CommandType = CommandType,
                 CommandId = CommandId,
                 GroupId = GroupId,
+                TargetEntityId = TargetEntityId,
                 Priority = Priority,
                 TargetPosition = TargetPosition
             };
         }
     }
 }
-

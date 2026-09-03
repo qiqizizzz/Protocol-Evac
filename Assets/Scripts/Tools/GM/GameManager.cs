@@ -13,10 +13,11 @@ namespace Tools.GM
 {
     public sealed class GameManager : MonoBehaviour
     {
-        private static readonly string[] S_tabNames = { "概览", "玩家", "状态机" };
+        private static readonly string[] S_tabNames = { "概览", "玩家", "状态机", "群体" };
 
         private static GameManager S_instance;
         private readonly List<IGamePanel> m_panels = new();
+        private CrowdGamePanel m_crowdGamePanel;
         private bool m_isOpen;
         private int m_activeTabIndex;
         private GUIStyle m_panelStyle;
@@ -57,6 +58,8 @@ namespace Tools.GM
             S_instance = this;
             DontDestroyOnLoad(gameObject);
             m_panels.Add(new PlayerGamePanel());
+            m_crowdGamePanel = new CrowdGamePanel();
+            m_panels.Add(m_crowdGamePanel);
         }
 
         // 释放运行时创建的 IMGUI 纹理
@@ -75,11 +78,28 @@ namespace Tools.GM
             if (Input.GetKeyDown(KeyCode.H))
                 m_isOpen = !m_isOpen;
 
+            for (int i = 0; i < m_panels.Count; i++)
+                m_panels[i].Tick(Time.deltaTime);
+
             if (!m_isOpen)
                 return;
 
             for (int i = 0; i < m_panels.Count; i++)
                 m_panels[i].Refresh();
+        }
+
+        // 驱动调试面板关联模块的固定步长逻辑
+        private void FixedUpdate()
+        {
+            for (int i = 0; i < m_panels.Count; i++)
+                m_panels[i].FixedTick(Time.fixedDeltaTime);
+        }
+
+        // 在模拟完成后驱动调试面板关联模块同步表现
+        private void LateUpdate()
+        {
+            for (int i = 0; i < m_panels.Count; i++)
+                m_panels[i].LateTick(Time.deltaTime);
         }
 
         // 绘制调试总面板
@@ -91,7 +111,8 @@ namespace Tools.GM
             CreateStyles();
 
             float panelWidth = Mathf.Min(440f, Screen.width - 40f);
-            GUILayout.BeginArea(new Rect(20f, 20f, panelWidth, 330f), m_panelStyle);
+            float panelHeight = Mathf.Min(620f, Screen.height - 40f);
+            GUILayout.BeginArea(new Rect(20f, 20f, panelWidth, panelHeight), m_panelStyle);
             GUILayout.Label("GM Console", m_headerStyle);
             m_activeTabIndex = GUILayout.Toolbar(m_activeTabIndex, S_tabNames, m_tabStyle);
             GUILayout.Space(12f);

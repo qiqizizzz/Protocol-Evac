@@ -16,8 +16,8 @@ namespace Framework.QTower.ECS.Crowd.Command
     {
         public override CrowdCommandType CommandType => CrowdCommandType.Stop;
 
-        public CrowdStopCommand(int commandId, int groupId, int priority = 0)
-            : base(commandId, groupId, priority)
+        public CrowdStopCommand(int commandId, int groupId, int priority = 0, int targetEntityId = -1)
+            : base(commandId, groupId, priority, targetEntityId)
         {
         }
         
@@ -28,10 +28,10 @@ namespace Framework.QTower.ECS.Crowd.Command
                 CommandType = CommandType,
                 CommandId = CommandId,
                 GroupId = GroupId,
+                TargetEntityId = TargetEntityId,
                 Priority = Priority,
                 TargetPosition = Vector3.zero
             };
         }
     }
 }
-

@@ -21,6 +21,21 @@ namespace Tools.GM
         private float m_currentHealth;
         private bool m_isGmInvincible;
 
+        // 玩家调试面板没有独立的运行时系统
+        public void Tick(float deltaTime)
+        {
+        }
+
+        // 玩家调试面板没有独立的固定步长运行时系统
+        public void FixedTick(float fixedDeltaTime)
+        {
+        }
+
+        // 玩家调试面板没有独立的表现同步运行时系统
+        public void LateTick(float deltaTime)
+        {
+        }
+
         // 刷新玩家状态诊断数据
         public void Refresh()
         {

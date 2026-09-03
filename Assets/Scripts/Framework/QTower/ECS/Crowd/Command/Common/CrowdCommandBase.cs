@@ -14,13 +14,15 @@ namespace Framework.QTower.ECS.Crowd.Command.Common
     {
         public int CommandId { get; }
         public int GroupId { get; }
+        public int TargetEntityId { get; }
         public int Priority { get; }
         public abstract CrowdCommandType CommandType { get; }
         
-        protected CrowdCommandBase(int commandId, int groupId, int priority)
+        protected CrowdCommandBase(int commandId, int groupId, int priority, int targetEntityId = -1)
         {
             CommandId = commandId;
             GroupId = groupId;
+            TargetEntityId = targetEntityId;
             Priority = priority;
         }
 
@@ -28,4 +30,3 @@ namespace Framework.QTower.ECS.Crowd.Command.Common
         public abstract CrowdCommandData ToData();
     }
 }
-

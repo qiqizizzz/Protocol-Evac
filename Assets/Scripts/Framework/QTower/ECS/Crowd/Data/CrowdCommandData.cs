@@ -17,9 +17,9 @@ namespace Framework.QTower.ECS.Crowd.Data
         public CrowdCommandType CommandType;
         public int CommandId;
         public int GroupId;
+        public int TargetEntityId;
         public int Priority;
 
         public Vector3 TargetPosition;
     }
 }
-

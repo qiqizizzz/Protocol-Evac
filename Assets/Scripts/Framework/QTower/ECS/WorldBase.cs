@@ -103,6 +103,20 @@ namespace Framework.QTower.Event.ECS
                 system.Tick(deltaTime);
         }
 
+        // 以固定步长执行全部系统
+        public void FixedTick(float fixedDeltaTime)
+        {
+            foreach (ECSSystem system in Systems.Values)
+                system.FixedTick(fixedDeltaTime);
+        }
+
+        // 在所有模拟逻辑完成后执行表现同步
+        public void LateTick(float deltaTime)
+        {
+            foreach (ECSSystem system in Systems.Values)
+                system.LateTick(deltaTime);
+        }
+
         // 刷新某个实体和全部系统的匹配关系
         public void RefreshEntitySystems(ECSEntity entity)
         {
