@@ -56,7 +56,8 @@ namespace Tools.GM
 
         // 根据当前页签绘制对应的玩家调试内容
         public void Draw(int activeTabIndex, GUIStyle labelStyle, GUIStyle valueStyle, GUIStyle toggleStyle,
-            GUIStyle buttonStyle)
+            GUIStyle buttonStyle, GUIStyle sectionStyle, GUIStyle sectionHeaderStyle, GUIStyle inputStyle,
+            GUIStyle statusStyle)
         {
             switch (activeTabIndex)
             {

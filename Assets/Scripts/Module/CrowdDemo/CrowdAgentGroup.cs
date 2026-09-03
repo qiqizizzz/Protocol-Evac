@@ -8,6 +8,7 @@
 
 using System.Collections.Generic;
 using UnityEngine;
+using Utils.log;
 
 namespace Module.CrowdDemo
 {
@@ -24,6 +25,25 @@ namespace Module.CrowdDemo
         public static int Version => S_version;
         public int GroupIdValue => GroupId;
         public int AgentCount => transform.childCount;
+
+        // 在指定 CrowdSystem 父节点下创建一个新的运行时群体
+        public static CrowdAgentGroup CreateRuntimeGroup(Transform parent)
+        {
+            if (parent == null)
+            {
+                QLog.Error("创建 Crowd 群体失败：群体根节点为空");
+                return null;
+            }
+
+            int groupId = AllocateGroupId();
+            GameObject groupObject = new GameObject($"CrowdGroup_{groupId}");
+            groupObject.SetActive(false);
+            groupObject.transform.SetParent(parent, false);
+            CrowdAgentGroup group = groupObject.AddComponent<CrowdAgentGroup>();
+            group.GroupId = groupId;
+            groupObject.SetActive(true);
+            return group;
+        }
 
         // 注册启用的 Crowd 群体父节点
         private void OnEnable()
@@ -42,6 +62,29 @@ namespace Module.CrowdDemo
                 return;
 
             S_version++;
+        }
+
+        // 分配当前场景中未被占用的群体编号
+        private static int AllocateGroupId()
+        {
+            int groupId = 1;
+            while (IsGroupIdUsed(groupId))
+                groupId++;
+
+            return groupId;
+        }
+
+        // 判断群体编号是否已经被启用的群体占用
+        private static bool IsGroupIdUsed(int groupId)
+        {
+            for (int i = 0; i < S_activeGroups.Count; i++)
+            {
+                CrowdAgentGroup group = S_activeGroups[i];
+                if (group != null && group.GroupId == groupId)
+                    return true;
+            }
+
+            return false;
         }
     }
 }

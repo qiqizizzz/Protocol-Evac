@@ -21,8 +21,10 @@ namespace Tools.GM
     {
         private readonly CrowdWorld m_world = new CrowdWorld();
         private readonly List<CrowdAgentGroup> m_groups = new List<CrowdAgentGroup>();
+        private readonly List<CrowdAgentView> m_agentSources = new List<CrowdAgentView>();
         private readonly HashSet<int> m_boundViewIds = new HashSet<int>();
 
+        private const int NEW_AGENT_SOURCE_ID = -1;
         private string m_spawnCountInput = "10";
         private string m_status = "未发送命令";
         private int m_entityCount;
@@ -30,13 +32,19 @@ namespace Tools.GM
         private int m_selectedGroupId;
         private int m_groupVersion = -1;
         private int m_viewVersion = -1;
+        private int m_agentSourceVersion = -1;
+        private int m_selectedAgentSourceId = NEW_AGENT_SOURCE_ID;
         private bool m_isGroupDropdownOpen;
+        private bool m_isAgentDropdownOpen;
+        private Vector2 m_groupDropdownScrollPosition;
+        private Vector2 m_agentDropdownScrollPosition;
 
         // 驱动 Crowd ECS 世界执行待处理命令
         public void Tick(float deltaTime)
         {
             RefreshGroupsIfNeeded();
             BindViewsIfNeeded();
+            RefreshAgentSourcesIfNeeded();
             m_world.Tick(deltaTime);
         }
 
@@ -62,50 +70,67 @@ namespace Tools.GM
 
         // 根据当前页签绘制 Crowd ECS 调试内容
         public void Draw(int activeTabIndex, GUIStyle labelStyle, GUIStyle valueStyle, GUIStyle toggleStyle,
-            GUIStyle buttonStyle)
+            GUIStyle buttonStyle, GUIStyle sectionStyle, GUIStyle sectionHeaderStyle, GUIStyle inputStyle,
+            GUIStyle statusStyle)
         {
             if (activeTabIndex != 3)
                 return;
 
-            DrawCrowdControls(labelStyle, valueStyle, buttonStyle);
+            DrawCrowdControls(labelStyle, valueStyle, buttonStyle, sectionStyle, sectionHeaderStyle, inputStyle,
+                statusStyle);
         }
 
-        // 绘制群体选择、生成和停止控制
-        private void DrawCrowdControls(GUIStyle labelStyle, GUIStyle valueStyle, GUIStyle buttonStyle)
+        // 绘制分区后的群体选择、生成和停止控制
+        private void DrawCrowdControls(GUIStyle labelStyle, GUIStyle valueStyle, GUIStyle buttonStyle,
+            GUIStyle sectionStyle, GUIStyle sectionHeaderStyle, GUIStyle inputStyle, GUIStyle statusStyle)
         {
-            DrawInfoRow("实体数量", m_entityCount.ToString(), labelStyle, valueStyle);
+            GUILayout.BeginVertical(sectionStyle);
+            GUILayout.Label("运行状态", sectionHeaderStyle);
+            DrawInfoRow("ECS 实体", m_entityCount.ToString(), labelStyle, valueStyle);
             DrawInfoRow("待处理命令", m_pendingCommandCount.ToString(), labelStyle, valueStyle);
-            GUILayout.Space(8f);
+            GUILayout.EndVertical();
 
-            GUILayout.Label("当前 Agent 群体父节点", labelStyle);
+            GUILayout.BeginVertical(sectionStyle);
+            GUILayout.Label("群体目标", sectionHeaderStyle);
+            GUILayout.Label("群体父节点", labelStyle);
             DrawGroupDropdown(valueStyle, buttonStyle);
+            if (GUILayout.Button("+ 新建群体父节点", buttonStyle))
+                CreateNewGroup();
 
             CrowdAgentGroup selectedGroup = GetSelectedGroup();
             if (selectedGroup == null)
             {
                 GUILayout.Label("场景中没有可用的 CrowdAgentGroup 父节点", valueStyle);
-                GUILayout.Label(m_status, valueStyle);
+                GUILayout.Label(m_status, statusStyle);
+                GUILayout.EndVertical();
                 return;
             }
 
-            DrawInfoRow("父节点", selectedGroup.name, labelStyle, valueStyle);
+            DrawInfoRow("名称", selectedGroup.name, labelStyle, valueStyle);
             DrawInfoRow("Group ID", selectedGroup.GroupIdValue.ToString(), labelStyle, valueStyle);
-            DrawInfoRow("子节点数量", selectedGroup.AgentCount.ToString(), labelStyle, valueStyle);
+            DrawInfoRow("当前 Agent", selectedGroup.AgentCount.ToString(), labelStyle, valueStyle);
+            GUILayout.EndVertical();
 
-            GUILayout.Space(8f);
+            GUILayout.BeginVertical(sectionStyle);
+            GUILayout.Label("Agent 生成", sectionHeaderStyle);
+            GUILayout.Label("Agent 来源", labelStyle);
+            DrawAgentSourceDropdown(buttonStyle);
             GUILayout.Label("生成数量", labelStyle);
             GUILayout.BeginHorizontal();
-            m_spawnCountInput = GUILayout.TextField(m_spawnCountInput);
-            if (GUILayout.Button("生成 Agent", buttonStyle, GUILayout.Width(112f)))
+            m_spawnCountInput = GUILayout.TextField(m_spawnCountInput, inputStyle);
+            if (GUILayout.Button("生成 Agent", buttonStyle, GUILayout.Width(124f)))
                 SpawnSelectedGroup();
             GUILayout.EndHorizontal();
+            GUILayout.Label($"{GetNewAgentSourceLabel()}；已有 Agent 会复制其当前模型与组件配置", labelStyle);
+            GUILayout.EndVertical();
 
-            GUILayout.Space(8f);
+            GUILayout.BeginVertical(sectionStyle);
+            GUILayout.Label("移动控制", sectionHeaderStyle);
             GUILayout.Label("点击地面让当前群体前往目标位置", valueStyle);
             if (GUILayout.Button("停止当前群体", buttonStyle))
                 StopSelectedGroup();
-
-            GUILayout.Label(m_status, valueStyle);
+            GUILayout.Label(m_status, statusStyle);
+            GUILayout.EndVertical();
         }
 
         // 绘制可展开的群体父节点下拉列表
@@ -122,7 +147,9 @@ namespace Tools.GM
             if (!m_isGroupDropdownOpen)
                 return;
 
-            GUILayout.BeginVertical();
+            float dropdownHeight = Mathf.Min(160f, Mathf.Max(34f, m_groups.Count * 32f));
+            m_groupDropdownScrollPosition = GUILayout.BeginScrollView(m_groupDropdownScrollPosition, false, true,
+                GUILayout.Height(dropdownHeight));
             for (int i = 0; i < m_groups.Count; i++)
             {
                 CrowdAgentGroup group = m_groups[i];
@@ -137,7 +164,58 @@ namespace Tools.GM
                 m_isGroupDropdownOpen = false;
             }
 
-            GUILayout.EndVertical();
+            GUILayout.EndScrollView();
+        }
+
+        // 绘制 Agent 来源下拉列表
+        private void DrawAgentSourceDropdown(GUIStyle buttonStyle)
+        {
+            CrowdAgentView selectedView = GetSelectedAgentSource();
+            string selectedLabel = selectedView == null
+                ? GetNewAgentSourceLabel()
+                : $"复制 {selectedView.name}（实体 {selectedView.EntityIdValue}）";
+
+            if (GUILayout.Button(selectedLabel + (m_isAgentDropdownOpen ? "  ▲" : "  ▼"), buttonStyle))
+                m_isAgentDropdownOpen = !m_isAgentDropdownOpen;
+
+            if (!m_isAgentDropdownOpen)
+                return;
+
+            int optionCount = m_agentSources.Count + 1;
+            float dropdownHeight = Mathf.Min(180f, Mathf.Max(34f, optionCount * 32f));
+            m_agentDropdownScrollPosition = GUILayout.BeginScrollView(m_agentDropdownScrollPosition, false, true,
+                GUILayout.Height(dropdownHeight));
+
+            if (GUILayout.Button(GetNewAgentSourceLabel(), buttonStyle))
+            {
+                m_selectedAgentSourceId = NEW_AGENT_SOURCE_ID;
+                m_isAgentDropdownOpen = false;
+            }
+
+            for (int i = 0; i < m_agentSources.Count; i++)
+            {
+                CrowdAgentView view = m_agentSources[i];
+                if (view == null)
+                    continue;
+
+                string optionLabel = $"复制 {view.name}（实体 {view.EntityIdValue}）";
+                if (!GUILayout.Button(optionLabel, buttonStyle))
+                    continue;
+
+                m_selectedAgentSourceId = view.EntityIdValue;
+                m_isAgentDropdownOpen = false;
+            }
+
+            GUILayout.EndScrollView();
+        }
+
+        // 获取新建 Agent 使用的实际预制体显示名
+        private string GetNewAgentSourceLabel()
+        {
+            CrowdSpawnController spawnController = CrowdSpawnController.Active;
+            return spawnController == null
+                ? "新建 Agent（未配置）"
+                : $"新建 Agent（{spawnController.AgentPrefabName}）";
         }
 
         // 在群体注册表变化时刷新下拉列表
@@ -173,6 +251,80 @@ namespace Tools.GM
             m_selectedGroupId = group.GroupIdValue;
             m_world.SetSelectedGroup(m_selectedGroupId);
             m_status = $"当前群体已切换为 {group.name}";
+        }
+
+        // 创建新的群体父节点并切换为当前目标
+        private void CreateNewGroup()
+        {
+            Transform groupRoot = GetGroupRoot();
+            if (groupRoot == null)
+            {
+                m_status = "未找到 CrowdSystem 群体根节点，无法创建新群体";
+                return;
+            }
+
+            CrowdAgentGroup group = CrowdAgentGroup.CreateRuntimeGroup(groupRoot);
+            if (group == null)
+            {
+                m_status = "创建群体失败，请检查 Console";
+                return;
+            }
+
+            RefreshGroupsIfNeeded();
+            SelectGroup(group);
+            m_status = $"已创建 {group.name}，Group ID 为 {group.GroupIdValue}";
+        }
+
+        // 获取场景中所有群体共用的 CrowdSystem 父节点
+        private Transform GetGroupRoot()
+        {
+            if (m_groups.Count > 0 && m_groups[0] != null)
+                return m_groups[0].transform.parent;
+
+            CrowdSpawnController spawnController = CrowdSpawnController.Active;
+            return spawnController == null ? null : spawnController.transform.parent;
+        }
+
+        // 在场景表现集合变化时刷新 Agent 来源列表
+        private void RefreshAgentSourcesIfNeeded()
+        {
+            if (m_agentSourceVersion == CrowdAgentView.Version)
+                return;
+
+            m_agentSources.Clear();
+            IReadOnlyList<CrowdAgentView> activeViews = CrowdAgentView.ActiveViews;
+            bool selectedSourceStillExists = m_selectedAgentSourceId == NEW_AGENT_SOURCE_ID;
+            for (int i = 0; i < activeViews.Count; i++)
+            {
+                CrowdAgentView view = activeViews[i];
+                if (view == null || view.EntityIdValue < 0)
+                    continue;
+
+                m_agentSources.Add(view);
+                if (view.EntityIdValue == m_selectedAgentSourceId)
+                    selectedSourceStillExists = true;
+            }
+
+            if (!selectedSourceStillExists)
+                m_selectedAgentSourceId = NEW_AGENT_SOURCE_ID;
+
+            m_agentSourceVersion = CrowdAgentView.Version;
+        }
+
+        // 获取当前选择的 Agent 来源表现对象
+        private CrowdAgentView GetSelectedAgentSource()
+        {
+            if (m_selectedAgentSourceId == NEW_AGENT_SOURCE_ID)
+                return null;
+
+            for (int i = 0; i < m_agentSources.Count; i++)
+            {
+                CrowdAgentView view = m_agentSources[i];
+                if (view != null && view.EntityIdValue == m_selectedAgentSourceId)
+                    return view;
+            }
+
+            return null;
         }
 
         // 获取当前选中的群体父节点
@@ -212,8 +364,16 @@ namespace Tools.GM
                 return;
             }
 
-            int spawnedCount = spawnController.SpawnAgents(group, count);
-            m_status = $"已在 {group.name} 下生成 {spawnedCount} 个 Agent";
+            CrowdAgentView template = GetSelectedAgentSource();
+            if (m_selectedAgentSourceId != NEW_AGENT_SOURCE_ID && template == null)
+            {
+                m_status = "所选 Agent 已不可用，请重新选择来源";
+                return;
+            }
+
+            int spawnedCount = spawnController.SpawnAgents(group, count, template);
+            string sourceLabel = template == null ? spawnController.AgentPrefabName : template.name;
+            m_status = $"已在 {group.name} 下生成 {spawnedCount} 个 Agent（来源：{sourceLabel}）";
         }
 
         // 停止当前选中群体的移动

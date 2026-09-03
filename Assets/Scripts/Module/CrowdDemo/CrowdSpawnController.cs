@@ -27,6 +27,7 @@ namespace Module.CrowdDemo
         private int m_nextEntityId = DEFAULT_FIRST_ENTITY_ID;
 
         public static CrowdSpawnController Active => S_active;
+        public string AgentPrefabName => AgentPrefab == null ? "未配置" : $"{AgentPrefab.name}.prefab";
 
         // 注册当前场景中的 Crowd 生成控制器
         private void OnEnable()
@@ -68,13 +69,19 @@ namespace Module.CrowdDemo
         // 向指定群体父节点下批量生成 Agent
         public int SpawnAgents(CrowdAgentGroup group, int count)
         {
+            return SpawnAgents(group, count, null);
+        }
+
+        // 向指定群体父节点下批量生成指定来源的 Agent
+        public int SpawnAgents(CrowdAgentGroup group, int count, CrowdAgentView template)
+        {
             if (group == null)
             {
                 QLog.Error("Crowd Agent生成失败：群体父节点为空");
                 return 0;
             }
 
-            if (AgentPrefab == null)
+            if (template == null && AgentPrefab == null)
             {
                 QLog.Error("Crowd Agent生成失败：AgentPrefab 未配置");
                 return 0;
@@ -97,7 +104,8 @@ namespace Module.CrowdDemo
             for (int i = 0; i < count; i++)
             {
                 int entityId = AllocateEntityId();
-                GameObject instance = Instantiate(AgentPrefab, group.transform);
+                GameObject source = template == null ? AgentPrefab : template.gameObject;
+                GameObject instance = Instantiate(source, group.transform);
                 instance.name = $"CrowdAgent_{entityId}";
                 instance.transform.localPosition = CalculateFormationPosition(existingCount + i, totalCount);
                 instance.transform.localRotation = Quaternion.identity;

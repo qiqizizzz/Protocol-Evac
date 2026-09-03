@@ -20,6 +20,7 @@ namespace Tools.GM
         private CrowdGamePanel m_crowdGamePanel;
         private bool m_isOpen;
         private int m_activeTabIndex;
+        private Vector2 m_contentScrollPosition;
         private GUIStyle m_panelStyle;
         private GUIStyle m_headerStyle;
         private GUIStyle m_tabStyle;
@@ -28,11 +29,16 @@ namespace Tools.GM
         private GUIStyle m_valueStyle;
         private GUIStyle m_toggleStyle;
         private GUIStyle m_buttonStyle;
+        private GUIStyle m_sectionStyle;
+        private GUIStyle m_sectionHeaderStyle;
+        private GUIStyle m_inputStyle;
+        private GUIStyle m_statusStyle;
         private Texture2D m_panelTexture;
         private Texture2D m_headerTexture;
         private Texture2D m_tabTexture;
         private Texture2D m_activeTabTexture;
         private Texture2D m_buttonTexture;
+        private Texture2D m_sectionTexture;
 
         // 游戏启动时创建调试总面板
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -70,6 +76,7 @@ namespace Tools.GM
             Destroy(m_tabTexture);
             Destroy(m_activeTabTexture);
             Destroy(m_buttonTexture);
+            Destroy(m_sectionTexture);
         }
 
         // 监听 H 键并更新模块面板数据
@@ -110,18 +117,22 @@ namespace Tools.GM
 
             CreateStyles();
 
-            float panelWidth = Mathf.Min(440f, Screen.width - 40f);
-            float panelHeight = Mathf.Min(620f, Screen.height - 40f);
+            float panelWidth = Mathf.Min(480f, Screen.width - 40f);
+            float panelHeight = Mathf.Min(700f, Screen.height - 40f);
             GUILayout.BeginArea(new Rect(20f, 20f, panelWidth, panelHeight), m_panelStyle);
             GUILayout.Label("GM Console", m_headerStyle);
             m_activeTabIndex = GUILayout.Toolbar(m_activeTabIndex, S_tabNames, m_tabStyle);
             GUILayout.Space(12f);
+            m_contentScrollPosition = GUILayout.BeginScrollView(m_contentScrollPosition, false, true,
+                GUILayout.ExpandHeight(true));
             GUILayout.BeginVertical(m_contentStyle);
 
             for (int i = 0; i < m_panels.Count; i++)
-                m_panels[i].Draw(m_activeTabIndex, m_labelStyle, m_valueStyle, m_toggleStyle, m_buttonStyle);
+                m_panels[i].Draw(m_activeTabIndex, m_labelStyle, m_valueStyle, m_toggleStyle, m_buttonStyle,
+                    m_sectionStyle, m_sectionHeaderStyle, m_inputStyle, m_statusStyle);
 
             GUILayout.EndVertical();
+            GUILayout.EndScrollView();
             GUILayout.EndArea();
         }
 
@@ -136,6 +147,7 @@ namespace Tools.GM
             m_tabTexture = CreateColorTexture(new Color(0.075f, 0.1f, 0.14f, 1f));
             m_activeTabTexture = CreateColorTexture(new Color(0.08f, 0.46f, 0.58f, 1f));
             m_buttonTexture = CreateColorTexture(new Color(0.1f, 0.31f, 0.38f, 1f));
+            m_sectionTexture = CreateColorTexture(new Color(0.055f, 0.075f, 0.105f, 1f));
 
             m_panelStyle = new GUIStyle(GUI.skin.box)
             {
@@ -194,6 +206,32 @@ namespace Tools.GM
                 fixedHeight = 32f,
                 fontSize = 13,
                 fontStyle = FontStyle.Bold
+            };
+            m_sectionStyle = new GUIStyle(GUI.skin.box)
+            {
+                normal = { background = m_sectionTexture },
+                padding = new RectOffset(12, 12, 10, 12),
+                margin = new RectOffset(0, 0, 0, 10)
+            };
+            m_sectionHeaderStyle = new GUIStyle(GUI.skin.label)
+            {
+                normal = { textColor = Color.white },
+                fontSize = 14,
+                fontStyle = FontStyle.Bold,
+                padding = new RectOffset(0, 0, 0, 8)
+            };
+            m_inputStyle = new GUIStyle(GUI.skin.textField)
+            {
+                fontSize = 13,
+                fixedHeight = 30f,
+                padding = new RectOffset(8, 8, 5, 5)
+            };
+            m_statusStyle = new GUIStyle(GUI.skin.label)
+            {
+                normal = { textColor = new Color(0.4f, 0.9f, 0.78f) },
+                fontSize = 12,
+                wordWrap = true,
+                padding = new RectOffset(0, 0, 6, 0)
             };
         }
 

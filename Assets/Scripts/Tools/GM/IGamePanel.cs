@@ -23,6 +23,7 @@ namespace Tools.GM
 
         void Refresh();
         void Draw(int activeTabIndex, GUIStyle labelStyle, GUIStyle valueStyle, GUIStyle toggleStyle,
-            GUIStyle buttonStyle);
+            GUIStyle buttonStyle, GUIStyle sectionStyle, GUIStyle sectionHeaderStyle, GUIStyle inputStyle,
+            GUIStyle statusStyle);
     }
 }
