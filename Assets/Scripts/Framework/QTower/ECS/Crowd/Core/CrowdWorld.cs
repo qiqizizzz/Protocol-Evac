@@ -11,6 +11,7 @@ using Framework.QTower.ECS.Crowd.Command;
 using Framework.QTower.ECS.Crowd.Component;
 using Framework.QTower.ECS.Crowd.Component.Common;
 using Framework.QTower.ECS.Crowd.Component.View;
+using Framework.QTower.ECS.Crowd.Data;
 using Framework.QTower.ECS.Crowd.System;
 using Framework.QTower.ECS.Crowd.System.Common;
 using UnityEngine;
@@ -30,6 +31,8 @@ namespace Framework.QTower.ECS.Crowd.Core
         private static CrowdWorld S_active;
         private int m_nextCommandId = 1;
 
+        public CrowdAvoidanceData AvoidanceData { get; } 
+        
         public CrowdCommandBuffer CommandBuffer { get; }
         public static CrowdWorld Active => S_active;
         public int SelectedGroupId { get; private set; }
@@ -38,6 +41,7 @@ namespace Framework.QTower.ECS.Crowd.Core
         public CrowdWorld()
         {
             S_active = this;
+            AvoidanceData = new CrowdAvoidanceData();
             CommandBuffer = new CrowdCommandBuffer();
             Register();
         }
@@ -51,6 +55,7 @@ namespace Framework.QTower.ECS.Crowd.Core
             AddSystem(new CrowdCommandApplySystem(this, CommandBuffer));
             AddSystem(new CrowdMovementSystem(this));
             AddSystem(new CrowdViewSyncSystem(this));
+            AddSystem(new CrowdSpatialHashSystem(this, AvoidanceData));
         }
 
         // 创建或获取一个可被 GM 控制的群体代理

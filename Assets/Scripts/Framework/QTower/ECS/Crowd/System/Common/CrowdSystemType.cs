@@ -11,7 +11,10 @@ namespace Framework.QTower.ECS.Crowd.System.Common
     public enum CrowdSystemType
     {
         CommandApply = 1001,
-        Movement = 1002,
-        ViewSync = 1003
+        SpatialHash = 1002, //空间哈希
+        Avoidance = 1003, //动态避障
+        Movement = 1004,
+        OverlapResolve = 1005, //重叠模型解决
+        ViewSync = 1006
     }
 }

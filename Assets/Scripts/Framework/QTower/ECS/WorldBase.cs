@@ -14,16 +14,11 @@ namespace Framework.QTower.Event.ECS
     public class WorldBase
     {
         public Dictionary<int, ECSEntity> Entities = new Dictionary<int, ECSEntity>();
-        public Dictionary<int, ECSSystem> Systems = new Dictionary<int, ECSSystem>();
+        public SortedDictionary<int, ECSSystem> Systems = new SortedDictionary<int, ECSSystem>();
         public Dictionary<int, Dictionary<int, ECSComponent>> Components =
             new Dictionary<int, Dictionary<int, ECSComponent>>();
         
         public virtual void Register()
-        {
-            
-        }
-
-        public void AddSystem(int sysType)
         {
             
         }
