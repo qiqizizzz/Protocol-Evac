@@ -11,6 +11,9 @@ using Framework.QTower.Event.ECS;
 using Framework.QTower.ECS.Crowd.Component;
 using Framework.QTower.ECS.Crowd.Component.Common;
 using Framework.QTower.ECS.Crowd.Core;
+using Framework.QTower.ECS.Crowd.Data;
+using Framework.QTower.ECS.Crowd.System;
+using Framework.QTower.ECS.Crowd.System.Common;
 using Module.CrowdDemo;
 using UnityEngine;
 using Utils.log;
@@ -25,6 +28,18 @@ namespace Tools.GM
         private readonly HashSet<int> m_boundViewIds = new HashSet<int>();
 
         private const int NEW_AGENT_SOURCE_ID = -1;
+        private const float STRENGTH_MIN = 0f;
+        private const float STRENGTH_MAX = 3f;
+        private const float NEIGHBOR_RADIUS_MIN = 0.5f;
+        private const float NEIGHBOR_RADIUS_MAX = 6f;
+        private const float SEPARATION_MARGIN_MAX = 1f;
+        private const float PREDICT_TIME_MIN = 0.05f;
+        private const float PREDICT_TIME_MAX = 3f;
+        private const float NEIGHBOR_COUNT_MIN = 1f;
+        private const float NEIGHBOR_COUNT_MAX = 24f;
+        private const float OVERLAP_STRENGTH_MAX = 1f;
+        private const float DEFAULT_SEPARATION_STRENGTH = 1f;
+        private const float DEFAULT_AVOIDANCE_STRENGTH = 1f;
         private string m_spawnCountInput = "10";
         private string m_status = "未发送命令";
         private int m_entityCount;
@@ -38,6 +53,16 @@ namespace Tools.GM
         private bool m_isAgentDropdownOpen;
         private Vector2 m_groupDropdownScrollPosition;
         private Vector2 m_agentDropdownScrollPosition;
+        private CrowdSpatialHashSystem m_hashSystem;
+        private CrowdAvoidanceSystem m_avoidanceSystem;
+        private CrowdOverlapResolveSystem m_overlapSystem;
+        private bool m_isSystemResolved;
+        private int m_hashAgentCount;
+        private int m_hashCellCount;
+        private float m_maxPenetration;
+        private bool m_hasInvalidVelocity;
+        private float m_remainingPenetration;
+        private int m_correctedPairCount;
 
         // 驱动 Crowd ECS 世界执行待处理命令
         public void Tick(float deltaTime)
@@ -66,6 +91,7 @@ namespace Tools.GM
             RefreshGroupsIfNeeded();
             m_entityCount = m_world.Entities.Count;
             m_pendingCommandCount = m_world.CommandBuffer.Count;
+            RefreshAvoidanceStats();
         }
 
         // 根据当前页签绘制 Crowd ECS 调试内容
@@ -88,6 +114,17 @@ namespace Tools.GM
             GUILayout.Label("运行状态", sectionHeaderStyle);
             DrawInfoRow("ECS 实体", m_entityCount.ToString(), labelStyle, valueStyle);
             DrawInfoRow("待处理命令", m_pendingCommandCount.ToString(), labelStyle, valueStyle);
+            DrawInfoRow("空间哈希", $"{m_hashAgentCount} 代理 / {m_hashCellCount} 格子", labelStyle, valueStyle);
+            DrawInfoRow("避障前穿模", m_maxPenetration.ToString("0.000"), labelStyle, valueStyle);
+            DrawInfoRow("残余穿模", m_remainingPenetration.ToString("0.000"), labelStyle, valueStyle);
+            DrawInfoRow("修正对数", m_correctedPairCount.ToString(), labelStyle, valueStyle);
+            if (m_hasInvalidVelocity)
+                GUILayout.Label("检测到非法速度，位置可能已被 NaN 污染", valueStyle);
+            GUILayout.EndVertical();
+
+            GUILayout.BeginVertical(sectionStyle);
+            GUILayout.Label("避障调参", sectionHeaderStyle);
+            DrawAvoidanceControls(labelStyle, valueStyle, buttonStyle);
             GUILayout.EndVertical();
 
             GUILayout.BeginVertical(sectionStyle);
@@ -429,6 +466,104 @@ namespace Tools.GM
             }
 
             m_viewVersion = CrowdAgentView.Version;
+        }
+
+        // 读取避障与哈希系统的运行统计，系统引用只在首次解析
+        private void RefreshAvoidanceStats()
+        {
+            if (!m_isSystemResolved)
+            {
+                m_hashSystem = FindSystem<CrowdSpatialHashSystem>((int) CrowdSystemType.SpatialHash);
+                m_avoidanceSystem = FindSystem<CrowdAvoidanceSystem>((int) CrowdSystemType.Avoidance);
+                m_overlapSystem = FindSystem<CrowdOverlapResolveSystem>((int) CrowdSystemType.OverlapResolve);
+                m_isSystemResolved = true;
+            }
+
+            if (m_hashSystem != null)
+            {
+                m_hashAgentCount = m_hashSystem.AgentCount;
+                m_hashCellCount = m_hashSystem.CellCount;
+            }
+
+            if (m_avoidanceSystem != null)
+            {
+                m_maxPenetration = m_avoidanceSystem.MaxPenetration;
+                m_hasInvalidVelocity = m_avoidanceSystem.HasInvalidVelocity;
+            }
+
+            if (m_overlapSystem != null)
+            {
+                m_remainingPenetration = m_overlapSystem.RemainingPenetration;
+                m_correctedPairCount = m_overlapSystem.CorrectedPairCount;
+            }
+        }
+
+        // 按系统编号取系统，取不到说明 Register 漏注册，直接报错暴露配置缺失
+        private T FindSystem<T>(int sysType) where T : ECSSystem
+        {
+            ECSSystem system;
+            if (!m_world.Systems.TryGetValue(sysType, out system))
+            {
+                QLog.Error($"Crowd 世界未注册系统 {sysType}，无法读取 {typeof(T).Name} 统计");
+                return null;
+            }
+
+            T typedSystem = system as T;
+            if (typedSystem == null)
+                QLog.Error($"Crowd 系统 {sysType} 类型不符，期望 {typeof(T).Name}，实际 {system.GetType().Name}");
+
+            return typedSystem;
+        }
+
+        // 绘制避障权重与查询参数，滑杆结果统一走 Clamp 兜住越界
+        private void DrawAvoidanceControls(GUIStyle labelStyle, GUIStyle valueStyle, GUIStyle buttonStyle)
+        {
+            CrowdAvoidanceData data = m_world.AvoidanceData;
+
+            data.SeparationStrength = DrawSliderRow("分离权重", data.SeparationStrength,
+                STRENGTH_MIN, STRENGTH_MAX, labelStyle, valueStyle);
+            data.AvoidanceStrength = DrawSliderRow("规避权重", data.AvoidanceStrength,
+                STRENGTH_MIN, STRENGTH_MAX, labelStyle, valueStyle);
+            data.NeighborRadius = DrawSliderRow("邻居半径", data.NeighborRadius,
+                NEIGHBOR_RADIUS_MIN, NEIGHBOR_RADIUS_MAX, labelStyle, valueStyle);
+            data.SeparationMargin = DrawSliderRow("安全间距", data.SeparationMargin,
+                STRENGTH_MIN, SEPARATION_MARGIN_MAX, labelStyle, valueStyle);
+            data.PredictTime = DrawSliderRow("预测时长", data.PredictTime,
+                PREDICT_TIME_MIN, PREDICT_TIME_MAX, labelStyle, valueStyle);
+            data.MaxNeighborCount = (int) DrawSliderRow("邻居上限", data.MaxNeighborCount,
+                NEIGHBOR_COUNT_MIN, NEIGHBOR_COUNT_MAX, labelStyle, valueStyle);
+            data.OverlapStrength = DrawSliderRow("重叠修正", data.OverlapStrength,
+                STRENGTH_MIN, OVERLAP_STRENGTH_MAX, labelStyle, valueStyle);
+            data.Clamp();
+
+            GUILayout.Label("邻居半径须大于两代理半径与安全间距之和，否则重叠会被半径提前剔除", labelStyle);
+
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button("权重归零", buttonStyle))
+                SetAvoidanceWeights(data, 0f, 0f);
+            if (GUILayout.Button("恢复默认", buttonStyle))
+                SetAvoidanceWeights(data, DEFAULT_SEPARATION_STRENGTH, DEFAULT_AVOIDANCE_STRENGTH);
+            GUILayout.EndHorizontal();
+        }
+
+        // 绘制一行带实时数值的滑杆并返回结果
+        private float DrawSliderRow(string label, float value, float minValue, float maxValue,
+            GUIStyle labelStyle, GUIStyle valueStyle)
+        {
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(label, labelStyle, GUILayout.Width(92f));
+            float result = GUILayout.HorizontalSlider(value, minValue, maxValue);
+            GUILayout.Label(result.ToString("0.00"), valueStyle, GUILayout.Width(42f));
+            GUILayout.EndHorizontal();
+
+            return result;
+        }
+
+        // 设置两类修正权重，归零即回到无避障的直线冲锋基线
+        private void SetAvoidanceWeights(CrowdAvoidanceData data, float separationStrength, float avoidanceStrength)
+        {
+            data.SeparationStrength = separationStrength;
+            data.AvoidanceStrength = avoidanceStrength;
         }
 
         // 绘制一行 Crowd ECS 诊断信息

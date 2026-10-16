@@ -55,7 +55,11 @@ namespace Framework.QTower.ECS.Crowd.Core
             AddSystem(new CrowdCommandApplySystem(this, CommandBuffer));
             AddSystem(new CrowdMovementSystem(this));
             AddSystem(new CrowdViewSyncSystem(this));
-            AddSystem(new CrowdSpatialHashSystem(this, AvoidanceData));
+
+            CrowdSpatialHashSystem spatialHashSystem = new CrowdSpatialHashSystem(this, AvoidanceData);
+            AddSystem(spatialHashSystem);
+            AddSystem(new CrowdAvoidanceSystem(this, spatialHashSystem, AvoidanceData));
+            AddSystem(new CrowdOverlapResolveSystem(this, spatialHashSystem, AvoidanceData));
         }
 
         // 创建或获取一个可被 GM 控制的群体代理

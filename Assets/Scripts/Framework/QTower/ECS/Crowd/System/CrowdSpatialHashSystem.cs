@@ -98,7 +98,8 @@ namespace Framework.QTower.ECS.Crowd.System
             }
         }
 
-        private void Rebuild()
+        // 按代理最新位置重建格子，需要即时相邻关系时由外部主动调用
+        public void Rebuild()
         {
             m_cellSize = Mathf.Max(MIN_CELL_SIZE, m_avoidanceData.NeighborRadius);
             m_agentCount = 0;

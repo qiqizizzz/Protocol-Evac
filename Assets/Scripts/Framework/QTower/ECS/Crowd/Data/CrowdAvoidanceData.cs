@@ -13,9 +13,10 @@ namespace Framework.QTower.ECS.Crowd.Data
         private const float MIN_NEIGHBOR_RADIUS = 0.5f;//最小邻居半径
         private const float MIN_PREDICT_TIME = 0.05f;//最小碰撞时间
         private const int MIN_NEIGHBOR_COUNT = 1;//最小邻居考察数量
+        private const float MAX_OVERLAP_STRENGTH = 1f;//最大重叠修正强度
         
         //邻居查询半径
-        public float NeighborRadius = 4;
+        public float NeighborRadius = 4f;
 
         //额外安全间距
         public float SeparationMargin = 0.15f;
@@ -29,9 +30,13 @@ namespace Framework.QTower.ECS.Crowd.Data
         //速度障碍修正权重
         public float AvoidanceStrength = 1f;
         
+        //重叠硬修正强度, 0 为关闭, 1 为一帧内完全消除穿模
+        public float OverlapStrength = 1f;
+
         //单个代理每帧最多处理的邻居数量, 用于限制高密度下的开销
         public int MaxNeighborCount = 8;
         
+        // 将参数约束到合法区间, 避免滑杆与配置写入非法值
         public void Clamp()
         {
             if (NeighborRadius < MIN_NEIGHBOR_RADIUS)
@@ -51,6 +56,12 @@ namespace Framework.QTower.ECS.Crowd.Data
             
             if(MaxNeighborCount < MIN_NEIGHBOR_COUNT)
                 MaxNeighborCount = MIN_NEIGHBOR_COUNT;
+
+            if(OverlapStrength < 0f)
+                OverlapStrength = 0f;
+
+            if(OverlapStrength > MAX_OVERLAP_STRENGTH)
+                OverlapStrength = MAX_OVERLAP_STRENGTH;
         }
 
     }

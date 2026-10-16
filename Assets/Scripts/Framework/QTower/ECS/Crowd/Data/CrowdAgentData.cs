@@ -27,6 +27,9 @@ namespace Framework.QTower.ECS.Crowd.Data
         //Steering 输出
         public Vector3 SteeringForce;
 
+        //避障阶段写入的期望速度修正量，由运动系统消费后清零
+        public Vector3 AvoidanceForce;
+
         //运动约束
         public float Radius;
         public float Mass;
