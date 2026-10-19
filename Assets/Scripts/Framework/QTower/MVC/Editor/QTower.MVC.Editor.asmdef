@@ -1,0 +1,19 @@
+{
+    "name": "QTower.MVC.Editor",
+    "rootNamespace": "Framework.QTower.Editor",
+    "references": [
+        "QTower",
+        "QTower.MVC"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

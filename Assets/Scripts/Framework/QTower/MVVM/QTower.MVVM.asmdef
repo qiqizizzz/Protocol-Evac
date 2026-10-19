@@ -1,12 +1,10 @@
 {
-    "name": "QTower.Editor",
-    "rootNamespace": "Framework.QTower.Editor",
+    "name": "QTower.MVVM",
+    "rootNamespace": "",
     "references": [
-        "QTower"
+        "GUID:47b93ceb36104063b4d385403b21ee9b"
     ],
-    "includePlatforms": [
-        "Editor"
-    ],
+    "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,

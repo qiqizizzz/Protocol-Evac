@@ -13,6 +13,7 @@ using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
+using UnityEngine.ResourceManagement.ResourceLocations;
 using Utils.log;
 
 namespace Common.Res
@@ -31,18 +32,18 @@ namespace Common.Res
         private const string PREFAB_POOL_ROOT_NAME = "PrefabPool";
         #endregion
 
-        private static readonly Dictionary<string, CacheEntry> caches;
-        private static readonly Dictionary<string, Queue<GameObject>> _pool;
-        private static readonly Dictionary<GameObject, Queue<GameObject>> _prefabPool;
+        private static readonly Dictionary<string, CacheEntry> m_caches;
+        private static readonly Dictionary<string, Queue<GameObject>> m_pool;
+        private static readonly Dictionary<GameObject, Queue<GameObject>> m_prefabPool;
         private static Transform m_resPoolRoot;
         private static Transform m_addressablesPoolRoot;
         private static Transform m_prefabPoolRoot;
 
         static ResManager()
         {
-            caches = new Dictionary<string, CacheEntry>();
-            _pool = new Dictionary<string, Queue<GameObject>>();
-            _prefabPool = new Dictionary<GameObject, Queue<GameObject>>();
+            m_caches = new Dictionary<string, CacheEntry>();
+            m_pool = new Dictionary<string, Queue<GameObject>>();
+            m_prefabPool = new Dictionary<GameObject, Queue<GameObject>>();
         }
 
         // 清理资源管理器持有的全部资源
@@ -114,7 +115,7 @@ namespace Common.Res
                 return default;
             }
 
-            if (caches.TryGetValue(path, out CacheEntry cache))
+            if (m_caches.TryGetValue(path, out CacheEntry cache))
             {
                 cache.refCount++;
                 cache.handle.WaitForCompletion();
@@ -133,7 +134,7 @@ namespace Common.Res
                 handle = handle,
                 refCount = 1
             };
-            caches.Add(path, cache);
+            m_caches.Add(path, cache);
             handle.WaitForCompletion();
 
             if (handle.Status == AsyncOperationStatus.Succeeded)
@@ -153,7 +154,7 @@ namespace Common.Res
                 return default;
             }
 
-            if (caches.TryGetValue(path, out CacheEntry cache))
+            if (m_caches.TryGetValue(path, out CacheEntry cache))
             {
                 cache.refCount++;
                 try
@@ -181,7 +182,7 @@ namespace Common.Res
                 handle = handle,
                 refCount = 1
             };
-            caches.Add(path, cache);
+            m_caches.Add(path, cache);
 
             try
             {
@@ -223,10 +224,50 @@ namespace Common.Res
                 await AcquireAssetAsync<UnityEngine.Object>(path);
         }
 
+        // 按 Addressables 标签解析出全部资源地址
+        public static async UniTask<List<string>> LoadAddressesByLabel<T>(string label) where T : UnityEngine.Object
+        {
+            if (string.IsNullOrEmpty(label))
+            {
+                QLog.Error("按标签解析资源地址失败：标签为空");
+                return null;
+            }
+
+            AsyncOperationHandle<IList<IResourceLocation>> handle = Addressables.LoadResourceLocationsAsync(label, typeof(T));
+            await handle.ToUniTask();
+
+            if (handle.Status != AsyncOperationStatus.Succeeded)
+            {
+                QLog.Error($"按标签解析资源地址失败：{label}");
+                Addressables.Release(handle);
+                return null;
+            }
+
+            List<string> addresses = new List<string>();
+            foreach (IResourceLocation location in handle.Result)
+                addresses.Add(location.PrimaryKey);
+
+            Addressables.Release(handle);
+            return addresses;
+        }
+
+        // 按 Addressables 标签预加载全部资源，返回已加载的地址列表
+        public static async UniTask<List<string>> PreLoadAssetsByLabel<T>(string label) where T : UnityEngine.Object
+        {
+            List<string> addresses = await LoadAddressesByLabel<T>(label);
+            if (addresses == null || addresses.Count == 0)
+                return null;
+
+            for (int i = 0; i < addresses.Count; i++)
+                await AcquireAssetAsync<T>(addresses[i]);
+
+            return addresses;
+        }
+
         // 释放一次指定地址的资源引用
         public static void ReleaseAsset(string path)
         {
-            if (!caches.TryGetValue(path, out CacheEntry cache))
+            if (!m_caches.TryGetValue(path, out CacheEntry cache))
             {
                 QLog.Warning($"释放资源失败：未找到资源缓存 {path}");
                 return;
@@ -239,13 +280,13 @@ namespace Common.Res
             if (cache.handle.IsValid())
                 Addressables.Release(cache.handle);
 
-            caches.Remove(path);
+            m_caches.Remove(path);
         }
 
         // 回滚一次失败的资源获取
         private static void ReleaseFailedCache(string path, CacheEntry cache)
         {
-            if (!caches.TryGetValue(path, out CacheEntry cachedEntry) || cachedEntry != cache)
+            if (!m_caches.TryGetValue(path, out CacheEntry cachedEntry) || cachedEntry != cache)
                 return;
 
             cache.refCount--;
@@ -255,19 +296,19 @@ namespace Common.Res
             if (cache.handle.IsValid())
                 Addressables.Release(cache.handle);
 
-            caches.Remove(path);
+            m_caches.Remove(path);
         }
 
         // 释放全部已缓存的资源
         private static void ReleaseAllAssets()
         {
-            foreach (CacheEntry cache in caches.Values)
+            foreach (CacheEntry cache in m_caches.Values)
             {
                 if (cache.handle.IsValid())
                     Addressables.Release(cache.handle);
             }
 
-            caches.Clear();
+            m_caches.Clear();
         }
         #endregion
 
@@ -275,11 +316,11 @@ namespace Common.Res
         //同步从对象池加载实例
         public static GameObject InstantiateFromPool(string keyName, Transform parent = null)
         {
-            if (_pool.ContainsKey(keyName))
+            if (m_pool.ContainsKey(keyName))
             {
-                while (_pool[keyName].Count > 0)
+                while (m_pool[keyName].Count > 0)
                 {
-                    GameObject obj = _pool[keyName].Dequeue();
+                    GameObject obj = m_pool[keyName].Dequeue();
                     if (obj == null) continue;
 
                     obj.transform.SetParent(parent);
@@ -294,7 +335,7 @@ namespace Common.Res
         // 异步从对象池加载实例
         public static async UniTask<GameObject> InstantiateFromPoolAsync(string path, Transform parent = null)
         {
-            if (_pool.TryGetValue(path, out Queue<GameObject> pool))
+            if (m_pool.TryGetValue(path, out Queue<GameObject> pool))
             {
                 while (pool.Count > 0)
                 {
@@ -317,14 +358,14 @@ namespace Common.Res
 
             obj.SetActive(false);
 
-            if (!_pool.ContainsKey(keyName))
-                _pool[keyName] = new Queue<GameObject>();
+            if (!m_pool.ContainsKey(keyName))
+                m_pool[keyName] = new Queue<GameObject>();
 
-            if (_pool[keyName].Count < maxPoolSize)
+            if (m_pool[keyName].Count < maxPoolSize)
             {
                 EnsurePoolRoots();
                 obj.transform.SetParent(m_addressablesPoolRoot);
-                _pool[keyName].Enqueue(obj);
+                m_pool[keyName].Enqueue(obj);
             }
             else
             {
@@ -336,7 +377,7 @@ namespace Common.Res
         //清理单个对象池
         public static void ClearPool(string keyName)
         {
-            if (_pool.TryGetValue(keyName, out var queue))
+            if (m_pool.TryGetValue(keyName, out var queue))
             {
                 while (queue.Count > 0)
                 {
@@ -344,14 +385,14 @@ namespace Common.Res
                     if (obj != null)
                         Addressables.ReleaseInstance(obj);
                 }
-                _pool.Remove(keyName);
+                m_pool.Remove(keyName);
             }
         }
         
         //清理所有对象池
         public static void ClearAllPools()
         {
-            foreach (var key in new List<string>(_pool.Keys))
+            foreach (var key in new List<string>(m_pool.Keys))
                 ClearPool(key);
         }
         #endregion
@@ -362,11 +403,11 @@ namespace Common.Res
         {
             if (prefab == null) return null;
 
-            if (_prefabPool.ContainsKey(prefab))
+            if (m_prefabPool.ContainsKey(prefab))
             {
-                while (_prefabPool[prefab].Count > 0)
+                while (m_prefabPool[prefab].Count > 0)
                 {
-                    GameObject obj = _prefabPool[prefab].Dequeue();
+                    GameObject obj = m_prefabPool[prefab].Dequeue();
                     if (obj == null) continue;
 
                     obj.transform.SetParent(parent);
@@ -387,14 +428,14 @@ namespace Common.Res
 
             obj.SetActive(false);
 
-            if (!_prefabPool.ContainsKey(prefab))
-                _prefabPool[prefab] = new Queue<GameObject>();
+            if (!m_prefabPool.ContainsKey(prefab))
+                m_prefabPool[prefab] = new Queue<GameObject>();
 
-            if (_prefabPool[prefab].Count < maxPoolSize)
+            if (m_prefabPool[prefab].Count < maxPoolSize)
             {
                 EnsurePoolRoots();
                 obj.transform.SetParent(m_prefabPoolRoot);
-                _prefabPool[prefab].Enqueue(obj);
+                m_prefabPool[prefab].Enqueue(obj);
             }
             else
             {
@@ -406,7 +447,7 @@ namespace Common.Res
         public static void ClearPrefabPool(GameObject prefab)
         {
             if (prefab == null) return;
-            if (_prefabPool.TryGetValue(prefab, out var queue))
+            if (m_prefabPool.TryGetValue(prefab, out var queue))
             {
                 while (queue.Count > 0)
                 {
@@ -414,14 +455,14 @@ namespace Common.Res
                     if (obj != null)
                         UnityEngine.Object.Destroy(obj);
                 }
-                _prefabPool.Remove(prefab);
+                m_prefabPool.Remove(prefab);
             }
         }
 
         //清理所有预制体对象池
         public static void ClearAllPrefabPools()
         {
-            foreach (var key in new List<GameObject>(_prefabPool.Keys))
+            foreach (var key in new List<GameObject>(m_prefabPool.Keys))
                 ClearPrefabPool(key);
         }
         #endregion
