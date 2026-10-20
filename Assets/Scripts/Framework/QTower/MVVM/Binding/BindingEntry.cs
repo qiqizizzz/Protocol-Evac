@@ -10,7 +10,7 @@ using System;
 
 namespace Framework.QTower.MVVM.Binding
 {
-    public class BindingEntry
+    internal sealed class BindingEntry
     {
         public Action Start { get; }
         public Action Stop { get; }
