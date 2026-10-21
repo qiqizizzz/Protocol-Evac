@@ -45,7 +45,7 @@ namespace Framework.QTower.MVVM.View
         #region 生命周期
         private void Awake()
         {
-            m_scope = BindingScope.GetOrCreate(gameObject);
+            EnsureScope();
             OnAwake();
         }
 
@@ -79,11 +79,11 @@ namespace Framework.QTower.MVVM.View
         {
             if (!EnsureViewModel()) return;
 
-            SetVisible(true);
-
-            // 上一次 Close 已解绑，这里重新接上，绑定条目由作用域重放
+            // 上一次 Close 已解绑, 先让视图模型回到绑定态, 显示时再由作用域重放绑定条目
             if (!m_viewModel.IsBound)
                 m_scope.NotifyReopened();
+
+            SetVisible(true);
 
             OnShow(args);
         }
@@ -137,10 +137,19 @@ namespace Framework.QTower.MVVM.View
         #endregion
 
         #region 内部函数
-        // 首帧创建视图模型并挂上租约，失败时已报错，返回 false 让调用方直接中止
+        // 作用域惰性获取：物体在隐藏状态下被创建时 Awake 会延后, 显示前必须兜住
+        private BindingScope EnsureScope()
+        {
+            if (m_scope != null) return m_scope;
+
+            m_scope = BindingScope.GetOrCreate(gameObject);
+            return m_scope;
+        }
+
+        // 首次显示创建视图模型并挂上租约, 失败时已报错, 返回 false 让调用方直接中止
         private bool EnsureViewModel()
         {
-            if (m_scope == null)
+            if (EnsureScope() == null)
             {
                 QLog.Error($"显示失败：{GetType().Name} 的绑定作用域为空");
                 return false;

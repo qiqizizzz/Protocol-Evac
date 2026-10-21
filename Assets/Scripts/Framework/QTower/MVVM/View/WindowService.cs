@@ -1,4 +1,4 @@
-﻿/*
+/*
  * ┌──────────────────────────────────┐
  * │  描    述: 窗口服务，负责 MVVM 视图的注册、实例缓存与显示关闭
  * │  类    名: WindowService.cs
@@ -45,29 +45,56 @@ namespace Framework.QTower.MVVM.View
         /// </summary>
         /// <param name="factory">传入根节点, 返回视图物体</param>
         public void Register<TView>(Func<Transform, GameObject> factory) where TView : Component, IView
-        {
-            RegisterAsync<TView>(parent => UniTask.FromResult(factory(parent)));
-        }
+            => Register(typeof(TView), factory);
+
+        /// <summary>
+        /// 非泛型注册入口，供反射式装配调用，校验规则与泛型版完全一致
+        /// </summary>
+        /// <param name="viewClass">视图组件类型，必须同时是 Component 与 IView</param>
+        /// <param name="factory">传入根节点, 返回视图物体</param>
+        public void Register(Type viewClass, Func<Transform, GameObject> factory)
+            => RegisterAsync(viewClass, factory == null
+                ? null
+                : (Func<Transform, UniTask<GameObject>>)(parent => UniTask.FromResult(factory(parent))));
 
         /// <summary>
         /// 注册异步视图工厂，适用于 Addressables 等需要等待的资源加载
         /// </summary>
         /// <param name="factory">传入根节点, 返回视图物体的异步任务</param>
         public void RegisterAsync<TView>(Func<Transform, UniTask<GameObject>> factory) where TView : Component, IView
+            => RegisterAsync(typeof(TView), factory);
+
+        /// <summary>
+        /// 非泛型异步注册入口，供反射式装配调用
+        /// </summary>
+        /// <param name="viewClass">视图组件类型，必须同时是 Component 与 IView</param>
+        /// <param name="factory">传入根节点, 返回视图物体的异步任务</param>
+        public void RegisterAsync(Type viewClass, Func<Transform, UniTask<GameObject>> factory)
         {
             if (m_isDestroyed)
             {
-                QLog.Error($"注册失败：窗口服务已销毁，目标 {typeof(TView).Name}");
+                QLog.Error($"注册失败：窗口服务已销毁，目标 {NameOf(viewClass)}");
+                return;
+            }
+
+            if (viewClass == null)
+            {
+                QLog.Error("注册失败：视图类型为空");
+                return;
+            }
+
+            if (!typeof(Component).IsAssignableFrom(viewClass) || !typeof(IView).IsAssignableFrom(viewClass))
+            {
+                QLog.Error($"注册失败：{viewClass.Name} 不是挂载在物体上的 IView 组件");
                 return;
             }
 
             if (factory == null)
             {
-                QLog.Error($"注册失败：{typeof(TView).Name} 的视图工厂为空");
+                QLog.Error($"注册失败：{viewClass.Name} 的视图工厂为空");
                 return;
             }
 
-            Type viewClass = typeof(TView);
             if (m_factories.ContainsKey(viewClass))
             {
                 QLog.Error($"注册失败：{viewClass.Name} 已注册过视图工厂");
@@ -76,8 +103,7 @@ namespace Framework.QTower.MVVM.View
 
             m_factories.Add(viewClass, factory);
         }
-
-        /// <summary>
+/// <summary>
         /// 显示视图，未创建则走工厂实例化，已创建则直接复用
         /// </summary>
         /// <param name="args">打开参数</param>
@@ -89,6 +115,9 @@ namespace Framework.QTower.MVVM.View
                 QLog.Error($"显示失败：窗口服务已销毁，目标 {viewClass.Name}");
                 return null;
             }
+
+            // 实例可能已被外部 Destroy, 空壳缓存先剔除, 下面直接走工厂重建
+            EvictIfDead(viewClass);
 
             if (m_instances.TryGetValue(viewClass, out IView cached))
             {
@@ -143,6 +172,8 @@ namespace Framework.QTower.MVVM.View
         /// </summary>
         public TView Get<TView>() where TView : class, IView
         {
+            EvictIfDead(typeof(TView));
+
             if (m_instances.TryGetValue(typeof(TView), out IView view))
                 return view as TView;
 
@@ -152,6 +183,8 @@ namespace Framework.QTower.MVVM.View
 
         public bool TryGet<TView>(out TView view) where TView : class, IView
         {
+            EvictIfDead(typeof(TView));
+
             view = null;
             return m_instances.TryGetValue(typeof(TView), out IView cached) && (view = cached as TView) != null;
         }
@@ -228,6 +261,24 @@ namespace Framework.QTower.MVVM.View
             m_factories.Clear();
             m_isDestroyed = true;
         }
+
+        // 剔除已被 Destroy 的视图缓存：组件销毁后字典里只剩空壳引用，留着会让后续 Show 永远拿不到实例
+        private bool EvictIfDead(Type viewClass)
+        {
+            if (!m_instances.TryGetValue(viewClass, out IView cached)) return false;
+
+            // 非组件视图不受 Unity 生命周期影响, 一律视为存活
+            if (cached is not Component component || component != null) return false;
+
+            m_instances.Remove(viewClass);
+            m_openOrder.Remove(viewClass);
+            QLog.Warning($"视图实例已被销毁，已剔除缓存：{viewClass.Name}");
+
+            return true;
+        }
+
+        // 反射入口可能传空类型, 日志给可定位的占位而不是抛空引用
+        private static string NameOf(Type viewClass) => viewClass == null ? "空类型" : viewClass.Name;
 
         private void TrackOpen(Type viewClass)
         {

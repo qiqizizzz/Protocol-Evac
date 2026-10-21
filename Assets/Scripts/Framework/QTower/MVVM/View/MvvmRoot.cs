@@ -42,6 +42,8 @@ namespace Framework.QTower.MVVM.View
             if (parent != null)
                 rootObject.transform.SetParent(parent, false);
 
+            rootObject.AddComponent<MvvmRoot>();
+
             // 构造期间 Awake 已执行, 这里直接取实例
             if (m_instance == null)
                 QLog.Error($"[{nameof(MvvmRoot)}] 根节点创建失败：{rootName}");

@@ -1,4 +1,4 @@
-﻿/*
+/*
  * ┌──────────────────────────────────┐
  * │  描    述: 模型仓库，按接口类型集中托管模型实例的注册与注销
  * │  类    名: ModelRegistry.cs
@@ -31,20 +31,39 @@ namespace Framework.QTower.MVVM.Model
         /// </summary>
         /// <param name="model">待注册的模型实例</param>
         public TModel Register<TModel>(TModel model) where TModel : class, IModel
+            => Register(typeof(TModel), model) as TModel;
+
+        /// <summary>
+        /// 非泛型注册入口，供反射式装配调用，校验规则与泛型版完全一致
+        /// </summary>
+        /// <param name="contract">模型契约类型，通常是 IModel 的子接口</param>
+        /// <param name="model">待注册的模型实例</param>
+        public IModel Register(Type contract, IModel model)
         {
             if (model == null)
             {
-                QLog.Error("模型注册失败：实例为空");
+                QLog.Error($"模型注册失败：实例为空，目标 {NameOf(contract)}");
+                return null;
+            }
+
+            if (contract == null)
+            {
+                QLog.Error($"模型注册失败：契约类型为空，实例 {model.GetType().Name}");
+                return null;
+            }
+
+            if (!contract.IsAssignableFrom(model.GetType()))
+            {
+                QLog.Error($"模型注册失败：{model.GetType().Name} 未实现契约 {contract.Name}");
                 return null;
             }
 
             if (m_isShutdown)
             {
-                QLog.Error($"模型注册失败：仓库已注销，目标 {typeof(TModel).Name}");
+                QLog.Error($"模型注册失败：仓库已注销，目标 {contract.Name}");
                 return null;
             }
 
-            Type contract = typeof(TModel);
             if (m_models.ContainsKey(contract))
             {
                 QLog.Error($"模型注册失败：{contract.Name} 已存在模型，重复注册被忽略");
@@ -131,5 +150,8 @@ namespace Framework.QTower.MVVM.Model
             m_models.Clear();
             m_registerOrder.Clear();
         }
+
+        // 反射入口可能传空类型, 日志给可定位的占位而不是抛空引用
+        private static string NameOf(Type contract) => contract == null ? "空类型" : contract.Name;
     }
 }
