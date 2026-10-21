@@ -1,0 +1,26 @@
+﻿{
+    "name": "QTower.MVVM.Tests",
+    "rootNamespace": "Tests.MVVM",
+    "references": [
+        "GUID:14ebfc5d30df33343850d7112d03441d",
+        "GUID:f51ebe6a0ceec4240a699833d6309b23",
+        "GUID:1e6a16ebd49fdb74fad1843f95457608",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

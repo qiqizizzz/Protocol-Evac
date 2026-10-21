@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using Framework.QTower.MVVM.ViewModel.Interfaces;
+using Framework.QTower.MVVM.ViewModel;
 using UnityEngine;
 using Utils.log;
 
@@ -38,6 +39,8 @@ namespace Framework.QTower.MVVM.Binding
         private bool m_isActive;
         private bool m_hasBegun;
         private int m_activeBindingCount;
+        private ViewModelLease m_lease;
+        private bool m_isDisposed;
 
         #region 生命周期
         private void OnEnable()
@@ -54,19 +57,26 @@ namespace Framework.QTower.MVVM.Binding
             Deactivate();
         }
 
+
         private void OnDestroy()
         {
+            m_isDisposed = true;
+
             if (m_isActive) Deactivate();
 
             m_entries.Clear();
             m_children.Clear();
-            
+            m_lease?.MarkDisposed();
+            m_lease = null;
+
+
             if (m_cts == null) return;
             m_cts.Cancel();
             m_cts.Dispose();
             m_cts = null;
         }
         #endregion
+
 
         #region 主要函数
         /// <summary>
@@ -210,6 +220,56 @@ namespace Framework.QTower.MVVM.Binding
 
             Deactivate();
         }
+
+        /// <summary>
+        /// 绑定视图模型并接管其生死, 本作用域负责完整的收敛顺序
+        /// </summary>
+        /// <param name="viewModel">View侧要绑定的视图模型</param>
+        public ViewModelLease Bind(IViewModelLifecycle viewModel) => Bind(viewModel, ViewModelOwnership.Owned);
+
+        /// <summary>
+        /// 绑定视图模型并声明生死归属, External 只解绑不释放
+        /// </summary>
+        /// <param name="viewModel">View侧要绑定的视图模型</param>
+        /// <param name="ownership">视图模型的生死归属</param>
+        public ViewModelLease Bind(IViewModelLifecycle viewModel, ViewModelOwnership ownership)
+        {
+            if (m_isDisposed)
+            {
+                QLog.Error("绑定失败：绑定作用域已销毁, 视图模型未纳入管理");
+                return null;
+            }
+
+            if (viewModel == null)
+            {
+                QLog.Error("绑定失败：视图模型为空");
+                return null;
+            }
+
+            if (m_lease != null)
+            {
+                QLog.Error($"绑定失败：作用域已持有视图模型租约, 重复Bind被忽略：{viewModel.GetType().Name}");
+                return m_lease;
+            }
+
+            m_lease = new ViewModelLease(this, viewModel, ownership);
+
+            viewModel.OnBind();
+
+            // 挂上组件时 OnEnable 未必已经跑过, 这里补一次, 避免绑定登记完却永不激活
+            EnsureScopeRunning();
+            return m_lease;
+        }
+
+        /// <summary>
+        /// 面板关闭时通知视图模型停止广播, 绑定条目与租约都不动
+        /// </summary>
+        public void NotifyClosed()
+        {
+            if (m_lease == null || m_lease.IsDisposed) return;
+
+            m_lease.NotifyClosed();
+        }
         #endregion
 
         #region 内部函数
@@ -221,6 +281,21 @@ namespace Framework.QTower.MVVM.Binding
             return false;
         }
 
+        // 只驱动状态, 资源释放一律交给租约
+        private void EnsureScopeRunning()
+        {
+            if (m_isActive) return;
+
+            if (!m_hasBegun)
+            {
+                Activate();
+                return;
+            }
+
+            Begin();
+        }
+
+
         private void AddEntry(BindingEntry entry)
         {
             m_entries.Add(entry);
@@ -231,6 +306,13 @@ namespace Framework.QTower.MVVM.Binding
         private void Activate()
         {
             if (m_isActive) return;
+
+            // 租约已拆除却再次激活, 说明面板被直接 Open 复用, 必须先重绑
+            if (m_lease != null && m_lease.IsDisposed)
+            {
+                QLog.Error("激活失败：绑定作用域的视图模型租约已拆除, 请重新 Bind 视图模型后再打开");
+                return;
+            }
 
             m_isActive = true;
             m_hasBegun = true;
