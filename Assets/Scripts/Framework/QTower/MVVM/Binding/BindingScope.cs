@@ -66,7 +66,8 @@ namespace Framework.QTower.MVVM.Binding
 
             m_entries.Clear();
             m_children.Clear();
-            m_lease?.MarkDisposed();
+            // 作用域销毁即代表视图模型归本作用域管, 完整拆除交给租约
+            m_lease?.Dispose();
             m_lease = null;
 
 
@@ -225,14 +226,14 @@ namespace Framework.QTower.MVVM.Binding
         /// 绑定视图模型并接管其生死, 本作用域负责完整的收敛顺序
         /// </summary>
         /// <param name="viewModel">View侧要绑定的视图模型</param>
-        public ViewModelLease Bind(IViewModelLifecycle viewModel) => Bind(viewModel, ViewModelOwnership.Owned);
+        public ViewModelLease Bind(IViewModel viewModel) => Bind(viewModel, ViewModelOwnership.Owned);
 
         /// <summary>
         /// 绑定视图模型并声明生死归属, External 只解绑不释放
         /// </summary>
         /// <param name="viewModel">View侧要绑定的视图模型</param>
         /// <param name="ownership">视图模型的生死归属</param>
-        public ViewModelLease Bind(IViewModelLifecycle viewModel, ViewModelOwnership ownership)
+        public ViewModelLease Bind(IViewModel viewModel, ViewModelOwnership ownership)
         {
             if (m_isDisposed)
             {
@@ -243,6 +244,24 @@ namespace Framework.QTower.MVVM.Binding
             if (viewModel == null)
             {
                 QLog.Error("绑定失败：视图模型为空");
+                return null;
+            }
+
+            if (viewModel.IsDisposed)
+            {
+                QLog.Error("绑定失败：视图模型已被释放, 不允许再次绑定");
+                return null;
+            }
+
+            if (viewModel.IsBound)
+            {
+                QLog.Error($"绑定失败：视图模型已处于绑定态, 请先解绑：{viewModel.GetType().Name}");
+                return null;
+            }
+
+            if (m_lease != null && m_lease.IsDisposed)
+            {
+                QLog.Error("绑定失败：作用域已完成拆除, 租约不可复用, 请重建面板");
                 return null;
             }
 
@@ -269,6 +288,16 @@ namespace Framework.QTower.MVVM.Binding
             if (m_lease == null || m_lease.IsDisposed) return;
 
             m_lease.NotifyClosed();
+        }
+
+        /// <summary>
+        /// 面板重新打开时通知视图模型重新绑定, 已有绑定条目由作用域重放
+        /// </summary>
+        public void NotifyReopened()
+        {
+            if (m_lease == null || m_lease.IsDisposed) return;
+
+            m_lease.NotifyReopened();
         }
         #endregion
 

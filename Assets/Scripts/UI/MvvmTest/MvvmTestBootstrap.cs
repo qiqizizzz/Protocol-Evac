@@ -1,11 +1,13 @@
 ﻿/*
  * ┌──────────────────────────────────┐
- * │  描    述: MVVM验收测试装配器，运行期搭建Canvas与测试面板节点
+ * │  描    述: MVVM验收测试装配器，运行期搭Canvas并走纯MVVM的窗口服务
  * │  类    名: MvvmTestBootstrap.cs
  * │  创    建: By qiqizizzz
  * └──────────────────────────────────┘
  */
 
+using Cysharp.Threading.Tasks;
+using Framework.QTower.MVVM.View;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -15,13 +17,14 @@ using Utils.log;
 namespace UI.MvvmTest
 {
     /// <summary>
-    /// 验收测试装配器：不依赖 prefab 与 Addressables，运行期搭出面板后走真实 UIBase 生命周期
+    /// 验收测试装配器：不依赖 prefab 与 Addressables，运行期搭出面板后交给 MvvmRoot 的窗口服务
     /// </summary>
     public sealed class MvvmTestBootstrap : MonoBehaviour
     {
         private const string CANVAS_NAME = "MvvmTest_Canvas";
         private const string PANEL_NAME = "UIMvvmTestPanel";
         private const string BOOTSTRAP_NAME = "MvvmTest_Bootstrap";
+        private const string ROOT_NAME = "MvvmTest_Root";
         private const int SORTING_ORDER = 32767;
 
         private static readonly Vector2 m_panelSize = new Vector2(760f, 460f);
@@ -33,6 +36,7 @@ namespace UI.MvvmTest
 
         public MvvmTestPanelView Panel { get; private set; }
         public Canvas Canvas { get; private set; }
+        public MvvmRoot Root { get; private set; }
 
         private bool m_isBuilt;
 
@@ -73,7 +77,7 @@ namespace UI.MvvmTest
         }
 
         /// <summary>
-        /// 搭建 Canvas、测试面板与事件系统，重复调用只生效一次
+        /// 搭建 Canvas、注册视图工厂并打开面板，重复调用只生效一次
         /// </summary>
         public void Build()
         {
@@ -81,11 +85,57 @@ namespace UI.MvvmTest
                 return;
 
             BuildCanvas();
-            BuildPanel();
             EnsureEventSystem();
-            m_isBuilt = true;
 
-            QLog.Info($"[{nameof(MvvmTestBootstrap)}] 测试面板已就绪：{Panel.Snapshot()}");
+            Root = MvvmRoot.Create(Canvas.transform, ROOT_NAME);
+            if (Root == null)
+            {
+                QLog.Error($"[{nameof(MvvmTestBootstrap)}] MvvmRoot 创建失败");
+                return;
+            }
+
+            Root.gameObject.hideFlags = HideFlags.DontSave;
+            Root.Windows.Register<MvvmTestPanelView>(BuildPanelObject);
+            ShowPanel().Forget();
+
+            m_isBuilt = true;
+            QLog.Info($"[{nameof(MvvmTestBootstrap)}] 测试面板已就绪：{(Panel == null ? "面板未就绪" : Panel.Snapshot())}");
+        }
+
+        // 通过窗口服务打开面板，实例由服务缓存复用
+        public UniTask ShowPanel()
+        {
+            return ShowPanelAsync();
+        }
+
+        public void HidePanel()
+        {
+            Root.Windows.Hide<MvvmTestPanelView>();
+            QLog.Info($"[{nameof(MvvmTestBootstrap)}] HidePanel {Panel.Snapshot()}");
+        }
+
+        public void ClosePanel()
+        {
+            Root.Windows.Close<MvvmTestPanelView>();
+            QLog.Info($"[{nameof(MvvmTestBootstrap)}] ClosePanel {Panel.Snapshot()}");
+        }
+
+        // 销毁面板实例，验证租约的完整拆除
+        public void DestroyPanel()
+        {
+            if (Panel == null) return;
+
+            GameObject panelObject = Panel.gameObject;
+            Panel = null;
+            DestroyImmediate(panelObject);
+            QLog.Info($"[{nameof(MvvmTestBootstrap)}] DestroyPanel 完成");
+        }
+
+        private async UniTask ShowPanelAsync()
+        {
+            Panel = await Root.Windows.ShowAsync<MvvmTestPanelView>();
+            if (Panel == null)
+                QLog.Error($"[{nameof(MvvmTestBootstrap)}] 面板打开失败");
         }
 
         // 搭建独立测试 Canvas，不复用场景内已有 UI，避免影响正式界面
@@ -103,10 +153,10 @@ namespace UI.MvvmTest
             scaler.matchWidthOrHeight = 0.5f;
         }
 
-        // 搭建面板节点并走 UIBase 的 Init 与 Open
-        private void BuildPanel()
+        // 视图工厂：搭建面板节点并挂上视图组件, 绑定与生命周期交给 ViewBase
+        private GameObject BuildPanelObject(Transform parent)
         {
-            RectTransform panelRect = CreateRect(PANEL_NAME, Canvas.transform);
+            RectTransform panelRect = CreateRect(PANEL_NAME, parent);
 
             Image background = panelRect.gameObject.AddComponent<Image>();
             background.color = m_panelColor;
@@ -122,9 +172,8 @@ namespace UI.MvvmTest
             CreateButton("Btn_Lock", "Lock", panelRect, new Vector2(250f, 40f));
             CreateToggle("Tgl_Lock", panelRect, new Vector2(0f, -30f));
 
-            Panel = panelRect.gameObject.AddComponent<MvvmTestPanelView>();
-            Panel.Init();
-            Panel.Open();
+            panelRect.gameObject.AddComponent<MvvmTestPanelView>();
+            return panelRect.gameObject;
         }
 
         // 保证按钮可点：场景内没有事件系统时补一个
