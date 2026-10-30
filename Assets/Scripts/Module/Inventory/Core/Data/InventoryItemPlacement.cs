@@ -12,7 +12,7 @@ using UnityEngine;
 
 namespace Module.Inventory.Core.Data
 {
-    public class InventoryPlacement
+    public class InventoryItemPlacement
     {
         public InventoryItemInstance Instance { get; }
 
@@ -24,7 +24,7 @@ namespace Module.Inventory.Core.Data
 
         public int CellCount => Size.x * Size.y;
 
-        public InventoryPlacement(InventoryItemInstance instance, Vector2Int position)
+        public InventoryItemPlacement(InventoryItemInstance instance, Vector2Int position)
         {
             Instance = instance;
             Position = position;
