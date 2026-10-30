@@ -50,5 +50,12 @@ namespace Module.Inventory.Core.Config
         public Vector2Int Size => new Vector2Int(GridWidthValue, GridHeightValue);
         public Sprite Icon => IconValue;
         public bool IsStackable => MaxStackCountValue > 1;
+        
+        //指定朝下的占格尺寸(用于试算)
+        public Vector2Int GetSizeAt(InventoryRotation rotation)
+        {
+            Vector2Int size = Size;
+            return (int)rotation % 2 == 1 ? new Vector2Int(size.y, size.x) : size;
+        }
     }
 }

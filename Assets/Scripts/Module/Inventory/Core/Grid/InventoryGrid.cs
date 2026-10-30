@@ -35,6 +35,9 @@ namespace Module.Inventory.Core.Grid
             m_placements = new HashSet<InventoryItemPlacement>();
         }
 
+        public bool Contains(InventoryItemPlacement placement) => m_placements.Contains(placement);
+
+        #region 网格相关检测操作
         //单点检测(判断是否在网格范围内)
         public bool IsInside(Vector2Int cell)
         {
@@ -68,15 +71,9 @@ namespace Module.Inventory.Core.Grid
         {
             return cell.y * Width + cell.x;
         }
-
-        public bool TryGetPlacementAt(Vector2Int cell, out InventoryItemPlacement itemPlacement)
-        {
-            itemPlacement = null;
-            if (!IsInside(cell)) return false;
-            itemPlacement = m_cells[GetCellIndex(cell)];
-            return itemPlacement != null;
-        }
-
+        #endregion
+        
+        #region 物品放置操作
         //判断是否能放下物品(以指定位置和朝向)
         public bool CanPlace(InventoryItemPlacement itemPlacement, Vector2Int position, InventoryRotation rotation,
             InventoryItemPlacement ignore = null)
@@ -117,6 +114,15 @@ namespace Module.Inventory.Core.Grid
             }
             
             return true;
+        }
+        #endregion
+        
+        public bool TryGetPlacementAt(Vector2Int cell, out InventoryItemPlacement itemPlacement)
+        {
+            itemPlacement = null;
+            if (!IsInside(cell)) return false;
+            itemPlacement = m_cells[GetCellIndex(cell)];
+            return itemPlacement != null;
         }
         
         public override string ToString()

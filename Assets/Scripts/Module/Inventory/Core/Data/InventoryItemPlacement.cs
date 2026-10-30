@@ -24,18 +24,15 @@ namespace Module.Inventory.Core.Data
 
         public int CellCount => Size.x * Size.y;
 
-        public InventoryItemPlacement(InventoryItemInstance instance, Vector2Int position)
+        public InventoryItemPlacement(InventoryItemInstance instance, Vector2Int position, InventoryRotation rotation = InventoryRotation.None)
         {
             Instance = instance;
             Position = position;
+            Rotation = rotation;
         }
         
         //指定向下的占格尺寸(用于试算)
-        public Vector2Int SizeAt(InventoryRotation rotation)
-        {
-            Vector2Int size = Instance.Config.Size;
-            return (int)rotation % 2 == 1 ? new Vector2Int(size.y, size.x) : size;
-        }
+        public Vector2Int SizeAt(InventoryRotation rotation) => Instance.Config.GetSizeAt(rotation);
 
         //判断某个格子是否被占据(AABB, 轴对齐包围盒)
         public bool Contains(Vector2Int cell)
