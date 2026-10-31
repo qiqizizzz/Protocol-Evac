@@ -89,6 +89,25 @@ namespace Framework.QTower.MVVM.View
         }
 
         /// <summary>
+        /// 显示面板: 显示由上层注入的视图模型的面板, 只借用不释放, 拆除时只解绑
+        /// </summary>
+        /// <param name="viewModel">上层持有的视图模型</param>
+        public void Show(TViewModel viewModel)
+        {
+            if(m_lease != null && m_viewModel != viewModel)
+                QLog.Error($"显示失败: {GetType().Name} 已绑定视图模型, 单元视图不可换绑");
+            
+            if(!EnsureViewModel(viewModel)) return;
+            
+            if(!m_viewModel.IsBound)
+                m_scope.NotifyReopened();
+            
+            SetVisible(true);
+            
+            OnShow();
+        }
+
+        /// <summary>
         /// 隐藏面板：只断显示，视图模型保持绑定态，状态原地保留
         /// </summary>
         public void Hide()
@@ -137,7 +156,7 @@ namespace Framework.QTower.MVVM.View
         #endregion
 
         #region 内部函数
-        // 作用域惰性获取：物体在隐藏状态下被创建时 Awake 会延后, 显示前必须兜住
+        // 作用域惰性获取
         private BindingScope EnsureScope()
         {
             if (m_scope != null) return m_scope;
@@ -146,8 +165,8 @@ namespace Framework.QTower.MVVM.View
             return m_scope;
         }
 
-        // 首次显示创建视图模型并挂上租约, 失败时已报错, 返回 false 让调用方直接中止
-        private bool EnsureViewModel()
+        // 首次显示创建视图模型
+        private bool EnsureViewModel(TViewModel externalViewModel = null)
         {
             if (EnsureScope() == null)
             {
@@ -166,7 +185,7 @@ namespace Framework.QTower.MVVM.View
                 return true;
             }
 
-            TViewModel created = CreateViewModel();
+            TViewModel created = externalViewModel ?? CreateViewModel();
             if (created == null)
             {
                 QLog.Error($"显示失败：{GetType().Name} 未创建出视图模型");
@@ -174,7 +193,10 @@ namespace Framework.QTower.MVVM.View
             }
 
             m_viewModel = created;
-            m_lease = m_scope.Bind(created);
+            m_lease = externalViewModel == null
+                ? m_scope.Bind(created)
+                : m_scope.Bind(created, ViewModelOwnership.External);
+            
             if (m_lease == null)
             {
                 m_viewModel = null;

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: "ItemConfig_1000_\u7A81\u51FB\u6B65\u67AA"
   m_EditorClassIdentifier: 
   ItemIdValue: 1000
-  DisplayNameValue: 
+  DisplayNameValue: "\u7A81\u51FB\u6B65\u67AA"
   ItemTypeValue: 10
   CanRotateValue: 1
   MaxStackCountValue: 1

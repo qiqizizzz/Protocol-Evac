@@ -12,12 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 78907d81b7b34ce9af01dc3cfaf05607, type: 3}
   m_Name: "ItemConfig_2000_\u4E00\u7EA7\u5B50\u5F39"
   m_EditorClassIdentifier: 
-  ItemIdValue: 0
-  DisplayNameValue: 
-  ItemTypeValue: 0
+  ItemIdValue: 2000
+  DisplayNameValue: "\u4E00\u7EA7\u5B50\u5F39"
+  ItemTypeValue: 20
   CanRotateValue: 1
-  MaxStackCountValue: 1
-  UnitWeightValue: 0
+  MaxStackCountValue: 60
+  UnitWeightValue: 0.025
   GridWidthValue: 1
   GridHeightValue: 1
   IconValue: {fileID: 0}

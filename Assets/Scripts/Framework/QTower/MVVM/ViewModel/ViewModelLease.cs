@@ -18,13 +18,11 @@ namespace Framework.QTower.MVVM.ViewModel
     {
         // 由本作用域创建, 收敛时负责释放
         Owned,
+        
         // 由外部注入, 收敛时只解绑绝不释放
         External
     }
-
-    /// <summary>
-    /// 视图模型租约：把绑定作用域与视图模型绑成一条收敛链，拆除顺序由框架写死
-    /// </summary>
+    
     public sealed class ViewModelLease
     {
         private readonly BindingScope m_scope;
@@ -51,16 +49,12 @@ namespace Framework.QTower.MVVM.ViewModel
         /// </summary>
         internal void NotifyReopened() => m_viewModel.OnBind();
 
-        /// <summary>
-        /// 完整拆除，固定顺序：先收敛绑定，再解绑，最后才轮到释放视图模型
-        /// </summary>
         public void Dispose()
         {
             if (IsDisposed) return;
 
             IsDisposed = true;
 
-            // 颠倒这一步会让订阅继续向已释放的属性推值, 直接刷出释放告警
             if (m_scope != null && m_scope.IsActive)
                 m_scope.End();
 
