@@ -11,7 +11,7 @@ using UnityEngine;
 
 namespace Module.Inventory.Core.Config
 {
-    [CreateAssetMenu(fileName = "InventoryItemConfig", menuName = "配置/背包/物品定义配置")]
+    [CreateAssetMenu(fileName = "ItemConfig", menuName = "配置/背包/物品定义配置")]
     public sealed class InventoryItemConfigSO : ScriptableObject
     {
         [Header("基础属性")]
@@ -31,7 +31,7 @@ namespace Module.Inventory.Core.Config
         [Tooltip("最大堆叠数")]
         [SerializeField,Min(1)] private int MaxStackCountValue = 1;
         
-        [Tooltip("单件重量")]
+        [Tooltip("单件重量/kg")]
         [SerializeField,Min(0f)] private float UnitWeightValue;
         
         [Header("占格")]

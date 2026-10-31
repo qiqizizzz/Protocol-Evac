@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 78907d81b7b34ce9af01dc3cfaf05607, type: 3}
+  m_Name: "ItemConfig_1000_\u7A81\u51FB\u6B65\u67AA"
+  m_EditorClassIdentifier: 
+  ItemIdValue: 1000
+  DisplayNameValue: 
+  ItemTypeValue: 10
+  CanRotateValue: 1
+  MaxStackCountValue: 1
+  UnitWeightValue: 3
+  GridWidthValue: 5
+  GridHeightValue: 2
+  IconValue: {fileID: 0}

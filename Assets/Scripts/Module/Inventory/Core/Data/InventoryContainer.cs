@@ -122,16 +122,8 @@ namespace Module.Inventory.Core.Data
             itemPlacement = null;
             return false;
         }
-
-        //移除物品
-        public bool Remove(InventoryItemPlacement placement) => Grid.Remove(placement);
         
-        public bool Contains(InventoryItemPlacement placement)
-        {
-            return Grid.TryGetPlacementAt(placement.Position, out var found) && ReferenceEquals(found, placement);
-        }
-        
-        
+        public bool Contains(InventoryItemPlacement placement) => Grid.Contains(placement);
         
         public override string ToString()
         {
