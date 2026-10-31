@@ -39,6 +39,9 @@ namespace Module.Inventory.Core.Rule.Type
         SourceNotFound = 400,
 
         // 物品归属权冲突, 实体已被其他容器持有
-        OwnershipConflict = 401
+        OwnershipConflict = 401,
+        
+        ConfigMissing = 402
+        
     }
 }

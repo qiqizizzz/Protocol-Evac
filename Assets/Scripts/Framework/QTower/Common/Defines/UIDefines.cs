@@ -12,5 +12,6 @@ namespace Framework.QTower.Common.Defines
     {
         public const string UICombatHUD = "UICombatHUD";
         public const string UISummary = "UISummary";
+        public const string UIInventoryPanel = "UIInventoryPanel";
     }
 }

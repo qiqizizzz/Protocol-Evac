@@ -45,7 +45,7 @@ namespace Module.Inventory.Core.Data
         }
         
         //减少堆叠数量
-        public bool ReduceStack(int count)
+        public bool TryReduceStack(int count)
         {
             if (count <= 0 || count >= StackCount) return false;
 
