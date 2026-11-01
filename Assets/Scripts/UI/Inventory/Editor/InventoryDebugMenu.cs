@@ -89,22 +89,22 @@ namespace UI.Inventory.Editor
             Debug.Log(LOG + "子弹x30 -> " + InvokeAdd(model, 2000, 30, new Vector2Int(5, 0)));
         }
 
-        // 链路探针: 直接调用面板 VM 的格子点击入口, 等价于玩家点 (5,0)
+        // 链路探针: 直接调用面板 VM 的格子交互入口, 等价于玩家点 (5,0)
         [MenuItem("Tools/背包7a/4.点击格子(5,0)")]
         public static void ClickSlotProbe()
         {
             object vm = ResolvePanelViewModel();
             if (vm == null) return;
 
-            MethodInfo click = vm.GetType().GetMethod("ClickCell");
+            MethodInfo click = vm.GetType().GetMethod("InteractAt");
             if (click == null)
             {
-                Debug.LogWarning(LOG + "InventoryViewModel 还没有 ClickCell, 请先敲文件 5");
+                Debug.LogWarning(LOG + "InventoryViewModel 还没有 InteractAt, 请先敲文件 5");
                 return;
             }
 
             click.Invoke(vm, new object[] { new Vector2Int(5, 0) });
-            Debug.Log(LOG + "已点击格子 (5,0), 观察高亮与提示变化");
+            Debug.Log(LOG + "已在格子 (5,0) 发起交互, 观察高亮与提示变化");
         }
 
         // 读取面板 VM 的提示/选中/高亮/重量统计, 全部走反射, 缺成员报 "(缺失)" 而不抛异常
@@ -155,10 +155,10 @@ namespace UI.Inventory.Editor
             object vm = ResolvePanelViewModel();
             if (vm == null) return;
 
-            MethodInfo rotate = vm.GetType().GetMethod("RotateSelected");
+            MethodInfo rotate = vm.GetType().GetMethod("RotateSelectedItem");
             if (rotate == null)
             {
-                Debug.LogWarning(LOG + "InventoryViewModel 还没有 RotateSelected, 请先敲文件 5");
+                Debug.LogWarning(LOG + "InventoryViewModel 还没有 RotateSelectedItem, 请先敲文件 5");
                 return;
             }
 

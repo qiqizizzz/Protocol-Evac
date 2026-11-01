@@ -6,11 +6,230 @@
  * └──────────────────────────────────┘
  */
 
+using System.Collections.Generic;
+using Framework.QTower.MVVM.View;
 using Framework.QTower.MVVM.ViewModel;
+using Framework.QTower.MVVM.ViewModel.Interfaces;
+using Module.Inventory.Core.Defines;
+using Module.Inventory.Core.Rule.Type;
+using UnityEngine;
 
 namespace UI.Inventory
 {
     public class InventoryViewModel : ViewModelBase
     {
+        private const int NO_SELECTION = -1; //未选中任何物品的标记号
+
+        public IReadOnlyReactiveProperty<InventoryContainerVO> Snapshot => m_snapshot;
+        public IReadOnlyReactiveProperty<int> SelectedInstanceId => m_selectedInstanceId;
+        public IReadOnlyReactiveProperty<InventoryHintKind> HintKind => m_hintKind;
+        public IReadOnlyReactiveProperty<bool> CanRotate => m_canRotate;
+        public ISignal HintPulse => m_hintPulse;
+        public InventoryMoveResult LastMoveResult => m_lastMoveResult;
+        public int ContainerId => m_containerId;
+        
+        private readonly IInventoryModel m_model;
+        private readonly int m_containerId;
+        public int SlotCount => m_slots.Count;
+        
+        private readonly ReactiveProperty<InventoryContainerVO> m_snapshot;
+        private readonly ReactiveProperty<int> m_selectedInstanceId;
+        private readonly ReactiveProperty<InventoryHintKind> m_hintKind;
+        private readonly ReactiveProperty<bool> m_canRotate;
+        private readonly Signal m_hintPulse;
+
+        private readonly List<InventorySlotViewModel>  m_slots = new List<InventorySlotViewModel>();
+        private readonly List<ReactiveProperty<bool>> m_slotHighlights = new List<ReactiveProperty<bool>>();
+        
+        private int m_snapshotVersion = -1;
+        private int m_slotWidth = -1;
+        private InventoryMoveResult m_lastMoveResult;
+        private RectInt m_lastRegion;
+        private bool m_hasLastRegion;
+
+        public InventoryViewModel() : this(MvvmRoot.Instance.Models.Get<IInventoryModel>())
+        {
+            
+        }
+
+        public InventoryViewModel(IInventoryModel model, int containerId = InventoryContainerIds.BACKPACK)
+        {
+            m_model = model;
+            m_containerId = containerId;
+
+            m_snapshot = CreateProperty(InventoryContainerVO.Empty);
+            m_selectedInstanceId = CreateProperty(NO_SELECTION);
+            m_hintKind = CreateProperty(InventoryHintKind.Idle);
+            m_canRotate = CreateProperty(false);
+            m_hintPulse = CreateSignal();
+        }
+
+        #region 生命周期
+        protected override void OnBindCore()
+        {
+            m_model.OnChanged += HandleModelChanged;
+            RefreshFromModel();
+        }
+
+        protected override void OnUnbindCore()
+        {
+            m_model.OnChanged -= HandleModelChanged;
+        }
+
+        protected override void OnDisposeCore()
+        {
+            for (int i = 0; i < m_slots.Count; i++)
+            {
+                m_slots[i].Dispose();
+            }
+            
+            m_slots.Clear();
+            m_slotHighlights.Clear();
+            m_hasLastRegion = false;
+        }
+        #endregion
+
+        #region 上行方法
+        public InventorySlotViewModel GetSlot(int index) => m_slots[index];
+
+        //交互格子
+        public void InteractAt(Vector2Int cell)
+        {
+            if (m_model.TryGetInstanceIdAt(m_containerId, cell, out int instanceId))
+            {
+                ToggleItemSelection(instanceId);
+                return;
+            }
+            
+            //空格子静默
+            if(m_selectedInstanceId.Value == NO_SELECTION) return;
+            
+            PlaceSelectedItem(cell);
+        }
+        
+        //旋转选中物品
+        public void RotateSelectedItem()
+        {
+            if(m_selectedInstanceId.Value == NO_SELECTION) return;
+            
+            m_lastMoveResult = m_model.TryRotateItem(m_containerId, m_selectedInstanceId.Value);
+            SetHint(ToHintKind(m_lastMoveResult));
+        }
+        
+        //取消当前选中
+        public void ClearSelection()
+        {
+            ResetSelection(InventoryHintKind.Idle);
+        }
+        #endregion
+
+        #region 内部方法
+        private void HandleModelChanged(int containerId)
+        {
+            if(containerId != m_containerId) return;
+            
+            RefreshFromModel();
+        }
+        
+        //从模型拉取最新快照
+        private void RefreshFromModel()
+        {
+            InventoryContainerVO vo = m_model.GetContainerVO(m_containerId);
+            m_snapshot.Set(vo);
+            SyncSlots(vo);
+            
+            //选中物品已被外部挪走或销毁则丢弃选中态
+            if(m_selectedInstanceId.Value != NO_SELECTION && !vo.Contains(m_selectedInstanceId.Value))
+            {
+                ResetSelection(InventoryHintKind.Idle);
+                return;
+            }
+            
+            RefreshHighlight();
+            RefreshCanRotate();
+        }
+
+        //按容器拓扑增减格子子 VM
+        private void SyncSlots(InventoryContainerVO vo)
+        {
+            //宽度改变, 全部重建
+            if (vo.Width != m_slotWidth)
+            {
+                for (int i = 0; i < m_slots.Count; i++)
+                {
+                    m_slots[i].Dispose();
+                }
+                
+                m_slots.Clear();
+                m_slotHighlights.Clear();
+                m_hasLastRegion = false;
+                m_slotWidth = vo.Width;
+            }
+
+            //格子不够, 向后补齐(初始化或者背包高度变高)
+            int cellCount = vo.CellCount;
+            while (m_slots.Count < cellCount)
+            {
+                int index = m_slots.Count;
+                Vector2Int cell = new Vector2Int(index % m_slotWidth, index / m_slotWidth);
+                ReactiveProperty<bool> highlight = CreateProperty(false);
+                
+                m_slotHighlights.Add(highlight);
+                m_slots.Add(new InventorySlotViewModel(cell, highlight.AsReadOnly(), InteractAt));
+            }
+
+            //格子多了, 多余的裁剪(大背包变成小背包)
+            while (m_slots.Count > cellCount)
+            {
+                int last = m_slots.Count - 1;
+                m_slots[last].Dispose();
+                m_slots.RemoveAt(last);
+                m_slotHighlights.RemoveAt(last);
+            }
+        }
+
+        private void RefreshHighlight()
+        {
+            
+        }
+
+        private void SetRegionHighlight(RectInt region, bool isHighlighted)
+        {
+            
+        }
+
+        private void ToggleItemSelection(int instanceId)
+        {
+            
+        }
+
+        private void PlaceSelectedItem(Vector2Int cell)
+        {
+            
+        }
+
+        private void ResetSelection(InventoryHintKind hint)
+        {
+            
+        }
+
+        private void RefreshCanRotate()
+        {
+            
+        }
+
+        private InventoryHintKind ToHintKind(InventoryMoveResult result)
+        {
+            return InventoryHintKind.Idle;
+        }
+
+        private void SetHint(InventoryHintKind kind)
+        {
+            
+        }
+        
+
+        #endregion
+
     }
 }

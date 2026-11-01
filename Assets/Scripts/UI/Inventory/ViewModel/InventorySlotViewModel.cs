@@ -15,27 +15,21 @@ namespace UI.Inventory
 {
     public sealed class InventorySlotViewModel : ViewModelBase
     {
-        private readonly ReactiveProperty<bool> m_isSelected;
-        private readonly ReactiveProperty<bool> m_isBlocked;
-
-        private readonly Action<Vector2Int> m_requestHandler;
-        
         public Vector2Int Cell {get; }
-        public IReadOnlyReactiveProperty<bool>  IsSelected => m_isSelected;
-        public IReadOnlyReactiveProperty<bool>  IsBlocked => m_isBlocked;
+        public IReadOnlyReactiveProperty<bool>  IsSelected { get; }
+        
+        private readonly Action<Vector2Int> m_clickHandler;
+        
+        
 
-        public InventorySlotViewModel(Vector2Int cell, Action<Vector2Int> requestHandler)
+        public InventorySlotViewModel(Vector2Int cell, IReadOnlyReactiveProperty<bool> isSelected,
+            Action<Vector2Int> clickHandler)
         {
             Cell = cell;
-            m_requestHandler = requestHandler;
-            
-            m_isSelected = CreateProperty(false);
-            m_isBlocked = CreateProperty(false);
+            IsSelected = isSelected;
+            m_clickHandler = clickHandler;
         }
 
-        public void RequestSelect() => m_requestHandler?.Invoke(Cell);
-        
-        public void SetSelected(bool selected) => m_isSelected.TrySet(selected);
-        public void SetBlocked(bool blocked) => m_isBlocked.TrySet(blocked);
+        public void NotifyClicked() => m_clickHandler(Cell);
     }
 }
