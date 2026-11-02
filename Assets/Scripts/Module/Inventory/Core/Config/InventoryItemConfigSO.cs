@@ -38,6 +38,13 @@ namespace Module.Inventory.Core.Config
         [SerializeField, Min(1)] private int GridWidthValue = 1;
         [SerializeField, Min(1)] private int GridHeightValue = 1;
 
+        [Header("品质与价值")]
+        [Tooltip("稀有度等级, 决定物品块底色档位")]
+        [SerializeField] private InventoryItemRarity RarityValue;
+
+        [Tooltip("单件估价, 用于战利品价值统计与阶段二出售结算")]
+        [SerializeField, Min(0)] private int UnitValueValue;
+        
         [Header("UI表现")] 
         [SerializeField] private Sprite IconValue;
         
@@ -48,6 +55,8 @@ namespace Module.Inventory.Core.Config
         public int MaxStackCount => MaxStackCountValue;
         public float UnitWeight => UnitWeightValue;
         public Vector2Int Size => new Vector2Int(GridWidthValue, GridHeightValue);
+        public InventoryItemRarity Rarity => RarityValue;
+        public int UnitValue => UnitValueValue;
         public Sprite Icon => IconValue;
         public bool IsStackable => MaxStackCountValue > 1;
         

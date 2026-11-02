@@ -72,7 +72,8 @@ namespace UI.Inventory
             {
                 InventoryItemInstance instance = placement.Instance;
                 items[index++] = new InventoryItemVO(instance.InstanceId, instance.ItemId, instance.Config.DisplayName,
-                    instance.StackCount, instance.Config.Icon, placement.Position, placement.Size, placement.Rotation);
+                    instance.StackCount, instance.Config.Icon, instance.Config.Rarity, instance.Config.UnitValue,
+                    placement.Position, placement.Size, placement.Rotation);
             }
 
             return new InventoryContainerVO(container.ContainerId, container.Grid.Width, container.Grid.Height,

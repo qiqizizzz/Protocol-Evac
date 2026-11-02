@@ -18,6 +18,9 @@ namespace UI.Inventory
         public string DisplayName { get; }
         public int StackCount { get; }
         public Sprite Icon { get; }
+        public InventoryItemRarity Rarity { get; }
+        public int UnitValue { get; }
+        public int TotalValue => UnitValue * StackCount;
         
         //物品左下角所在格子
         public Vector2Int Origin { get; }
@@ -29,6 +32,7 @@ namespace UI.Inventory
         public int CellCount => Size.x * Size.y;
 
         public InventoryItemVO(int instanceId, int itemId, string displayName, int stackCount, Sprite icon,
+            InventoryItemRarity rarity, int unitValue,
             Vector2Int origin, Vector2Int size, InventoryRotation rotation)
         {
             InstanceId = instanceId;
@@ -36,6 +40,8 @@ namespace UI.Inventory
             DisplayName = displayName;
             StackCount = stackCount;
             Icon = icon;
+            Rarity = rarity;
+            UnitValue = unitValue;
             Origin = origin;
             Size = size;
             Rotation = rotation;
