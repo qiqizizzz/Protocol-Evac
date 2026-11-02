@@ -5,6 +5,7 @@
     "com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
     "com.fluid.behavior-tree": "https://github.com/ashblue/fluid-behavior-tree.git?path=/Assets/com.fluid.behavior-tree#v2.3.0",
     "com.ivanmurzak.unity.mcp": "0.83.1",
+    "com.unity.2d.sprite": "1.0.0",
     "com.unity.addressables": "1.22.3",
     "com.unity.collab-proxy": "2.12.4",
     "com.unity.ide.rider": "3.0.36",

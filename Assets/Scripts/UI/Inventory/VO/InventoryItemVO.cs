@@ -22,7 +22,7 @@ namespace UI.Inventory
         public int UnitValue { get; }
         public int TotalValue => UnitValue * StackCount;
         
-        //物品左下角所在格子
+        //物品左上角所在格子
         public Vector2Int Origin { get; }
         
         //占格尺寸

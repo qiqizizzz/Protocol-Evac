@@ -20,4 +20,6 @@ MonoBehaviour:
   UnitWeightValue: 3
   GridWidthValue: 5
   GridHeightValue: 2
+  RarityValue: 1
+  UnitValueValue: 0
   IconValue: {fileID: 0}
