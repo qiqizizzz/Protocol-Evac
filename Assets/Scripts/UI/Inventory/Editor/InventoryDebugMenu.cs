@@ -22,7 +22,7 @@ namespace UI.Inventory.Editor
     public static class InventoryDebugMenu
     {
         private const string LOG = "[InventoryDebugMenu] ";
-        private const string PANEL_VIEW_TYPE_NAME = "UI.Inventory.InventoryPanelView";
+        private const string PANEL_VIEW_TYPE_NAME = "UI.Inventory.View.InventoryPanelView";
         private const string MODEL_TYPE_NAME = "UI.Inventory.IInventoryModel";
         private const string MISSING = "(缺失)";
 
@@ -121,14 +121,14 @@ namespace UI.Inventory.Editor
                 + ", CanRotate = " + ReadValue(vmType, vm, "CanRotate"));
 
             object snapshot = ReadValue(vmType, vm, "Snapshot");
-            if (snapshot != MISSING)
+            if (!MISSING.Equals(snapshot))
             {
                 Type snapType = snapshot.GetType();
                 object items = ReadPlain(snapType, snapshot, "Items");
                 Debug.Log(LOG + "Weight = " + ReadPlain(snapType, snapshot, "TotalWeight")
                     + "/" + ReadPlain(snapType, snapshot, "WeightLimit")
                     + ", Version = " + ReadPlain(snapType, snapshot, "Version")
-                    + ", ItemCount = " + (items == MISSING ? MISSING : ReadPlain(items.GetType(), items, "Count")));
+                    + ", ItemCount = " + (MISSING.Equals(items) ? MISSING : ReadPlain(items.GetType(), items, "Count")));
             }
 
             if (ReadPlain(vmType, vm, "SlotCount") is not int slotCount)
@@ -243,7 +243,7 @@ namespace UI.Inventory.Editor
         private static object ReadValue(Type type, object target, string propertyName)
         {
             object holder = ReadPlain(type, target, propertyName);
-            if (holder == null || holder == MISSING) return MISSING;
+            if (holder == null || MISSING.Equals(holder)) return MISSING;
 
             PropertyInfo value = holder.GetType().GetProperty("Value");
             return value == null ? MISSING : value.GetValue(holder) ?? "null";

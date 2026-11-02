@@ -10,7 +10,10 @@ using System.Collections.Generic;
 using Framework.QTower.MVVM.View;
 using Framework.QTower.MVVM.ViewModel;
 using Framework.QTower.MVVM.ViewModel.Interfaces;
+using Module.Inventory.Core.Config;
+using Module.Inventory.Core.Config.Type;
 using Module.Inventory.Core.Defines;
+using Module.Inventory.Core.Rule.Extensions;
 using Module.Inventory.Core.Rule.Type;
 using UnityEngine;
 
@@ -41,7 +44,6 @@ namespace UI.Inventory
         private readonly List<InventorySlotViewModel>  m_slots = new List<InventorySlotViewModel>();
         private readonly List<ReactiveProperty<bool>> m_slotHighlights = new List<ReactiveProperty<bool>>();
         
-        private int m_snapshotVersion = -1;
         private int m_slotWidth = -1;
         private InventoryMoveResult m_lastMoveResult;
         private RectInt m_lastRegion;
@@ -131,24 +133,6 @@ namespace UI.Inventory
             RefreshFromModel();
         }
         
-        //从模型拉取最新快照
-        private void RefreshFromModel()
-        {
-            InventoryContainerVO vo = m_model.GetContainerVO(m_containerId);
-            m_snapshot.Set(vo);
-            SyncSlots(vo);
-            
-            //选中物品已被外部挪走或销毁则丢弃选中态
-            if(m_selectedInstanceId.Value != NO_SELECTION && !vo.Contains(m_selectedInstanceId.Value))
-            {
-                ResetSelection(InventoryHintKind.Idle);
-                return;
-            }
-            
-            RefreshHighlight();
-            RefreshCanRotate();
-        }
-
         //按容器拓扑增减格子子 VM
         private void SyncSlots(InventoryContainerVO vo)
         {
@@ -187,48 +171,134 @@ namespace UI.Inventory
                 m_slotHighlights.RemoveAt(last);
             }
         }
-
-        private void RefreshHighlight()
+        
+        //从模型拉取最新快照
+        private void RefreshFromModel()
         {
+            InventoryContainerVO vo = m_model.GetContainerVO(m_containerId);
+            SyncSlots(vo);
+            m_snapshot.Set(vo);
             
+            //选中物品已被外部挪走或销毁则丢弃选中态
+            if(m_selectedInstanceId.Value != NO_SELECTION && !vo.Contains(m_selectedInstanceId.Value))
+            {
+                ResetSelection(InventoryHintKind.Idle);
+                return;
+            }
+            
+            RefreshHighlight();
+            RefreshCanRotate();
         }
 
+        //刷新格子高亮状态
+        private void RefreshHighlight()
+        {
+            if(m_hasLastRegion)
+                SetRegionHighlight(m_lastRegion, false);
+
+            m_hasLastRegion = false;
+
+            int selected = m_selectedInstanceId.Value;
+            if (selected == NO_SELECTION || !m_snapshot.Value.TryGetItem(selected, out InventoryItemVO item)) return;
+
+            m_lastRegion = new RectInt(item.Origin, item.Size);
+            m_hasLastRegion = true;
+            SetRegionHighlight(m_lastRegion, true);
+        }
+        
+        //刷新格子旋转状态
+        private void RefreshCanRotate()
+        {
+            int selected = m_selectedInstanceId.Value;
+
+            if (selected == NO_SELECTION || !m_snapshot.Value.TryGetItem(selected, out InventoryItemVO item))
+            {
+                m_canRotate.TrySet(false);
+                return;
+            }
+
+            bool canRotate = ItemRegistry.TryGet(item.ItemId, out InventoryItemConfigSO config) && config.CanRotate;
+            m_canRotate.TrySet(canRotate);
+        }
+
+        //设置区域高亮状态
         private void SetRegionHighlight(RectInt region, bool isHighlighted)
         {
-            
+            int height = m_snapshot.Value.Height;
+
+            for (int y = region.yMin; y < region.yMax; y++)
+            {
+                if (y < 0 || y >= height) continue;
+
+                for (int x = region.xMin; x < region.xMax; x++)
+                {
+                    if (x < 0 || x >= m_slotWidth) continue;
+
+                    int index = y * m_slotWidth + x;
+                    if (index >= m_slotHighlights.Count) continue;
+
+                    m_slotHighlights[index].TrySet(isHighlighted);
+                }
+            }
         }
 
         private void ToggleItemSelection(int instanceId)
         {
-            
+            if (m_selectedInstanceId.Value == instanceId)
+            {
+                ResetSelection(InventoryHintKind.Idle);
+                return;
+            }
+
+            m_selectedInstanceId.TrySet(instanceId);
+            RefreshHighlight();
+            RefreshCanRotate();
+            SetHint(InventoryHintKind.Selected);
         }
 
+        //放置选中物品
         private void PlaceSelectedItem(Vector2Int cell)
         {
+            int instanceId = m_selectedInstanceId.Value;
+            InventoryRotation rotation = InventoryRotation.None;
+
+            if (m_snapshot.Value.TryGetItem(instanceId, out InventoryItemVO item))
+                rotation = item.Rotation;
             
+            m_lastMoveResult = m_model.TryMoveItem(m_containerId, instanceId, cell, rotation);
+            
+            if(!m_lastMoveResult.IsSuccessOrSame())
+            {
+                SetHint(ToHintKind(m_lastMoveResult));
+                return;
+            }
+            
+            ResetSelection(InventoryHintKind.Placed);
         }
 
+        //重置选中态, 清理相关交互表现
         private void ResetSelection(InventoryHintKind hint)
         {
-            
-        }
-
-        private void RefreshCanRotate()
-        {
-            
-        }
-
-        private InventoryHintKind ToHintKind(InventoryMoveResult result)
-        {
-            return InventoryHintKind.Idle;
-        }
-
-        private void SetHint(InventoryHintKind kind)
-        {
-            
+            m_selectedInstanceId.TrySet(NO_SELECTION);
+            RefreshHighlight();
+            RefreshCanRotate();
+            SetHint(hint);
         }
         
+        private InventoryHintKind ToHintKind(InventoryMoveResult result)
+        {
+            if(result.IsSuccessOrSame()) return InventoryHintKind.Selected;
+            if(result.IsDataDesync()) return InventoryHintKind.Desync;
+            
+            return InventoryHintKind.Failed;
+        }
 
+        //设置提示信息
+        private void SetHint(InventoryHintKind kind)
+        {
+            m_hintKind.Set(kind);
+            m_hintPulse.Fire();
+        }
         #endregion
 
     }

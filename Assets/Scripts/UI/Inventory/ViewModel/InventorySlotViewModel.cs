@@ -20,8 +20,6 @@ namespace UI.Inventory
         
         private readonly Action<Vector2Int> m_clickHandler;
         
-        
-
         public InventorySlotViewModel(Vector2Int cell, IReadOnlyReactiveProperty<bool> isSelected,
             Action<Vector2Int> clickHandler)
         {
