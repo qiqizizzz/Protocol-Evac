@@ -26,6 +26,7 @@ namespace UI.Inventory
         public IReadOnlyList<InventoryItemVO> Items { get; }
         
         public int CellCount => Width * Height;
+        public int UsedCellCount { get; }
 
         private readonly Dictionary<int, InventoryItemVO> m_itemIndex; //按实例号查物品载体
 
@@ -40,9 +41,12 @@ namespace UI.Inventory
             WeightLimit = weightLimit;
             Items = items;
             m_itemIndex = new Dictionary<int, InventoryItemVO>(items.Length);
-            
+
             for (int i = 0; i < items.Length; i++)
+            {
                 m_itemIndex[items[i].InstanceId] = items[i];
+                UsedCellCount += items[i].CellCount;
+            }
         }
         
         public bool TryGetItem(int instanceId, out InventoryItemVO item) => m_itemIndex.TryGetValue(instanceId, out item);

@@ -1,20 +1,19 @@
 ﻿/*
  * ┌──────────────────────────────────┐
  * │  描    述: 背包格子视图                      
- * │  类    名: InventorySlotView.cs       
+ * │  类    名: UIInventorySlot.cs       
  * │  创    建: By qiqizizzz
  * └──────────────────────────────────┘
  */
 
 using Framework.QTower.MVVM.View;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace UI.Inventory.View
 {
-    public class InventorySlotView : ViewBase<InventorySlotViewModel>, IPointerClickHandler
+    public sealed class UIInventorySlot : ViewBase<InventorySlotViewModel>, IPointerClickHandler
     {
         private static readonly Color m_normalColor = new Color(1f, 1f, 1f, 0.16f);
         private static readonly Color m_selectedColor = new Color(0.31f, 0.76f, 1f, 0.55f);

@@ -8,20 +8,20 @@
 
 using Framework.QTower.MVVM.Model;
 using UnityEngine;
+using UnityEngine.UI;
 using Utils.log;
 
 namespace Framework.QTower.MVVM.View
 {
-    /// <summary>
-    /// MVVM 运行根节点：只负责窗口服务与模型仓库的生死，Canvas 与事件系统由装配处准备
-    /// </summary>
     public sealed class MvvmRoot : MonoBehaviour
     {
         private const string VIEW_ROOT_NAME = "ViewRoot";
-
+        private const int DEFAULT_SORTING_ORDER = 50;
+        
         private static MvvmRoot m_instance;
-
+        
         private Transform m_viewRoot;
+        private Canvas m_viewCanvas;
 
         public static MvvmRoot Instance => m_instance;
 
@@ -29,12 +29,7 @@ namespace Framework.QTower.MVVM.View
         public ModelRegistry Models { get; private set; }
         public WindowService Windows { get; private set; }
 
-        /// <summary>
-        /// 创建或取得运行根节点，重复调用返回已有实例
-        /// </summary>
-        /// <param name="parent">挂载的父节点，通常是场景里的 Canvas 或其子层</param>
-        /// <param name="rootName">根节点名称</param>
-        public static MvvmRoot Create(Transform parent = null, string rootName = "MvvmRoot")
+        public static MvvmRoot Create(Transform parent = null, string rootName = "MvvmRoot", int sortingOrder = DEFAULT_SORTING_ORDER)
         {
             if (m_instance != null) return m_instance;
 
@@ -44,9 +39,11 @@ namespace Framework.QTower.MVVM.View
 
             rootObject.AddComponent<MvvmRoot>();
 
-            // 构造期间 Awake 已执行, 这里直接取实例
             if (m_instance == null)
+            {
                 QLog.Error($"[{nameof(MvvmRoot)}] 根节点创建失败：{rootName}");
+                return null;
+            }
 
             return m_instance;
         }
@@ -65,6 +62,16 @@ namespace Framework.QTower.MVVM.View
             viewNode.transform.SetParent(transform, false);
             m_viewRoot = viewNode.transform;
 
+            m_viewCanvas = viewNode.AddComponent<Canvas>();
+            m_viewCanvas.overrideSorting = true;
+            m_viewCanvas.sortingOrder = DEFAULT_SORTING_ORDER;
+
+            m_viewCanvas.additionalShaderChannels = AdditionalCanvasShaderChannels.TexCoord1 |
+                                                    AdditionalCanvasShaderChannels.Normal |
+                                                    AdditionalCanvasShaderChannels.Tangent;
+            
+            viewNode.AddComponent<GraphicRaycaster>();
+            
             Models = new ModelRegistry();
             Windows = new WindowService(m_viewRoot);
         }
@@ -76,7 +83,20 @@ namespace Framework.QTower.MVVM.View
 
             if (m_instance != this) return;
 
+            m_viewCanvas = null;
+            m_viewRoot = null;
             m_instance = null;
+        }
+        
+        private void ApplySortingOrder(int sortingOrder)
+        {
+            if (m_viewCanvas == null)
+            {
+                QLog.Error($"[{nameof(MvvmRoot)}] 排序应用失败：{VIEW_ROOT_NAME} 上没有 Canvas");
+                return;
+            }
+
+            m_viewCanvas.sortingOrder = sortingOrder;
         }
     }
 }

@@ -22,7 +22,7 @@ namespace UI.Inventory.Editor
     public static class InventoryDebugMenu
     {
         private const string LOG = "[InventoryDebugMenu] ";
-        private const string PANEL_VIEW_TYPE_NAME = "UI.Inventory.View.InventoryPanelView";
+        private const string CARRIER_VIEW_TYPE_NAME = "UI.Inventory.View.UIInventoryCarrier";
         private const string MODEL_TYPE_NAME = "UI.Inventory.IInventoryModel";
         private const string MISSING = "(缺失)";
 
@@ -30,10 +30,11 @@ namespace UI.Inventory.Editor
         [MenuItem("Tools/背包7a/1.搭建测试场景")]
         public static void SetupTestScene()
         {
-            if (UnityEngine.Object.FindObjectOfType<Canvas>() == null)
+            Canvas canvas = UnityEngine.Object.FindObjectOfType<Canvas>();
+            if (canvas == null)
             {
                 GameObject canvasGo = new GameObject("Canvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
-                Canvas canvas = canvasGo.GetComponent<Canvas>();
+                canvas = canvasGo.GetComponent<Canvas>();
                 canvas.renderMode = RenderMode.ScreenSpaceOverlay;
                 CanvasScaler scaler = canvasGo.GetComponent<CanvasScaler>();
                 scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
@@ -45,31 +46,41 @@ namespace UI.Inventory.Editor
                 new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
             }
 
+            // MvvmHost 必须落在 Canvas 子树内, 否则 MvvmRoot/ViewRoot 没有渲染根, 面板实例化出来也看不见
             if (UnityEngine.Object.FindObjectOfType<MvvmHost>() == null)
-                new GameObject("MvvmHost", typeof(MvvmHost));
+            {
+                //优先挂 MVC 的 UIRoot, 与业务面板共用同一渲染根与缩放, 没有再退回场景任意 Canvas
+                Transform hostParent = canvas.transform;
+                GameObject uiRoot = GameObject.Find("UIRoot");
+                if (uiRoot != null && uiRoot.GetComponent<Canvas>() != null)
+                    hostParent = uiRoot.transform;
 
-            Debug.Log(LOG + "测试场景就绪(Canvas/EventSystem/MvvmHost), 进入 Play 后依次点 2/3/4(先点物品格再点 5,0)/5");
+                GameObject hostObject = new GameObject("MvvmHost", typeof(RectTransform), typeof(MvvmHost));
+                hostObject.transform.SetParent(hostParent, false);
+            }
+
+            Debug.Log(LOG + "测试场景就绪(Canvas 下挂 MvvmHost/EventSystem), 进入 Play 后依次点 2/3/4(先点物品格再点 5,0)/5");
         }
 
-        // 打开背包面板: 反射取 InventoryPanelView, 未敲完时给可读提示
-        [MenuItem("Tools/背包7a/2.打开背包面板")]
+        // 打开背包载体: 反射取 UIInventoryCarrier, 未敲完时给可读提示
+        [MenuItem("Tools/背包7a/2.打开背包载体")]
         public static void OpenPanel()
         {
             MvvmRoot root = EnsureRoot();
             if (root == null) return;
 
-            Type panelType = FindType(PANEL_VIEW_TYPE_NAME);
-            if (panelType == null)
+            Type carrierType = FindType(CARRIER_VIEW_TYPE_NAME);
+            if (carrierType == null)
             {
-                Debug.LogWarning(LOG + "InventoryPanelView 还不存在, 请先敲完文件 6~9");
+                Debug.LogWarning(LOG + "UIInventoryCarrier 还不存在, 请先敲完文件 6~9");
                 return;
             }
 
-            MethodInfo showAsync = root.Windows.GetType().GetMethod("ShowAsync").MakeGenericMethod(panelType);
+            MethodInfo showAsync = root.Windows.GetType().GetMethod("ShowAsync").MakeGenericMethod(carrierType);
             object task = showAsync.Invoke(root.Windows, new object[] { new object[0] });
             AttachNoOp(task);
 
-            Debug.Log(LOG + "已请求打开背包面板(地址 UIInventoryPanel, 需已入 Addressables)");
+            Debug.Log(LOG + "已请求打开背包载体(地址 UIInventoryCarrier, 需已入 Addressables)");
         }
 
         // 探针放三件物品: 5x2 步枪 / 3x3 护甲 / 30 发子弹, 校验 Version 驱动的自动重绘
@@ -80,20 +91,20 @@ namespace UI.Inventory.Editor
             object model = ResolveModel();
             if (model == null)
             {
-                Debug.LogWarning(LOG + "IInventoryModel 尚未注册, 先打开面板或确认文件 9 已敲完");
+                Debug.LogWarning(LOG + "IInventoryModel 尚未注册, 先打开载体或确认文件 9 已敲完");
                 return;
             }
 
             Debug.Log(LOG + "步枪 -> " + InvokeAdd(model, 1000, 1, new Vector2Int(0, 0)));
-            Debug.Log(LOG + "护甲 -> " + InvokeAdd(model, 3000, 1, new Vector2Int(0, 3)));
+            Debug.Log(LOG + "护甲 -> " + InvokeAdd(model, 3000, 1, new Vector2Int(0, 2)));
             Debug.Log(LOG + "子弹x30 -> " + InvokeAdd(model, 2000, 30, new Vector2Int(5, 0)));
         }
 
-        // 链路探针: 直接调用面板 VM 的格子交互入口, 等价于玩家点 (5,0)
+        // 链路探针: 直接调用载体 VM 的格子交互入口, 等价于玩家点 (5,0)
         [MenuItem("Tools/背包7a/4.点击格子(5,0)")]
         public static void ClickSlotProbe()
         {
-            object vm = ResolvePanelViewModel();
+            object vm = ResolveCarrierViewModel();
             if (vm == null) return;
 
             MethodInfo click = vm.GetType().GetMethod("InteractAt");
@@ -107,11 +118,11 @@ namespace UI.Inventory.Editor
             Debug.Log(LOG + "已在格子 (5,0) 发起交互, 观察高亮与提示变化");
         }
 
-        // 读取面板 VM 的提示/选中/高亮/重量统计, 全部走反射, 缺成员报 "(缺失)" 而不抛异常
+        // 读取载体 VM 的提示/选中/高亮/重量统计, 全部走反射, 缺成员报 "(缺失)" 而不抛异常
         [MenuItem("Tools/背包7a/5.打印快照状态")]
         public static void DumpState()
         {
-            object vm = ResolvePanelViewModel();
+            object vm = ResolveCarrierViewModel();
             if (vm == null) return;
 
             Type vmType = vm.GetType();
@@ -152,7 +163,7 @@ namespace UI.Inventory.Editor
         [MenuItem("Tools/背包7a/6.旋转选中物品")]
         public static void RotateSelectedProbe()
         {
-            object vm = ResolvePanelViewModel();
+            object vm = ResolveCarrierViewModel();
             if (vm == null) return;
 
             MethodInfo rotate = vm.GetType().GetMethod("RotateSelectedItem");
@@ -179,28 +190,28 @@ namespace UI.Inventory.Editor
             }
         }
 
-        // 取面板上的 ViewModel, 任一环节缺失都给可读提示
-        private static object ResolvePanelViewModel()
+        // 取载体上的 ViewModel, 任一环节缺失都给可读提示
+        private static object ResolveCarrierViewModel()
         {
             MvvmRoot root = EnsureRoot();
             if (root == null) return null;
 
-            Type panelType = FindType(PANEL_VIEW_TYPE_NAME);
-            if (panelType == null)
+            Type carrierType = FindType(CARRIER_VIEW_TYPE_NAME);
+            if (carrierType == null)
             {
-                Debug.LogWarning(LOG + "InventoryPanelView 还不存在, 请先敲完文件 6~9");
+                Debug.LogWarning(LOG + "UIInventoryCarrier 还不存在, 请先敲完文件 6~9");
                 return null;
             }
 
-            Component[] components = root.ViewRoot.GetComponentsInChildren(panelType, true);
+            Component[] components = root.ViewRoot.GetComponentsInChildren(carrierType, true);
             if (components.Length == 0)
             {
-                Debug.LogWarning(LOG + "面板未打开, 先点 2");
+                Debug.LogWarning(LOG + "载体未打开, 先点 2");
                 return null;
             }
 
-            object viewModel = panelType.GetProperty("ViewModel").GetValue(components[0]);
-            if (viewModel == null) Debug.LogWarning(LOG + "面板 ViewModel 为空");
+            object viewModel = carrierType.GetProperty("ViewModel").GetValue(components[0]);
+            if (viewModel == null) Debug.LogWarning(LOG + "载体 ViewModel 为空");
             return viewModel;
         }
 

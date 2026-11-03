@@ -46,6 +46,9 @@ namespace Module.Inventory.Core.Config
         [SerializeField, Min(0)] private int UnitValueValue;
         
         [Header("UI表现")] 
+        [Tooltip("物品块底色, 按稀有度档位配置")]
+        [SerializeField] private Color BaseColorValue = new Color(0.16f, 0.18f, 0.21f, 0.95f);
+        
         [SerializeField] private Sprite IconValue;
         
         public int ItemId => ItemIdValue;
@@ -57,6 +60,7 @@ namespace Module.Inventory.Core.Config
         public Vector2Int Size => new Vector2Int(GridWidthValue, GridHeightValue);
         public InventoryItemRarity Rarity => RarityValue;
         public int UnitValue => UnitValueValue;
+        public Color BaseColor => BaseColorValue;
         public Sprite Icon => IconValue;
         public bool IsStackable => MaxStackCountValue > 1;
         

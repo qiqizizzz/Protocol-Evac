@@ -14,37 +14,31 @@ using Utils.log;
 
 namespace Framework.QTower.MVVM.View
 {
-    /// <summary>
-    /// MVVM 装配入口：场景里只挂这一个脚本，自动发现带 [MvvmModule] 的业务装配类并驱动注册
-    /// </summary>
     public sealed class MvvmHost : MonoBehaviour
     {
         private const string REGISTER_METHOD_NAME = "Register";
 
-        // ==================== 字段[外部设置] ====================
         [Header("装配设置")]
         [Tooltip("运行根节点名称")]
         [SerializeField] private string RootName = "MvvmRoot";
+        [Tooltip("视图根的 Canvas 排序档位, 与 MVC 面板分段共存")]
+        [SerializeField] private int SortingOrder = 50;
 
         [Tooltip("是否在 Awake 自动完成装配，关闭后需自行调用 Run")]
         [SerializeField] private bool AutoRunOnAwake = true;
 
-        // ==================== 属性 ====================
         public MvvmRoot Root => m_root;
         public bool IsRun => m_isRun;
 
-        // ==================== 字段[私有] ====================
         private MvvmRoot m_root;
         private bool m_isRun;
 
-        // ==================== 生命周期 ====================
         private void Awake()
         {
             if (AutoRunOnAwake)
                 Run();
         }
 
-        // ==================== Public Function ====================
         /// <summary>
         /// 执行装配：创建运行根节点并按顺序调用全部业务模块，重复调用只生效一次
         /// </summary>
@@ -52,7 +46,7 @@ namespace Framework.QTower.MVVM.View
         {
             if (m_isRun) return m_root;
 
-            m_root = MvvmRoot.Create(transform, RootName);
+            m_root = MvvmRoot.Create(transform, RootName, SortingOrder);
             if (m_root == null)
             {
                 QLog.Error($"[{nameof(MvvmHost)}] 装配失败：运行根节点未创建，检查 {name} 的父节点是否处于激活状态");
@@ -71,9 +65,7 @@ namespace Framework.QTower.MVVM.View
             return m_root;
         }
 
-        /// <summary>
         /// 扫描当前域内所有贴了 [MvvmModule] 的静态装配类，按 Order 再按程序集名与类名排序
-        /// </summary>
         public static List<Type> CollectModuleTypes()
         {
             List<Type> moduleTypes = new List<Type>();
