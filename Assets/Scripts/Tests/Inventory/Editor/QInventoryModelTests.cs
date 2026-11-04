@@ -71,6 +71,17 @@ namespace Tests.Inventory
         }
 
         [Test]
+        public void RegisterContainer_RaisesOnChangedOnlyForTheFirstTime()
+        {
+            int newContainerId = m_kit.NewContainerId();
+            m_model.RegisterContainer(newContainerId, new InventoryContainerSpec(2, 2, float.MaxValue));
+            m_model.RegisterContainer(newContainerId, new InventoryContainerSpec(3, 3, float.MaxValue));
+
+            Assert.AreEqual(1, m_changedIds.Count);
+            Assert.AreEqual(newContainerId, m_changedIds[0]);
+        }
+
+        [Test]
         public void UnregisterContainer_RaisesOnChangedAndDropsTheContainer()
         {
             m_model.UnregisterContainer(m_containerId);
@@ -287,11 +298,15 @@ namespace Tests.Inventory
             m_model.RegisterContainer(otherContainerId, new InventoryContainerSpec(2, 2, float.MaxValue));
             int itemId = m_kit.CreateItem(1, 1).ItemId;
 
+            //注册新容器本身就会广播一次, 先把这条记进账本
+            Assert.AreEqual(1, m_changedIds.Count);
+            Assert.AreEqual(otherContainerId, m_changedIds[0]);
+
             Assert.AreEqual(InventoryMoveResult.Success,
                 m_model.TryAddItem(otherContainerId, itemId, 1, Vector2Int.zero));
 
-            Assert.AreEqual(1, m_changedIds.Count);
-            Assert.AreEqual(otherContainerId, m_changedIds[0]);
+            Assert.AreEqual(2, m_changedIds.Count);
+            Assert.AreEqual(otherContainerId, m_changedIds[1]);
         }
         #endregion
 

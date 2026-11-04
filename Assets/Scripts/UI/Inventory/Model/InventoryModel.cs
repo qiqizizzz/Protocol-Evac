@@ -46,6 +46,8 @@ namespace UI.Inventory
             container.OnChanged += HandleContainerChanged;
             m_containers[containerId] = container;
 
+            //新开容器也是拓扑变化, 运行时注册的战利品箱要靠这条广播刷出网格
+            OnChanged?.Invoke(containerId);
         }
 
         public void UnregisterContainer(int containerId)

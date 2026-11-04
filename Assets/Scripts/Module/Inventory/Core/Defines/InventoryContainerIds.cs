@@ -1,10 +1,10 @@
 ﻿/*
- * ┌──────────────────────────────────┐
- * │  描    述: 背包容器身份定义                      
- * │  类    名: InventoryContainerIds.cs       
- * │  创    建: By qiqizizzz
- * └──────────────────────────────────┘
- */
+* ┌──────────────────────────────────┐
+* │  描    述: 背包容器身份定义
+* │  类    名: InventoryContainerIds.cs
+* │  创    建: By qiqizizzz
+* └──────────────────────────────────┘
+*/
 
 namespace Module.Inventory.Core.Defines
 {
@@ -24,5 +24,11 @@ namespace Module.Inventory.Core.Defines
 
         //地上战利品箱
         public const int LOOT = 10;
+
+        //角色身上的容器槽位, 装配处按此顺序注册
+        public static readonly int[] ROLE_SLOT_IDS =
+        {
+            BACKPACK, RIG, POCKETS, SAFEBOX
+        };
     }
 }

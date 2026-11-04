@@ -1,33 +1,81 @@
 ﻿/*
- * ┌──────────────────────────────────┐
- * │  描    述: 背包模块装配处, 注册模型与载体视图工厂
- * │  类    名: InventoryModule.cs
- * │  创    建: By qiqizizzz
- * └──────────────────────────────────┘
- */
+* ┌──────────────────────────────────┐
+* │  描    述: 背包模块装配处, 按穿戴表注册容器并登记载体视图工厂
+* │  类    名: InventoryModule.cs
+* │  创    建: By qiqizizzz
+* └──────────────────────────────────┘
+*/
 
 using Common.Res;
 using Framework.QTower.Common.Defines;
 using Framework.QTower.MVVM.View;
+using Module.Inventory.Core.Config;
 using Module.Inventory.Core.Data;
 using Module.Inventory.Core.Defines;
 using UI.Inventory.View;
+using Utils.log;
 
 namespace UI.Inventory
 {
     [MvvmModule]
     public static class InventoryModule
     {
+        public const string LOADOUT_ADDRESS = "Config/Inventory/Loadout";
 
         //装配背包模块: 注册模型契约与载体视图工厂, 由 MvvmHost 反射调用
         public static void Register(MvvmRoot root)
         {
             IInventoryModel model = root.Models.Register<IInventoryModel>(new InventoryModel());
-            //临时占位规格: Step 2 起改由当前穿戴的背包装备配置提供
-            model.RegisterContainer(InventoryContainerIds.BACKPACK, new InventoryContainerSpec(8, 5, float.MaxValue));
+            ApplyLoadout(model, ResManager.LoadAsset<InventoryLoadoutConfigSO>(LOADOUT_ADDRESS));
 
             root.Windows.RegisterAsync<UIInventoryCarrier>(
                 parent => ResManager.InstantiateAsync(UIDefines.UIInventoryCarrier, parent));
+        }
+
+        /// <summary>
+        /// 按穿戴表把角色身上的每个容器槽位注册进模型
+        /// </summary>
+        /// <param name="model">背包模型</param>
+        /// <param name="loadout">穿戴表, 取不到时整批槽位都不会被注册</param>
+        public static void ApplyLoadout(IInventoryModel model, InventoryLoadoutConfigSO loadout)
+        {
+            if (loadout == null)
+            {
+                QLog.Error($"穿戴表未加载：{LOADOUT_ADDRESS}");
+                return;
+            }
+
+            int[] slotIds = InventoryContainerIds.ROLE_SLOT_IDS;
+            for (int i = 0; i < slotIds.Length; i++)
+            {
+                if (!loadout.TryGetContainer(slotIds[i], out InventoryContainerConfigSO container))
+                {
+                    //脱下装备后空槽位会变成合法状态, 那时再把这条报错降级成跳过
+                    QLog.Error($"槽位未配置容器定义：{slotIds[i]}");
+                    continue;
+                }
+
+                ApplyContainer(model, slotIds[i], container);
+            }
+        }
+
+        /// <summary>
+        /// 用一份容器定义注册单个槽位
+        /// </summary>
+        /// <param name="model">背包模型</param>
+        /// <param name="slotId">角色容器槽位号</param>
+        /// <param name="container">该槽位要撑起的容器定义</param>
+        public static void ApplyContainer(IInventoryModel model, int slotId, InventoryContainerConfigSO container)
+        {
+            if (container == null)
+            {
+                QLog.Error($"容器定义为空, 槽位注册失败：{slotId}");
+                return;
+            }
+
+            //负重上限归角色整体负重系统统一结算, 单容器这一层不设限
+            model.RegisterContainer(slotId,
+                new InventoryContainerSpec(container.Width, container.Height, float.MaxValue));
         }
     }
 }
