@@ -20,6 +20,7 @@ namespace UI.Inventory.View
         private const string GRID_PATH = "Layout_Grid";
         private const string ITEM_PATH = "Layout_Item";
         private const string CAPACITY_PATH = "Layout_Header/Txt_Capacity";
+        private const string NAME_PATH = "Layout_Header/Txt_Name";
         private const string HINT_PATH = "Txt_Hint";
         private const string ROTATE_PATH = "Btn_Rotate";
 
@@ -36,6 +37,7 @@ namespace UI.Inventory.View
         private Transform m_itemRoot;
         private GridLayoutGroup m_gridLayout;
         private TMP_Text m_capacityText;
+        private TMP_Text m_nameText;
         private TMP_Text m_hintText;
         private Button m_rotateButton;
 
@@ -48,20 +50,16 @@ namespace UI.Inventory.View
         #region 生命周期
         protected override InventoryViewModel CreateViewModel() => new InventoryViewModel();
 
-        //取节点引用并校验模板
         protected override void OnAwake()
         {
             m_gridRoot = this.FindChild(GRID_PATH);
             m_itemRoot = this.FindChild(ITEM_PATH);
             m_gridLayout = m_gridRoot.GetComponent<GridLayoutGroup>();
+            m_gridLayout.startAxis = GridLayoutGroup.Axis.Horizontal;
+            m_nameText = this.FindChildComponent<TMP_Text>(NAME_PATH);
             m_capacityText = this.FindChildComponent<TMP_Text>(CAPACITY_PATH);
             m_hintText = this.FindChildComponent<TMP_Text>(HINT_PATH);
             m_rotateButton = this.FindChildComponent<Button>(ROTATE_PATH);
-
-#if UNITY_EDITOR
-            if (SlotPrefab == null) Debug.LogError($"[{nameof(UIInventoryCarrier)}] SlotPrefab 未赋值，请检查预制体");
-            if (ItemPrefab == null) Debug.LogError($"[{nameof(UIInventoryCarrier)}] ItemPrefab 未赋值，请检查预制体");
-#endif
         }
 
         //登记绑定, 视图只做表现不做业务判定
@@ -83,6 +81,7 @@ namespace UI.Inventory.View
             SyncSlotViews(vo);
             SyncItemViews(vo);
 
+            m_nameText.text = vo.DisplayName;
             m_capacityText.text = $"{vo.UsedCellCount}/{vo.CellCount}";
         }
 
@@ -96,10 +95,10 @@ namespace UI.Inventory.View
                 m_gridLayout.constraintCount = Mathf.Max(MIN_COLUMN_COUNT, vo.Width);
             }
 
-            while (m_slotViews.Count < vo.CellCount)
+            while (m_slotViews.Count < vo.SlotCount)
                 AddSlotView(m_slotViews.Count);
 
-            while (m_slotViews.Count > vo.CellCount)
+            while (m_slotViews.Count > vo.SlotCount)
                 RemoveLastSlotView();
         }
 
@@ -162,7 +161,7 @@ namespace UI.Inventory.View
             }
         }
 
-        //实例化物品视图并按子作用域绑定选中态
+        //实例化物品视图并按子作用域绑定所在面板
         private void AddItemView(InventoryItemVO item)
         {
             GameObject itemObject = Instantiate(ItemPrefab, m_itemRoot);
@@ -170,7 +169,7 @@ namespace UI.Inventory.View
 
             itemView.Setup(item);
             m_itemViews.Add(item.InstanceId, itemView);
-            itemView.BindSelection(Scope.CreateChild(itemObject), ViewModel.SelectedInstanceId);
+            itemView.Bind(Scope.CreateChild(itemObject), ViewModel);
         }
 
         //渲染提示语义

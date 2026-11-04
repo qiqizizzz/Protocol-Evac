@@ -1,6 +1,6 @@
 ﻿/*
  * ┌──────────────────────────────────┐
- * │  描    述: 背包载体预制体生成器，一键产出载体与格子、物品三张预制体
+ * │  描    述: 背包预制体生成器，产出载体与格子、物品三张模板，另可单独重出物品模板与战备面板
  * │  类    名: InventoryPrefabBuilder.cs
  * │  创    建: By qiqizizzz
  * └──────────────────────────────────┘
@@ -9,8 +9,11 @@
 using System;
 using System.Reflection;
 using System.Collections.Generic;
+using Framework.QTower.Common.Defines;
 using TMPro;
 using UnityEditor;
+using UnityEditor.AddressableAssets;
+using UnityEditor.AddressableAssets.Settings;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -33,6 +36,10 @@ namespace UI.Inventory.Editor
         private const string SLOT_SCRIPT = "UI.Inventory.View.UIInventorySlot";
         private const string ITEM_SCRIPT = "UI.Inventory.View.UIInventoryItem";
 
+        private const string EQUIPMENT_SCRIPT = "UI.Inventory.View.UIEquipmentPanel";
+        private const string EQUIPMENT_PATH = PREFAB_DIR + "/UIEquipmentPanel.prefab";
+        private const string ADDRESSABLE_GROUP_NAME = "UI";
+
         private const int CELL_SIZE = 80;
         private const int CELL_SPACING = 4;
         private const int DEFAULT_COLUMNS = 8;
@@ -45,9 +52,16 @@ namespace UI.Inventory.Editor
         private const string SELECTED_FRAME_NAME = "Img_Selected";
         private const int SELECTED_BORDER_WIDTH = 3;
 
+        private const int PANEL_PADDING = 16;
+        private const int CONTAINER_SPACING = 16;
+        private const int PANEL_COLUMN_COUNT = 2;
+
         private static readonly Color m_itemDefaultColor = new Color(0.16f, 0.18f, 0.21f, 0.95f);
         private static readonly Color m_selectedBorderColor = new Color(0.31f, 0.76f, 1f, 1f);
         private const string CJK_FONT_PATH = "Assets/Fonts/miSans/MiSans-Regular SDF.asset";
+
+        // 载体节点后缀， 顺序与 InventoryContainerIds.ROLE_SLOT_IDS 一致
+        private static readonly string[] m_carrierNames = { "Backpack", "Rig", "Pockets", "SafeBox" };
 
         private static readonly List<string> m_missingScripts = new List<string>();
 
@@ -81,7 +95,175 @@ namespace UI.Inventory.Editor
             }
         }
 
+        // 只产出战备面板, 三张模板与载体预制体一概不动, 避免覆盖手工调过的 UIInventoryCarrier
+        [MenuItem("Tools/背包7a/7.生成战备面板预制体")]
+        public static void BuildEquipmentPanel()
+        {
+            if (PrefabStageUtility.GetCurrentPrefabStage() != null)
+            {
+                Debug.LogError(LOG + "当前处于 Prefab 编辑模式，请先退出再运行");
+                return;
+            }
+
+            GameObject carrierAsset = AssetDatabase.LoadAssetAtPath<GameObject>(CARRIER_PATH);
+            if (carrierAsset == null)
+            {
+                Debug.LogError(LOG + "找不到载体预制体 " + CARRIER_PATH + "，请先点 0.生成背包载体预制体");
+                return;
+            }
+
+            m_missingScripts.Clear();
+
+            // 临时空场景承载节点, 存完就关, 不碰正在编辑的场景
+            Scene tempScene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
+            try
+            {
+                GameObject root = BuildEquipment(carrierAsset);
+                if (root == null) return;
+
+                SavePrefab(root, EQUIPMENT_PATH);
+                RegisterAddressable(EQUIPMENT_PATH, UIDefines.UIEquipmentPanel);
+            }
+            finally
+            {
+                EditorSceneManager.CloseScene(tempScene, true);
+                AssetDatabase.SaveAssets();
+                AssetDatabase.Refresh();
+
+                if (m_missingScripts.Count > 0)
+                    Debug.LogWarning(LOG + "以下脚本还没敲，本次未挂上，敲完再点一次本菜单即可: " + string.Join(", ", m_missingScripts));
+            }
+        }
+        // 只重出物品模板, 格子与载体预制体一概不动, 避免覆盖手工调过的 UIInventoryCarrier
+        [MenuItem("Tools/背包7a/8.仅生成物品模板")]
+        public static void BuildItemTemplate()
+        {
+            if (PrefabStageUtility.GetCurrentPrefabStage() != null)
+            {
+                Debug.LogError(LOG + "当前处于 Prefab 编辑模式，请先退出再运行");
+                return;
+            }
+
+            m_missingScripts.Clear();
+
+            Scene tempScene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
+            try
+            {
+                SavePrefab(BuildItem(), ITEM_PATH);
+            }
+            finally
+            {
+                EditorSceneManager.CloseScene(tempScene, true);
+                AssetDatabase.SaveAssets();
+                AssetDatabase.Refresh();
+
+                if (m_missingScripts.Count > 0)
+                    Debug.LogWarning(LOG + "脚本还没敲，本次未挂上，敲完再点一次本菜单即可: " + string.Join(", ", m_missingScripts));
+            }
+        }
+
         // ==================== Private Function ====================
+        // 战备面板: 背景 + 横向排开的四个容器载体, 载体本体是既有预制体实例
+        private static GameObject BuildEquipment(GameObject carrierAsset)
+        {
+            GameObject root = NewNode("UIEquipmentPanel", null);
+            SetStretch(root.GetComponent<RectTransform>(), 0f);
+
+            GameObject background = NewNode("Img_Bg", root.transform);
+            SetStretch(background.GetComponent<RectTransform>(), 0f);
+            Image backgroundImage = background.AddComponent<Image>();
+            backgroundImage.color = new Color(0.06f, 0.07f, 0.09f, 0.92f);
+            backgroundImage.raycastTarget = true;
+
+            GameObject layout = NewNode("Layout_Containers", root.transform);
+            SetStretch(layout.GetComponent<RectTransform>(), PANEL_PADDING);
+            // 四张载体同屏在 1920x1080 放不下横排, 这里摆成两列两行
+            GridLayoutGroup layoutGroup = layout.AddComponent<GridLayoutGroup>();
+            layoutGroup.cellSize = carrierAsset.GetComponent<RectTransform>().sizeDelta;
+            layoutGroup.spacing = new Vector2(CONTAINER_SPACING, CONTAINER_SPACING);
+            layoutGroup.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            layoutGroup.constraintCount = PANEL_COLUMN_COUNT;
+            layoutGroup.startCorner = GridLayoutGroup.Corner.UpperLeft;
+            // 载体行优先摆放, 与面板 Containers 数组顺序一致
+            layoutGroup.startAxis = GridLayoutGroup.Axis.Horizontal;
+            layoutGroup.childAlignment = TextAnchor.UpperCenter;
+
+            Type carrierType = FindType(CARRIER_SCRIPT);
+            if (carrierType == null)
+            {
+                Debug.LogError(LOG + "取不到载体脚本类型 " + CARRIER_SCRIPT + "，请先点 0 生成载体预制体");
+                return null;
+            }
+
+            List<Component> carriers = new List<Component>();
+            for (int i = 0; i < m_carrierNames.Length; i++)
+            {
+                GameObject carrier = PrefabUtility.InstantiatePrefab(carrierAsset) as GameObject;
+                carrier.transform.SetParent(layout.transform, false);
+                carrier.name = "Carrier_" + m_carrierNames[i];
+
+                Component carrierComponent = carrier.GetComponent(carrierType);
+                if (carrierComponent == null)
+                {
+                    Debug.LogError(LOG + "载体实例缺少组件 " + CARRIER_SCRIPT + "，请先点 0 重新生成载体");
+                    return null;
+                }
+
+                carriers.Add(carrierComponent);
+            }
+
+            Component panelScript = AttachScript(root, EQUIPMENT_SCRIPT);
+            if (panelScript != null) AssignCarriers(panelScript, carriers);
+            return root;
+        }
+
+        // 把四个载体组件写进面板的 Containers 数组, 字段找不到只提示不抛
+        private static void AssignCarriers(Component panelScript, List<Component> carriers)
+        {
+            SerializedObject serialized = new SerializedObject(panelScript);
+            SerializedProperty property = serialized.FindProperty("Containers");
+            if (property == null)
+            {
+                Debug.LogWarning(LOG + "UIEquipmentPanel 找不到 [SerializeField] UIInventoryCarrier[] Containers，请在 Inspector 手动拖引用");
+                return;
+            }
+
+            property.arraySize = carriers.Count;
+            for (int i = 0; i < carriers.Count; i++)
+                property.GetArrayElementAtIndex(i).objectReferenceValue = carriers[i];
+
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        // 把生成的面板登记进 Addressables 的 UI 组, 地址与 UIDefines 常量保持一致
+        private static void RegisterAddressable(string assetPath, string address)
+        {
+            AddressableAssetSettings settings = AddressableAssetSettingsDefaultObject.Settings;
+            if (settings == null)
+            {
+                Debug.LogError(LOG + "Addressables 尚未初始化，请手动把 " + assetPath + " 拖入 Group \"UI\" 且 Address 填 " + address);
+                return;
+            }
+
+            AddressableAssetGroup group = settings.DefaultGroup;
+            foreach (AddressableAssetGroup candidate in settings.groups)
+            {
+                if (candidate != null && candidate.Name == ADDRESSABLE_GROUP_NAME)
+                    group = candidate;
+            }
+
+            string guid = AssetDatabase.AssetPathToGUID(assetPath);
+            if (string.IsNullOrEmpty(guid))
+            {
+                Debug.LogError(LOG + "预制体还没导入，登记失败: " + assetPath);
+                return;
+            }
+
+            AddressableAssetEntry entry = settings.CreateOrMoveEntry(guid, group, false, true);
+            entry.address = address;
+            settings.SetDirty(AddressableAssetSettings.ModificationEvent.EntryModified, entry, true, true);
+            Debug.Log(LOG + "已登记 Addressables: " + address + " -> " + assetPath + "，Group " + group.Name);
+        }
         // 删除被命名规范淘汰的空壳面板, 已确认没有被场景/预制体/Addressables 引用
         private static void DeleteLegacy()
         {
@@ -116,8 +298,8 @@ namespace UI.Inventory.Editor
             Image background = node.AddComponent<Image>();
             // 模板默认底色, 运行时按稀有度覆盖
             background.color = m_itemDefaultColor;
-            // 射线留给底下的格子, 物品只是载荷, 点击统一由 UIInventorySlot 接收
-            background.raycastTarget = false;
+            // 物品自身接收点击与拖拽, 拖影期间再由 UIInventoryItem 关掉射线
+            background.raycastTarget = true;
 
             GameObject icon = NewNode("Img_Icon", node.transform);
             SetStretch(icon.GetComponent<RectTransform>(), 6f);
@@ -194,7 +376,8 @@ namespace UI.Inventory.Editor
             gridLayout.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
             gridLayout.constraintCount = DEFAULT_COLUMNS;
             gridLayout.startCorner = GridLayoutGroup.Corner.UpperLeft;
-            gridLayout.startAxis = GridLayoutGroup.Axis.Vertical;
+            // 格子行优先填充, 与视图模型 index -> (x, y) 的行优先映射一致
+            gridLayout.startAxis = GridLayoutGroup.Axis.Horizontal;
             gridLayout.childAlignment = TextAnchor.UpperLeft;
 
             // 物品层必须排在网格层之后, 同尺寸同位置才能盖在格子上

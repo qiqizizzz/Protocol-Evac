@@ -39,12 +39,21 @@ namespace Framework.QTower.MVVM.View
                 Run();
         }
 
+        // 装配入口常在 Awake 之后才被 SetParent 到 Canvas, 这里补一次铺满, 让整条渲染链拿到有效尺寸
+        private void Start()
+        {
+            MvvmRoot.FillParentRect(transform as RectTransform);
+        }
+
         /// <summary>
         /// 执行装配：创建运行根节点并按顺序调用全部业务模块，重复调用只生效一次
         /// </summary>
         public MvvmRoot Run()
         {
             if (m_isRun) return m_root;
+
+            // 挂载点铺满父级 Canvas, 整条 MvvmHost -> MvvmRoot -> ViewRoot 的渲染链才有有效尺寸
+            MvvmRoot.FillParentRect(transform as RectTransform);
 
             m_root = MvvmRoot.Create(transform, RootName, SortingOrder);
             if (m_root == null)

@@ -1,6 +1,6 @@
 ﻿/*
 * ┌──────────────────────────────────┐
-* │  描    述: 背包模块装配处, 按总配置登记物品表与容器并注册载体视图工厂
+* │  描    述: 背包模块装配处, 按总配置登记物品表与容器并注册战备面板视图工厂
 * │  类    名: InventoryModule.cs
 * │  创    建: By qiqizizzz
 * └──────────────────────────────────┘
@@ -36,8 +36,8 @@ namespace UI.Inventory
             config.RegisterItems();
             ApplyLoadout(model, config.Loadout);
 
-            root.Windows.RegisterAsync<UIInventoryCarrier>(
-                parent => ResManager.InstantiateAsync(UIDefines.UIInventoryCarrier, parent));
+            root.Windows.RegisterAsync<UIEquipmentPanel>(
+                parent => ResManager.InstantiateAsync(UIDefines.UIEquipmentPanel, parent));
         }
 
         /// <summary>
@@ -83,7 +83,8 @@ namespace UI.Inventory
 
             //负重上限归角色整体负重系统统一结算, 单容器这一层不设限
             model.RegisterContainer(slotId,
-                new InventoryContainerSpec(container.Width, container.Height, float.MaxValue));
+                new InventoryContainerSpec(container.Width, container.Height, float.MaxValue, container.Mask,
+                    container.DisplayName));
         }
     }
 }

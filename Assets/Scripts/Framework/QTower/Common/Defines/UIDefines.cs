@@ -1,4 +1,4 @@
-/*
+﻿/*
  * ┌──────────────────────────────────┐
  * │  描    述: UI Addressables 地址定义
  * │  类    名: UIDefines.cs
@@ -12,7 +12,7 @@ namespace Framework.QTower.Common.Defines
     {
         public const string UICombatHUD = "UICombatHUD";
         public const string UISummary = "UISummary";
-        public const string UIInventoryPanel = "UIInventoryPanel";
         public const string UIInventoryCarrier = "UIInventoryCarrier";
+        public const string UIEquipmentPanel = "UIEquipmentPanel";
     }
 }

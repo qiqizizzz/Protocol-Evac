@@ -396,7 +396,7 @@ namespace Tests.Inventory
             Assert.IsTrue(container.TryGetPlacement(instance, out InventoryItemPlacement found));
             Assert.AreSame(placement, found);
             Assert.IsFalse(container.TryGetPlacement(stranger, out _));
-            Assert.IsTrue(container.ToString().Contains("[Grid 4x4, 1 placements]"));
+            Assert.IsTrue(container.ToString().Contains("[Grid 4x4, 16 cells, 1 placements]"));
         }
 
         #endregion

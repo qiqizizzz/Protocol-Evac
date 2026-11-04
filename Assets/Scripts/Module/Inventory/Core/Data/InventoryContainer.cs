@@ -19,6 +19,9 @@ namespace Module.Inventory.Core.Data
     public class InventoryContainer
     {
         public int ContainerId { get; }
+
+        //容器显示名, 装配处从容器定义带进来
+        public string DisplayName { get; }
         public InventoryGrid Grid { get; }
         public float WeightLimit { get; }
         
@@ -51,8 +54,9 @@ namespace Module.Inventory.Core.Data
         public InventoryContainer(int containerId, InventoryContainerSpec spec, IInventoryRules rules)
         {
             ContainerId = containerId;
-            Grid = new InventoryGrid(spec.Width, spec.Height);
+            Grid = new InventoryGrid(spec.Width, spec.Height, spec.Mask);
             WeightLimit = spec.WeightLimit;
+            DisplayName = spec.DisplayName;
             m_rules = rules;
         }
 
@@ -86,6 +90,32 @@ namespace Module.Inventory.Core.Data
             return InventoryMoveResult.Success;
         }
 
+        //与目标容器指定位置上的物品交换, occupant 被顶回 moving 原位且保持自身朝向
+        public InventoryMoveResult TrySwapTo(InventoryContainer target, InventoryItemPlacement moving,
+            InventoryItemPlacement occupant, Vector2Int position, InventoryRotation rotation)
+        {
+            InventoryMoveResult result = m_rules.CanSwap(this, target, moving, occupant, position, rotation);
+            if (result != InventoryMoveResult.Success) return result;
+
+            Vector2Int originPosition = moving.Position;
+            InventoryRotation originRotation = moving.Rotation;
+
+            //先把两件物品双双摘出网格再各就各位, 否则新旧占位会在网格里互相压住
+            Grid.Remove(moving);
+            target.Grid.Remove(occupant);
+
+            moving.SetPosition(position);
+            moving.SetRotation(rotation);
+            occupant.SetPosition(originPosition);
+
+            Grid.Add(occupant);
+            target.Grid.Add(moving);
+
+            Commit();
+            if (!ReferenceEquals(this, target)) target.Commit();
+
+            return InventoryMoveResult.Success;
+        }
         //旋转物品
         public InventoryMoveResult TryRotate(InventoryItemPlacement placement)
         {

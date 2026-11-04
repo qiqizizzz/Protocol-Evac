@@ -25,6 +25,7 @@ namespace UI.Inventory.Editor
         private const string CARRIER_VIEW_TYPE_NAME = "UI.Inventory.View.UIInventoryCarrier";
         private const string MODEL_TYPE_NAME = "UI.Inventory.IInventoryModel";
         private const string MISSING = "(缺失)";
+        private const string PANEL_VIEW_TYPE_NAME = "UI.Inventory.View.UIEquipmentPanel";
 
         // 一键搭好 7a 验收场景: Canvas + EventSystem + MvvmHost
         [MenuItem("Tools/背包7a/1.搭建测试场景")]
@@ -62,41 +63,48 @@ namespace UI.Inventory.Editor
             Debug.Log(LOG + "测试场景就绪(Canvas 下挂 MvvmHost/EventSystem), 进入 Play 后依次点 2/3/4(先点物品格再点 5,0)/5");
         }
 
-        // 打开背包载体: 反射取 UIInventoryCarrier, 未敲完时给可读提示
-        [MenuItem("Tools/背包7a/2.打开背包载体")]
+        // 打开战备面板: 反射取 UIEquipmentPanel, 载体在它内部一并出来
+        [MenuItem("Tools/背包7a/2.打开战备面板")]
         public static void OpenPanel()
         {
             MvvmRoot root = EnsureRoot();
             if (root == null) return;
 
-            Type carrierType = FindType(CARRIER_VIEW_TYPE_NAME);
-            if (carrierType == null)
+            Type panelType = FindType(PANEL_VIEW_TYPE_NAME);
+            if (panelType == null)
             {
-                Debug.LogWarning(LOG + "UIInventoryCarrier 还不存在, 请先敲完文件 6~9");
+                Debug.LogWarning(LOG + "UIEquipmentPanel 还不存在, 请先敲完面板视图与视图模型");
                 return;
             }
 
-            MethodInfo showAsync = root.Windows.GetType().GetMethod("ShowAsync").MakeGenericMethod(carrierType);
+            MethodInfo showAsync = root.Windows.GetType().GetMethod("ShowAsync").MakeGenericMethod(panelType);
             object task = showAsync.Invoke(root.Windows, new object[] { new object[0] });
             AttachNoOp(task);
 
-            Debug.Log(LOG + "已请求打开背包载体(地址 UIInventoryCarrier, 需已入 Addressables)");
+            Debug.Log(LOG + "已请求打开战备面板(地址 UIEquipmentPanel, 需先点 7 生成并登记)");
         }
 
-        // 探针放三件物品: 5x2 步枪 / 3x3 护甲 / 30 发子弹, 校验 Version 驱动的自动重绘
+        // 四个容器各塞几件物品, 校验多容器同屏与 Version 驱动的自动重绘
         [MenuItem("Tools/背包7a/3.放入测试物品")]
         public static void AddTestItems()
         {
             object model = ResolveModel();
             if (model == null)
             {
-                Debug.LogWarning(LOG + "IInventoryModel 尚未注册, 先打开载体或确认文件 9 已敲完");
+                Debug.LogWarning(LOG + "IInventoryModel 尚未注册, 先点 2 打开战备面板");
                 return;
             }
 
-            Debug.Log(LOG + "步枪 -> " + InvokeAdd(model, 1000, 1, new Vector2Int(0, 0)));
-            Debug.Log(LOG + "护甲 -> " + InvokeAdd(model, 3000, 1, new Vector2Int(0, 2)));
-            Debug.Log(LOG + "子弹x30 -> " + InvokeAdd(model, 2000, 30, new Vector2Int(5, 0)));
+            Debug.Log(LOG + "背包/步枪 -> " + InvokeAdd(model, InventoryContainerIds.BACKPACK, 1000, 1, new Vector2Int(0, 0)));
+            Debug.Log(LOG + "背包/护甲 -> " + InvokeAdd(model, InventoryContainerIds.BACKPACK, 3000, 1, new Vector2Int(5, 0)));
+            Debug.Log(LOG + "背包/子弹x30 -> " + InvokeAdd(model, InventoryContainerIds.BACKPACK, 2000, 30, new Vector2Int(0, 3)));
+
+            Debug.Log(LOG + "胸挂/血包x2 -> " + InvokeAdd(model, InventoryContainerIds.RIG, 4000, 2, new Vector2Int(0, 0)));
+            Debug.Log(LOG + "胸挂/子弹x20 -> " + InvokeAdd(model, InventoryContainerIds.RIG, 2000, 20, new Vector2Int(1, 0)));
+
+            Debug.Log(LOG + "口袋/子弹x10 -> " + InvokeAdd(model, InventoryContainerIds.POCKETS, 2000, 10, new Vector2Int(0, 0)));
+
+            Debug.Log(LOG + "安全箱/电池 -> " + InvokeAdd(model, InventoryContainerIds.SAFEBOX, 5000, 1, new Vector2Int(0, 0)));
         }
 
         // 链路探针: 直接调用载体 VM 的格子交互入口, 等价于玩家点 (5,0)
@@ -148,14 +156,15 @@ namespace UI.Inventory.Editor
             }
 
             MethodInfo getSlot = vmType.GetMethod("GetSlot");
-            int highlightedCount = 0;
+            int markedCount = 0;
             for (int i = 0; getSlot != null && i < slotCount; i++)
             {
                 object slotVm = getSlot.Invoke(vm, new object[] { i });
-                if (ReadValue(slotVm.GetType(), slotVm, "IsSelected") is true) highlightedCount++;
+                if (ReadValue(slotVm.GetType(), slotVm, "Mark") is not InventoryCellMark mark) continue;
+                if (mark != InventoryCellMark.None) markedCount++;
             }
 
-            Debug.Log(LOG + "格子子VM数量 = " + slotCount + ", 高亮格子数 = " + highlightedCount);
+            Debug.Log(LOG + "格子子VM数量 = " + slotCount + ", 着色格子数 = " + markedCount);
         }
 
         // 链路探针: 旋转当前选中物品, 等价于玩家点旋转按钮
@@ -185,7 +194,7 @@ namespace UI.Inventory.Editor
             Type carrierType = FindType(CARRIER_VIEW_TYPE_NAME);
             if (carrierType == null)
             {
-                Debug.LogWarning(LOG + "UIInventoryCarrier 还不存在, 请先敲完文件 6~9");
+                Debug.LogWarning(LOG + "取不到 " + CARRIER_VIEW_TYPE_NAME + ", 请先点 7 生成战备面板");
                 return null;
             }
 
@@ -231,10 +240,10 @@ namespace UI.Inventory.Editor
         }
 
         // 反射调用 TryAddItem(containerId, itemId, amount, cell)
-        private static object InvokeAdd(object model, int itemId, int amount, Vector2Int cell)
+        private static object InvokeAdd(object model, int containerId, int itemId, int amount, Vector2Int cell)
         {
             MethodInfo add = model.GetType().GetMethod("TryAddItem");
-            return add.Invoke(model, new object[] { InventoryContainerIds.BACKPACK, itemId, amount, cell });
+            return add.Invoke(model, new object[] { containerId, itemId, amount, cell });
         }
         // 读取 ReactiveProperty 形态属性的 Value, 反射取不到时返回 "(缺失)"
         private static object ReadValue(Type type, object target, string propertyName)

@@ -88,7 +88,8 @@ namespace UI.Inventory
             }
 
             return new InventoryContainerVO(container.ContainerId, container.Grid.Width, container.Grid.Height,
-                container.Version, container.TotalWeight, container.WeightLimit, items);
+                container.Grid.Mask, container.Version, container.TotalWeight, container.WeightLimit, items,
+                container.DisplayName);
         }
 
         public InventoryMoveResult TryAddItem(int containerId, int itemId, int amount, Vector2Int cell)
@@ -127,6 +128,67 @@ namespace UI.Inventory
                 return InventoryMoveResult.SourceNotFound;
 
             return container.TryMoveTo(container, placement, cell, rotation);
+        }
+
+        public InventoryMoveResult TryTransferItem(int sourceContainerId, int targetContainerId, int instanceId, Vector2Int cell)
+        {
+            if (!TryGetContainer(sourceContainerId, out InventoryContainer source))
+            {
+                QLog.Error($"容器未注册：{sourceContainerId}");
+                return InventoryMoveResult.None;
+            }
+
+            if (!TryGetContainer(targetContainerId, out InventoryContainer target))
+            {
+                QLog.Error($"容器未注册：{targetContainerId}");
+                return InventoryMoveResult.None;
+            }
+
+            if (!TryGetPlacement(source, instanceId, out InventoryItemPlacement placement))
+                return InventoryMoveResult.SourceNotFound;
+
+            //转移不改朝向, 拖过去是什么姿态就保持什么姿态
+            InventoryRotation rotation = placement.Rotation;
+            InventoryMoveResult verdict = ResolveTransfer(source, target, placement, cell, rotation,
+                out InventoryItemPlacement occupant);
+
+            if (verdict != InventoryMoveResult.Success) return verdict;
+
+            if (occupant == null) return source.TryMoveTo(target, placement, cell, rotation);
+
+            return source.TrySwapTo(target, placement, occupant, cell, rotation);
+        }
+
+        public InventoryMoveResult PeekTransferItem(int sourceContainerId, int targetContainerId, int instanceId,
+            Vector2Int cell, out bool willSwap)
+        {
+            willSwap = false;
+
+            //悬停每帧都会问, 配错容器由 Try 路径报错, 预判这里静默免得刷屏
+            if (!TryGetContainer(sourceContainerId, out InventoryContainer source)) return InventoryMoveResult.None;
+            if (!TryGetContainer(targetContainerId, out InventoryContainer target)) return InventoryMoveResult.None;
+            if (!TryGetPlacement(source, instanceId, out InventoryItemPlacement placement)) return InventoryMoveResult.None;
+
+            InventoryMoveResult verdict = ResolveTransfer(source, target, placement, cell, placement.Rotation,
+                out InventoryItemPlacement occupant);
+
+            //被第三方物品压住才会改判交换, 落回自己身上不算
+            willSwap = occupant != null && verdict == InventoryMoveResult.Success;
+            return verdict;
+        }
+
+        //转移落点判定: 直落被占就改判与原物品交换, 试移与预判共用这一条规则
+        private static InventoryMoveResult ResolveTransfer(InventoryContainer source, InventoryContainer target,
+            InventoryItemPlacement moving, Vector2Int cell, InventoryRotation rotation, out InventoryItemPlacement occupant)
+        {
+            occupant = null;
+
+            InventoryMoveResult verdict = source.Rules.CanMove(source, target, moving, cell, rotation);
+            if (verdict != InventoryMoveResult.Occupied) return verdict;
+
+            if (!target.Grid.TryGetPlacementAt(cell, out occupant)) return InventoryMoveResult.Occupied;
+
+            return source.Rules.CanSwap(source, target, moving, occupant, cell, rotation);
         }
 
         public InventoryMoveResult TryRotateItem(int containerId, int instanceId)

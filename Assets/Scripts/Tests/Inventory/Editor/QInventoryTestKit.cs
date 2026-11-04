@@ -78,14 +78,23 @@ namespace Tests.Inventory
             return CreateItem(occupyWidth, occupyHeight, false, 1, 0f, unitValue, rarity, container);
         }
 
-        // 造一份运行时容器定义
-        public InventoryContainerConfigSO CreateContainer(int width, int height, string displayName = "TEST_CONTAINER")
+        /// <summary>
+        /// 造一份运行时容器定义
+        /// </summary>
+        /// <param name="width">网格列数</param>
+        /// <param name="height">网格行数</param>
+        /// <param name="displayName">容器显示名</param>
+        /// <param name="rows">异形形状行, # 实心 . 空洞, 传 null 代表满格矩形</param>
+        public InventoryContainerConfigSO CreateContainer(int width, int height, string displayName = "TEST_CONTAINER",
+            string[] rows = null)
         {
             InventoryContainerConfigSO container = CreateConfig<InventoryContainerConfigSO>();
 
             SetField(container, "DisplayNameValue", displayName);
             SetField(container, "WidthValue", width);
             SetField(container, "HeightValue", height);
+
+            if (rows != null) SetField(container, "RowsValue", rows);
             return container;
         }
 

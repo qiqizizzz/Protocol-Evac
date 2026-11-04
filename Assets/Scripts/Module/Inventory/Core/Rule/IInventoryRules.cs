@@ -23,6 +23,10 @@ namespace Module.Inventory.Core.Rule
         InventoryMoveResult CanMove(InventoryContainer source, InventoryContainer target,
             InventoryItemPlacement placement, Vector2Int position, InventoryRotation rotation);
         
+        //交换两件物品, moving 落到 position, occupant 顶回 moving 原位
+        InventoryMoveResult CanSwap(InventoryContainer source, InventoryContainer target,
+            InventoryItemPlacement moving, InventoryItemPlacement occupant, Vector2Int position,
+            InventoryRotation rotation);
         //旋转物品
         InventoryMoveResult CanRotate(InventoryContainer container, InventoryItemPlacement placement,
             out InventoryRotation nextRotation);

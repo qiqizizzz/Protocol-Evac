@@ -71,10 +71,10 @@ namespace Tests.Inventory
         }
 
         [Test]
-        public void Bind_LeavesEveryHighlightOffUntilSomethingIsSelected()
+        public void Bind_LeavesEveryCellUnmarkedUntilSomethingIsSelected()
         {
             for (int index = 0; index < m_viewModel.SlotCount; index++)
-                Assert.IsFalse(m_viewModel.GetSlot(index).IsSelected.Value);
+                Assert.AreEqual(InventoryCellMark.None, m_viewModel.GetSlot(index).Mark.Value);
 
             Assert.AreEqual(NO_SELECTION, m_viewModel.SelectedInstanceId.Value);
             Assert.AreEqual(InventoryHintKind.Idle, m_viewModel.HintKind.Value);
@@ -250,11 +250,11 @@ namespace Tests.Inventory
             Assert.AreEqual(InventoryHintKind.Placed, m_viewModel.HintKind.Value);
 
             for (int index = 0; index < m_viewModel.SlotCount; index++)
-                Assert.IsFalse(m_viewModel.GetSlot(index).IsSelected.Value);
+                Assert.AreEqual(InventoryCellMark.None, m_viewModel.GetSlot(index).Mark.Value);
         }
 
         [Test]
-        public void ClearSelection_TurnsOffHighlightAndRotateAvailability()
+        public void ClearSelection_ClearsCellMarksAndRotateAvailability()
         {
             AddItem(2, 2, new Vector2Int(1, 1));
             m_viewModel.InteractAt(new Vector2Int(2, 2));
@@ -267,7 +267,7 @@ namespace Tests.Inventory
             Assert.IsFalse(m_viewModel.CanRotate.Value);
 
             for (int index = 0; index < m_viewModel.SlotCount; index++)
-                Assert.IsFalse(m_viewModel.GetSlot(index).IsSelected.Value);
+                Assert.AreEqual(InventoryCellMark.None, m_viewModel.GetSlot(index).Mark.Value);
         }
         #endregion
 
@@ -328,8 +328,8 @@ namespace Tests.Inventory
             Assert.IsTrue(m_viewModel.IsDisposed);
             Assert.AreEqual(0, m_viewModel.SlotCount);
 
-            // 子格子的响应式高亮由父 VM 的 Bundle 托管, 父释放后一并失效
-            Assert.IsTrue(slot.IsSelected.IsDisposed);
+            // 子格子的响应式着色由父 VM 的 Bundle 托管, 父释放后一并失效
+            Assert.IsTrue(slot.Mark.IsDisposed);
         }
         #endregion
 
@@ -356,10 +356,11 @@ namespace Tests.Inventory
             return item;
         }
 
-        // 断言某个格子的高亮状态
+        // 断言某个格子是否处于选中着色
         private void AssertSelected(int x, int y, bool expected)
         {
-            Assert.AreEqual(expected, m_viewModel.GetSlot(y * 4 + x).IsSelected.Value, "格子 " + x + "," + y + " 高亮不符");
+            bool actual = m_viewModel.GetSlot(y * 4 + x).Mark.Value == InventoryCellMark.Selected;
+            Assert.AreEqual(expected, actual, "格子 " + x + "," + y + " 选中着色不符");
         }
     }
 }
