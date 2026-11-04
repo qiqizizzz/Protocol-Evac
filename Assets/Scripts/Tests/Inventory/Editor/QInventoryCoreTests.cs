@@ -439,6 +439,31 @@ namespace Tests.Inventory
         }
 
         #endregion
+
+        #region 容器规格
+        // 规格是纯数据载荷: 宽高与限重原样保存, 格子总数由宽高相乘派生
+        [Test]
+        public void ContainerSpec_KeepsGeometryAndDerivesCellCount()
+        {
+            InventoryContainerSpec spec = new InventoryContainerSpec(8, 5, 12f);
+
+            Assert.AreEqual(8, spec.Width);
+            Assert.AreEqual(5, spec.Height);
+            Assert.AreEqual(12f, spec.WeightLimit, 0.001f);
+            Assert.AreEqual(40, spec.CellCount);
+        }
+
+        // 容器完全由规格构造: 网格尺寸与限重都取自 spec, 散参入口已彻底移除
+        [Test]
+        public void Container_BuiltFromSpecAdoptsGridSizeAndWeightLimit()
+        {
+            InventoryContainer container = NewContainer(3, 7, 9f);
+
+            Assert.AreEqual(3, container.Grid.Width);
+            Assert.AreEqual(7, container.Grid.Height);
+            Assert.AreEqual(9f, container.WeightLimit, 0.001f);
+        }
+        #endregion
         // 取容器里的第一个占位, 用例基本只放一件物品
         private static InventoryItemPlacement FirstPlacement(InventoryContainer container)
         {
@@ -449,7 +474,7 @@ namespace Tests.Inventory
 
         // 造一个独立编号的容器, 避免用例之间串数据
         private InventoryContainer NewContainer(int width, int height, float weightLimit)
-            => new InventoryContainer(m_kit.NewContainerId(), width, height, weightLimit);
+            => new InventoryContainer(m_kit.NewContainerId(), new InventoryContainerSpec(width, height, weightLimit));
 
         // 直接往网格里塞一个占位, 用于剥离规则单测几何逻辑
         private InventoryItemPlacement AddToGrid(InventoryGrid grid, InventoryItemConfigSO config, Vector2Int cell,

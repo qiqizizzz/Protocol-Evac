@@ -9,6 +9,7 @@
 using System;
 using Framework.QTower.MVVM.Model.Interfaces;
 using Module.Inventory.Core.Config.Type;
+using Module.Inventory.Core.Data;
 using Module.Inventory.Core.Rule.Type;
 using UnityEngine;
 
@@ -19,7 +20,7 @@ namespace UI.Inventory
         event Action<int> OnChanged;
         
         //注册容器
-        void RegisterContainer(int containerId, int width, int height, float weightLimit);
+        void RegisterContainer(int containerId, InventoryContainerSpec spec);
         
         //注销容器
         void UnregisterContainer(int containerId);

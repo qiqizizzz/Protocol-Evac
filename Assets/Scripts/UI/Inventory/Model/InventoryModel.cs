@@ -38,11 +38,11 @@ namespace UI.Inventory
         #endregion
 
         #region 主要方法
-        public void RegisterContainer(int containerId, int width, int height, float weightLimit)
+        public void RegisterContainer(int containerId, InventoryContainerSpec spec)
         {
             if(m_containers.ContainsKey(containerId)) return;
             
-            InventoryContainer container = new InventoryContainer(containerId, width, height, weightLimit);
+            InventoryContainer container = new InventoryContainer(containerId, spec);
             container.OnChanged += HandleContainerChanged;
             m_containers[containerId] = container;
 

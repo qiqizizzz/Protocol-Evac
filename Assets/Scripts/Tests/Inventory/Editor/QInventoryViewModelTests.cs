@@ -9,6 +9,7 @@
 using System;
 using System.Text.RegularExpressions;
 using Module.Inventory.Core.Config.Type;
+using Module.Inventory.Core.Data;
 using Module.Inventory.Core.Rule.Type;
 using NUnit.Framework;
 using UI.Inventory;
@@ -38,7 +39,7 @@ namespace Tests.Inventory
             m_model.OnRegister();
 
             m_containerId = m_kit.NewContainerId();
-            m_model.RegisterContainer(m_containerId, 4, 4, float.MaxValue);
+            m_model.RegisterContainer(m_containerId, new InventoryContainerSpec(4, 4, float.MaxValue));
 
             m_hintPulseCount = 0;
             m_viewModel = new InventoryViewModel(m_model, m_containerId);
@@ -289,7 +290,7 @@ namespace Tests.Inventory
         public void ModelChange_OnAnotherContainer_DoesNotTouchThisPanel()
         {
             int otherContainerId = m_kit.NewContainerId();
-            m_model.RegisterContainer(otherContainerId, 2, 2, float.MaxValue);
+            m_model.RegisterContainer(otherContainerId, new InventoryContainerSpec(2, 2, float.MaxValue));
             int itemId = m_kit.CreateItem(1, 1).ItemId;
             Assert.AreEqual(InventoryMoveResult.Success, m_model.TryAddItem(otherContainerId, itemId, 1, Vector2Int.zero));
 

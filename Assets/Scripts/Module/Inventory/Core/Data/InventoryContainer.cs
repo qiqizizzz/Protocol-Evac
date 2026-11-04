@@ -45,14 +45,14 @@ namespace Module.Inventory.Core.Data
             }
         }
 
-        public InventoryContainer(int containerId, int width, int height, float weightLimit)
-            : this(containerId, width, height, weightLimit, InventoryRules.Instance) { }
+        public InventoryContainer(int containerId, InventoryContainerSpec spec)
+            : this(containerId, spec, InventoryRules.Instance) { }
         
-        public InventoryContainer(int containerId, int width, int height, float weightLimit, IInventoryRules rules)
+        public InventoryContainer(int containerId, InventoryContainerSpec spec, IInventoryRules rules)
         {
             ContainerId = containerId;
-            Grid = new InventoryGrid(width, height);
-            WeightLimit = weightLimit;
+            Grid = new InventoryGrid(spec.Width, spec.Height);
+            WeightLimit = spec.WeightLimit;
             m_rules = rules;
         }
 

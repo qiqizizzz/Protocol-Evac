@@ -9,6 +9,7 @@
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using Module.Inventory.Core.Config.Type;
+using Module.Inventory.Core.Data;
 using Module.Inventory.Core.Rule.Type;
 using NUnit.Framework;
 using UI.Inventory;
@@ -38,7 +39,7 @@ namespace Tests.Inventory
             m_model.OnRegister();
 
             m_containerId = m_kit.NewContainerId();
-            m_model.RegisterContainer(m_containerId, 4, 4, float.MaxValue);
+            m_model.RegisterContainer(m_containerId, new InventoryContainerSpec(4, 4, float.MaxValue));
             // NUnit 复用同一个夹具实例, 广播记录必须在每个用例开头清零
             m_changedIds.Clear();
             m_model.OnChanged += HandleChanged;
@@ -59,7 +60,7 @@ namespace Tests.Inventory
         [Test]
         public void RegisterContainer_DuplicateRequest_KeepsTheFirstTopology()
         {
-            m_model.RegisterContainer(m_containerId, 8, 8, 1f);
+            m_model.RegisterContainer(m_containerId, new InventoryContainerSpec(8, 8, 1f));
 
             InventoryContainerVO vo = m_model.GetContainerVO(m_containerId);
             Assert.AreEqual(4, vo.Width);
@@ -85,7 +86,7 @@ namespace Tests.Inventory
         public void OnUnregister_ClosesEveryContainer()
         {
             int otherContainerId = m_kit.NewContainerId();
-            m_model.RegisterContainer(otherContainerId, 2, 2, float.MaxValue);
+            m_model.RegisterContainer(otherContainerId, new InventoryContainerSpec(2, 2, float.MaxValue));
 
             m_model.OnChanged -= HandleChanged;
             m_model.OnUnregister();
@@ -162,7 +163,7 @@ namespace Tests.Inventory
         public void TryAddItem_OverWeightLimit_ReturnsWeightExceeded()
         {
             int heavyContainerId = m_kit.NewContainerId();
-            m_model.RegisterContainer(heavyContainerId, 4, 4, 3f);
+            m_model.RegisterContainer(heavyContainerId, new InventoryContainerSpec(4, 4, 3f));
             int itemId = m_kit.CreateItem(1, 1, unitWeight: 5f).ItemId;
 
             Assert.AreEqual(InventoryMoveResult.WeightExceeded,
@@ -283,7 +284,7 @@ namespace Tests.Inventory
         public void OnChanged_CarriesOnlyTheTouchedContainer()
         {
             int otherContainerId = m_kit.NewContainerId();
-            m_model.RegisterContainer(otherContainerId, 2, 2, float.MaxValue);
+            m_model.RegisterContainer(otherContainerId, new InventoryContainerSpec(2, 2, float.MaxValue));
             int itemId = m_kit.CreateItem(1, 1).ItemId;
 
             Assert.AreEqual(InventoryMoveResult.Success,
