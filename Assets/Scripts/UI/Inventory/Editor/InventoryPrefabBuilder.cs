@@ -114,7 +114,7 @@ namespace UI.Inventory.Editor
                 new Vector2(0f, 1f), new Vector2(CELL_SIZE, CELL_SIZE), Vector2.zero);
 
             Image background = node.AddComponent<Image>();
-            // 模板默认底色, 运行时由 InventoryItemVO.BaseColor 覆盖
+            // 模板默认底色, 运行时按稀有度覆盖
             background.color = m_itemDefaultColor;
             // 射线留给底下的格子, 物品只是载荷, 点击统一由 UIInventorySlot 接收
             background.raycastTarget = false;

@@ -35,7 +35,7 @@ namespace Tests.Inventory
         public void SetUp()
         {
             m_kit = new QInventoryTestKit();
-            m_model = new InventoryModel();
+            m_model = new InventoryModel(m_kit.CreateInventoryConfig());
             m_model.OnRegister();
 
             m_containerId = m_kit.NewContainerId();

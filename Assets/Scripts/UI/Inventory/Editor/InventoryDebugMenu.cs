@@ -87,7 +87,6 @@ namespace UI.Inventory.Editor
         [MenuItem("Tools/背包7a/3.放入测试物品")]
         public static void AddTestItems()
         {
-            RegisterAllConfigs();
             object model = ResolveModel();
             if (model == null)
             {
@@ -175,19 +174,6 @@ namespace UI.Inventory.Editor
 
             rotate.Invoke(vm, null);
             Debug.Log(LOG + "已请求旋转选中物品, 观察提示语义与结果码");
-        }
-
-        // 把全部物品配置登记进 ItemRegistry(正式加载路径等配置表系统, 这里只是编辑器捷径)
-        private static void RegisterAllConfigs()
-        {
-            string[] guids = AssetDatabase.FindAssets("t:InventoryItemConfigSO", new[] { "Assets/Config/Inventory/Item" });
-            for (int i = 0; i < guids.Length; i++)
-            {
-                InventoryItemConfigSO config = AssetDatabase.LoadAssetAtPath<InventoryItemConfigSO>(AssetDatabase.GUIDToAssetPath(guids[i]));
-                if (config == null) continue;
-
-                ItemRegistry.Register(config);
-            }
         }
 
         // 取载体上的 ViewModel, 任一环节缺失都给可读提示

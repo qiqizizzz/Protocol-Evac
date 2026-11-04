@@ -30,7 +30,7 @@ namespace Tests.Inventory
         public void SetUp()
         {
             m_kit = new QInventoryTestKit();
-            m_model = new InventoryModel();
+            m_model = new InventoryModel(m_kit.CreateInventoryConfig());
             m_model.OnRegister();
         }
 
@@ -222,7 +222,7 @@ namespace Tests.Inventory
         [Test]
         public void ApplyLoadout_NullLoadoutLogsErrorAndRegistersNothing()
         {
-            LogAssert.Expect(LogType.Error, new Regex("穿戴表未加载"));
+            LogAssert.Expect(LogType.Error, new Regex("穿戴表为空"));
             InventoryModule.ApplyLoadout(m_model, null);
 
             LogAssert.Expect(LogType.Error, new Regex("容器未注册"));

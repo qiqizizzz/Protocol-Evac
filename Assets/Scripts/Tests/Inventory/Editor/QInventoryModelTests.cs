@@ -8,6 +8,7 @@
 
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using Module.Inventory.Core.Config;
 using Module.Inventory.Core.Config.Type;
 using Module.Inventory.Core.Data;
 using Module.Inventory.Core.Rule.Type;
@@ -28,6 +29,7 @@ namespace Tests.Inventory
         private readonly List<int> m_changedIds = new List<int>();
 
         private QInventoryTestKit m_kit;
+        private InventoryConfigSO m_config;
         private InventoryModel m_model;
         private int m_containerId;
 
@@ -35,7 +37,8 @@ namespace Tests.Inventory
         public void SetUp()
         {
             m_kit = new QInventoryTestKit();
-            m_model = new InventoryModel();
+            m_config = m_kit.CreateInventoryConfig();
+            m_model = new InventoryModel(m_config);
             m_model.OnRegister();
 
             m_containerId = m_kit.NewContainerId();
@@ -186,6 +189,55 @@ namespace Tests.Inventory
                 m_model.TryAddItem(heavyContainerId, lightItemId, 1, Vector2Int.one));
         }
         #endregion
+        #region 稀有度底色
+        // 底色由总配置说了算: 改配置里的档位色, 快照载荷要跟着变
+        [Test]
+        public void GetContainerVO_BaseColorComesFromConfigRarityColor()
+        {
+            Color rareColor = new Color(0.11f, 0.22f, 0.33f, 1f);
+            m_kit.SetRarityColor(m_config, InventoryItemRarity.Rare, rareColor);
+            int itemId = m_kit.CreateItem(1, 1, rarity: InventoryItemRarity.Rare).ItemId;
+
+            Assert.AreEqual(InventoryMoveResult.Success,
+                m_model.TryAddItem(m_containerId, itemId, 1, Vector2Int.zero));
+
+            InventoryItemVO item = OnlyItem(m_model.GetContainerVO(m_containerId));
+            Assert.AreEqual(InventoryItemRarity.Rare, item.Rarity);
+            Assert.AreEqual(rareColor, item.BaseColor);
+        }
+
+        // 六档底色各查各的, 防止查表漏档或串档
+        [Test]
+        public void GetContainerVO_EveryRarityMapsToItsOwnConfiguredColor()
+        {
+            InventoryItemRarity[] rarities =
+            {
+                InventoryItemRarity.None, InventoryItemRarity.Common, InventoryItemRarity.Uncommon,
+                InventoryItemRarity.Rare, InventoryItemRarity.Epic, InventoryItemRarity.Legendary
+            };
+
+            Dictionary<InventoryItemRarity, Color> expectedColors = new Dictionary<InventoryItemRarity, Color>();
+            Dictionary<int, InventoryItemRarity> rarityByItemId = new Dictionary<int, InventoryItemRarity>();
+            for (int i = 0; i < rarities.Length; i++)
+            {
+                Color color = new Color(0.05f + i * 0.1f, 0.9f - i * 0.13f, 0.3f + i * 0.07f, 1f);
+                m_kit.SetRarityColor(m_config, rarities[i], color);
+                expectedColors[rarities[i]] = color;
+
+                int itemId = m_kit.CreateItem(1, 1, rarity: rarities[i]).ItemId;
+                rarityByItemId[itemId] = rarities[i];
+                Assert.AreEqual(InventoryMoveResult.Success,
+                    m_model.TryAddItem(m_containerId, itemId, 1, new Vector2Int(i % 4, i / 4)));
+            }
+
+            InventoryContainerVO vo = m_model.GetContainerVO(m_containerId);
+            Assert.AreEqual(rarities.Length, vo.Items.Count);
+            foreach (InventoryItemVO item in vo.Items)
+                Assert.AreEqual(expectedColors[rarityByItemId[item.ItemId]], item.BaseColor,
+                    "稀有度 " + item.Rarity + " 取到了别的档位的底色");
+        }
+        #endregion
+
         #region 移动与旋转
         [Test]
         public void TryMoveItem_UnknownInstance_ReturnsSourceNotFound()

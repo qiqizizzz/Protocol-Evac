@@ -21,7 +21,16 @@ namespace UI.Inventory
     {
         private readonly Dictionary<int, InventoryContainer> m_containers = new Dictionary<int, InventoryContainer>();
         
+        //背包总配置: 只在出口拍快照时查稀有度底色
+        private readonly InventoryConfigSO m_config;
+
         public event Action<int> OnChanged;
+
+        //装配处注入总配置, 不存在无配置的半成品模型
+        public InventoryModel(InventoryConfigSO config)
+        {
+            m_config = config;
+        }
 
         #region Model生命周期
         public void OnRegister()
@@ -74,8 +83,7 @@ namespace UI.Inventory
             {
                 InventoryItemInstance instance = placement.Instance;
                 items[index++] = new InventoryItemVO(instance.InstanceId, instance.ItemId, instance.Config.DisplayName,
-                    instance.StackCount, instance.Config.Icon, instance.Config.BaseColor, instance.Config.Rarity,
-                    instance.Config.UnitValue,
+                    instance.StackCount, instance.Config.Icon, m_config.GetRarityColor(instance.Config.Rarity), instance.Config.Rarity, instance.Config.UnitValue,
                     placement.Position, placement.Size, placement.Rotation);
             }
 

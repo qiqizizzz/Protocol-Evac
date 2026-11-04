@@ -17,8 +17,8 @@ MonoBehaviour:
     m_SerializedData: []
   m_GUID: 0bd57ddf19e98bf4bac2d6e18011be59
   m_SerializeEntries:
-  - m_GUID: 8c7d6027960e78642ade7ea6f072423b
-    m_Address: Config/Inventory/Loadout
+  - m_GUID: c12145ecceab3b34db191468b4914bf6
+    m_Address: Config/Inventory/Config
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

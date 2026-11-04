@@ -44,9 +44,10 @@ namespace Tests.Inventory
         /// <param name="unitValue">单件估价</param>
         /// <param name="rarity">稀有度</param>
         /// <param name="container">装备后撑起的容器定义, 留空代表这件物品不是容器</param>
+        /// <param name="register">是否顺手登记进 ItemRegistry, 验总配置整批登记时传 false</param>
         public InventoryItemConfigSO CreateItem(int width, int height, bool canRotate = true, int maxStackCount = 1,
             float unitWeight = 0f, int unitValue = 0, InventoryItemRarity rarity = InventoryItemRarity.None,
-            InventoryContainerConfigSO container = null)
+            InventoryContainerConfigSO container = null, bool register = true)
         {
             int itemId = m_nextItemId++;
             InventoryItemConfigSO config = CreateConfig<InventoryItemConfigSO>();
@@ -62,10 +63,10 @@ namespace Tests.Inventory
             SetField(config, "GridHeightValue", height);
             SetField(config, "RarityValue", rarity);
             SetField(config, "UnitValueValue", unitValue);
-            SetField(config, "BaseColorValue", new Color(0.5f, 0.5f, 0.5f, 1f));
             SetField(config, "ContainerValue", container);
 
-            ItemRegistry.Register(config);
+            // register 传 false 造出「表里有但没登记」的物品, 用来验总配置能否整批登记
+            if (register) ItemRegistry.Register(config);
             return config;
         }
 
@@ -106,6 +107,32 @@ namespace Tests.Inventory
             SetField(loadout, "PocketsValue", pockets);
             SetField(loadout, "SafeBoxValue", safeBox);
             return loadout;
+        }
+
+        /// <summary>
+        /// 造一份运行时背包总配置, 底色不写就用脚本默认值
+        /// </summary>
+        /// <param name="loadout">要挂上去的穿戴表, 传 null 代表总配置里没有穿戴信息</param>
+        /// <param name="items">物品表内容, 传 null 代表留一张空表</param>
+        public InventoryConfigSO CreateInventoryConfig(InventoryLoadoutConfigSO loadout = null,
+            InventoryItemConfigSO[] items = null)
+        {
+            InventoryConfigSO config = CreateConfig<InventoryConfigSO>();
+            SetField(config, "LoadoutValue", loadout);
+            SetField(config, "ItemsValue", items ?? new InventoryItemConfigSO[0]);
+            return config;
+        }
+
+        /// <summary>
+        /// 覆盖总配置里某一档稀有度底色, 用来验证底色确实取自配置而不是写死
+        /// </summary>
+        /// <param name="config">背包总配置</param>
+        /// <param name="rarity">要改的稀有度档位</param>
+        /// <param name="color">新的物品块底板色</param>
+        public void SetRarityColor(InventoryConfigSO config, InventoryItemRarity rarity, Color color)
+        {
+            // 总配置底色字段名固定是「档位名 + ColorValue」, 按档位直接拼
+            SetField(config, rarity + "ColorValue", color);
         }
 
         // 按配置造一个运行时实例

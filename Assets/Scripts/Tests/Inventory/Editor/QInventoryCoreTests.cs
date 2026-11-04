@@ -6,6 +6,7 @@
 * └──────────────────────────────────┘
 */
 
+using System.Text.RegularExpressions;
 using Module.Inventory.Core.Config;
 using Module.Inventory.Core.Config.Type;
 using Module.Inventory.Core.Data;
@@ -15,6 +16,7 @@ using Module.Inventory.Core.Rule.Extensions;
 using Module.Inventory.Core.Rule.Type;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace Tests.Inventory
 {
@@ -464,6 +466,59 @@ namespace Tests.Inventory
             Assert.AreEqual(9f, container.WeightLimit, 0.001f);
         }
         #endregion
+
+        #region 背包总配置
+        // 物品表是运行时唯一的登记入口: 表里的每件物品都要能被 ItemRegistry 查到
+        [Test]
+        public void InventoryConfig_RegisterItems_RegistersTheWholeTable()
+        {
+            InventoryItemConfigSO[] items =
+            {
+                m_kit.CreateItem(1, 1, register: false),
+                m_kit.CreateItem(2, 1, register: false),
+                m_kit.CreateItem(1, 3, register: false)
+            };
+
+            m_kit.CreateInventoryConfig(null, items).RegisterItems();
+
+            foreach (InventoryItemConfigSO item in items)
+            {
+                Assert.IsTrue(ItemRegistry.TryGet(item.ItemId, out InventoryItemConfigSO found));
+                Assert.AreSame(item, found);
+            }
+        }
+
+        // 空表会让背包解析不出任何物品, 必须报错而不是静默返回
+        [Test]
+        public void InventoryConfig_RegisterItems_EmptyTableLogsError()
+        {
+            LogAssert.Expect(LogType.Error, new Regex("物品表为空"));
+
+            m_kit.CreateInventoryConfig().RegisterItems();
+        }
+
+        // 表里夹一个空槽只报那一条, 后面的物品照常登记
+        [Test]
+        public void InventoryConfig_RegisterItems_NullSlotLogsErrorAndKeepsGoing()
+        {
+            InventoryItemConfigSO item = m_kit.CreateItem(1, 1, register: false);
+            LogAssert.Expect(LogType.Error, new Regex("空槽"));
+
+            m_kit.CreateInventoryConfig(null, new[] { null, item }).RegisterItems();
+
+            Assert.IsTrue(ItemRegistry.TryGet(item.ItemId, out _));
+        }
+
+        // 底色只认已定义的档位, 冒出没档位的枚举要当场炸出来
+        [Test]
+        public void InventoryConfig_GetRarityColor_UndefinedRarityThrows()
+        {
+            InventoryConfigSO config = m_kit.CreateInventoryConfig();
+
+            Assert.Throws<System.ArgumentOutOfRangeException>(() => config.GetRarityColor((InventoryItemRarity)99));
+        }
+        #endregion
+
         // 取容器里的第一个占位, 用例基本只放一件物品
         private static InventoryItemPlacement FirstPlacement(InventoryContainer container)
         {

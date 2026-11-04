@@ -10,7 +10,7 @@ namespace Module.Inventory.Core.Config.Type
 {
     public enum InventoryItemRarity
     {
-        None = 0,         // 未定义（白色)
+        None = 0,         // 未配置（中性）
         Common = 1,       // 普通（灰色）
         Uncommon = 2,     // 优秀（绿）
         Rare = 3,         // 稀有（蓝）

@@ -1,6 +1,6 @@
 ﻿/*
 * ┌──────────────────────────────────┐
-* │  描    述: 背包模块装配处, 按穿戴表注册容器并登记载体视图工厂
+* │  描    述: 背包模块装配处, 按总配置登记物品表与容器并注册载体视图工厂
 * │  类    名: InventoryModule.cs
 * │  创    建: By qiqizizzz
 * └──────────────────────────────────┘
@@ -20,13 +20,21 @@ namespace UI.Inventory
     [MvvmModule]
     public static class InventoryModule
     {
-        public const string LOADOUT_ADDRESS = "Config/Inventory/Loadout";
+        public const string CONFIG_ADDRESS = "Config/Inventory/Config";
 
         //装配背包模块: 注册模型契约与载体视图工厂, 由 MvvmHost 反射调用
         public static void Register(MvvmRoot root)
         {
-            IInventoryModel model = root.Models.Register<IInventoryModel>(new InventoryModel());
-            ApplyLoadout(model, ResManager.LoadAsset<InventoryLoadoutConfigSO>(LOADOUT_ADDRESS));
+            InventoryConfigSO config = ResManager.LoadAsset<InventoryConfigSO>(CONFIG_ADDRESS);
+            if (config == null)
+            {
+                QLog.Error($"背包总配置未加载：{CONFIG_ADDRESS}");
+                return;
+            }
+
+            IInventoryModel model = root.Models.Register<IInventoryModel>(new InventoryModel(config));
+            config.RegisterItems();
+            ApplyLoadout(model, config.Loadout);
 
             root.Windows.RegisterAsync<UIInventoryCarrier>(
                 parent => ResManager.InstantiateAsync(UIDefines.UIInventoryCarrier, parent));
@@ -41,7 +49,7 @@ namespace UI.Inventory
         {
             if (loadout == null)
             {
-                QLog.Error($"穿戴表未加载：{LOADOUT_ADDRESS}");
+                QLog.Error("穿戴表为空, 角色身上不会注册任何容器");
                 return;
             }
 

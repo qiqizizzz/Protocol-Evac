@@ -22,6 +22,5 @@ MonoBehaviour:
   GridHeightValue: 3
   RarityValue: 2
   UnitValueValue: 12000
-  BaseColorValue: {r: 0.2, g: 0.44, b: 0.28, a: 0.92}
   IconValue: {fileID: 21300000, guid: 43569723e6ec46947beac477c6968047, type: 3}
   ContainerValue: {fileID: 11400000, guid: 32d0c68da187e8f4aa61903a62548d19, type: 2}
