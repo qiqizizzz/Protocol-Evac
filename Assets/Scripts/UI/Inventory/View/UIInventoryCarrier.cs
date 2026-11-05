@@ -60,12 +60,15 @@ namespace UI.Inventory.View
             m_capacityText = this.FindChildComponent<TMP_Text>(CAPACITY_PATH);
             m_hintText = this.FindChildComponent<TMP_Text>(HINT_PATH);
             m_rotateButton = this.FindChildComponent<Button>(ROTATE_PATH);
+            if (m_rotateButton != null)
+                m_rotateButton.gameObject.SetActive(false);
         }
 
         //登记绑定, 视图只做表现不做业务判定
         protected override void BindViewModel(InventoryViewModel viewModel)
         {
-            m_rotateButton.onClick.AddListener(viewModel.RotateSelectedItem);
+            if (m_rotateButton != null)
+                m_rotateButton.onClick.AddListener(viewModel.RotateSelectedItem);
 
             Scope.Bind(viewModel.Snapshot, RenderSnapshot);
             Scope.Bind(viewModel.HintKind, RenderHint);
@@ -195,7 +198,8 @@ namespace UI.Inventory.View
         //渲染旋转按钮可用性
         private void RenderCanRotate(bool canRotate)
         {
-            m_rotateButton.interactable = canRotate;
+            if (m_rotateButton != null)
+                m_rotateButton.interactable = canRotate;
         }
 
         //提示重放时闪一下文本

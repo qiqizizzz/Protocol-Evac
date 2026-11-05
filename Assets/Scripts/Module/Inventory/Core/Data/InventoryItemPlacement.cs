@@ -27,6 +27,12 @@ namespace Module.Inventory.Core.Data
         //实际占下的格子范围, 装备槽把大件压成单格时由容器写入; 未写入时沿用配置尺寸
         public Vector2Int Footprint { get; internal set; }
 
+        //清除装备槽临时压缩的足迹, 让普通容器重新读取物品配置尺寸
+        internal void ResetFootprint()
+        {
+            Footprint = default;
+        }
+
         public InventoryItemPlacement(InventoryItemInstance instance, Vector2Int position, InventoryRotation rotation = InventoryRotation.None)
         {
             Instance = instance;

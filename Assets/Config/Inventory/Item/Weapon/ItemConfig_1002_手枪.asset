@@ -24,4 +24,4 @@ MonoBehaviour:
   UnitValueValue: 4000
   IconValue: {fileID: 21300000, guid: a339809716d15a7479eb61d96fae9ca7, type: 3}
   ContainerValue: {fileID: 0}
-  EquipSlotValue: 5
+  EquipSlotValue: 7

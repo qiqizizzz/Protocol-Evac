@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 2637781485283965691}
   - component: {fileID: 2280469856729802559}
   m_Layer: 0
-  m_Name: Layout_EquipSlots
+  m_Name: Layout_EquipmentSlots
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -32,15 +32,15 @@ RectTransform:
   - {fileID: 7353585061090568419}
   - {fileID: 6073521203406015872}
   - {fileID: 6363062572598608311}
+  - {fileID: 5061071992516644965}
   - {fileID: 132157152006882414}
   - {fileID: 5261424470463646929}
-  - {fileID: 5061071992516644965}
   m_Father: {fileID: 709165301083212681}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 0, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 104, y: 684}
+  m_AnchoredPosition: {x: 63, y: -126}
+  m_SizeDelta: {x: 220, y: 684}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!114 &2280469856729802559
 MonoBehaviour:
@@ -259,7 +259,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 0, y: 0.5}
-  m_AnchoredPosition: {x: 157, y: 169}
+  m_AnchoredPosition: {x: 335, y: 169}
   m_SizeDelta: {x: 692, y: 630}
   m_Pivot: {x: 0, y: 0.5}
 --- !u!222 &736609719937346352
@@ -580,7 +580,7 @@ PrefabInstance:
     - target: {fileID: 2690466681365645920, guid: 08a41339ee62c3a40b76b4931bac8009,
         type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 157
+      value: 335
       objectReference: {fileID: 0}
     - target: {fileID: 2690466681365645920, guid: 08a41339ee62c3a40b76b4931bac8009,
         type: 3}
@@ -736,7 +736,7 @@ PrefabInstance:
     - target: {fileID: 2690466681365645920, guid: 08a41339ee62c3a40b76b4931bac8009,
         type: 3}
       propertyPath: m_SizeDelta.x
-      value: 104
+      value: 220
       objectReference: {fileID: 0}
     - target: {fileID: 2690466681365645920, guid: 08a41339ee62c3a40b76b4931bac8009,
         type: 3}
@@ -2112,7 +2112,7 @@ PrefabInstance:
     - target: {fileID: 2690466681365645920, guid: 08a41339ee62c3a40b76b4931bac8009,
         type: 3}
       propertyPath: m_SizeDelta.x
-      value: 104
+      value: 220
       objectReference: {fileID: 0}
     - target: {fileID: 2690466681365645920, guid: 08a41339ee62c3a40b76b4931bac8009,
         type: 3}
@@ -2403,7 +2403,7 @@ PrefabInstance:
     - target: {fileID: 7133497272564883991, guid: 08a41339ee62c3a40b76b4931bac8009,
         type: 3}
       propertyPath: m_Name
-      value: Slot_ChestRig
+      value: Slot_Armor
       objectReference: {fileID: 0}
     - target: {fileID: 7215906698989755206, guid: 08a41339ee62c3a40b76b4931bac8009,
         type: 3}
@@ -2584,7 +2584,7 @@ PrefabInstance:
     - target: {fileID: 7133497272564883991, guid: 08a41339ee62c3a40b76b4931bac8009,
         type: 3}
       propertyPath: m_Name
-      value: Slot_Backpack
+      value: Slot_Pistol
       objectReference: {fileID: 0}
     - target: {fileID: 7215906698989755206, guid: 08a41339ee62c3a40b76b4931bac8009,
         type: 3}

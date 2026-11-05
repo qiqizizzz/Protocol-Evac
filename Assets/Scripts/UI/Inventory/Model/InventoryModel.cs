@@ -348,6 +348,9 @@ namespace UI.Inventory
                 case InventoryEquipSlot.PrimaryWeapon: return "主武器";
                 case InventoryEquipSlot.SecondaryWeapon: return "副武器";
                 case InventoryEquipSlot.Melee: return "近战";
+                case InventoryEquipSlot.Pistol: return "手枪";
+                case InventoryEquipSlot.Armor: return "护甲";
+                case InventoryEquipSlot.SafeBox: return "安全箱";
                 default: return string.Empty;
             }
         }

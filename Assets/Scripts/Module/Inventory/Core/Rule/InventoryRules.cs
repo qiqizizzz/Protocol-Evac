@@ -49,11 +49,8 @@ namespace Module.Inventory.Core.Rule
             if (rotation != placement.Rotation && !placement.Instance.Config.CanRotate)
                 return InventoryMoveResult.NotRotatable;
 
-            //装备槽里的装备本期不许拖出
-            if (!sameContainer && source.IsEquipSlot) return InventoryMoveResult.UnequipLocked;
-
             //跨容器搬进装备槽同样要部位对得上
-            if (!sameContainer && target.IsEquipSlot && placement.Instance.Config.EquipSlot != target.EquipSlot)
+            if (!sameContainer && target.IsEquipSlot && !CanEquipInSlot(placement.Instance.Config.EquipSlot, target.EquipSlot))
                 return InventoryMoveResult.SlotMismatch;
 
             //物品移动后目标容器重量超标
@@ -75,10 +72,12 @@ namespace Module.Inventory.Core.Rule
             //自己和自己交换视为未移动
             if (ReferenceEquals(moving, occupant)) return InventoryMoveResult.SameSpot;
 
-            //装备槽被顶出就是卸下, 本期不开这个口子
-            if (source.IsEquipSlot || target.IsEquipSlot) return InventoryMoveResult.UnequipLocked;
-
             bool sameContainer = ReferenceEquals(source, target);
+
+            if (target.IsEquipSlot && !CanEquipInSlot(moving.Instance.Config.EquipSlot, target.EquipSlot))
+                return InventoryMoveResult.SlotMismatch;
+            if (source.IsEquipSlot && !CanEquipInSlot(occupant.Instance.Config.EquipSlot, source.EquipSlot))
+                return InventoryMoveResult.SlotMismatch;
 
             //物体未移动
             if (sameContainer && position == moving.Position && rotation == moving.Rotation)
@@ -149,6 +148,22 @@ namespace Module.Inventory.Core.Rule
         private bool IsOverWeight(InventoryContainer target, float addWeight)
         {
             return target.TotalWeight + addWeight > target.WeightLimit;
+        }
+
+        //允许主武器、副武器与手枪装备槽之间互换
+        private static bool CanEquipInSlot(InventoryEquipSlot itemSlot, InventoryEquipSlot targetSlot)
+        {
+            if (itemSlot == targetSlot) return true;
+
+            return IsWeaponSlot(itemSlot) && IsWeaponSlot(targetSlot);
+        }
+
+        //判断是否为可互换的武器装备槽
+        private static bool IsWeaponSlot(InventoryEquipSlot slot)
+        {
+            return slot == InventoryEquipSlot.PrimaryWeapon ||
+                   slot == InventoryEquipSlot.SecondaryWeapon ||
+                   slot == InventoryEquipSlot.Pistol;
         }
     }
 }

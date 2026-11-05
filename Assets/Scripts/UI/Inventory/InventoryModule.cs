@@ -10,6 +10,7 @@ using Common.Res;
 using Framework.QTower.Common.Defines;
 using Framework.QTower.MVVM.View;
 using Module.Inventory.Core.Config;
+using Module.Inventory.Core.Config.Type;
 using Module.Inventory.Core.Data;
 using Module.Inventory.Core.Defines;
 using Module.Inventory.Core.Rule.Extensions;
@@ -58,6 +59,8 @@ namespace UI.Inventory
 
             ApplyInnateContainer(model, InventoryContainerIds.POCKETS, loadout);
             ApplyInnateContainer(model, InventoryContainerIds.SAFEBOX, loadout);
+            if (loadout.SafeBox != null && loadout.SafeBox.EquipSlot == InventoryEquipSlot.SafeBox)
+                EquipFromLoadout(model, InventoryContainerIds.SAFEBOX_SLOT, loadout.SafeBox, "安全箱");
 
             EquipFromLoadout(model, InventoryContainerIds.BACKPACK_SLOT, loadout.Backpack, "背包");
             EquipFromLoadout(model, InventoryContainerIds.CHESTRIG_SLOT, loadout.Rig, "胸挂");

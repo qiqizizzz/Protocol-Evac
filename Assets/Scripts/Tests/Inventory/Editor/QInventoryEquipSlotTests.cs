@@ -157,7 +157,7 @@ namespace Tests.Inventory
 
         #region 穿戴锁
         [Test]
-        public void TryTransferItem_OutOfEquipSlot_ReturnsUnequipLocked()
+        public void TryTransferItem_OutOfEquipSlot_AllowsUnequip()
         {
             int backpackId = m_kit.CreateContainerItem(m_kit.CreateContainer(8, 5), SLOT_OCCUPY_WIDTH,
                 SLOT_OCCUPY_HEIGHT, equipSlot: InventoryEquipSlot.Backpack).ItemId;
@@ -166,13 +166,31 @@ namespace Tests.Inventory
             Assert.IsTrue(m_model.TryGetInstanceIdAt(InventoryContainerIds.BACKPACK_SLOT, Vector2Int.zero,
                 out int wornInstanceId));
 
-            Assert.AreEqual(InventoryMoveResult.UnequipLocked,
+            Assert.AreEqual(InventoryMoveResult.Success,
                 m_model.TryTransferItem(InventoryContainerIds.BACKPACK_SLOT, m_bagId, wornInstanceId, Vector2Int.zero));
-            Assert.IsTrue(m_model.GetContainerVO(InventoryContainerIds.BACKPACK_SLOT).Contains(wornInstanceId));
+            Assert.IsTrue(m_model.GetContainerVO(m_bagId).Contains(wornInstanceId));
         }
 
         [Test]
-        public void TryTransferItem_SwappingOutASlottedWeapon_ReturnsUnequipLocked()
+        public void TryTransferItem_UnequippedHelmet_RestoresConfiguredFootprint()
+        {
+            int helmetId = m_kit.CreateItem(2, 2, equipSlot: InventoryEquipSlot.Helmet).ItemId;
+            Assert.AreEqual(InventoryMoveResult.Success,
+                m_model.TryAddItemAuto(InventoryContainerIds.HELMET_SLOT, helmetId, 1));
+            Assert.IsTrue(m_model.TryGetInstanceIdAt(InventoryContainerIds.HELMET_SLOT, Vector2Int.zero,
+                out int helmetInstanceId));
+
+            Assert.AreEqual(InventoryMoveResult.Success,
+                m_model.TryTransferItem(InventoryContainerIds.HELMET_SLOT, m_bagId, helmetInstanceId,
+                    Vector2Int.zero));
+
+            InventoryContainerVO bag = m_model.GetContainerVO(m_bagId);
+            Assert.IsTrue(bag.TryGetItem(helmetInstanceId, out InventoryItemVO item));
+            Assert.AreEqual(new Vector2Int(2, 2), item.Size);
+        }
+
+        [Test]
+        public void TryTransferItem_SwappingOutASlottedWeapon_AllowsWeaponSwap()
         {
             int wornId = m_kit.CreateItem(1, 1, equipSlot: InventoryEquipSlot.PrimaryWeapon).ItemId;
             int spareId = m_kit.CreateItem(1, 1, equipSlot: InventoryEquipSlot.PrimaryWeapon).ItemId;
@@ -181,7 +199,7 @@ namespace Tests.Inventory
             Assert.AreEqual(InventoryMoveResult.Success, m_model.TryAddItem(m_bagId, spareId, 1, Vector2Int.zero));
             Assert.IsTrue(m_model.TryGetInstanceIdAt(m_bagId, Vector2Int.zero, out int spareInstanceId));
 
-            Assert.AreEqual(InventoryMoveResult.UnequipLocked,
+            Assert.AreEqual(InventoryMoveResult.Success,
                 m_model.TryTransferItem(m_bagId, InventoryContainerIds.PRIMARY_WEAPON_SLOT, spareInstanceId,
                     Vector2Int.zero));
         }

@@ -33,5 +33,14 @@ namespace Module.Inventory.Core.Config.Type
 
         [InspectorName("近战")]
         Melee = 6,
+
+        [InspectorName("手枪")]
+        Pistol = 7,
+
+        [InspectorName("护甲")]
+        Armor = 8,
+
+        [InspectorName("安全箱")]
+        SafeBox = 9,
     }
 }

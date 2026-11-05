@@ -33,6 +33,7 @@ namespace Module.Inventory.Core.Config
         //穿戴进槽的入口只取背包与胸挂两件容器装备
         public InventoryItemConfigSO Backpack => BackpackValue;
         public InventoryItemConfigSO Rig => RigValue;
+        public InventoryItemConfigSO SafeBox => SafeBoxValue;
 
         public bool TryGetContainer(int slotId, out InventoryContainerConfigSO container)
         {

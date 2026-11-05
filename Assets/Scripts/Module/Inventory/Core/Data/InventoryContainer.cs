@@ -117,6 +117,8 @@ namespace Module.Inventory.Core.Data
             occupant.SetPosition(originPosition);
 
             //两件物品各奔新家, 落位前按新东家的口径重算足迹
+            moving.ResetFootprint();
+            occupant.ResetFootprint();
             moving.Footprint = target.ResolveFootprint(moving.Instance, rotation);
             occupant.Footprint = ResolveFootprint(occupant.Instance, occupant.Rotation);
 
@@ -188,6 +190,7 @@ namespace Module.Inventory.Core.Data
             source.Grid.Remove(placement);
             placement.SetPosition(position);
             placement.SetRotation(rotation);
+            placement.ResetFootprint();
             placement.Footprint = target.ResolveFootprint(placement.Instance, rotation);
             target.Grid.Add(placement);
         }

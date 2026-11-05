@@ -8,6 +8,8 @@
 
 using Framework.QTower.MVVM.Binding;
 using TMPro;
+using Module.Inventory.Core.Config;
+using Module.Inventory.Core.Defines;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -44,6 +46,7 @@ namespace UI.Inventory.View
         private RectTransform m_snapTarget;
         private bool m_isDragging;
         private PointerEventData.InputButton m_dragButton;
+        private Vector2 m_dragOriginSize;
 
         public int InstanceId { get; private set; }
 
@@ -159,6 +162,8 @@ namespace UI.Inventory.View
 
         private void BeginDragGhost()
         {
+            m_dragOriginSize = m_rect.sizeDelta;
+            ResizeGhostToConfiguredFootprint();
             m_dragCanvas = gameObject.AddComponent<Canvas>();
             m_dragCanvas.overrideSorting = true;
             m_dragCanvas.sortingOrder = DRAG_GHOST_SORTING_ORDER;
@@ -171,8 +176,27 @@ namespace UI.Inventory.View
             m_canvasGroup.blocksRaycasts = false;
         }
 
+        //装备槽中的物品拖拽时立即恢复配置尺寸, 让头盔等大件显示真实拖影
+        private void ResizeGhostToConfiguredFootprint()
+        {
+            if (m_viewModel == null || !InventoryContainerIds.TryGetEquipSlotRole(m_viewModel.ContainerId, out _))
+                return;
+
+            if (!m_viewModel.Snapshot.Value.TryGetItem(InstanceId, out InventoryItemVO item))
+                return;
+
+            if (!ItemRegistry.TryGet(item.ItemId, out InventoryItemConfigSO config))
+                return;
+
+            Vector2Int size = config.GetSizeAt(item.Rotation);
+            m_rect.sizeDelta = new Vector2(
+                size.x * CELL_SIZE + (size.x - 1) * CELL_SPACING,
+                size.y * CELL_SIZE + (size.y - 1) * CELL_SPACING);
+        }
+
         private void EndDragGhost()
         {
+            m_rect.sizeDelta = m_dragOriginSize;
             m_background.enabled = true;
             m_countText.enabled = true;
             RenderSelected(m_viewModel != null ? m_viewModel.SelectedInstanceId.Value : NO_SELECTION);

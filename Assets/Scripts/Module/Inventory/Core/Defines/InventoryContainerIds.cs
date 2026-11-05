@@ -42,6 +42,15 @@ namespace Module.Inventory.Core.Defines
         //近战装备槽
         public const int MELEE_SLOT = 10;
 
+        //手枪装备槽
+        public const int PISTOL_SLOT = 11;
+
+        //护甲装备槽
+        public const int ARMOR_SLOT = 12;
+
+        //安全箱装备槽
+        public const int SAFEBOX_SLOT = 13;
+
         //地上战利品箱起始号, 运行时往后递增分配
         public const int LOOT = 20;
 
@@ -51,17 +60,17 @@ namespace Module.Inventory.Core.Defines
             BACKPACK, RIG, POCKETS, SAFEBOX
         };
 
-        //左列六个装备槽, 顺序即自上而下
+        //角色全部装备槽, 其中胸挂与背包槽用于支撑容量载体, 不直接显示在左列
         public static readonly int[] EQUIP_SLOT_IDS =
         {
-            HELMET_SLOT, CHESTRIG_SLOT, BACKPACK_SLOT, PRIMARY_WEAPON_SLOT, SECONDARY_WEAPON_SLOT, MELEE_SLOT
+            HELMET_SLOT, ARMOR_SLOT, CHESTRIG_SLOT, BACKPACK_SLOT, PISTOL_SLOT, MELEE_SLOT, PRIMARY_WEAPON_SLOT, SECONDARY_WEAPON_SLOT, SAFEBOX_SLOT
         };
 
         //战备面板载体的装配顺序, 必须与预制体 Containers[] 逐项对应
         public static readonly int[] EQUIPMENT_CONTAINER_IDS =
         {
-            HELMET_SLOT, CHESTRIG_SLOT, BACKPACK_SLOT, PRIMARY_WEAPON_SLOT, SECONDARY_WEAPON_SLOT, MELEE_SLOT,
-            RIG, POCKETS, BACKPACK, SAFEBOX
+            HELMET_SLOT, ARMOR_SLOT, PISTOL_SLOT, PRIMARY_WEAPON_SLOT, SECONDARY_WEAPON_SLOT, MELEE_SLOT,
+            RIG, POCKETS, BACKPACK, SAFEBOX, CHESTRIG_SLOT, BACKPACK_SLOT, SAFEBOX_SLOT
         };
 
         /// <summary>
@@ -79,6 +88,9 @@ namespace Module.Inventory.Core.Defines
                 PRIMARY_WEAPON_SLOT => InventoryEquipSlot.PrimaryWeapon,
                 SECONDARY_WEAPON_SLOT => InventoryEquipSlot.SecondaryWeapon,
                 MELEE_SLOT => InventoryEquipSlot.Melee,
+                PISTOL_SLOT => InventoryEquipSlot.Pistol,
+                ARMOR_SLOT => InventoryEquipSlot.Armor,
+                SAFEBOX_SLOT => InventoryEquipSlot.SafeBox,
                 _ => InventoryEquipSlot.None
             };
 

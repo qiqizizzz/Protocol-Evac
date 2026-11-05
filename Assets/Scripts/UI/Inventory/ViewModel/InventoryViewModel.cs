@@ -348,9 +348,24 @@ namespace UI.Inventory
 
             if (verdict == InventoryMoveResult.None || verdict == InventoryMoveResult.SameSpot) return false;
 
-            size = item.Size;
+            size = ResolvePreviewSize(sourceContainerId, item);
             mark = ToCellMark(verdict, willSwap);
             return true;
+        }
+
+        //拖出装备槽时按目标容器还原物品配置尺寸, 避免预览仍沿用装备槽的 1x1 足迹
+        private Vector2Int ResolvePreviewSize(int sourceContainerId, InventoryItemVO item)
+        {
+            if (!InventoryContainerIds.TryGetEquipSlotRole(sourceContainerId, out _))
+                return item.Size;
+
+            if (InventoryContainerIds.TryGetEquipSlotRole(m_containerId, out _))
+                return Vector2Int.one;
+
+            if (ItemRegistry.TryGet(item.ItemId, out InventoryItemConfigSO config))
+                return config.GetSizeAt(item.Rotation);
+
+            return item.Size;
         }
 
         private bool TryResolveDropCandidate(out int sourceContainerId, out int instanceId, out InventoryItemVO item)
