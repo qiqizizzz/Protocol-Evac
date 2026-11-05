@@ -21,7 +21,7 @@ namespace UI.Inventory
     {
         private readonly Dictionary<int, InventoryContainer> m_containers = new Dictionary<int, InventoryContainer>();
         
-        //背包总配置: 只在出口拍快照时查稀有度底色
+        //背包总配置: 仅在构建快照时查询稀有度底色
         private readonly InventoryConfigSO m_config;
 
         public event Action<int> OnChanged;

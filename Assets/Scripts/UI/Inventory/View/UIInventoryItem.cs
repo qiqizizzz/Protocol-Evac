@@ -15,14 +15,16 @@ using Utils.Find;
 
 namespace UI.Inventory.View
 {
-    public sealed class UIInventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler,
-        IEndDragHandler, IDropHandler, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
+    public sealed class UIInventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler,
+        IDropHandler, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
     {
         public const int CELL_SIZE = 80;
         public const int CELL_SPACING = 4;
 
-        private const int DRAG_GHOST_SORTING_ORDER = 100; //拖影排序档, 压过面板默认档
+        private const int DRAG_GHOST_SORTING_ORDER = 100; //拖影排序层级, 高于面板默认层级
         private const float DRAG_GHOST_ALPHA = 0.75f; //拖影期间的不透明度
+
+        private const int NO_SELECTION = -1; //无选中
 
         private const string ICON_PATH = "Img_Icon";
         private const string COUNT_PATH = "Txt_Count";
@@ -39,7 +41,7 @@ namespace UI.Inventory.View
         private InventoryViewModel m_viewModel;
         private Vector2Int m_origin;
         private Vector2 m_homeAnchoredPosition;
-        private Vector3 m_grabOffset;
+        private RectTransform m_snapTarget;
         private bool m_isDragging;
         private PointerEventData.InputButton m_dragButton;
 
@@ -68,6 +70,9 @@ namespace UI.Inventory.View
                 -item.Origin.y * (CELL_SIZE + CELL_SPACING));
             m_rect.anchoredPosition = m_homeAnchoredPosition;
 
+            m_background.enabled = true;
+            m_countText.enabled = true;
+
             m_background.color = item.BaseColor;
             m_icon.sprite = item.Icon;
             m_icon.enabled = item.Icon != null;
@@ -81,10 +86,29 @@ namespace UI.Inventory.View
             scope.Bind(viewModel.SelectedInstanceId, RenderSelected);
         }
 
+        /// <summary>
+        /// 拖拽中将物品视图对齐到目标格子的左上角原点
+        /// </summary>
+        /// <param name="eventData">当前指针事件</param>
+        /// <param name="target">被悬停格子或物品的 RectTransform</param>
+        public static void SnapGhostTo(PointerEventData eventData, RectTransform target)
+        {
+            if (eventData == null || eventData.pointerDrag == null) return;
+            if (!eventData.pointerDrag.TryGetComponent(out UIInventoryItem ghost)) return;
+            if (!ghost.m_isDragging) return;
+
+            ghost.m_snapTarget = target;
+            ghost.SnapToCell(target);
+        }
+
         #region UI事件
         public void OnPointerClick(PointerEventData eventData) => m_viewModel.InteractAt(m_origin);
 
-        public void OnPointerEnter(PointerEventData eventData) => m_viewModel.PreviewDropAt(m_origin);
+        public void OnPointerEnter(PointerEventData eventData)
+        {
+            SnapGhostTo(eventData, m_rect);
+            m_viewModel.PreviewDropAt(m_origin);
+        }
 
         public void OnPointerExit(PointerEventData eventData) => m_viewModel.ClearDropPreview(m_origin);
 
@@ -94,22 +118,13 @@ namespace UI.Inventory.View
 
             m_isDragging = true;
             m_dragButton = eventData.button;
-            m_grabOffset = Vector3.zero;
-
-            if (RectTransformUtility.ScreenPointToWorldPointInRectangle(m_rect, eventData.position,
-                    eventData.pressEventCamera, out Vector3 grabPoint))
-                m_grabOffset = m_rect.position - grabPoint;
-
             BeginDragGhost();
         }
 
         public void OnDrag(PointerEventData eventData)
         {
-            if (!m_isDragging) return;
-
-            if (RectTransformUtility.ScreenPointToWorldPointInRectangle(m_rect, eventData.position,
-                    eventData.pressEventCamera, out Vector3 worldPoint))
-                m_rect.position = worldPoint + m_grabOffset;
+            if (m_snapTarget != null)
+                SnapToCell(m_snapTarget);
         }
 
         public void OnDrop(PointerEventData eventData)
@@ -123,6 +138,12 @@ namespace UI.Inventory.View
         #endregion
 
         #region Private Function
+        private void SnapToCell(RectTransform target)
+        {
+            Rect targetRect = target.rect;
+            m_rect.position = target.TransformPoint(new Vector3(targetRect.xMin, targetRect.yMax, 0f));
+        }
+
         private void Update()
         {
             if (!m_isDragging) return;
@@ -142,12 +163,20 @@ namespace UI.Inventory.View
             m_dragCanvas.overrideSorting = true;
             m_dragCanvas.sortingOrder = DRAG_GHOST_SORTING_ORDER;
 
+            m_background.enabled = false;
+            m_countText.enabled = false;
+            m_selectedFrame.SetActive(false);
+
             m_canvasGroup.alpha = DRAG_GHOST_ALPHA;
             m_canvasGroup.blocksRaycasts = false;
         }
 
         private void EndDragGhost()
         {
+            m_background.enabled = true;
+            m_countText.enabled = true;
+            RenderSelected(m_viewModel != null ? m_viewModel.SelectedInstanceId.Value : NO_SELECTION);
+
             if (m_dragCanvas == null) return;
 
             Destroy(m_dragCanvas);
@@ -161,6 +190,7 @@ namespace UI.Inventory.View
             if (!m_isDragging) return;
 
             m_isDragging = false;
+            m_snapTarget = null;
             EndDragGhost();
             m_rect.anchoredPosition = m_homeAnchoredPosition;
             m_viewModel.CancelDrag();

@@ -318,7 +318,7 @@ namespace UI.Inventory.Editor
             m_icon = item != null ? item.Icon : null;
         }
 
-        // 显示当前档位三份资产的真实现状, 会不会新建、有没有穿上一眼看清
+        // 显示当前档位三份资产的现状, 包括是否会新建与绑定是否完整
         private void DrawCurrentState()
         {
             int slot = SelectedSlot;

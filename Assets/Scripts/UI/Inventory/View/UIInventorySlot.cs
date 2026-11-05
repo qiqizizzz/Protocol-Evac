@@ -33,6 +33,7 @@ namespace UI.Inventory.View
         [SerializeField] private Color DropInvalidColor = new Color(0.92f, 0.27f, 0.26f, 0.55f);
 
         private Image m_background;
+        private RectTransform m_rect;
         private bool m_isSolid = true;
         private InventoryCellMark m_mark;
 
@@ -41,6 +42,7 @@ namespace UI.Inventory.View
         protected override void OnAwake()
         {
             m_background = GetComponent<Image>();
+            m_rect = GetComponent<RectTransform>();
         }
 
         protected override void BindViewModel(InventorySlotViewModel viewModel)
@@ -61,6 +63,7 @@ namespace UI.Inventory.View
 
         public void OnPointerEnter(PointerEventData eventData)
         {
+            UIInventoryItem.SnapGhostTo(eventData, m_rect);
             ViewModel.NotifyHovered(true);
         }
 

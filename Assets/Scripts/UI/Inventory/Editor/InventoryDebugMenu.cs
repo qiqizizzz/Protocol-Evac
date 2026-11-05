@@ -84,7 +84,7 @@ namespace UI.Inventory.Editor
             Debug.Log(LOG + "已请求打开战备面板(地址 UIEquipmentPanel, 需先点 7 生成并登记)");
         }
 
-        // 四个容器各塞几件物品, 校验多容器同屏与 Version 驱动的自动重绘
+        // 四个容器各添加若干物品, 校验多容器同屏与 Version 驱动的自动重绘
         [MenuItem("Tools/背包7a/3.放入测试物品")]
         public static void AddTestItems()
         {

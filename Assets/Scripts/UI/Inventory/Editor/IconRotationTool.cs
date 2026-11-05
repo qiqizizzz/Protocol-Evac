@@ -238,7 +238,7 @@ namespace UI.Inventory.Editor
             EditorGUILayout.EndVertical();
         }
 
-        // 预览区: 深色棋盘底 + 画布边框 + 水平中线, 一眼看出歪不歪
+        // 预览区: 深色棋盘底、画布边框与水平中线, 便于观察旋转是否对齐
         private void DrawPreviewArea(Entry entry)
         {
             Rect box = GUILayoutUtility.GetRect(120f, 2048f, GUILayout.ExpandWidth(true), GUILayout.Height(268f));
@@ -535,7 +535,7 @@ namespace UI.Inventory.Editor
             Repaint();
         }
 
-        // 生成并写出一张 PNG, 顺手把导入设置拉起来
+        // 生成并写出 PNG, 同时更新导入设置
         private bool ExportOne(Entry entry)
         {
             int width, height;

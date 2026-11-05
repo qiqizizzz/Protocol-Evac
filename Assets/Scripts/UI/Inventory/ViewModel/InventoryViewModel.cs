@@ -163,7 +163,7 @@ namespace UI.Inventory
             m_owner?.NotifyDragEnded(this);
         }
 
-        //回灌一次转移结果,
+        //应用一次转移结果
         public void ApplyTransferResult(InventoryMoveResult result)
         {
             ResetDropPreview();
@@ -189,7 +189,7 @@ namespace UI.Inventory
             RefreshCellMarks();
         }
 
-        //走出预览区才收掉
+        //指针离开预览区域后清除预览
         public void ClearDropPreview(Vector2Int cell)
         {
             if (!m_hasDropCandidate) return;

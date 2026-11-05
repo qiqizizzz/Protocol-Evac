@@ -425,7 +425,7 @@ namespace UI.Inventory.Editor
             property.objectReferenceValue = AssetDatabase.LoadAssetAtPath<GameObject>(path);
         }
 
-        // 按完整类型名反射挂脚本, 取不到就先记账, 不阻塞出树
+        // 按完整类型名反射挂载脚本, 取不到时记录缺失, 不阻塞节点生成
         private static Component AttachScript(GameObject node, string fullTypeName)
         {
             Type type = FindType(fullTypeName);
