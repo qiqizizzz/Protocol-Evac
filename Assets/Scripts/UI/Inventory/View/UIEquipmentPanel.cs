@@ -24,60 +24,68 @@ namespace UI.Inventory.View
 
         protected override void BindViewModel(EquipmentPanelViewModel viewModel)
         {
-            if (Containers.Length > viewModel.ContainerCount)
+            UIInventoryCarrier[] allContainers = GetAllContainers(viewModel);
+            if (allContainers == null)
+                return;
+
+            if (allContainers.Length != viewModel.ContainerCount)
             {
-                QLog.Error($"载体数量与视图模型不符: 预制体 {Containers.Length} 个, 面板 {viewModel.ContainerCount} 个");
+                QLog.Error($"载体数量与视图模型不符: 预制体 {allContainers.Length} 个, 面板 {viewModel.ContainerCount} 个");
                 return;
             }
 
-            List<UIInventoryCarrier> runtimeContainers = new List<UIInventoryCarrier>(Containers);
-            for (int i = runtimeContainers.Count; i < viewModel.ContainerCount; i++)
+            for (int i = 0; i < allContainers.Length; i++)
             {
-                UIInventoryCarrier source = Containers[i % Containers.Length];
-                Transform carrier = ResolveExtraSlotCarrier(viewModel.GetContainer(i).ContainerId);
-                if (carrier == null) return;
-
-                UIInventoryCarrier clone = Instantiate(source, transform);
-                clone.name = $"Slot_{viewModel.GetContainer(i).ContainerId}";
-                RectTransform rect = clone.GetComponent<RectTransform>();
-                rect.anchorMin = new Vector2(0.5f, 0.5f);
-                rect.anchorMax = new Vector2(0.5f, 0.5f);
-                rect.pivot = new Vector2(1f, 1f);
-                rect.sizeDelta = new Vector2(104f, 104f);
-                Canvas.ForceUpdateCanvases();
-                rect.position = carrier.position + new Vector3(-8f, -40f, 0f);
-                runtimeContainers.Add(clone);
-            }
-
-            for (int i = 0; i < runtimeContainers.Count; i++)
-            {
-                Scope.CreateChild(runtimeContainers[i].gameObject);
-                runtimeContainers[i].Show(viewModel.GetContainer(i));
+                Scope.CreateChild(allContainers[i].gameObject);
+                allContainers[i].Show(viewModel.GetContainer(i));
             }
         }
 
-        //按容量载体查找独立装备槽的挂载位置
-        private Transform ResolveExtraSlotCarrier(int containerId)
+        //读取各容量载体预制体中固定配置的独立装备槽
+        private UIInventoryCarrier[] GetAllContainers(EquipmentPanelViewModel viewModel)
         {
-            string carrierName = containerId switch
+            List<UIInventoryCarrier> result = new List<UIInventoryCarrier>(Containers);
+            for (int i = 0; i < Containers.Length; i++)
             {
-                InventoryContainerIds.CHESTRIG_SLOT => "Carrier_Rig",
-                InventoryContainerIds.BACKPACK_SLOT => "Carrier_Backpack",
-                InventoryContainerIds.SAFEBOX_SLOT => "Carrier_SafeBox",
-                _ => string.Empty
-            };
+                Transform slotTransform = Containers[i].transform.Find("Slot_Equipment");
+                if (slotTransform != null)
+                    slotTransform.gameObject.SetActive(false);
+            }
 
-            if (string.IsNullOrEmpty(carrierName))
-                return null;
+            int[] capacityContainerIds = { InventoryContainerIds.RIG, InventoryContainerIds.BACKPACK, InventoryContainerIds.SAFEBOX };
+            for (int i = 0; i < capacityContainerIds.Length; i++)
+            {
+                int containerIndex = FindContainerIndex(viewModel, capacityContainerIds[i]);
+                if (containerIndex < 0)
+                    return null;
 
-            Transform carrier = transform.Find($"ScrollView_Capacity/Viewport/Content/{carrierName}");
-            if (carrier != null) return carrier;
+                Transform slotTransform = Containers[containerIndex].transform.Find("Slot_Equipment");
+                UIInventoryCarrier slot = slotTransform == null ? null : slotTransform.GetComponent<UIInventoryCarrier>();
+#if UNITY_EDITOR
+                if (slot == null)
+                    QLog.Error($"容量载体缺少固定独立装备槽：容器 {capacityContainerIds[i]}");
+#endif
+                if (slot == null)
+                    return null;
 
-            if (containerId == InventoryContainerIds.SAFEBOX_SLOT)
-                return transform.Find("Carrier_SafeBox");
+                slot.gameObject.SetActive(true);
+                result.Add(slot);
+            }
 
-            QLog.Error($"找不到独立装备槽挂载位置：{carrierName}");
-            return null;
+            return result.ToArray();
+        }
+
+        //按容器编号查找面板载体索引
+        private static int FindContainerIndex(EquipmentPanelViewModel viewModel, int containerId)
+        {
+            for (int i = 0; i < viewModel.ContainerCount; i++)
+            {
+                if (viewModel.GetContainer(i).ContainerId == containerId)
+                    return i;
+            }
+
+            QLog.Error($"找不到容量容器：{containerId}");
+            return -1;
         }
         #endregion
     }

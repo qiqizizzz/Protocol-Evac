@@ -43,6 +43,10 @@ namespace UI.Inventory.View
         {
             m_background = GetComponent<Image>();
             m_rect = GetComponent<RectTransform>();
+#if UNITY_EDITOR
+            if (m_background == null)
+                Utils.log.QLog.Error($"[{nameof(UIInventorySlot)}] 格子预制体缺少 Image 组件：{gameObject.name}");
+#endif
         }
 
         protected override void BindViewModel(InventorySlotViewModel viewModel)
@@ -77,6 +81,7 @@ namespace UI.Inventory.View
         private void RenderSolid(bool isSolid)
         {
             m_isSolid = isSolid;
+            if (m_background == null) return;
             m_background.enabled = isSolid;
             m_background.raycastTarget = isSolid;
             ApplyMark();
@@ -90,7 +95,7 @@ namespace UI.Inventory.View
 
         private void ApplyMark()
         {
-            if (!m_isSolid) return;
+            if (!m_isSolid || m_background == null) return;
 
             m_background.color = ColorOf(m_mark);
         }
