@@ -26,6 +26,12 @@ namespace UI.Inventory
         //注销容器
         void UnregisterContainer(int containerId);
         
+        //容器是否已注册
+        bool IsContainerRegistered(int containerId);
+        
+        //自动找第一块空位塞入新物品, 穿戴装备与造演示物品的主路径
+        InventoryMoveResult TryAddItemAuto(int containerId, int itemId, int amount);
+        
         //打开野外物资箱, 摇一次掉落并注册成运行时容器; 同一份配置未关闭前重复打开返回原容器号
         int OpenLootContainer(LootContainerConfigSO loot, int seed);
         

@@ -145,14 +145,12 @@ namespace Tests.MVVM
         public static void Register(MvvmRoot root) => QMvvmProbeJournal.Add("High");
     }
 
-    // 缺少 Register 方法的探针
-    [MvvmModule]
+    // 缺少 Register 方法的探针, 不加 MvvmModule 特性, 避免被运行期装配扫到
     internal static class QMvvmProbeModuleMissing
     {
     }
 
-    // 装配时抛异常的探针
-    [MvvmModule]
+    // 装配时抛异常的探针, 不加 MvvmModule 特性, 避免被运行期装配扫到
     internal static class QMvvmProbeModuleThrowing
     {
         public static void Register(MvvmRoot root) => throw new InvalidOperationException("探针装配断裂");

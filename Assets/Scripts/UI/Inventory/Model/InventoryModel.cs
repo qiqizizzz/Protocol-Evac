@@ -14,6 +14,7 @@ using Module.Inventory.Core.Config.Type;
 using Module.Inventory.Core.Data;
 using Module.Inventory.Core.Defines;
 using Module.Inventory.Core.Loot;
+using Module.Inventory.Core.Rule.Extensions;
 using Module.Inventory.Core.Rule.Type;
 using UnityEngine;
 using Utils.log;
@@ -24,6 +25,9 @@ namespace UI.Inventory
     {
         //物资箱配置无效时返回的容器号
         private const int INVALID_CONTAINER_ID = -1;
+
+        //装备槽按单格收纳, 只够放下一件装备
+        private const int EQUIP_SLOT_SIZE = 1;
 
         //物资箱不设独立负重, 负重结算归角色整体
         private const float LOOT_WEIGHT_LIMIT = float.MaxValue;
@@ -51,7 +55,15 @@ namespace UI.Inventory
         #region Model生命周期
         public void OnRegister()
         {
-            
+            //装备槽是角色身体拓扑的一部分, 模型注册时就把六个槽位立起来
+            int[] equipSlotIds = InventoryContainerIds.EQUIP_SLOT_IDS;
+            for (int i = 0; i < equipSlotIds.Length; i++)
+            {
+                if (!InventoryContainerIds.TryGetEquipSlotRole(equipSlotIds[i], out InventoryEquipSlot role)) continue;
+
+                RegisterContainer(equipSlotIds[i], new InventoryContainerSpec(EQUIP_SLOT_SIZE, EQUIP_SLOT_SIZE,
+                    float.MaxValue, null, SlotDisplayName(role), role));
+            }
         }
 
         public void OnUnregister()
@@ -84,6 +96,33 @@ namespace UI.Inventory
             ForgetLootContainer(containerId);
             
             OnChanged?.Invoke(containerId);
+        }
+
+        public bool IsContainerRegistered(int containerId) => m_containers.ContainsKey(containerId);
+
+        //自动找第一块空位塞入新物品, 穿戴装备与造演示物品的主路径
+        public InventoryMoveResult TryAddItemAuto(int containerId, int itemId, int amount)
+        {
+            if (!TryGetContainer(containerId, out InventoryContainer container))
+            {
+                QLog.Error($"容器未注册：{containerId}");
+                return InventoryMoveResult.None;
+            }
+
+            if (!ItemRegistry.TryGet(itemId, out InventoryItemConfigSO config))
+            {
+                QLog.Error($"物品配置未登记：{itemId}");
+                return InventoryMoveResult.ConfigMissing;
+            }
+
+            InventoryItemInstance instance = new InventoryItemInstance(config, amount);
+            if (!TryFindFreeCell(container, container.ResolveFootprint(instance, InventoryRotation.None), out Vector2Int cell))
+                return InventoryMoveResult.Occupied;
+
+            if (container.TryAdd(instance, cell) == null) return InventoryMoveResult.Occupied;
+
+            SyncWornCapacities();
+            return InventoryMoveResult.Success;
         }
 
         public InventoryContainerVO GetContainerVO(int containerId)
@@ -146,7 +185,8 @@ namespace UI.Inventory
             if(reason != InventoryMoveResult.Success) return reason;
 
             if (container.TryAdd(instance, cell) == null) return InventoryMoveResult.Occupied;
-            
+
+            SyncWornCapacities();
             return InventoryMoveResult.Success;
         }
 
@@ -161,7 +201,10 @@ namespace UI.Inventory
             if (!TryGetPlacement(container, instanceId, out InventoryItemPlacement placement))
                 return InventoryMoveResult.SourceNotFound;
 
-            return container.TryMoveTo(container, placement, cell, rotation);
+            InventoryMoveResult moveResult = container.TryMoveTo(container, placement, cell, rotation);
+            if (moveResult.IsSuccessOrSame()) SyncWornCapacities();
+
+            return moveResult;
         }
 
         public InventoryMoveResult TryTransferItem(int sourceContainerId, int targetContainerId, int instanceId, Vector2Int cell)
@@ -188,9 +231,12 @@ namespace UI.Inventory
 
             if (verdict != InventoryMoveResult.Success) return verdict;
 
-            if (occupant == null) return source.TryMoveTo(target, placement, cell, rotation);
+            InventoryMoveResult transferResult = occupant == null
+                ? source.TryMoveTo(target, placement, cell, rotation)
+                : source.TrySwapTo(target, placement, occupant, cell, rotation);
 
-            return source.TrySwapTo(target, placement, occupant, cell, rotation);
+            if (transferResult.IsSuccessOrSame()) SyncWornCapacities();
+            return transferResult;
         }
 
         public InventoryMoveResult PeekTransferItem(int sourceContainerId, int targetContainerId, int instanceId,
@@ -262,6 +308,49 @@ namespace UI.Inventory
             OnChanged?.Invoke(container.ContainerId);
         }
         #endregion
+
+        //把装备槽撑起的容量容器同步一遍: 槽里穿着容器装备就注册其容量, 槽空或装备不带容量就注销
+        //本期不换装也不卸载, 装备槽内容写一次定终身, RegisterContainer 对已存在 id 早返回, 不会读到旧尺寸
+        private void SyncWornCapacities()
+        {
+            int[] slotIds = InventoryContainerIds.EQUIP_SLOT_IDS;
+            for (int i = 0; i < slotIds.Length; i++)
+            {
+                if (!m_containers.TryGetValue(slotIds[i], out InventoryContainer slot)) continue;
+                if (!InventoryContainerIds.TryGetEquipSlotRole(slotIds[i], out InventoryEquipSlot role)) continue;
+                if (!InventoryContainerIds.TryGetCapacityContainerId(role, out int capacityId)) continue;
+
+                if (slot.Count == 0)
+                {
+                    UnregisterContainer(capacityId);
+                    continue;
+                }
+
+                foreach (InventoryItemPlacement placement in slot.Placements)
+                {
+                    InventoryContainerConfigSO definition = placement.Instance.Config.Container;
+                    if (definition == null) UnregisterContainer(capacityId);
+                    else RegisterContainer(capacityId, new InventoryContainerSpec(definition.Width, definition.Height,
+                        float.MaxValue, definition.Mask, definition.DisplayName));
+                    break;
+                }
+            }
+        }
+
+        //装备槽表头显示名, 展示穿戴部位而不是装备名
+        private static string SlotDisplayName(InventoryEquipSlot role)
+        {
+            switch (role)
+            {
+                case InventoryEquipSlot.Helmet: return "头盔";
+                case InventoryEquipSlot.ChestRig: return "胸挂";
+                case InventoryEquipSlot.Backpack: return "背包";
+                case InventoryEquipSlot.PrimaryWeapon: return "主武器";
+                case InventoryEquipSlot.SecondaryWeapon: return "副武器";
+                case InventoryEquipSlot.Melee: return "近战";
+                default: return string.Empty;
+            }
+        }
 
         //物资箱配置校验, 缺网格的箱子开不出来
         private static bool TryGetLootGrid(LootContainerConfigSO loot, out InventoryContainerConfigSO grid)

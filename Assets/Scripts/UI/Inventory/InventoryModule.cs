@@ -12,6 +12,8 @@ using Framework.QTower.MVVM.View;
 using Module.Inventory.Core.Config;
 using Module.Inventory.Core.Data;
 using Module.Inventory.Core.Defines;
+using Module.Inventory.Core.Rule.Extensions;
+using Module.Inventory.Core.Rule.Type;
 using UI.Inventory.View;
 using Utils.log;
 
@@ -35,16 +37,17 @@ namespace UI.Inventory
             IInventoryModel model = root.Models.Register<IInventoryModel>(new InventoryModel(config));
             config.RegisterItems();
             ApplyLoadout(model, config.Loadout);
+            SeedDemoItems(model);
 
             root.Windows.RegisterAsync<UIEquipmentPanel>(
                 parent => ResManager.InstantiateAsync(UIDefines.UIEquipmentPanel, parent));
         }
 
         /// <summary>
-        /// 按穿戴表把角色身上的每个容器槽位注册进模型
+        /// 按穿戴表注册角色身上的容器: 口袋与安全箱是先天容量, 背包与胸挂要穿进装备槽才撑起容量
         /// </summary>
         /// <param name="model">背包模型</param>
-        /// <param name="loadout">穿戴表, 取不到时整批槽位都不会被注册</param>
+        /// <param name="loadout">穿戴表, 取不到时角色身上不会注册任何容器</param>
         public static void ApplyLoadout(IInventoryModel model, InventoryLoadoutConfigSO loadout)
         {
             if (loadout == null)
@@ -53,18 +56,11 @@ namespace UI.Inventory
                 return;
             }
 
-            int[] slotIds = InventoryContainerIds.ROLE_SLOT_IDS;
-            for (int i = 0; i < slotIds.Length; i++)
-            {
-                if (!loadout.TryGetContainer(slotIds[i], out InventoryContainerConfigSO container))
-                {
-                    //脱下装备后空槽位会变成合法状态, 那时再把这条报错降级成跳过
-                    QLog.Error($"槽位未配置容器定义：{slotIds[i]}");
-                    continue;
-                }
+            ApplyInnateContainer(model, InventoryContainerIds.POCKETS, loadout);
+            ApplyInnateContainer(model, InventoryContainerIds.SAFEBOX, loadout);
 
-                ApplyContainer(model, slotIds[i], container);
-            }
+            EquipFromLoadout(model, InventoryContainerIds.BACKPACK_SLOT, loadout.Backpack, "背包");
+            EquipFromLoadout(model, InventoryContainerIds.CHESTRIG_SLOT, loadout.Rig, "胸挂");
         }
 
         /// <summary>
@@ -85,6 +81,47 @@ namespace UI.Inventory
             model.RegisterContainer(slotId,
                 new InventoryContainerSpec(container.Width, container.Height, float.MaxValue, container.Mask,
                     container.DisplayName));
+        }
+
+        //先天容量直接按穿戴表里的容器定义注册, 不经过装备槽
+        private static void ApplyInnateContainer(IInventoryModel model, int slotId, InventoryLoadoutConfigSO loadout)
+        {
+            if (!loadout.TryGetContainer(slotId, out InventoryContainerConfigSO container))
+            {
+                QLog.Error($"槽位未配置容器定义：{slotId}");
+                return;
+            }
+
+            ApplyContainer(model, slotId, container);
+        }
+
+        //把穿戴表里的容器装备塞进对应装备槽, 模型内部顺势撑起它的容量容器
+        private static void EquipFromLoadout(IInventoryModel model, int slotId, InventoryItemConfigSO equipment,
+            string label)
+        {
+            if (equipment == null) return;
+
+            if (!equipment.IsContainer)
+            {
+                QLog.Error($"{label}穿戴的物品不是容器装备：{equipment.DisplayName}");
+                return;
+            }
+
+            InventoryMoveResult result = model.TryAddItemAuto(slotId, equipment.ItemId, 1);
+            if (!result.IsSuccessOrSame()) QLog.Error($"{label}穿戴失败：{result}");
+        }
+
+        //演示种子, 掉落系统接上后移除
+        private static void SeedDemoItems(IInventoryModel model)
+        {
+            int backpack = InventoryContainerIds.BACKPACK;
+            if (!model.IsContainerRegistered(backpack)) return;
+
+            model.TryAddItemAuto(backpack, 6100, 1);
+            model.TryAddItemAuto(backpack, 1000, 1);
+            model.TryAddItemAuto(backpack, 1002, 1);
+            model.TryAddItemAuto(backpack, 1003, 1);
+            model.TryAddItemAuto(backpack, 3001, 1);
         }
     }
 }

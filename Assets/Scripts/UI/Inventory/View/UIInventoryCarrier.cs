@@ -71,6 +71,7 @@ namespace UI.Inventory.View
             Scope.Bind(viewModel.HintKind, RenderHint);
             Scope.Bind(viewModel.CanRotate, RenderCanRotate);
             Scope.Bind(viewModel.HintPulse, PlayHintPulse);
+            Scope.Bind(viewModel.Visible, gameObject.SetActive);
         }
         #endregion
 

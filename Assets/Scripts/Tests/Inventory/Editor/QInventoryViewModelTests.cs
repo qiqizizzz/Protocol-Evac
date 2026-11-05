@@ -7,14 +7,12 @@
 */
 
 using System;
-using System.Text.RegularExpressions;
 using Module.Inventory.Core.Config.Type;
 using Module.Inventory.Core.Data;
 using Module.Inventory.Core.Rule.Type;
 using NUnit.Framework;
 using UI.Inventory;
 using UnityEngine;
-using UnityEngine.TestTools;
 
 namespace Tests.Inventory
 {
@@ -306,9 +304,9 @@ namespace Tests.Inventory
             m_viewModel.InteractAt(new Vector2Int(1, 1));
             Assert.AreEqual(InventoryHintKind.Selected, m_viewModel.HintKind.Value);
 
-            LogAssert.Expect(LogType.Error, new Regex("容器未注册"));
             m_model.UnregisterContainer(m_containerId);
 
+            Assert.IsFalse(m_viewModel.Visible.Value, "容器注销后载体该隐藏");
             Assert.AreEqual(NO_SELECTION, m_viewModel.SelectedInstanceId.Value);
             Assert.AreEqual(InventoryHintKind.Idle, m_viewModel.HintKind.Value);
             Assert.AreEqual(0, m_viewModel.SlotCount);

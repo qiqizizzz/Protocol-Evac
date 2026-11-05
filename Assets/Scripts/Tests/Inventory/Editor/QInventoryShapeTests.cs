@@ -390,7 +390,6 @@ namespace Tests.Inventory
         [Test]
         public void ReRegister_WithAnotherShape_RebuildsSlotsAndSolidFlags()
         {
-            LogAssert.Expect(LogType.Error, new Regex("容器未注册"));
             m_model.UnregisterContainer(m_containerId);
 
             Assert.AreEqual(0, m_viewModel.SlotCount);

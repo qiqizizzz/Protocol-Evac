@@ -47,7 +47,7 @@ namespace UI.Inventory.Editor
                 new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
             }
 
-            // MvvmHost 必须落在 Canvas 子树内, 否则 MvvmRoot/ViewRoot 没有渲染根, 面板实例化出来也看不见
+            // MvvmHost 必须落在 Canvas 子树内, 否则 MvvmRoot 没有渲染根, 面板实例化出来也看不见
             if (UnityEngine.Object.FindObjectOfType<MvvmHost>() == null)
             {
                 //优先挂 MVC 的 UIRoot, 与业务面板共用同一渲染根与缩放, 没有再退回场景任意 Canvas
@@ -198,7 +198,7 @@ namespace UI.Inventory.Editor
                 return null;
             }
 
-            Component[] components = root.ViewRoot.GetComponentsInChildren(carrierType, true);
+            Component[] components = root.Windows.Root.GetComponentsInChildren(carrierType, true);
             if (components.Length == 0)
             {
                 Debug.LogWarning(LOG + "载体未打开, 先点 2");

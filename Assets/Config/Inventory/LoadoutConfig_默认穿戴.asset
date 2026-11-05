@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: "LoadoutConfig_\u9ED8\u8BA4\u7A7F\u6234"
   m_EditorClassIdentifier: 
   BackpackValue: {fileID: 11400000, guid: b4040e161276aa64dae592e947b625de, type: 2}
-  RigValue: {fileID: 11400000, guid: d772b2bd416234a40a2a28d0996f22a9, type: 2}
+  RigValue: {fileID: 0}
   PocketsValue: {fileID: 11400000, guid: 01e09bde3b95fbb4d893af6f5e758482, type: 2}
   SafeBoxValue: {fileID: 11400000, guid: fcd3e41df66796641a03933a1e5e02af, type: 2}

@@ -27,6 +27,7 @@ namespace UI.Inventory
         public IReadOnlyReactiveProperty<int> SelectedInstanceId => m_selectedInstanceId;
         public IReadOnlyReactiveProperty<InventoryHintKind> HintKind => m_hintKind;
         public IReadOnlyReactiveProperty<bool> CanRotate => m_canRotate;
+        public IReadOnlyReactiveProperty<bool> Visible => m_visible;
         public ISignal HintPulse => m_hintPulse;
         public InventoryMoveResult LastMoveResult => m_lastMoveResult;
         public int DraggingInstanceId => m_dragInstanceId;
@@ -43,6 +44,7 @@ namespace UI.Inventory
         private readonly ReactiveProperty<int> m_selectedInstanceId;
         private readonly ReactiveProperty<InventoryHintKind> m_hintKind;
         private readonly ReactiveProperty<bool> m_canRotate;
+        private readonly ReactiveProperty<bool> m_visible;
         private readonly Signal m_hintPulse;
 
         private readonly List<InventorySlotViewModel>  m_slots = new List<InventorySlotViewModel>();
@@ -74,6 +76,7 @@ namespace UI.Inventory
             m_selectedInstanceId = CreateProperty(NO_SELECTION);
             m_hintKind = CreateProperty(InventoryHintKind.Idle);
             m_canRotate = CreateProperty(false);
+            m_visible = CreateProperty(false);
             m_hintPulse = CreateSignal();
         }
 
@@ -266,7 +269,10 @@ namespace UI.Inventory
         //从模型拉取最新快照
         private void RefreshFromModel()
         {
-            InventoryContainerVO vo = m_model.GetContainerVO(m_containerId);
+            //容器没注册就不该让载体刷一张空网格, 更不该去模型里讨报错
+            bool registered = m_model.IsContainerRegistered(m_containerId);
+            m_visible.TrySet(registered);
+            InventoryContainerVO vo = registered ? m_model.GetContainerVO(m_containerId) : InventoryContainerVO.Empty;
             SyncSlots(vo);
             m_snapshot.Set(vo);
             

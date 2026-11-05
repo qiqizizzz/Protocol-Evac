@@ -1,6 +1,6 @@
 ﻿/*
  * ┌──────────────────────────────────┐
- * │  描    述: 战备面板视图模型, 按角色槽位统管四个容器子视图模型
+ * │  描    述: 战备面板视图模型, 统管六个装备槽与四个容量载体的子视图模型
  * │  类    名: EquipmentPanelViewModel.cs
  * │  创    建: By qiqizizzz
  * └──────────────────────────────────┘
@@ -26,7 +26,7 @@ namespace UI.Inventory
         private InventoryViewModel m_dragSource; 
 
         public EquipmentPanelViewModel()
-            : this(MvvmRoot.Instance.Models.Get<IInventoryModel>(), InventoryContainerIds.ROLE_SLOT_IDS)
+            : this(MvvmRoot.Instance.Models.Get<IInventoryModel>(), InventoryContainerIds.EQUIPMENT_CONTAINER_IDS)
         {
         }
 

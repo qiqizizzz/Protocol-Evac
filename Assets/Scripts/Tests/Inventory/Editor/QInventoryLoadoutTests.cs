@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using Module.Inventory.Core.Config;
+using Module.Inventory.Core.Config.Type;
 using Module.Inventory.Core.Defines;
 using NUnit.Framework;
 using UI.Inventory;
@@ -170,36 +171,36 @@ namespace Tests.Inventory
         public void ApplyLoadout_RegistersEachSlotWithItsOwnGeometry()
         {
             InventoryLoadoutConfigSO loadout = m_kit.CreateLoadout(
-                m_kit.CreateContainerItem(m_kit.CreateContainer(8, 5)),
-                m_kit.CreateContainerItem(m_kit.CreateContainer(5, 3)),
+                m_kit.CreateContainerItem(m_kit.CreateContainer(8, 5), equipSlot: InventoryEquipSlot.Backpack),
+                m_kit.CreateContainerItem(m_kit.CreateContainer(5, 3), equipSlot: InventoryEquipSlot.ChestRig),
                 m_kit.CreateContainer(4, 2),
                 m_kit.CreateContainerItem(m_kit.CreateContainer(3, 3)));
 
             InventoryModule.ApplyLoadout(m_model, loadout);
 
+            Assert.IsTrue(m_model.IsContainerRegistered(InventoryContainerIds.BACKPACK_SLOT));
+            Assert.IsTrue(m_model.IsContainerRegistered(InventoryContainerIds.CHESTRIG_SLOT));
             AssertContainerGeometry(InventoryContainerIds.BACKPACK, 8, 5, 40);
             AssertContainerGeometry(InventoryContainerIds.RIG, 5, 3, 15);
             AssertContainerGeometry(InventoryContainerIds.POCKETS, 4, 2, 8);
             AssertContainerGeometry(InventoryContainerIds.SAFEBOX, 3, 3, 9);
         }
 
+        // 没穿胸挂是常态而非配置事故, 装配处不该报错, 胸挂容量也不该被注册出来
         [Test]
-        public void ApplyLoadout_EmptySlotLogsErrorButOthersStillRegister()
+        public void ApplyLoadout_EmptyRigSlotRegistersNothingAndKeepsTheRest()
         {
             InventoryLoadoutConfigSO loadout = m_kit.CreateLoadout(
-                m_kit.CreateContainerItem(m_kit.CreateContainer(8, 5)), null,
+                m_kit.CreateContainerItem(m_kit.CreateContainer(8, 5), equipSlot: InventoryEquipSlot.Backpack), null,
                 m_kit.CreateContainer(4, 2),
                 m_kit.CreateContainerItem(m_kit.CreateContainer(3, 3)));
 
-            LogAssert.Expect(LogType.Error, new Regex("槽位未配置容器定义"));
             InventoryModule.ApplyLoadout(m_model, loadout);
 
+            Assert.IsFalse(m_model.IsContainerRegistered(InventoryContainerIds.RIG));
             AssertContainerGeometry(InventoryContainerIds.BACKPACK, 8, 5, 40);
             AssertContainerGeometry(InventoryContainerIds.POCKETS, 4, 2, 8);
             AssertContainerGeometry(InventoryContainerIds.SAFEBOX, 3, 3, 9);
-
-            LogAssert.Expect(LogType.Error, new Regex("容器未注册"));
-            Assert.AreEqual(0, m_model.GetContainerVO(InventoryContainerIds.RIG).CellCount);
         }
 
         [Test]
@@ -207,16 +208,32 @@ namespace Tests.Inventory
         {
             InventoryLoadoutConfigSO loadout = m_kit.CreateLoadout(
                 m_kit.CreateItem(2, 3),
-                m_kit.CreateContainerItem(m_kit.CreateContainer(5, 3)),
+                m_kit.CreateContainerItem(m_kit.CreateContainer(5, 3), equipSlot: InventoryEquipSlot.ChestRig),
                 m_kit.CreateContainer(4, 2),
                 m_kit.CreateContainerItem(m_kit.CreateContainer(3, 3)));
 
-            LogAssert.Expect(LogType.Error, new Regex("槽位未配置容器定义"));
+            LogAssert.Expect(LogType.Error, new Regex("背包穿戴的物品不是容器装备"));
             InventoryModule.ApplyLoadout(m_model, loadout);
 
-            LogAssert.Expect(LogType.Error, new Regex("容器未注册"));
-            Assert.AreEqual(0, m_model.GetContainerVO(InventoryContainerIds.BACKPACK).CellCount);
+            Assert.IsFalse(m_model.IsContainerRegistered(InventoryContainerIds.BACKPACK));
             AssertContainerGeometry(InventoryContainerIds.RIG, 5, 3, 15);
+        }
+
+        // 穿戴表把部位配错, 装备槽按部位拒收, 装配处把失败原因报出来
+        [Test]
+        public void ApplyLoadout_WrongEquipSlotLogsWearFailure()
+        {
+            InventoryItemConfigSO helmetBackpack = m_kit.CreateContainerItem(m_kit.CreateContainer(8, 5),
+                equipSlot: InventoryEquipSlot.Helmet);
+            InventoryLoadoutConfigSO loadout = m_kit.CreateLoadout(helmetBackpack, null,
+                m_kit.CreateContainer(4, 2),
+                m_kit.CreateContainerItem(m_kit.CreateContainer(3, 3)));
+
+            LogAssert.Expect(LogType.Error, new Regex("背包穿戴失败"));
+            InventoryModule.ApplyLoadout(m_model, loadout);
+
+            Assert.IsFalse(m_model.IsContainerRegistered(InventoryContainerIds.BACKPACK));
+            Assert.AreEqual(0, m_model.GetContainerVO(InventoryContainerIds.BACKPACK_SLOT).Items.Count);
         }
 
         [Test]
@@ -260,7 +277,6 @@ namespace Tests.Inventory
             Assert.AreEqual(40, viewModel.Snapshot.Value.CellCount);
 
             // 换型号走先注销再注册, 注销瞬间快照为空, 注册新规格后网格按新拓扑重建
-            LogAssert.Expect(LogType.Error, new Regex("容器未注册"));
             m_model.UnregisterContainer(backpackSlot);
             InventoryModule.ApplyContainer(m_model, backpackSlot, m_kit.CreateContainer(10, 6));
 

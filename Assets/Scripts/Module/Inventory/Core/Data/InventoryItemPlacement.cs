@@ -1,7 +1,7 @@
 ﻿/*
  * ┌──────────────────────────────────┐
  * │  描    述: 背包物品网格占位记录类                      
- * │  类    名: InventoryPlacement.cs       
+ * │  类    名: InventoryItemPlacement.cs   
  * │  创    建: By qiqizizzz
  * └──────────────────────────────────┘
  */
@@ -24,6 +24,9 @@ namespace Module.Inventory.Core.Data
 
         public int CellCount => Size.x * Size.y;
 
+        //实际占下的格子范围, 装备槽把大件压成单格时由容器写入; 未写入时沿用配置尺寸
+        public Vector2Int Footprint { get; internal set; }
+
         public InventoryItemPlacement(InventoryItemInstance instance, Vector2Int position, InventoryRotation rotation = InventoryRotation.None)
         {
             Instance = instance;
@@ -31,8 +34,9 @@ namespace Module.Inventory.Core.Data
             Rotation = rotation;
         }
         
-        //指定向下的占格尺寸(用于试算)
-        public Vector2Int SizeAt(InventoryRotation rotation) => Instance.Config.GetSizeAt(rotation);
+        //指定向下的占格尺寸, 容器写过足迹后一律以足迹为准
+        public Vector2Int SizeAt(InventoryRotation rotation)
+            => Footprint.x > 0 && Footprint.y > 0 ? Footprint : Instance.Config.GetSizeAt(rotation);
 
         //判断某个格子是否被占据(AABB, 轴对齐包围盒)
         public bool Contains(Vector2Int cell)

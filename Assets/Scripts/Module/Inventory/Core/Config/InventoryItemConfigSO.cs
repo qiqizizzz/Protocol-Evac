@@ -51,6 +51,9 @@ namespace Module.Inventory.Core.Config
         [Tooltip("装备后撑起的网格定义, 非容器物品留空; 野外物资箱只用容器定义, 不需要这份物品配置")]
         [SerializeField] private InventoryContainerConfigSO ContainerValue;
 
+        [Tooltip("可穿戴到的部位, 装备槽只收对应部位的装备")]
+        [SerializeField] private InventoryEquipSlot EquipSlotValue;
+
         public int ItemId => ItemIdValue;
         public string DisplayName => DisplayNameValue;
         public InventoryItemType ItemType => ItemTypeValue;
@@ -65,6 +68,7 @@ namespace Module.Inventory.Core.Config
 
         public InventoryContainerConfigSO Container => ContainerValue;
         public bool IsContainer => ContainerValue != null;
+        public InventoryEquipSlot EquipSlot => EquipSlotValue;
 
         //指定朝下的占格尺寸(用于试算)
         public Vector2Int GetSizeAt(InventoryRotation rotation)

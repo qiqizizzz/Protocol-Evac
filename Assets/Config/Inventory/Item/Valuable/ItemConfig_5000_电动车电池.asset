@@ -23,3 +23,5 @@ MonoBehaviour:
   RarityValue: 5
   UnitValueValue: 25000
   IconValue: {fileID: 21300000, guid: e7472b0b49a92a14596635abcc50a5e6, type: 3}
+  ContainerValue: {fileID: 0}
+  EquipSlotValue: 0

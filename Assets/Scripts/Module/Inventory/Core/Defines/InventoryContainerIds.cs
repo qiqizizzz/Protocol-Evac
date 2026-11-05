@@ -6,13 +6,15 @@
 * └──────────────────────────────────┘
 */
 
+using Module.Inventory.Core.Config.Type;
+
 namespace Module.Inventory.Core.Defines
 {
     public static class InventoryContainerIds
     {
         //角色主背包
         public const int BACKPACK = 1;
-        
+
         //胸挂
         public const int RIG = 2;
 
@@ -22,13 +24,86 @@ namespace Module.Inventory.Core.Defines
         //安全箱
         public const int SAFEBOX = 4;
 
-        //地上战利品箱
-        public const int LOOT = 10;
+        //头盔装备槽
+        public const int HELMET_SLOT = 5;
 
-        //角色身上的容器槽位, 装配处按此顺序注册
+        //胸挂装备槽
+        public const int CHESTRIG_SLOT = 6;
+
+        //背包装备槽
+        public const int BACKPACK_SLOT = 7;
+
+        //主武器装备槽
+        public const int PRIMARY_WEAPON_SLOT = 8;
+
+        //副武器装备槽
+        public const int SECONDARY_WEAPON_SLOT = 9;
+
+        //近战装备槽
+        public const int MELEE_SLOT = 10;
+
+        //地上战利品箱起始号, 运行时往后递增分配
+        public const int LOOT = 20;
+
+        //角色身上的四个容量容器, 读档与测试按此遍历
         public static readonly int[] ROLE_SLOT_IDS =
         {
             BACKPACK, RIG, POCKETS, SAFEBOX
         };
+
+        //左列六个装备槽, 顺序即自上而下
+        public static readonly int[] EQUIP_SLOT_IDS =
+        {
+            HELMET_SLOT, CHESTRIG_SLOT, BACKPACK_SLOT, PRIMARY_WEAPON_SLOT, SECONDARY_WEAPON_SLOT, MELEE_SLOT
+        };
+
+        //战备面板载体的装配顺序, 必须与预制体 Containers[] 逐项对应
+        public static readonly int[] EQUIPMENT_CONTAINER_IDS =
+        {
+            HELMET_SLOT, CHESTRIG_SLOT, BACKPACK_SLOT, PRIMARY_WEAPON_SLOT, SECONDARY_WEAPON_SLOT, MELEE_SLOT,
+            RIG, POCKETS, BACKPACK, SAFEBOX
+        };
+
+        /// <summary>
+        /// 容器号反查装备槽部位, 非装备槽返回 false
+        /// </summary>
+        /// <param name="containerId">容器号</param>
+        /// <param name="slot">命中的穿戴部位</param>
+        public static bool TryGetEquipSlotRole(int containerId, out InventoryEquipSlot slot)
+        {
+            slot = containerId switch
+            {
+                HELMET_SLOT => InventoryEquipSlot.Helmet,
+                CHESTRIG_SLOT => InventoryEquipSlot.ChestRig,
+                BACKPACK_SLOT => InventoryEquipSlot.Backpack,
+                PRIMARY_WEAPON_SLOT => InventoryEquipSlot.PrimaryWeapon,
+                SECONDARY_WEAPON_SLOT => InventoryEquipSlot.SecondaryWeapon,
+                MELEE_SLOT => InventoryEquipSlot.Melee,
+                _ => InventoryEquipSlot.None
+            };
+
+            return slot != InventoryEquipSlot.None;
+        }
+
+        /// <summary>
+        /// 穿戴部位查它撑起的容量容器号, 头盔与武器等不带容量的部位返回 false
+        /// </summary>
+        /// <param name="slot">穿戴部位</param>
+        /// <param name="containerId">对应的容量容器号</param>
+        public static bool TryGetCapacityContainerId(InventoryEquipSlot slot, out int containerId)
+        {
+            switch (slot)
+            {
+                case InventoryEquipSlot.Backpack:
+                    containerId = BACKPACK;
+                    return true;
+                case InventoryEquipSlot.ChestRig:
+                    containerId = RIG;
+                    return true;
+                default:
+                    containerId = 0;
+                    return false;
+            }
+        }
     }
 }

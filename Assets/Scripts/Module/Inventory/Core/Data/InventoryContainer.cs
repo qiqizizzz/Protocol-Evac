@@ -24,6 +24,12 @@ namespace Module.Inventory.Core.Data
         public string DisplayName { get; }
         public InventoryGrid Grid { get; }
         public float WeightLimit { get; }
+
+        //穿戴部位, 普通容器为 None
+        public InventoryEquipSlot EquipSlot { get; }
+
+        //是不是装备槽, 装备槽只收对应部位的装备且按单格收纳
+        public bool IsEquipSlot => EquipSlot != InventoryEquipSlot.None;
         
         //每次成功变更后自增, 用于作联机时的冲突检测
         public int Version { get; private set; }
@@ -57,6 +63,7 @@ namespace Module.Inventory.Core.Data
             Grid = new InventoryGrid(spec.Width, spec.Height, spec.Mask);
             WeightLimit = spec.WeightLimit;
             DisplayName = spec.DisplayName;
+            EquipSlot = spec.EquipSlot;
             m_rules = rules;
         }
 
@@ -70,6 +77,7 @@ namespace Module.Inventory.Core.Data
             if (m_rules.CanAdd(this, instance, position, rotation) != InventoryMoveResult.Success)
                 return null;
 
+            placement.Footprint = ResolveFootprint(instance, rotation);
             Grid.Add(placement);
             Commit();
             return placement;
@@ -107,6 +115,10 @@ namespace Module.Inventory.Core.Data
             moving.SetPosition(position);
             moving.SetRotation(rotation);
             occupant.SetPosition(originPosition);
+
+            //两件物品各奔新家, 落位前按新东家的口径重算足迹
+            moving.Footprint = target.ResolveFootprint(moving.Instance, rotation);
+            occupant.Footprint = ResolveFootprint(occupant.Instance, occupant.Rotation);
 
             Grid.Add(occupant);
             target.Grid.Add(moving);
@@ -154,6 +166,10 @@ namespace Module.Inventory.Core.Data
         }
         
         public bool Contains(InventoryItemPlacement placement) => Grid.Contains(placement);
+
+        //这件物品在该容器里实际占下的格子范围
+        public Vector2Int ResolveFootprint(InventoryItemInstance instance, InventoryRotation rotation)
+            => IsEquipSlot ? Vector2Int.one : instance.Config.GetSizeAt(rotation);
         
         public override string ToString()
         {
@@ -172,6 +188,7 @@ namespace Module.Inventory.Core.Data
             source.Grid.Remove(placement);
             placement.SetPosition(position);
             placement.SetRotation(rotation);
+            placement.Footprint = target.ResolveFootprint(placement.Instance, rotation);
             target.Grid.Add(placement);
         }
     }

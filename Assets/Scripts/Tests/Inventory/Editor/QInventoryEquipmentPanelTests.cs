@@ -6,14 +6,12 @@
  * └──────────────────────────────────┘
  */
 
-using System.Text.RegularExpressions;
 using Module.Inventory.Core.Data;
 using Module.Inventory.Core.Defines;
 using Module.Inventory.Core.Rule.Type;
 using NUnit.Framework;
 using UI.Inventory;
 using UnityEngine;
-using UnityEngine.TestTools;
 
 namespace Tests.Inventory
 {
@@ -168,13 +166,13 @@ namespace Tests.Inventory
         }
         #endregion
 
-        #region 容器号非法
+        #region 容器号未注册
+        // 没穿装备时容量容器本就不存在, 载体要安静地空着, 不能去模型里讨一条报错
         [Test]
-        public void Bind_ContainerIdNotRegistered_BuildsEmptySnapshotAndLogsError()
+        public void Bind_ContainerIdNotRegistered_BuildsEmptySnapshotSilently()
         {
             int missingContainerId = m_kit.NewContainerId();
             EquipmentPanelViewModel panel = new EquipmentPanelViewModel(m_model, new[] { missingContainerId });
-            LogAssert.Expect(LogType.Error, new Regex("容器未注册"));
 
             try
             {
@@ -182,6 +180,7 @@ namespace Tests.Inventory
                 panel.GetContainer(0).OnBind();
 
                 InventoryViewModel child = panel.GetContainer(0);
+                Assert.IsFalse(child.Visible.Value, "容器未注册时载体该隐藏");
                 Assert.AreEqual(0, child.SlotCount);
                 Assert.AreEqual(0, child.Snapshot.Value.CellCount);
                 Assert.IsEmpty(child.Snapshot.Value.DisplayName);

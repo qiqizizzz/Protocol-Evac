@@ -23,9 +23,13 @@ namespace Module.Inventory.Core.Rule
         public InventoryMoveResult CanAdd(InventoryContainer target, InventoryItemInstance instance, Vector2Int position,
             InventoryRotation rotation)
         {
+            //装备槽只收对应部位的装备
+            if (target.IsEquipSlot && instance.Config.EquipSlot != target.EquipSlot)
+                return InventoryMoveResult.SlotMismatch;
+
             if (IsOverWeight(target, instance.Weight)) return InventoryMoveResult.WeightExceeded;
 
-            Vector2Int size = instance.Config.GetSizeAt(rotation);
+            Vector2Int size = target.ResolveFootprint(instance, rotation);
             return CheckFit(target.Grid, position, size, null);
         }
 
@@ -44,12 +48,19 @@ namespace Module.Inventory.Core.Rule
             //物品禁止旋转
             if (rotation != placement.Rotation && !placement.Instance.Config.CanRotate)
                 return InventoryMoveResult.NotRotatable;
-            
+
+            //装备槽里的装备本期不许拖出
+            if (!sameContainer && source.IsEquipSlot) return InventoryMoveResult.UnequipLocked;
+
+            //跨容器搬进装备槽同样要部位对得上
+            if (!sameContainer && target.IsEquipSlot && placement.Instance.Config.EquipSlot != target.EquipSlot)
+                return InventoryMoveResult.SlotMismatch;
+
             //物品移动后目标容器重量超标
             if(!sameContainer && IsOverWeight(target, placement.Instance.Weight)) 
                 return InventoryMoveResult.WeightExceeded;
 
-            Vector2Int size = placement.SizeAt(rotation);
+            Vector2Int size = target.ResolveFootprint(placement.Instance, rotation);
             return CheckFit(target.Grid, position, size, sameContainer ? placement : null);
         }
 
@@ -63,6 +74,9 @@ namespace Module.Inventory.Core.Rule
 
             //自己和自己交换视为未移动
             if (ReferenceEquals(moving, occupant)) return InventoryMoveResult.SameSpot;
+
+            //装备槽被顶出就是卸下, 本期不开这个口子
+            if (source.IsEquipSlot || target.IsEquipSlot) return InventoryMoveResult.UnequipLocked;
 
             bool sameContainer = ReferenceEquals(source, target);
 
@@ -83,16 +97,18 @@ namespace Module.Inventory.Core.Rule
             }
 
             //同容器交换, 两件物品的新足迹仍在同一张网格上, 一旦互相压住就换不动
-            if (sameContainer && IsAreaOverlap(position, moving.SizeAt(rotation), moving.Position, occupant.Size))
+            if (sameContainer && IsAreaOverlap(position, target.ResolveFootprint(moving.Instance, rotation), moving.Position,
+                    source.ResolveFootprint(occupant.Instance, occupant.Rotation)))
                 return InventoryMoveResult.Occupied;
 
             //moving 落进 target 的新位置, 同容器要连自己一起忽略, 否则新旧占位会互相卡住
-            InventoryMoveResult fitMoving = CheckFit(target.Grid, position, moving.SizeAt(rotation),
+            InventoryMoveResult fitMoving = CheckFit(target.Grid, position, target.ResolveFootprint(moving.Instance, rotation),
                 occupant, sameContainer ? moving : null);
             if (fitMoving != InventoryMoveResult.Success) return fitMoving;
 
             //occupant 保持自身朝向被顶回 moving 原位
-            return CheckFit(source.Grid, moving.Position, occupant.Size, moving, sameContainer ? occupant : null);
+            return CheckFit(source.Grid, moving.Position, source.ResolveFootprint(occupant.Instance, occupant.Rotation), moving,
+                sameContainer ? occupant : null);
         }
         public InventoryMoveResult CanRotate(InventoryContainer container, InventoryItemPlacement placement,
             out InventoryRotation nextRotation)
@@ -100,6 +116,9 @@ namespace Module.Inventory.Core.Rule
             nextRotation = placement.Rotation;
             
             if(!container.Contains(placement)) return InventoryMoveResult.SourceNotFound;
+
+            //装备槽按单格收纳, 朝向没有意义
+            if (container.IsEquipSlot) return InventoryMoveResult.NotRotatable;
             
             if(!placement.Instance.Config.CanRotate) return InventoryMoveResult.NotRotatable;
 

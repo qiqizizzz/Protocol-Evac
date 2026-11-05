@@ -45,10 +45,12 @@ namespace Tests.Inventory
         /// <param name="unitValue">单件估价</param>
         /// <param name="rarity">稀有度</param>
         /// <param name="container">装备后撑起的容器定义, 留空代表这件物品不是容器</param>
+        /// <param name="equipSlot">可穿戴到的部位, 装备槽只收对应部位的装备</param>
         /// <param name="register">是否顺手登记进 ItemRegistry, 验总配置整批登记时传 false</param>
         public InventoryItemConfigSO CreateItem(int width, int height, bool canRotate = true, int maxStackCount = 1,
             float unitWeight = 0f, int unitValue = 0, InventoryItemRarity rarity = InventoryItemRarity.None,
-            InventoryContainerConfigSO container = null, bool register = true)
+            InventoryContainerConfigSO container = null, InventoryEquipSlot equipSlot = InventoryEquipSlot.None,
+            bool register = true)
         {
             int itemId = m_nextItemId++;
             InventoryItemConfigSO config = CreateConfig<InventoryItemConfigSO>();
@@ -65,18 +67,27 @@ namespace Tests.Inventory
             SetField(config, "RarityValue", rarity);
             SetField(config, "UnitValueValue", unitValue);
             SetField(config, "ContainerValue", container);
+            SetField(config, "EquipSlotValue", equipSlot);
 
             // register 传 false 造出「表里有但没登记」的物品, 用来验总配置能否整批登记
             if (register) ItemRegistry.Register(config);
             return config;
         }
 
-        // 造一件容器类装备, 占格是它躺在别人格子里的大小, 容器是它穿戴后撑起的网格
+        /// <summary>
+        /// 造一件容器类装备, 占格是它躺在别人格子里的大小, 容器是它穿戴后撑起的网格
+        /// </summary>
+        /// <param name="container">穿戴后撑起的容器定义</param>
+        /// <param name="occupyWidth">躺在别人格子里时的占格宽</param>
+        /// <param name="occupyHeight">躺在别人格子里时的占格高</param>
+        /// <param name="unitValue">单件估价</param>
+        /// <param name="rarity">稀有度</param>
+        /// <param name="equipSlot">可穿戴到的部位, 穿进装备槽的用例必须填对部位</param>
         public InventoryItemConfigSO CreateContainerItem(InventoryContainerConfigSO container,
             int occupyWidth = 3, int occupyHeight = 3, int unitValue = 0,
-            InventoryItemRarity rarity = InventoryItemRarity.None)
+            InventoryItemRarity rarity = InventoryItemRarity.None, InventoryEquipSlot equipSlot = InventoryEquipSlot.None)
         {
-            return CreateItem(occupyWidth, occupyHeight, false, 1, 0f, unitValue, rarity, container);
+            return CreateItem(occupyWidth, occupyHeight, false, 1, 0f, unitValue, rarity, container, equipSlot);
         }
 
         /// <summary>

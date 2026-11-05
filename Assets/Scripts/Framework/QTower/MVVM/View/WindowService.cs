@@ -1,4 +1,4 @@
-/*
+﻿/*
  * ┌──────────────────────────────────┐
  * │  描    述: 窗口服务，负责 MVVM 视图的注册、实例缓存与显示关闭
  * │  类    名: WindowService.cs
@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using Framework.QTower.MVVM.View.Interfaces;
 using UnityEngine;
+using UnityEngine.UI;
 using Utils.log;
 
 namespace Framework.QTower.MVVM.View
@@ -27,17 +28,20 @@ namespace Framework.QTower.MVVM.View
 
         private readonly Transform m_root;
 
+        private int m_sortingOrder = MvvmRoot.DEFAULT_SORTING_ORDER;
+
         private bool m_isDestroyed;
 
         public Transform Root => m_root;
         public int InstanceCount => m_instances.Count;
 
-        public WindowService(Transform root)
+        public WindowService(Transform root, int sortingOrder = MvvmRoot.DEFAULT_SORTING_ORDER)
         {
             if (root == null)
                 QLog.Error("窗口服务创建失败：根节点为空");
 
             m_root = root;
+            m_sortingOrder = sortingOrder;
         }
 
         /// <summary>
@@ -161,6 +165,9 @@ namespace Framework.QTower.MVVM.View
                 return null;
             }
 
+            // 面板挂进来先补自己的 Canvas, 再走显示, 避免首帧没有渲染根
+            EnsureViewCanvas(viewObject);
+
             m_instances.Add(viewClass, view);
             view.Show(args);
             TrackOpen(viewClass);
@@ -260,6 +267,54 @@ namespace Framework.QTower.MVVM.View
             m_openOrder.Clear();
             m_factories.Clear();
             m_isDestroyed = true;
+        }
+
+        /// <summary>
+        /// 下发排序档位，同步刷新全部已产出面板的 Canvas
+        /// </summary>
+        /// <param name="sortingOrder">Canvas 排序序号</param>
+        public void ApplySortingOrder(int sortingOrder)
+        {
+            m_sortingOrder = sortingOrder;
+
+            foreach (IView view in m_instances.Values)
+            {
+                if (view is not Component component || component == null) continue;
+
+                ApplySortingOrder(component.gameObject);
+            }
+        }
+
+        // 每个面板自带 Canvas 与射线接收，不再依赖统一的视图根，窗口之间排序互相独立
+        private void EnsureViewCanvas(GameObject viewObject)
+        {
+            if (!(viewObject.transform is RectTransform))
+            {
+                QLog.Error($"视图根节点缺少 RectTransform，无法配置 Canvas：{viewObject.name}");
+                return;
+            }
+
+            if (!viewObject.TryGetComponent(out Canvas canvas))
+                canvas = viewObject.AddComponent<Canvas>();
+
+            // 嵌套 Canvas 只有开启 overrideSorting，自身的 sortingOrder 才生效
+            canvas.overrideSorting = true;
+            canvas.sortingOrder = m_sortingOrder;
+            canvas.additionalShaderChannels = AdditionalCanvasShaderChannels.TexCoord1 |
+                                              AdditionalCanvasShaderChannels.Normal |
+                                              AdditionalCanvasShaderChannels.Tangent;
+
+            if (!viewObject.TryGetComponent(out GraphicRaycaster raycaster))
+                raycaster = viewObject.AddComponent<GraphicRaycaster>();
+        }
+
+        // 档位刷新只改已有 Canvas，不给历史面板补建组件
+        private void ApplySortingOrder(GameObject viewObject)
+        {
+            if (!viewObject.TryGetComponent(out Canvas canvas)) return;
+
+            canvas.overrideSorting = true;
+            canvas.sortingOrder = m_sortingOrder;
         }
 
         // 剔除已被 Destroy 的视图缓存：组件销毁后字典里只剩空壳引用，留着会让后续 Show 永远拿不到实例

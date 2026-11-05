@@ -7,6 +7,7 @@
  */
 
 using System.Collections.Generic;
+using Module.Inventory.Core.Config.Type;
 
 namespace Module.Inventory.Core.Data
 {
@@ -23,17 +24,21 @@ namespace Module.Inventory.Core.Data
         //容器显示名, 载体表头的容器标题由它供给
         public string DisplayName { get; }
 
+        //穿戴部位, 非装备槽容器为 None
+        public InventoryEquipSlot EquipSlot { get; }
+
         //外接矩形格数, 异形容器的真实容量看掩码
         public int CellCount =>  Width * Height;
 
         public InventoryContainerSpec(int width, int height, float weightLimit, IReadOnlyList<bool> mask = null,
-            string displayName = "")
+            string displayName = "", InventoryEquipSlot equipSlot = InventoryEquipSlot.None)
         {
             Width = width;
             Height = height;
             Mask = mask;
             WeightLimit = weightLimit;
             DisplayName = displayName;
+            EquipSlot = equipSlot;
         }
     }
 }

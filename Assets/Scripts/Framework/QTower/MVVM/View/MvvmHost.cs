@@ -1,4 +1,4 @@
-/*
+﻿/*
  * ┌──────────────────────────────────┐
  * │  描    述: MVVM装配入口，场景唯一挂载点，创建运行根节点并驱动业务模块注册
  * │  类    名: MvvmHost.cs
@@ -21,7 +21,7 @@ namespace Framework.QTower.MVVM.View
         [Header("装配设置")]
         [Tooltip("运行根节点名称")]
         [SerializeField] private string RootName = "MvvmRoot";
-        [Tooltip("视图根的 Canvas 排序档位, 与 MVC 面板分段共存")]
+        [Tooltip("面板 Canvas 的排序档位, 与 MVC 面板分段共存")]
         [SerializeField] private int SortingOrder = 50;
 
         [Tooltip("是否在 Awake 自动完成装配，关闭后需自行调用 Run")]
@@ -52,7 +52,7 @@ namespace Framework.QTower.MVVM.View
         {
             if (m_isRun) return m_root;
 
-            // 挂载点铺满父级 Canvas, 整条 MvvmHost -> MvvmRoot -> ViewRoot 的渲染链才有有效尺寸
+            // 挂载点铺满父级 Canvas, 整条 MvvmHost -> MvvmRoot 的渲染链才有有效尺寸
             MvvmRoot.FillParentRect(transform as RectTransform);
 
             m_root = MvvmRoot.Create(transform, RootName, SortingOrder);

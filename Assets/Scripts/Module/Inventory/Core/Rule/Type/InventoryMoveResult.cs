@@ -34,6 +34,12 @@ namespace Module.Inventory.Core.Rule.Type
         // 目标容器超重
         WeightExceeded = 301,
 
+        // 可穿戴部位与装备槽不符
+        SlotMismatch = 302,
+
+        // 本期装备穿戴后禁止卸下与顶出
+        UnequipLocked = 303,
+
         // ==================== 数据异常 ====================
         // 源容器中不存在该占位记录(幽灵引用)
         SourceNotFound = 400,

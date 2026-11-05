@@ -30,6 +30,10 @@ namespace Module.Inventory.Core.Config
         [Tooltip("该槽位穿着的容器装备, 留空表示没穿")]
         [SerializeField] private InventoryItemConfigSO SafeBoxValue;
 
+        //穿戴进槽的入口只取背包与胸挂两件容器装备
+        public InventoryItemConfigSO Backpack => BackpackValue;
+        public InventoryItemConfigSO Rig => RigValue;
+
         public bool TryGetContainer(int slotId, out InventoryContainerConfigSO container)
         {
             container = slotId switch
