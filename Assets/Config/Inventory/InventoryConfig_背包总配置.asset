@@ -24,6 +24,26 @@ MonoBehaviour:
   - {fileID: 11400000, guid: d772b2bd416234a40a2a28d0996f22a9, type: 2}
   - {fileID: 11400000, guid: 19696734eb2d32e4cb935f54d311ef42, type: 2}
   - {fileID: 11400000, guid: fcd3e41df66796641a03933a1e5e02af, type: 2}
+  - {fileID: 11400000, guid: 3b4040030e3564a4782ccf6dbd10913b, type: 2}
+  - {fileID: 11400000, guid: 6f19417caf2561f43be84d230a3146c2, type: 2}
+  - {fileID: 11400000, guid: a1f6396de25d9224e86252e33dca5693, type: 2}
+  - {fileID: 11400000, guid: d8aa1a38f8e9ffa41aa135f0255fdbe6, type: 2}
+  - {fileID: 11400000, guid: 6bb9c1896fe77b14f88065227c134149, type: 2}
+  - {fileID: 11400000, guid: 89e561d26c4e2f94f8e479ac6a9818d6, type: 2}
+  - {fileID: 11400000, guid: 66b21f7ea91b04f4c93406fccf30aa9e, type: 2}
+  - {fileID: 11400000, guid: 714dbc29c25ae6b43b8394100bf6a7e7, type: 2}
+  - {fileID: 11400000, guid: 4dd7b30eee9b25f42ae2e6630f06eb47, type: 2}
+  - {fileID: 11400000, guid: bddc81e7ff451044481adffe25396555, type: 2}
+  - {fileID: 11400000, guid: 880b749a64ee64b4faf122e163135485, type: 2}
+  - {fileID: 11400000, guid: 7a407cd7da0b9cd4fbaff7d4ebbaf0ea, type: 2}
+  - {fileID: 11400000, guid: d57a4861e14e4a24d9790535803c7d61, type: 2}
+  - {fileID: 11400000, guid: 3670029d40bb36b4b8e8801ccef1c3bb, type: 2}
+  - {fileID: 11400000, guid: e651c87217983524888dd69c93381f9f, type: 2}
+  - {fileID: 11400000, guid: 56df21d900b614348bf0fd94c9be7be3, type: 2}
+  - {fileID: 11400000, guid: c704ac8056dbaf64c937e4fbe1d7a2bf, type: 2}
+  - {fileID: 11400000, guid: 6e4588d82e356374692404ffda1047cd, type: 2}
+  - {fileID: 11400000, guid: c88d77cfcbd8bdd409a54f951e3f083c, type: 2}
+  - {fileID: 11400000, guid: a1d746b11a82497438bc101e24f5594a, type: 2}
   LoadoutValue: {fileID: 11400000, guid: 8c7d6027960e78642ade7ea6f072423b, type: 2}
   NoneColorValue: {r: 0.16, g: 0.18, b: 0.21, a: 0.95}
   CommonColorValue: {r: 0.34, g: 0.36, b: 0.4, a: 0.92}

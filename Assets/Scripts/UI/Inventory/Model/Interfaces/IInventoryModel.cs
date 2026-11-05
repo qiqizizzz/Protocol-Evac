@@ -8,6 +8,7 @@
 
 using System;
 using Framework.QTower.MVVM.Model.Interfaces;
+using Module.Inventory.Core.Config.Loot;
 using Module.Inventory.Core.Config.Type;
 using Module.Inventory.Core.Data;
 using Module.Inventory.Core.Rule.Type;
@@ -24,6 +25,9 @@ namespace UI.Inventory
         
         //注销容器
         void UnregisterContainer(int containerId);
+        
+        //打开野外物资箱, 摇一次掉落并注册成运行时容器; 同一份配置未关闭前重复打开返回原容器号
+        int OpenLootContainer(LootContainerConfigSO loot, int seed);
         
         //获取容器快照
         InventoryContainerVO GetContainerVO(int containerId);

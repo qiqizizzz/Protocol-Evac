@@ -1,0 +1,55 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef23532054f215747aedd2d94cc0b026, type: 3}
+  m_Name: "LootConfig_\u6B66\u5668\u7BB1"
+  m_EditorClassIdentifier: 
+  DisplayNameValue: "\u6B66\u5668\u7BB1"
+  ContainerValue: {fileID: 11400000, guid: 3a8fdb53f0581604fbd024c612594d4a, type: 2}
+  RollCountMinValue: 4
+  RollCountMaxValue: 8
+  EntriesValue:
+  - ItemValue: {fileID: 11400000, guid: d088332197010b34cbc22b429614275c, type: 2}
+    WeightValue: 10
+    CountMinValue: 1
+    CountMaxValue: 1
+  - ItemValue: {fileID: 11400000, guid: 3b4040030e3564a4782ccf6dbd10913b, type: 2}
+    WeightValue: 12
+    CountMinValue: 1
+    CountMaxValue: 1
+  - ItemValue: {fileID: 11400000, guid: 6f19417caf2561f43be84d230a3146c2, type: 2}
+    WeightValue: 15
+    CountMinValue: 1
+    CountMaxValue: 1
+  - ItemValue: {fileID: 11400000, guid: a1f6396de25d9224e86252e33dca5693, type: 2}
+    WeightValue: 10
+    CountMinValue: 1
+    CountMaxValue: 1
+  - ItemValue: {fileID: 11400000, guid: d8aa1a38f8e9ffa41aa135f0255fdbe6, type: 2}
+    WeightValue: 25
+    CountMinValue: 10
+    CountMaxValue: 30
+  - ItemValue: {fileID: 11400000, guid: 6bb9c1896fe77b14f88065227c134149, type: 2}
+    WeightValue: 12
+    CountMinValue: 1
+    CountMaxValue: 2
+  - ItemValue: {fileID: 11400000, guid: 66b21f7ea91b04f4c93406fccf30aa9e, type: 2}
+    WeightValue: 8
+    CountMinValue: 1
+    CountMaxValue: 1
+  - ItemValue: {fileID: 11400000, guid: 6e4588d82e356374692404ffda1047cd, type: 2}
+    WeightValue: 6
+    CountMinValue: 1
+    CountMaxValue: 1
+  - ItemValue: {fileID: 11400000, guid: c88d77cfcbd8bdd409a54f951e3f083c, type: 2}
+    WeightValue: 8
+    CountMinValue: 1
+    CountMaxValue: 1

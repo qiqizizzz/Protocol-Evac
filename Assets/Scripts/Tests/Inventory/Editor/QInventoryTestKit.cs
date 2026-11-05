@@ -9,6 +9,7 @@
 using System.Collections.Generic;
 using System.Reflection;
 using Module.Inventory.Core.Config;
+using Module.Inventory.Core.Config.Loot;
 using NUnit.Framework;
 using Module.Inventory.Core.Config.Type;
 using Module.Inventory.Core.Data;
@@ -130,6 +131,45 @@ namespace Tests.Inventory
             SetField(config, "LoadoutValue", loadout);
             SetField(config, "ItemsValue", items ?? new InventoryItemConfigSO[0]);
             return config;
+        }
+
+        /// <summary>
+        /// 造一条战利品掉落条目
+        /// </summary>
+        /// <param name="item">掉落的物品配置</param>
+        /// <param name="weight">抽取权重, 传 0 表示不参与抽取</param>
+        /// <param name="countMin">单次命中的最少件数</param>
+        /// <param name="countMax">单次命中的最多件数</param>
+        public LootEntry CreateLootEntry(InventoryItemConfigSO item, int weight = 1, int countMin = 1, int countMax = 1)
+        {
+            LootEntry entry = new LootEntry();
+
+            SetField(entry, "ItemValue", item);
+            SetField(entry, "WeightValue", weight);
+            SetField(entry, "CountMinValue", countMin);
+            SetField(entry, "CountMaxValue", countMax);
+            return entry;
+        }
+
+        /// <summary>
+        /// 造一份野外物资箱配置
+        /// </summary>
+        /// <param name="displayName">物资箱显示名</param>
+        /// <param name="container">物资箱自身的网格定义</param>
+        /// <param name="rollCountMin">每次开箱的最少抽取次数</param>
+        /// <param name="rollCountMax">每次开箱的最多抽取次数</param>
+        /// <param name="entries">掉落表</param>
+        public LootContainerConfigSO CreateLoot(string displayName, InventoryContainerConfigSO container,
+            int rollCountMin, int rollCountMax, params LootEntry[] entries)
+        {
+            LootContainerConfigSO loot = CreateConfig<LootContainerConfigSO>();
+
+            SetField(loot, "DisplayNameValue", displayName);
+            SetField(loot, "ContainerValue", container);
+            SetField(loot, "RollCountMinValue", rollCountMin);
+            SetField(loot, "RollCountMaxValue", rollCountMax);
+            SetField(loot, "EntriesValue", entries ?? new LootEntry[0]);
+            return loot;
         }
 
         /// <summary>

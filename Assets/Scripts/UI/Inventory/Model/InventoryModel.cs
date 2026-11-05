@@ -9,8 +9,11 @@
 using System;
 using System.Collections.Generic;
 using Module.Inventory.Core.Config;
+using Module.Inventory.Core.Config.Loot;
 using Module.Inventory.Core.Config.Type;
 using Module.Inventory.Core.Data;
+using Module.Inventory.Core.Defines;
+using Module.Inventory.Core.Loot;
 using Module.Inventory.Core.Rule.Type;
 using UnityEngine;
 using Utils.log;
@@ -19,10 +22,23 @@ namespace UI.Inventory
 {
     public class InventoryModel : IInventoryModel
     {
+        //物资箱配置无效时返回的容器号
+        private const int INVALID_CONTAINER_ID = -1;
+
+        //物资箱不设独立负重, 负重结算归角色整体
+        private const float LOOT_WEIGHT_LIMIT = float.MaxValue;
+
         private readonly Dictionary<int, InventoryContainer> m_containers = new Dictionary<int, InventoryContainer>();
         
         //背包总配置: 仅在构建快照时查询稀有度底色
         private readonly InventoryConfigSO m_config;
+
+        //已开的物资箱: 配置到容器号, 同一份配置没关掉就重开要沿用旧箱
+        private readonly Dictionary<LootContainerConfigSO, int> m_lootContainers =
+            new Dictionary<LootContainerConfigSO, int>();
+
+        //注销容器时反查待清理的物资箱键
+        private readonly List<LootContainerConfigSO> m_staleLootKeys = new List<LootContainerConfigSO>();
 
         public event Action<int> OnChanged;
 
@@ -65,6 +81,7 @@ namespace UI.Inventory
             
             container.OnChanged -= HandleContainerChanged;
             m_containers.Remove(containerId);
+            ForgetLootContainer(containerId);
             
             OnChanged?.Invoke(containerId);
         }
@@ -90,6 +107,23 @@ namespace UI.Inventory
             return new InventoryContainerVO(container.ContainerId, container.Grid.Width, container.Grid.Height,
                 container.Grid.Mask, container.Version, container.TotalWeight, container.WeightLimit, items,
                 container.DisplayName);
+        }
+
+        public int OpenLootContainer(LootContainerConfigSO loot, int seed)
+        {
+            if (!TryGetLootGrid(loot, out InventoryContainerConfigSO grid)) return INVALID_CONTAINER_ID;
+
+            //搜刮到一半的箱子重开是继续翻残货, 不再摇一次掉落
+            if (m_lootContainers.TryGetValue(loot, out int openedId) && m_containers.ContainsKey(openedId))
+                return openedId;
+
+            int containerId = AllocateLootContainerId();
+            RegisterContainer(containerId, new InventoryContainerSpec(grid.Width, grid.Height, LOOT_WEIGHT_LIMIT,
+                grid.Mask, ResolveLootName(loot, grid)));
+            m_lootContainers[loot] = containerId;
+
+            FillLootContainer(m_containers[containerId], loot, seed);
+            return containerId;
         }
 
         public InventoryMoveResult TryAddItem(int containerId, int itemId, int amount, Vector2Int cell)
@@ -228,6 +262,76 @@ namespace UI.Inventory
             OnChanged?.Invoke(container.ContainerId);
         }
         #endregion
+
+        //物资箱配置校验, 缺网格的箱子开不出来
+        private static bool TryGetLootGrid(LootContainerConfigSO loot, out InventoryContainerConfigSO grid)
+        {
+            grid = loot != null ? loot.Container : null;
+
+            if (loot == null) QLog.Error("物资箱配置为空, 无法打开");
+            else if (grid == null) QLog.Error($"物资箱 {loot.DisplayName} 缺少网格定义, 无法打开");
+
+            return grid != null;
+        }
+
+        //箱名优先取物资箱自身的配置, 没配就沿用网格定义里的容器名
+        private static string ResolveLootName(LootContainerConfigSO loot, InventoryContainerConfigSO grid)
+        {
+            return string.IsNullOrEmpty(loot.DisplayName) ? grid.DisplayName : loot.DisplayName;
+        }
+
+        //物资箱容器号从 LOOT 起顺序分配, 跳过已被占用的号
+        private int AllocateLootContainerId()
+        {
+            int containerId = InventoryContainerIds.LOOT;
+            while (m_containers.ContainsKey(containerId)) containerId++;
+
+            return containerId;
+        }
+
+        //把抽取结果逐件塞进箱子, 塞不下的静默丢弃, 异形空洞由网格的空位判定挡掉
+        private void FillLootContainer(InventoryContainer container, LootContainerConfigSO loot, int seed)
+        {
+            IReadOnlyList<LootDrop> drops = LootRoller.Roll(loot, seed);
+
+            for (int i = 0; i < drops.Count; i++)
+            {
+                InventoryItemConfigSO item = drops[i].Item;
+                if (!TryFindFreeCell(container, item.Size, out Vector2Int cell)) continue;
+
+                container.TryAdd(new InventoryItemInstance(item, drops[i].Count), cell);
+            }
+        }
+
+        //从左上往右下找第一块放得下指定尺寸的连续空格
+        private static bool TryFindFreeCell(InventoryContainer container, Vector2Int size, out Vector2Int cell)
+        {
+            for (int y = 0; y + size.y <= container.Grid.Height; y++)
+            {
+                for (int x = 0; x + size.x <= container.Grid.Width; x++)
+                {
+                    cell = new Vector2Int(x, y);
+                    if (container.Grid.IsAreaFree(cell, size)) return true;
+                }
+            }
+
+            cell = default;
+            return false;
+        }
+
+        //容器注销后同一份物资箱配置下次打开要重新掉落, 所以连带清掉这条反向记录
+        private void ForgetLootContainer(int containerId)
+        {
+            if (m_lootContainers.Count == 0) return;
+
+            foreach (KeyValuePair<LootContainerConfigSO, int> pair in m_lootContainers)
+            {
+                if (pair.Value == containerId) m_staleLootKeys.Add(pair.Key);
+            }
+
+            for (int i = 0; i < m_staleLootKeys.Count; i++) m_lootContainers.Remove(m_staleLootKeys[i]);
+            m_staleLootKeys.Clear();
+        }
 
         private bool TryGetContainer(int containerId, out InventoryContainer container)
         {

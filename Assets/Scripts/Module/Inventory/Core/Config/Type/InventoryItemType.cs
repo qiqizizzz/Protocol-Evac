@@ -28,5 +28,14 @@ namespace Module.Inventory.Core.Config.Type
         
         [InspectorName("贵重物品")]
         Valuable = 50,
+
+        [InspectorName("食物饮水")]
+        Food = 60,
+
+        [InspectorName("物资工具")]
+        Material = 70,
+
+        [InspectorName("武器配件")]
+        Attachment = 80,
     }
 }
