@@ -39,7 +39,7 @@ namespace UI.Inventory.View
         [SerializeField] private GameObject ItemPrefab;
 
         [Header("表头设置")]
-        [Tooltip("容器未注册或装备被卸下时的常驻表头名, 留空则沿用预制体 Txt_Name 的原文案")]
+        [Tooltip("容器表头固定显示的名称, 留空则沿用预制体 Txt_Name 的原文案")]
         [SerializeField] private string DefaultName;
 
         private Transform m_gridRoot;
@@ -49,7 +49,7 @@ namespace UI.Inventory.View
         private TMP_Text m_capacityText;
         private TMP_Text m_nameText;
 
-        private string m_fallbackName; //快照没有显示名时表头要常驻的那行字
+        private string m_fallbackName; //表头固定显示的槽位类型名
 
         private RectTransform m_rect;
         private RectTransform m_gridRect;
@@ -128,7 +128,7 @@ namespace UI.Inventory.View
             SyncItemViews(vo);
 
             if (m_nameText != null)
-                m_nameText.text = string.IsNullOrEmpty(vo.DisplayName) ? m_fallbackName : vo.DisplayName;
+                m_nameText.text = m_fallbackName;
 
             if (m_capacityText != null)
                 m_capacityText.text = $"{vo.UsedCellCount}/{vo.CellCount}";

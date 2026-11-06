@@ -18,9 +18,9 @@ MonoBehaviour:
   CanRotateValue: 0
   MaxStackCountValue: 1
   UnitWeightValue: 3
-  GridWidthValue: 4
+  GridWidthValue: 3
   GridHeightValue: 3
-  RarityValue: 4
+  RarityValue: 3
   UnitValueValue: 65000
   IconValue: {fileID: 21300000, guid: 43569723e6ec46947beac477c6968047, type: 3}
   ContainerValue: {fileID: 11400000, guid: 2bb96182cb687494797e7136e38feade, type: 2}

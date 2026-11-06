@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4928918d3e0e0384fa4a180e2387c26b, type: 3}
   m_Name: "ContainerConfig_\u5B89\u5168\u7BB1Lv4"
   m_EditorClassIdentifier: 
-  DisplayNameValue: "\u5B89\u5168\u7BB1Lv3"
+  DisplayNameValue: "\u5B89\u5168\u7BB1Lv4"
   WidthValue: 3
-  HeightValue: 2
+  HeightValue: 3
   RowsValue: []
