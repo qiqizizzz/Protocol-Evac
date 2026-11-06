@@ -155,7 +155,19 @@ namespace UI.Inventory.View
         //按容器拓扑换算网格矩形并撑合载体, 让尺寸始终来自配置而不是手调预制体
         private void SyncGridSize(InventoryContainerVO vo)
         {
-            if (vo.Width < MIN_COLUMN_COUNT || vo.Height <= 0) return;
+            bool hasGrid = vo.Width >= MIN_COLUMN_COUNT && vo.Height > 0;
+            if (!hasGrid)
+            {
+                //空容量载体仍要由表头和装备槽撑开, 否则后续载体表头会压到装备槽上
+                if (m_containerRect != null)
+                {
+                    m_rect.sizeDelta = new Vector2(m_rect.sizeDelta.x,
+                        GridTopOffset() + EquipSlotHeight() + BOTTOM_GAP);
+                    RebuildLayout();
+                }
+
+                return;
+            }
 
             //格子边长与间距的唯一入口是 Layout_Grid 上的 GridLayoutGroup, 想改尺寸改这两处而不是根节点 RectTransform
             Vector2 cell = m_gridLayout.cellSize;
@@ -176,6 +188,12 @@ namespace UI.Inventory.View
                 m_rect.sizeDelta = new Vector2(m_rect.sizeDelta.x, GridTopOffset() + Mathf.Max(gridHeight, EquipSlotHeight()) + BOTTOM_GAP);
             }
 
+            RebuildLayout();
+        }
+
+        //容量载体的尺寸变化需要同步刷新自身与父布局, 保证后续载体立即重新排布
+        private void RebuildLayout()
+        {
             LayoutRebuilder.MarkLayoutForRebuild(m_gridRect);
             if (transform.parent is RectTransform parentRect)
                 LayoutRebuilder.MarkLayoutForRebuild(parentRect);
