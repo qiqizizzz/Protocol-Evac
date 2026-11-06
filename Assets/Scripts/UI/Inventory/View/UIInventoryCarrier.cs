@@ -22,10 +22,14 @@ namespace UI.Inventory.View
         private const string CONTAINER_ITEM_PATH = "Slot_Container/Layout_Item";
         private const string GRID_PATH = "Layout_Grid";
         private const string ITEM_PATH = "Layout_Item";
+        private const string HEADER_PATH = "Layout_Header";
+        private const string EQUIP_SLOT_PATH = "Slot_Equipment";
         private const string CAPACITY_PATH = "Layout_Header/Txt_Capacity";
         private const string NAME_PATH = "Layout_Header/Txt_Name";
 
         private const int MIN_COLUMN_COUNT = 1;
+        private const float HEADER_GAP = 8f; //表头底边到网格顶边的间距
+        private const float BOTTOM_GAP = 8f; //网格底边到载体底边的间距
 
         [Header("模板设置")]
         [Tooltip("格子模板")]
@@ -41,6 +45,13 @@ namespace UI.Inventory.View
         private TMP_Text m_capacityText;
         private TMP_Text m_nameText;
 
+        private RectTransform m_rect;
+        private RectTransform m_gridRect;
+        private RectTransform m_itemRect;
+        private RectTransform m_containerRect; //容量载体的网格外框, 独立装备槽没有该节点
+        private RectTransform m_headerRect; //表头, 独立装备槽没有该节点
+        private RectTransform m_equipSlotRect; //载体内嵌的装备槽, 有无由穿戴配置决定
+
         private readonly List<UIInventorySlot> m_slotViews = new List<UIInventorySlot>();
         private readonly Dictionary<int, UIInventoryItem> m_itemViews = new Dictionary<int, UIInventoryItem>();
         private readonly List<int> m_staleItemIds = new List<int>();
@@ -52,11 +63,13 @@ namespace UI.Inventory.View
 
         protected override void OnAwake()
         {
+            m_rect = (RectTransform)transform;
             Transform containerRoot = transform.Find(CONTAINER_PATH);
             if (containerRoot != null)
             {
                 m_gridRoot = this.FindChild(CONTAINER_GRID_PATH);
                 m_itemRoot = this.FindChild(CONTAINER_ITEM_PATH);
+                m_containerRect = (RectTransform)containerRoot;
                 m_visibleRoot = containerRoot.gameObject;
             }
             else
@@ -66,10 +79,20 @@ namespace UI.Inventory.View
                 m_visibleRoot = gameObject;
             }
 
+            m_gridRect = (RectTransform)m_gridRoot;
+            m_itemRect = (RectTransform)m_itemRoot;
             m_gridLayout = m_gridRoot.GetComponent<GridLayoutGroup>();
             m_gridLayout.startAxis = GridLayoutGroup.Axis.Horizontal;
+            //物品层按首格左上角原点摆放, 网格层必须左上对齐才能与物品层重合
+            m_gridLayout.childAlignment = TextAnchor.UpperLeft;
+
+            m_headerRect = transform.Find(HEADER_PATH) as RectTransform;
+            m_equipSlotRect = transform.Find(EQUIP_SLOT_PATH) as RectTransform;
             m_nameText = transform.Find(NAME_PATH)?.GetComponent<TMP_Text>();
             m_capacityText = transform.Find(CAPACITY_PATH)?.GetComponent<TMP_Text>();
+
+            SyncItemLayerToGrid();
+            SyncEquipSlotPosition();
         }
 
         //登记绑定, 视图只做表现不做业务判定
@@ -81,9 +104,10 @@ namespace UI.Inventory.View
         #endregion
 
         #region Private Function
-        //快照驱动网格层与物品层
+        //快照驱动网格尺寸与两层视图
         private void RenderSnapshot(InventoryContainerVO vo)
         {
+            SyncGridSize(vo);
             SyncSlotViews(vo);
             SyncItemViews(vo);
 
@@ -98,6 +122,73 @@ namespace UI.Inventory.View
         private void SetVisible(bool visible)
         {
             m_visibleRoot.SetActive(visible);
+        }
+
+        //按容器拓扑换算网格矩形并撑合载体, 让尺寸始终来自配置而不是手调预制体
+        private void SyncGridSize(InventoryContainerVO vo)
+        {
+            SyncEquipSlotPosition();
+            if (vo.Width < MIN_COLUMN_COUNT || vo.Height <= 0) return;
+
+            Vector2 cell = m_gridLayout.cellSize;
+            Vector2 spacing = m_gridLayout.spacing;
+            RectOffset padding = m_gridLayout.padding;
+            float gridWidth = padding.left + padding.right + cell.x * vo.Width + spacing.x * (vo.Width - 1);
+            float gridHeight = padding.top + padding.bottom + cell.y * vo.Height + spacing.y * (vo.Height - 1);
+
+            if (m_containerRect == null)
+            {
+                //独立装备槽: 外框等于网格本身, 不再保留第二套尺寸
+                m_rect.sizeDelta = new Vector2(gridWidth, gridHeight);
+            }
+            else
+            {
+                m_containerRect.anchoredPosition = new Vector2(m_containerRect.anchoredPosition.x, -GridTopOffset());
+                m_containerRect.sizeDelta = new Vector2(gridWidth, gridHeight);
+                m_rect.sizeDelta = new Vector2(m_rect.sizeDelta.x, GridTopOffset() + Mathf.Max(gridHeight, EquipSlotHeight()) + BOTTOM_GAP);
+            }
+
+            LayoutRebuilder.MarkLayoutForRebuild(m_gridRect);
+            if (transform.parent is RectTransform parentRect)
+                LayoutRebuilder.MarkLayoutForRebuild(parentRect);
+        }
+
+        //物品层收缩为网格的内缩区域, 原点钉在首格左上角, 保证物品永远压在格子上
+        private void SyncItemLayerToGrid()
+        {
+            RectOffset padding = m_gridLayout.padding;
+            m_itemRect.anchorMin = m_gridRect.anchorMin;
+            m_itemRect.anchorMax = m_gridRect.anchorMax;
+            m_itemRect.pivot = m_gridRect.pivot;
+            m_itemRect.sizeDelta = m_gridRect.sizeDelta - new Vector2(padding.horizontal, padding.vertical);
+            m_itemRect.anchoredPosition = m_gridRect.anchoredPosition + new Vector2(padding.left, -padding.top);
+        }
+
+        //内嵌装备槽沿表头下方的内容区垂直居中, 不再简单贴着载体中线, 避免撑出表头
+        private void SyncEquipSlotPosition()
+        {
+            if (m_equipSlotRect == null) return;
+
+            //定位公式以纵向居中锚点为前提, 在这里统一约定
+            m_equipSlotRect.anchorMin = new Vector2(m_equipSlotRect.anchorMin.x, 0.5f);
+            m_equipSlotRect.anchorMax = new Vector2(m_equipSlotRect.anchorMax.x, 0.5f);
+            m_equipSlotRect.pivot = new Vector2(m_equipSlotRect.pivot.x, 0.5f);
+            float horizontal = m_equipSlotRect.anchoredPosition.x;
+            m_equipSlotRect.anchoredPosition = new Vector2(horizontal, (BOTTOM_GAP - GridTopOffset()) * 0.5f);
+        }
+
+        //网格顶边相对载体顶边的下沉量, 由表头高度推导
+        private float GridTopOffset()
+        {
+            float headerHeight = m_headerRect != null ? m_headerRect.rect.height : 0f;
+            return headerHeight + HEADER_GAP;
+        }
+
+        //载体内装备槽占的行高, 没有该节点或已停用时不占位
+        private float EquipSlotHeight()
+        {
+            if (m_equipSlotRect == null || !m_equipSlotRect.gameObject.activeSelf) return 0f;
+            return m_equipSlotRect.rect.height;
         }
 
         //按容器拓扑增减格子视图
