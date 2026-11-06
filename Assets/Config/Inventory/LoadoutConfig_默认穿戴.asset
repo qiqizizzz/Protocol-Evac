@@ -16,3 +16,4 @@ MonoBehaviour:
   RigValue: {fileID: 0}
   PocketsValue: {fileID: 11400000, guid: 01e09bde3b95fbb4d893af6f5e758482, type: 2}
   SafeBoxValue: {fileID: 11400000, guid: fcd3e41df66796641a03933a1e5e02af, type: 2}
+  SafeBoxBaseValue: {fileID: 11400000, guid: 475b4b781a224144b8896c174172aa22, type: 2}

@@ -32,6 +32,9 @@ namespace UI.Inventory
         //物资箱不设独立负重, 负重结算归角色整体
         private const float LOOT_WEIGHT_LIMIT = float.MaxValue;
 
+        //换尺寸复位内容时的落位顺序: 行优先, 让同一批内容每次都按同样次序复原
+        private static readonly Comparison<InventoryItemPlacement> m_placementOrder = ComparePlacementRowFirst;
+
         private readonly Dictionary<int, InventoryContainer> m_containers = new Dictionary<int, InventoryContainer>();
         
         //背包总配置: 仅在构建快照时查询稀有度底色
@@ -99,6 +102,40 @@ namespace UI.Inventory
         }
 
         public bool IsContainerRegistered(int containerId) => m_containers.ContainsKey(containerId);
+
+        /// <summary>
+        /// 换容器尺寸: 网格拓扑重建但容器身份不变, 内容优先按原位复位, 有件放不下则整次回滚原拓扑
+        /// </summary>
+        /// <param name="containerId">要换尺寸的容器号</param>
+        /// <param name="spec">新的网格规格</param>
+        public bool TryResizeContainer(int containerId, InventoryContainerSpec spec)
+        {
+            if (!m_containers.TryGetValue(containerId, out InventoryContainer current))
+            {
+                QLog.Error($"容器未注册：{containerId}");
+                return false;
+            }
+
+            //拓扑本来就一致时不重建, 免得白白吃一次注销与视图重排
+            if (IsSameShape(current, spec)) return true;
+
+            InventoryContainerSpec origin = ToSpec(current);
+            List<InventoryItemPlacement> contents = CollectOrdered(current);
+
+            UnregisterContainer(containerId);
+            RegisterContainer(containerId, spec);
+            if (RestorePlacements(m_containers[containerId], contents)) return true;
+
+            //新网格塞不下旧内容, 连拓扑一起退回原样
+            UnregisterContainer(containerId);
+            RegisterContainer(containerId, origin);
+            if (!RestorePlacements(m_containers[containerId], contents))
+                QLog.Error($"容器回滚后内容仍复原失败：{containerId}");
+
+            QLog.Error($"容器换尺寸放不下现有内容, 已保持原拓扑：{containerId} " +
+                       $"{origin.Width}x{origin.Height} -> {spec.Width}x{spec.Height}");
+            return false;
+        }
 
         //自动找第一块空位塞入新物品, 穿戴装备与造演示物品的主路径
         public InventoryMoveResult TryAddItemAuto(int containerId, int itemId, int amount)
@@ -309,8 +346,7 @@ namespace UI.Inventory
         }
         #endregion
 
-        //把装备槽撑起的容量容器同步一遍: 槽里穿着容器装备就注册其容量, 槽空或装备不带容量就注销
-        //本期不换装也不卸载, 装备槽内容写一次定终身, RegisterContainer 对已存在 id 早返回, 不会读到旧尺寸
+        //把装备槽撑起的容量容器同步一遍: 槽里穿着容器装备就刷成型号的网格, 卸下后常驻容器回落基础尺寸, 非常驻容器才注销
         private void SyncWornCapacities()
         {
             int[] slotIds = InventoryContainerIds.EQUIP_SLOT_IDS;
@@ -320,21 +356,122 @@ namespace UI.Inventory
                 if (!InventoryContainerIds.TryGetEquipSlotRole(slotIds[i], out InventoryEquipSlot role)) continue;
                 if (!InventoryContainerIds.TryGetCapacityContainerId(role, out int capacityId)) continue;
 
-                if (slot.Count == 0)
+                InventoryContainerConfigSO definition = GetWornDefinition(slot);
+                if (definition == null)
                 {
+                    //常驻容器不因卸下型号而消失; 没配基础网格就维持现状, 配置缺失由装配处 ApplyInnateContainer 报错
+                    if (InventoryContainerIds.IsPersistentCapacityContainer(capacityId))
+                    {
+                        if (TryResolvePersistentFallback(capacityId, out InventoryContainerSpec fallback))
+                            ApplyWornCapacity(capacityId, fallback);
+                        continue;
+                    }
+
                     UnregisterContainer(capacityId);
                     continue;
                 }
 
-                foreach (InventoryItemPlacement placement in slot.Placements)
-                {
-                    InventoryContainerConfigSO definition = placement.Instance.Config.Container;
-                    if (definition == null) UnregisterContainer(capacityId);
-                    else RegisterContainer(capacityId, new InventoryContainerSpec(definition.Width, definition.Height,
-                        float.MaxValue, definition.Mask, definition.DisplayName));
-                    break;
-                }
+                ApplyWornCapacity(capacityId, new InventoryContainerSpec(definition.Width, definition.Height,
+                    float.MaxValue, definition.Mask, definition.DisplayName));
             }
+        }
+
+        //装备槽撑起容量容器: 从没注册过就按规格建起来, 已经存在才走换尺寸, 让首次穿戴与卸下回退都落得了地
+        private void ApplyWornCapacity(int capacityId, InventoryContainerSpec spec)
+        {
+            if (!IsContainerRegistered(capacityId))
+            {
+                RegisterContainer(capacityId, spec);
+                return;
+            }
+
+            TryResizeContainer(capacityId, spec);
+        }
+
+        //装备槽按单格收纳, 取槽里第一件装备挂着的容器定义; 槽空或装备不带容量返回 null
+        private static InventoryContainerConfigSO GetWornDefinition(InventoryContainer slot)
+        {
+            foreach (InventoryItemPlacement placement in slot.Placements)
+                return placement.Instance.Config.Container;
+
+            return null;
+        }
+
+        //常驻容器卸下型号后的回落规格; 总配置没有穿戴表或未配基础网格时静默返回 false, 这里不是配置校验的出口
+        private bool TryResolvePersistentFallback(int capacityId, out InventoryContainerSpec fallback)
+        {
+            fallback = default;
+
+            InventoryLoadoutConfigSO loadout = m_config != null ? m_config.Loadout : null;
+            if (loadout == null) return false;
+            if (!loadout.TryGetPersistentContainer(capacityId, out InventoryContainerConfigSO baseContainer)) return false;
+
+            fallback = new InventoryContainerSpec(baseContainer.Width, baseContainer.Height, float.MaxValue,
+                baseContainer.Mask, baseContainer.DisplayName);
+            return true;
+        }
+
+        //把已注册容器的当前拓扑读成规格, 供换尺寸失败时按原样重建
+        private static InventoryContainerSpec ToSpec(InventoryContainer container)
+        {
+            return new InventoryContainerSpec(container.Grid.Width, container.Grid.Height, container.WeightLimit,
+                container.Grid.Mask, container.DisplayName, container.EquipSlot);
+        }
+
+        //现有拓扑与目标规格是否完全一致, 一致就没必要重建
+        private static bool IsSameShape(InventoryContainer container, InventoryContainerSpec spec)
+        {
+            if (container.Grid.Width != spec.Width) return false;
+            if (container.Grid.Height != spec.Height) return false;
+            if (container.EquipSlot != spec.EquipSlot) return false;
+            if (container.DisplayName != spec.DisplayName) return false;
+
+            return IsSameMask(container.Grid.Mask, spec.Mask);
+        }
+
+        //逐格比对实心掩码, 规格侧为空或长度不符时按满格处理, 与 InventoryGrid 的容错口径一致
+        private static bool IsSameMask(IReadOnlyList<bool> gridMask, IReadOnlyList<bool> specMask)
+        {
+            bool specUsable = specMask != null && specMask.Count == gridMask.Count;
+
+            for (int i = 0; i < gridMask.Count; i++)
+            {
+                bool solid = !specUsable || specMask[i];
+                if (gridMask[i] != solid) return false;
+            }
+
+            return true;
+        }
+
+        //抄下容器内容并按行优先排序, Placements 是 HashSet 枚举顺序不稳定, 排序后回滚结果才可复现
+        private static List<InventoryItemPlacement> CollectOrdered(InventoryContainer container)
+        {
+            List<InventoryItemPlacement> contents = new List<InventoryItemPlacement>(container.Placements);
+            contents.Sort(m_placementOrder);
+            return contents;
+        }
+
+        //逐件复位到新网格: 原位放得下就原位, 放不下再找空位, 有一件彻底放不下即整体失败
+        private static bool RestorePlacements(InventoryContainer container, List<InventoryItemPlacement> contents)
+        {
+            for (int i = 0; i < contents.Count; i++)
+            {
+                InventoryItemPlacement origin = contents[i];
+                if (container.TryAdd(origin.Instance, origin.Position, origin.Rotation) != null) continue;
+
+                Vector2Int footprint = container.ResolveFootprint(origin.Instance, origin.Rotation);
+                if (!TryFindFreeCell(container, footprint, out Vector2Int cell)) return false;
+                if (container.TryAdd(origin.Instance, cell, origin.Rotation) == null) return false;
+            }
+
+            return true;
+        }
+
+        //行优先比较, 让内容复位与回滚的顺序稳定
+        private static int ComparePlacementRowFirst(InventoryItemPlacement left, InventoryItemPlacement right)
+        {
+            int byRow = left.Position.y.CompareTo(right.Position.y);
+            return byRow != 0 ? byRow : left.Position.x.CompareTo(right.Position.x);
         }
 
         //装备槽表头显示名, 展示穿戴部位而不是装备名

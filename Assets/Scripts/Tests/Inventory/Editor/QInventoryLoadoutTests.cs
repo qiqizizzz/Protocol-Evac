@@ -11,7 +11,9 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using Module.Inventory.Core.Config;
 using Module.Inventory.Core.Config.Type;
+using Module.Inventory.Core.Data;
 using Module.Inventory.Core.Defines;
+using Module.Inventory.Core.Rule.Type;
 using NUnit.Framework;
 using UI.Inventory;
 using UnityEngine;
@@ -149,6 +151,28 @@ namespace Tests.Inventory
             Assert.IsFalse(loadout.TryGetContainer(InventoryContainerIds.RIG, out _));
             Assert.IsFalse(loadout.TryGetContainer(InventoryContainerIds.POCKETS, out _));
             Assert.IsFalse(loadout.TryGetContainer(InventoryContainerIds.SAFEBOX, out _));
+        }
+
+        // 常驻底格只在没穿型号时顶上, 穿了型号仍以型号网格为准
+        [Test]
+        public void Loadout_SafeBoxResolvesBaseGridOnlyWhenNoModelWorn()
+        {
+            InventoryContainerConfigSO baseGrid = m_kit.CreateContainer(3, 3, "安全箱");
+            InventoryContainerConfigSO modelGrid = m_kit.CreateContainer(2, 2, "安全箱Lv2");
+            InventoryItemConfigSO model = m_kit.CreateContainerItem(modelGrid, equipSlot: InventoryEquipSlot.SafeBox);
+
+            InventoryLoadoutConfigSO bare = m_kit.CreateLoadout(null, null, null, null, baseGrid);
+            Assert.IsTrue(bare.TryGetContainer(InventoryContainerIds.SAFEBOX, out InventoryContainerConfigSO fallback));
+            Assert.AreSame(baseGrid, fallback, "没穿型号时安全箱该解析到常驻底格");
+            Assert.IsTrue(bare.TryGetPersistentContainer(InventoryContainerIds.SAFEBOX, out _));
+
+            InventoryLoadoutConfigSO worn = m_kit.CreateLoadout(null, null, null, model, baseGrid);
+            Assert.IsTrue(worn.TryGetContainer(InventoryContainerIds.SAFEBOX, out InventoryContainerConfigSO fromModel));
+            Assert.AreSame(modelGrid, fromModel, "穿了型号就以型号网格为准");
+
+            Assert.IsFalse(m_kit.CreateLoadout(null).TryGetPersistentContainer(InventoryContainerIds.SAFEBOX, out _),
+                "没配常驻底格时安全箱不常驻");
+            Assert.IsFalse(bare.TryGetPersistentContainer(InventoryContainerIds.BACKPACK, out _), "背包不是常驻槽位");
         }
 
         [Test]
@@ -290,6 +314,103 @@ namespace Tests.Inventory
         }
         #endregion
 
+        #region 安全箱常驻与换型
+        // 常驻判定只认安全箱: 胸挂与背包卸下型号后仍该整块注销
+        [Test]
+        public void ContainerIds_SafeBoxIsTheOnlyPersistentCapacityContainer()
+        {
+            Assert.IsTrue(InventoryContainerIds.IsPersistentCapacityContainer(InventoryContainerIds.SAFEBOX));
+            Assert.IsFalse(InventoryContainerIds.IsPersistentCapacityContainer(InventoryContainerIds.BACKPACK));
+            Assert.IsFalse(InventoryContainerIds.IsPersistentCapacityContainer(InventoryContainerIds.RIG));
+            Assert.IsFalse(InventoryContainerIds.IsPersistentCapacityContainer(InventoryContainerIds.POCKETS));
+
+            Assert.IsTrue(InventoryContainerIds.TryGetCapacityContainerId(InventoryEquipSlot.SafeBox, out int safeBoxId));
+            Assert.AreEqual(InventoryContainerIds.SAFEBOX, safeBoxId);
+        }
+
+        // 卸下型号不等于拆掉安全箱: 网格回落到常驻底格, 重新穿上型号又换回型号尺寸
+        [Test]
+        public void SafeBox_PersistentBaseGridSurvivesModelUnequipAndReEquip()
+        {
+            InventoryContainerConfigSO baseGrid = m_kit.CreateContainer(3, 3, "安全箱");
+            InventoryContainerConfigSO modelGrid = m_kit.CreateContainer(2, 2, "安全箱Lv2");
+            InventoryItemConfigSO model = m_kit.CreateContainerItem(modelGrid, 2, 2, equipSlot: InventoryEquipSlot.SafeBox);
+            InventoryLoadoutConfigSO loadout = m_kit.CreateLoadout(null, null, m_kit.CreateContainer(4, 2, "口袋"),
+                model, baseGrid);
+
+            RebuildModelWithLoadout(loadout);
+            InventoryModule.ApplyLoadout(m_model, loadout);
+            AssertContainerGeometry(InventoryContainerIds.SAFEBOX, 2, 2, 4);
+
+            int pockets = InventoryContainerIds.POCKETS;
+            int wornId = m_model.GetContainerVO(InventoryContainerIds.SAFEBOX_SLOT).Items[0].InstanceId;
+            Assert.AreEqual(InventoryMoveResult.Success,
+                m_model.TryTransferItem(InventoryContainerIds.SAFEBOX_SLOT, pockets, wornId, Vector2Int.zero));
+
+            Assert.IsTrue(m_model.IsContainerRegistered(InventoryContainerIds.SAFEBOX), "卸下型号后安全箱网格仍常驻");
+            AssertContainerGeometry(InventoryContainerIds.SAFEBOX, 3, 3, 9);
+            Assert.AreEqual("安全箱", m_model.GetContainerVO(InventoryContainerIds.SAFEBOX).DisplayName, "表头名跟着常驻底格走");
+
+            // 再穿回型号, 常驻底格让位给型号网格
+            int pocketId = m_model.GetContainerVO(pockets).Items[0].InstanceId;
+            Assert.AreEqual(InventoryMoveResult.Success,
+                m_model.TryTransferItem(pockets, InventoryContainerIds.SAFEBOX_SLOT, pocketId, Vector2Int.zero));
+            AssertContainerGeometry(InventoryContainerIds.SAFEBOX, 2, 2, 4);
+        }
+
+        // 换大: 拓扑重建但实例号不变, 原位放得下的物品留在原位
+        [Test]
+        public void TryResizeContainer_BiggerGridKeepsItemsAndInstanceIds()
+        {
+            int safeBox = InventoryContainerIds.SAFEBOX;
+            InventoryModule.ApplyContainer(m_model, safeBox, m_kit.CreateContainer(3, 3, "安全箱"));
+            Assert.AreEqual(InventoryMoveResult.Success,
+                m_model.TryAddItem(safeBox, m_kit.CreateItem(2, 1).ItemId, 1, new Vector2Int(0, 2)));
+
+            int instanceId = m_model.GetContainerVO(safeBox).Items[0].InstanceId;
+            Assert.IsTrue(m_model.TryResizeContainer(safeBox,
+                new InventoryContainerSpec(4, 4, float.MaxValue, null, "安全箱")));
+
+            AssertContainerGeometry(safeBox, 4, 4, 16);
+            Assert.AreEqual(1, m_model.GetContainerVO(safeBox).Items.Count);
+            Assert.AreEqual(instanceId, m_model.GetContainerVO(safeBox).Items[0].InstanceId, "换尺寸不该重造实例");
+            Assert.AreEqual(new Vector2Int(0, 2), m_model.GetContainerVO(safeBox).Items[0].Origin, "原位放得下就该留在原位");
+        }
+
+        // 换小且塞不下: 整次回滚, 拓扑与内容都保持原样并把问题报出来
+        [Test]
+        public void TryResizeContainer_TooSmallForContentsRollsBackToOriginalGeometry()
+        {
+            int safeBox = InventoryContainerIds.SAFEBOX;
+            InventoryModule.ApplyContainer(m_model, safeBox, m_kit.CreateContainer(3, 3, "安全箱"));
+            Assert.AreEqual(InventoryMoveResult.Success,
+                m_model.TryAddItem(safeBox, m_kit.CreateItem(2, 2).ItemId, 1, new Vector2Int(0, 1)));
+
+            int instanceId = m_model.GetContainerVO(safeBox).Items[0].InstanceId;
+            LogAssert.Expect(LogType.Error, new Regex("容器换尺寸放不下现有内容"));
+            Assert.IsFalse(m_model.TryResizeContainer(safeBox,
+                new InventoryContainerSpec(1, 1, float.MaxValue, null, "安全箱")));
+
+            AssertContainerGeometry(safeBox, 3, 3, 9);
+            Assert.IsTrue(m_model.IsContainerRegistered(safeBox), "回滚后网格必须还在");
+            Assert.AreEqual(instanceId, m_model.GetContainerVO(safeBox).Items[0].InstanceId, "回滚不该重造实例");
+            Assert.AreEqual(new Vector2Int(0, 1), m_model.GetContainerVO(safeBox).Items[0].Origin, "回滚后物品该回到原位");
+        }
+
+        // 规格与现有拓扑完全一致时不换尺寸, 免得白吃一次重建
+        [Test]
+        public void TryResizeContainer_SameShapeIsNoOp()
+        {
+            int safeBox = InventoryContainerIds.SAFEBOX;
+            InventoryModule.ApplyContainer(m_model, safeBox, m_kit.CreateContainer(3, 3, "安全箱"));
+            int version = m_model.GetContainerVO(safeBox).Version;
+
+            Assert.IsTrue(m_model.TryResizeContainer(safeBox,
+                new InventoryContainerSpec(3, 3, float.MaxValue, null, "安全箱")));
+            Assert.AreEqual(version, m_model.GetContainerVO(safeBox).Version, "没换尺寸不该动版本");
+        }
+        #endregion
+
         #region 断言辅助
         // 校验指定槽位在模型里注册出的网格尺寸与总格数
         private void AssertContainerGeometry(int slotId, int width, int height, int cellCount)
@@ -300,6 +421,14 @@ namespace Tests.Inventory
             Assert.AreEqual(width, vo.Width);
             Assert.AreEqual(height, vo.Height);
             Assert.AreEqual(cellCount, vo.CellCount);
+        }
+
+        // 换成带穿戴表的总配置重建模型, SyncWornCapacities 才可能从配置里读到常驻底格
+        private void RebuildModelWithLoadout(InventoryLoadoutConfigSO loadout)
+        {
+            m_model.OnUnregister();
+            m_model = new InventoryModel(m_kit.CreateInventoryConfig(loadout));
+            m_model.OnRegister();
         }
         #endregion
     }

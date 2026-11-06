@@ -26,6 +26,9 @@ namespace UI.Inventory
         //注销容器
         void UnregisterContainer(int containerId);
         
+        //换尺寸: 网格拓扑重建但容器身份不变, 内容放不下时回滚原拓扑并返回 false
+        bool TryResizeContainer(int containerId, InventoryContainerSpec spec);
+
         //容器是否已注册
         bool IsContainerRegistered(int containerId);
         

@@ -99,6 +99,7 @@ namespace Module.Inventory.Core.Defines
 
         /// <summary>
         /// 穿戴部位查它撑起的容量容器号, 头盔与武器等不带容量的部位返回 false
+        /// 安全箱部位同样映射到容量容器, 型号换型时要靠它找到该刷新的常驻网格
         /// </summary>
         /// <param name="slot">穿戴部位</param>
         /// <param name="containerId">对应的容量容器号</param>
@@ -112,10 +113,22 @@ namespace Module.Inventory.Core.Defines
                 case InventoryEquipSlot.ChestRig:
                     containerId = RIG;
                     return true;
+                case InventoryEquipSlot.SafeBox:
+                    containerId = SAFEBOX;
+                    return true;
                 default:
                     containerId = 0;
                     return false;
             }
+        }
+
+        /// <summary>
+        /// 该容量容器是否为角色常驻: 卸下型号后不注销网格, 而是回落到基础尺寸
+        /// </summary>
+        /// <param name="containerId">容量容器号</param>
+        public static bool IsPersistentCapacityContainer(int containerId)
+        {
+            return containerId == SAFEBOX;
         }
     }
 }

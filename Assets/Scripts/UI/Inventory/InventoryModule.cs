@@ -45,7 +45,8 @@ namespace UI.Inventory
         }
 
         /// <summary>
-        /// 按穿戴表注册角色身上的容器: 口袋与安全箱是先天容量, 背包与胸挂要穿进装备槽才撑起容量
+        /// 按穿戴表注册角色身上的容器: 口袋与安全箱是先天常驻容量, 背包与胸挂要穿进装备槽才撑起容量
+        /// 安全箱穿上型号就撑成型号网格, 卸下后由 SyncWornCapacities 回落到基础网格, 不会整块消失
         /// </summary>
         /// <param name="model">背包模型</param>
         /// <param name="loadout">穿戴表, 取不到时角色身上不会注册任何容器</param>

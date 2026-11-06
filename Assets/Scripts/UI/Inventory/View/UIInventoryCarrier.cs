@@ -38,12 +38,18 @@ namespace UI.Inventory.View
         [Tooltip("物品模板")]
         [SerializeField] private GameObject ItemPrefab;
 
+        [Header("表头设置")]
+        [Tooltip("容器未注册或装备被卸下时的常驻表头名, 留空则沿用预制体 Txt_Name 的原文案")]
+        [SerializeField] private string DefaultName;
+
         private Transform m_gridRoot;
         private Transform m_itemRoot;
         private GameObject m_visibleRoot;
         private GridLayoutGroup m_gridLayout;
         private TMP_Text m_capacityText;
         private TMP_Text m_nameText;
+
+        private string m_fallbackName; //快照没有显示名时表头要常驻的那行字
 
         private RectTransform m_rect;
         private RectTransform m_gridRect;
@@ -57,6 +63,16 @@ namespace UI.Inventory.View
         private readonly List<int> m_staleItemIds = new List<int>();
 
         private int m_gridWidth = -1;
+
+        /// <summary>
+        /// 当前载体的网格单元格尺寸
+        /// </summary>
+        public Vector2 CellSize => m_gridLayout.cellSize;
+
+        /// <summary>
+        /// 当前载体的网格单元格间距
+        /// </summary>
+        public Vector2 CellSpacing => m_gridLayout.spacing;
 
         #region 生命周期
         protected override InventoryViewModel CreateViewModel() => new InventoryViewModel();
@@ -90,9 +106,9 @@ namespace UI.Inventory.View
             m_equipSlotRect = transform.Find(EQUIP_SLOT_PATH) as RectTransform;
             m_nameText = transform.Find(NAME_PATH)?.GetComponent<TMP_Text>();
             m_capacityText = transform.Find(CAPACITY_PATH)?.GetComponent<TMP_Text>();
+            ResolveFallbackName();
 
             SyncItemLayerToGrid();
-            SyncEquipSlotPosition();
         }
 
         //登记绑定, 视图只做表现不做业务判定
@@ -112,10 +128,22 @@ namespace UI.Inventory.View
             SyncItemViews(vo);
 
             if (m_nameText != null)
-                m_nameText.text = vo.DisplayName;
+                m_nameText.text = string.IsNullOrEmpty(vo.DisplayName) ? m_fallbackName : vo.DisplayName;
 
             if (m_capacityText != null)
                 m_capacityText.text = $"{vo.UsedCellCount}/{vo.CellCount}";
+        }
+
+        //表头常驻名: 配了默认名就用它, 没配就沿用预制体里本来写着的文案
+        private void ResolveFallbackName()
+        {
+            if (!string.IsNullOrEmpty(DefaultName))
+            {
+                m_fallbackName = DefaultName;
+                return;
+            }
+
+            m_fallbackName = m_nameText != null ? m_nameText.text : string.Empty;
         }
 
         // 容量视图只显隐容器区域，避免连带隐藏独立装备槽
@@ -127,9 +155,9 @@ namespace UI.Inventory.View
         //按容器拓扑换算网格矩形并撑合载体, 让尺寸始终来自配置而不是手调预制体
         private void SyncGridSize(InventoryContainerVO vo)
         {
-            SyncEquipSlotPosition();
             if (vo.Width < MIN_COLUMN_COUNT || vo.Height <= 0) return;
 
+            //格子边长与间距的唯一入口是 Layout_Grid 上的 GridLayoutGroup, 想改尺寸改这两处而不是根节点 RectTransform
             Vector2 cell = m_gridLayout.cellSize;
             Vector2 spacing = m_gridLayout.spacing;
             RectOffset padding = m_gridLayout.padding;
@@ -162,19 +190,6 @@ namespace UI.Inventory.View
             m_itemRect.pivot = m_gridRect.pivot;
             m_itemRect.sizeDelta = m_gridRect.sizeDelta - new Vector2(padding.horizontal, padding.vertical);
             m_itemRect.anchoredPosition = m_gridRect.anchoredPosition + new Vector2(padding.left, -padding.top);
-        }
-
-        //内嵌装备槽沿表头下方的内容区垂直居中, 不再简单贴着载体中线, 避免撑出表头
-        private void SyncEquipSlotPosition()
-        {
-            if (m_equipSlotRect == null) return;
-
-            //定位公式以纵向居中锚点为前提, 在这里统一约定
-            m_equipSlotRect.anchorMin = new Vector2(m_equipSlotRect.anchorMin.x, 0.5f);
-            m_equipSlotRect.anchorMax = new Vector2(m_equipSlotRect.anchorMax.x, 0.5f);
-            m_equipSlotRect.pivot = new Vector2(m_equipSlotRect.pivot.x, 0.5f);
-            float horizontal = m_equipSlotRect.anchoredPosition.x;
-            m_equipSlotRect.anchoredPosition = new Vector2(horizontal, (BOTTOM_GAP - GridTopOffset()) * 0.5f);
         }
 
         //网格顶边相对载体顶边的下沉量, 由表头高度推导
@@ -250,7 +265,7 @@ namespace UI.Inventory.View
 
                 if (m_itemViews.TryGetValue(item.InstanceId, out UIInventoryItem itemView))
                 {
-                    itemView.Setup(item);
+                    itemView.Setup(item, m_gridLayout.cellSize, m_gridLayout.spacing);
                     m_staleItemIds.Remove(item.InstanceId);
                     continue;
                 }
@@ -273,7 +288,7 @@ namespace UI.Inventory.View
             GameObject itemObject = Instantiate(ItemPrefab, m_itemRoot);
             UIInventoryItem itemView = itemObject.GetComponent<UIInventoryItem>();
 
-            itemView.Setup(item);
+            itemView.Setup(item, m_gridLayout.cellSize, m_gridLayout.spacing);
             m_itemViews.Add(item.InstanceId, itemView);
             itemView.Bind(Scope.CreateChild(itemObject), ViewModel);
         }

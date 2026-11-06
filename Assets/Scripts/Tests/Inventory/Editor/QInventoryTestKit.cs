@@ -117,9 +117,10 @@ namespace Tests.Inventory
         /// <param name="rig">胸挂槽穿着的物品, 传 null 代表没穿</param>
         /// <param name="pockets">口袋的固有容器定义, 传 null 代表不注册口袋</param>
         /// <param name="safeBox">安全箱槽穿着的物品, 传 null 代表没穿</param>
+        /// <param name="safeBoxBase">安全箱卸下型号后的常驻底格, 传 null 代表安全箱不常驻</param>
         public InventoryLoadoutConfigSO CreateLoadout(InventoryItemConfigSO backpack,
             InventoryItemConfigSO rig = null, InventoryContainerConfigSO pockets = null,
-            InventoryItemConfigSO safeBox = null)
+            InventoryItemConfigSO safeBox = null, InventoryContainerConfigSO safeBoxBase = null)
         {
             InventoryLoadoutConfigSO loadout = CreateConfig<InventoryLoadoutConfigSO>();
 
@@ -127,6 +128,7 @@ namespace Tests.Inventory
             SetField(loadout, "RigValue", rig);
             SetField(loadout, "PocketsValue", pockets);
             SetField(loadout, "SafeBoxValue", safeBox);
+            SetField(loadout, "SafeBoxBaseValue", safeBoxBase);
             return loadout;
         }
 
