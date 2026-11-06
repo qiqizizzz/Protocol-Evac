@@ -17,12 +17,13 @@ namespace UI.Inventory.View
 {
     public sealed class UIInventoryCarrier : ViewBase<InventoryViewModel>
     {
+        private const string CONTAINER_PATH = "Slot_Container";
+        private const string CONTAINER_GRID_PATH = "Slot_Container/Layout_Grid";
+        private const string CONTAINER_ITEM_PATH = "Slot_Container/Layout_Item";
         private const string GRID_PATH = "Layout_Grid";
         private const string ITEM_PATH = "Layout_Item";
         private const string CAPACITY_PATH = "Layout_Header/Txt_Capacity";
         private const string NAME_PATH = "Layout_Header/Txt_Name";
-        private const string HINT_PATH = "Txt_Hint";
-        private const string ROTATE_PATH = "Btn_Rotate";
 
         private const int MIN_COLUMN_COUNT = 1;
 
@@ -35,11 +36,10 @@ namespace UI.Inventory.View
 
         private Transform m_gridRoot;
         private Transform m_itemRoot;
+        private GameObject m_visibleRoot;
         private GridLayoutGroup m_gridLayout;
         private TMP_Text m_capacityText;
         private TMP_Text m_nameText;
-        private TMP_Text m_hintText;
-        private Button m_rotateButton;
 
         private readonly List<UIInventorySlot> m_slotViews = new List<UIInventorySlot>();
         private readonly Dictionary<int, UIInventoryItem> m_itemViews = new Dictionary<int, UIInventoryItem>();
@@ -52,29 +52,31 @@ namespace UI.Inventory.View
 
         protected override void OnAwake()
         {
-            m_gridRoot = this.FindChild(GRID_PATH);
-            m_itemRoot = this.FindChild(ITEM_PATH);
+            Transform containerRoot = transform.Find(CONTAINER_PATH);
+            if (containerRoot != null)
+            {
+                m_gridRoot = this.FindChild(CONTAINER_GRID_PATH);
+                m_itemRoot = this.FindChild(CONTAINER_ITEM_PATH);
+                m_visibleRoot = containerRoot.gameObject;
+            }
+            else
+            {
+                m_gridRoot = this.FindChild(GRID_PATH);
+                m_itemRoot = this.FindChild(ITEM_PATH);
+                m_visibleRoot = gameObject;
+            }
+
             m_gridLayout = m_gridRoot.GetComponent<GridLayoutGroup>();
             m_gridLayout.startAxis = GridLayoutGroup.Axis.Horizontal;
-            m_nameText = this.FindChildComponent<TMP_Text>(NAME_PATH);
-            m_capacityText = this.FindChildComponent<TMP_Text>(CAPACITY_PATH);
-            m_hintText = this.FindChildComponent<TMP_Text>(HINT_PATH);
-            m_rotateButton = this.FindChildComponent<Button>(ROTATE_PATH);
-            if (m_rotateButton != null)
-                m_rotateButton.gameObject.SetActive(false);
+            m_nameText = transform.Find(NAME_PATH)?.GetComponent<TMP_Text>();
+            m_capacityText = transform.Find(CAPACITY_PATH)?.GetComponent<TMP_Text>();
         }
 
         //登记绑定, 视图只做表现不做业务判定
         protected override void BindViewModel(InventoryViewModel viewModel)
         {
-            if (m_rotateButton != null)
-                m_rotateButton.onClick.AddListener(viewModel.RotateSelectedItem);
-
             Scope.Bind(viewModel.Snapshot, RenderSnapshot);
-            Scope.Bind(viewModel.HintKind, RenderHint);
-            Scope.Bind(viewModel.CanRotate, RenderCanRotate);
-            Scope.Bind(viewModel.HintPulse, PlayHintPulse);
-            Scope.Bind(viewModel.Visible, gameObject.SetActive);
+            Scope.Bind(viewModel.Visible, SetVisible);
         }
         #endregion
 
@@ -85,8 +87,17 @@ namespace UI.Inventory.View
             SyncSlotViews(vo);
             SyncItemViews(vo);
 
-            m_nameText.text = vo.DisplayName;
-            m_capacityText.text = $"{vo.UsedCellCount}/{vo.CellCount}";
+            if (m_nameText != null)
+                m_nameText.text = vo.DisplayName;
+
+            if (m_capacityText != null)
+                m_capacityText.text = $"{vo.UsedCellCount}/{vo.CellCount}";
+        }
+
+        // 容量视图只显隐容器区域，避免连带隐藏独立装备槽
+        private void SetVisible(bool visible)
+        {
+            m_visibleRoot.SetActive(visible);
         }
 
         //按容器拓扑增减格子视图
@@ -176,12 +187,6 @@ namespace UI.Inventory.View
             itemView.Bind(Scope.CreateChild(itemObject), ViewModel);
         }
 
-        //渲染提示语义
-        private void RenderHint(InventoryHintKind kind)
-        {
-            m_hintText.text = HintOf(kind);
-        }
-
         //提示语义转文案
         private static string HintOf(InventoryHintKind kind)
         {
@@ -193,20 +198,6 @@ namespace UI.Inventory.View
                 case InventoryHintKind.Desync: return "数据异常";
                 default: return string.Empty;
             }
-        }
-
-        //渲染旋转按钮可用性
-        private void RenderCanRotate(bool canRotate)
-        {
-            if (m_rotateButton != null)
-                m_rotateButton.interactable = canRotate;
-        }
-
-        //提示重放时闪一下文本
-        private void PlayHintPulse()
-        {
-            m_hintText.CrossFadeAlpha(0f, 0f, false);
-            m_hintText.CrossFadeAlpha(1f, 0.12f, false);
         }
         #endregion
     }
