@@ -2041,6 +2041,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: Carrier_Rig
       objectReference: {fileID: 0}
+    - target: {fileID: 3087777012685539540, guid: 08a41339ee62c3a40b76b4931bac8009,
+        type: 3}
+      propertyPath: DefaultName
+      value: "\u80F8\u6302"
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

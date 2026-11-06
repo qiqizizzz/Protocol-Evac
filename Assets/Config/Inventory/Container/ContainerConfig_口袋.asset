@@ -13,5 +13,6 @@ MonoBehaviour:
   m_Name: "ContainerConfig_\u53E3\u888B"
   m_EditorClassIdentifier: 
   DisplayNameValue: "\u53E3\u888B"
-  WidthValue: 4
-  HeightValue: 2
+  WidthValue: 5
+  HeightValue: 1
+  RowsValue: []

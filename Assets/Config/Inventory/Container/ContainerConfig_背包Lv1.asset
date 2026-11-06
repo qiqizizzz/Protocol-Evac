@@ -13,5 +13,9 @@ MonoBehaviour:
   m_Name: "ContainerConfig_\u80CC\u5305Lv1"
   m_EditorClassIdentifier: 
   DisplayNameValue: "\u80CC\u5305"
-  WidthValue: 8
-  HeightValue: 5
+  WidthValue: 2
+  HeightValue: 3
+  RowsValue:
+  - '##.'
+  - '##.'
+  - ...
