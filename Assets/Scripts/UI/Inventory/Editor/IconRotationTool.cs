@@ -19,7 +19,6 @@ namespace UI.Inventory.Editor
     {
         // ==================== 常量与静态字段 ====================
         private const string LOG = "[IconRotationTool] ";
-        private const string DEFAULT_SRC = @"E:\Download\gun.png\icons\ffffff\transparent\1x1";
         private const string DEFAULT_DST = "Assets/Art/Inventory/ItemIcon/VectorImageIcon";
         private const string CONFIG_FILE_NAME = "icon_rotation_config.json";
         private const int EXPORT_SUPERSAMPLE = 4;
@@ -56,10 +55,7 @@ namespace UI.Inventory.Editor
         };
 
         // ==================== 字段[外部设置] ====================
-        [Tooltip("源 PNG 目录, 递归扫描")]
-        [SerializeField] private string SourceDir = DEFAULT_SRC;
-
-        [Tooltip("导出目录, 必须在 Assets 下")]
+        [Tooltip("图标目录, 读取并覆盖此目录下的 *.png")]
         [SerializeField] private string OutputDir = DEFAULT_DST;
 
         [Tooltip("导出画布统一高度")]
@@ -96,7 +92,7 @@ namespace UI.Inventory.Editor
         {
             m_configPath = Path.Combine(OutputDir, CONFIG_FILE_NAME);
             m_checker = MakeChecker();
-            ScanSources();
+            ScanIcons();
         }
 
         private void OnDisable()
@@ -126,10 +122,7 @@ namespace UI.Inventory.Editor
         {
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
 
-            string src = EditorGUILayout.TextField(new GUIContent("源目录", "递归扫描 *.png"), SourceDir);
-            if (src != SourceDir) SourceDir = src;
-
-            string dst = EditorGUILayout.TextField(new GUIContent("导出目录", "必须在 Assets 下"), OutputDir);
+            string dst = EditorGUILayout.TextField(new GUIContent("图标目录", "读取并覆盖此目录下的 *.png"), OutputDir);
             if (dst != OutputDir)
             {
                 OutputDir = dst;
@@ -147,7 +140,7 @@ namespace UI.Inventory.Editor
             if (maxWidth != MaxWidth) { MaxWidth = maxWidth; InvalidatePreviews(); }
 
             GUILayout.BeginHorizontal();
-            DrawButton("扫描源目录", 96f, ScanSources);
+            DrawButton("重新扫描图标", 96f, ScanIcons);
             DrawButton("重算自动角", 96f, AutoAngleAll);
             DrawButton("保存配置", 76f, SaveConfig);
             DrawButton("载入配置", 76f, LoadConfig);
@@ -229,7 +222,7 @@ namespace UI.Inventory.Editor
             }
 
             EditorGUILayout.LabelField(entry.OutputFile, EditorStyles.boldLabel);
-            EditorGUILayout.LabelField(entry.SourcePath, EditorStyles.miniLabel);
+            EditorGUILayout.LabelField(entry.IconPath, EditorStyles.miniLabel);
             DrawPreviewArea(entry);
             GUILayout.Space(4f);
             DrawAngleControls(entry);
@@ -341,7 +334,7 @@ namespace UI.Inventory.Editor
         {
             public string Key;
             public string Name;
-            public string SourcePath;
+            public string IconPath;
             public string OutputFile;
             public float Angle;
             public bool Flip;
@@ -369,42 +362,36 @@ namespace UI.Inventory.Editor
         }
 
         // ==================== 扫描与配置 ====================
-        // 递归扫描源目录, 同名文件按 _02 递增, 已存过配置则回填角度与文件名
-        private void ScanSources()
+        // 扫描图标目录中的 PNG, 旧配置只恢复排除状态
+        private void ScanIcons()
         {
             ReleasePreviews();
             m_entries.Clear();
             m_selected = -1;
 
-            if (!Directory.Exists(SourceDir))
+            string iconDir = ResolveOutputDir();
+            if (!Directory.Exists(iconDir))
             {
-                Debug.LogError(LOG + "源目录不存在: " + SourceDir);
-                m_status = "源目录不存在";
+                m_status = "图标目录不存在: " + OutputDir;
                 return;
             }
 
-            string[] files = Directory.GetFiles(SourceDir, "*.png", SearchOption.AllDirectories);
+            string[] files = Directory.GetFiles(iconDir, "*.png", SearchOption.TopDirectoryOnly);
             Array.Sort(files, StringComparer.OrdinalIgnoreCase);
 
-            Dictionary<string, int> used = new Dictionary<string, int>();
             for (int i = 0; i < files.Length; i++)
             {
                 string path = files[i];
-                string name = Path.GetFileNameWithoutExtension(path);
-                string author = new DirectoryInfo(Path.GetDirectoryName(path)).Name;
-
-                int count;
-                used.TryGetValue(name, out count);
-                count++;
-                used[name] = count;
+                string fileName = Path.GetFileName(path);
+                string name = Path.GetFileNameWithoutExtension(fileName);
+                if (name.StartsWith("gun_", StringComparison.OrdinalIgnoreCase))
+                    name = name.Substring(4);
 
                 Entry entry = new Entry();
-                entry.Key = author + "/" + name;
+                entry.Key = name;
                 entry.Name = name;
-                entry.SourcePath = path;
-                entry.OutputFile = count == 1
-                    ? "gun_" + name + ".png"
-                    : string.Format("gun_{0}_{1:00}.png", name, count);
+                entry.IconPath = path;
+                entry.OutputFile = fileName;
                 entry.Excluded = m_defaultExcluded.Contains(name);
                 m_entries.Add(entry);
             }
@@ -417,7 +404,7 @@ namespace UI.Inventory.Editor
             Repaint();
         }
 
-        // 把配置文件里的角度/朝向/排除/输出名回填到条目
+        // 优先按文件名匹配旧配置, 再兼容旧配置的 key
         private void ApplyConfig()
         {
             if (string.IsNullOrEmpty(m_configPath) || !File.Exists(m_configPath)) return;
@@ -425,27 +412,28 @@ namespace UI.Inventory.Editor
             AngleConfig config = JsonUtility.FromJson<AngleConfig>(File.ReadAllText(m_configPath));
             if (config == null || config.records == null) return;
 
-            Dictionary<string, AngleRecord> map = new Dictionary<string, AngleRecord>();
+            Dictionary<string, AngleRecord> byKey = new Dictionary<string, AngleRecord>();
+            Dictionary<string, AngleRecord> byFile = new Dictionary<string, AngleRecord>();
             for (int i = 0; i < config.records.Count; i++)
             {
                 AngleRecord record = config.records[i];
-                if (!string.IsNullOrEmpty(record.key)) map[record.key] = record;
+                if (!string.IsNullOrEmpty(record.key)) byKey[record.key] = record;
+                if (!string.IsNullOrEmpty(record.file)) byFile[record.file] = record;
             }
 
             int hit = 0;
             for (int i = 0; i < m_entries.Count; i++)
             {
                 AngleRecord record;
-                if (!map.TryGetValue(m_entries[i].Key, out record)) continue;
+                if (!byFile.TryGetValue(m_entries[i].OutputFile, out record)
+                    && !byKey.TryGetValue(m_entries[i].Key, out record))
+                    continue;
 
-                m_entries[i].Angle = record.angle;
-                m_entries[i].Flip = record.flip;
                 m_entries[i].Excluded = record.excluded;
-                if (!string.IsNullOrEmpty(record.file)) m_entries[i].OutputFile = record.file;
                 hit++;
             }
 
-            m_status = string.Format("已载入配置, 匹配 {0}/{1}", hit, m_entries.Count);
+            m_status = string.Format("已载入排除配置, 匹配 {0}/{1}", hit, m_entries.Count);
         }
 
         // 读回配置并刷新列表
@@ -552,6 +540,10 @@ namespace UI.Inventory.Editor
             File.WriteAllBytes(full, png);
             ConfigureImporter(entry.OutputFile, width);
 
+            // 输入和输出是同一张图, 导出后角度已经烘焙进 PNG, 当前预览必须回到 0
+            entry.Angle = 0f;
+            entry.Flip = false;
+            MarkChanged();
             m_previewDirty = true;
             return true;
         }
@@ -690,7 +682,7 @@ namespace UI.Inventory.Editor
         private float AutoSuggest(Entry entry)
         {
             int sw, sh;
-            float[] alpha = LoadAlpha(entry.SourcePath, out sw, out sh);
+            float[] alpha = LoadAlpha(entry.IconPath, out sw, out sh);
             if (alpha == null) return entry.Angle;
 
             List<Vector2> points = new List<Vector2>();
@@ -721,7 +713,7 @@ namespace UI.Inventory.Editor
         private bool SuggestFlip(Entry entry, float angle)
         {
             int sw, sh;
-            float[] alpha = LoadAlpha(entry.SourcePath, out sw, out sh);
+            float[] alpha = LoadAlpha(entry.IconPath, out sw, out sh);
             if (alpha == null) return entry.Flip;
 
             List<Vector2> points = new List<Vector2>();
@@ -755,14 +747,14 @@ namespace UI.Inventory.Editor
             outHeight = 0;
 
             int sw, sh;
-            float[] src = LoadAlpha(entry.SourcePath, out sw, out sh);
+            float[] src = LoadAlpha(entry.IconPath, out sw, out sh);
             if (src == null) return null;
 
             List<Vector2> points = new List<Vector2>();
             CollectPoints(src, sw, sh, Mathf.Max(1, sw / 256), points);
             if (points.Count < 8)
             {
-                Debug.LogError(LOG + "图标几乎没有内容: " + entry.SourcePath);
+                Debug.LogError(LOG + "图标几乎没有内容: " + entry.IconPath);
                 return null;
             }
 
@@ -1021,14 +1013,14 @@ namespace UI.Inventory.Editor
             return count > 0 ? sum / count : 0f;
         }
 
-        // 读 PNG 的 alpha 通道, 索引 = y * width + x, 第 0 行在底部
+        // 读取 PNG 的 alpha 通道, 索引 = y * width + x, 第 0 行在底部
         private static float[] LoadAlpha(string path, out int width, out int height)
         {
             width = 0;
             height = 0;
             if (!File.Exists(path))
             {
-                Debug.LogError(LOG + "源文件不存在: " + path);
+                Debug.LogError(LOG + "图标文件不存在: " + path);
                 return null;
             }
 
