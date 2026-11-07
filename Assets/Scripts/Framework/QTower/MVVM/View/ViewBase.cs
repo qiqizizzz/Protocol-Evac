@@ -11,6 +11,7 @@ using Framework.QTower.MVVM.View.Interfaces;
 using Framework.QTower.MVVM.ViewModel;
 using UnityEngine;
 using Utils.log;
+using Utils.Find;
 
 namespace Framework.QTower.MVVM.View
 {
@@ -214,18 +215,8 @@ namespace Framework.QTower.MVVM.View
         /// <param name="path">相对本面板的节点路径</param>
         protected T FindComponent<T>(string path) where T : Component
         {
-            Transform node = transform.Find(path);
-            if (node == null)
-            {
-                QLog.Error($"节点未找到：{path}，请检查 {gameObject.name} 的层级");
-                return null;
-            }
-
-            T component = node.GetComponent<T>();
-            if (component == null)
-                QLog.Error($"组件未找到：{path} 上没有 {typeof(T).Name}");
-
-            return component;
+            // 查找与报错统一走 HierarchyFindTool, 避免两套实现两种日志
+            return this.FindChildComponent<T>(path);
         }
     }
 }

@@ -24,6 +24,7 @@ namespace UI.Inventory.View
         private const string ITEM_PATH = "Layout_Item";
         private const string HEADER_PATH = "Layout_Header";
         private const string EQUIP_SLOT_PATH = "Slot_Equipment";
+        private const string VECTOR_ICON_PATH = "Img_Icon";
         private const string CAPACITY_PATH = "Layout_Header/Txt_Capacity";
         private const string NAME_PATH = "Layout_Header/Txt_Name";
 
@@ -45,6 +46,7 @@ namespace UI.Inventory.View
         private Transform m_gridRoot;
         private Transform m_itemRoot;
         private GameObject m_visibleRoot;
+        private GameObject m_vectorIcon; //装备槽根节点下的矢量底图, 容量载体没有该节点
         private GridLayoutGroup m_gridLayout;
         private TMP_Text m_capacityText;
         private TMP_Text m_nameText;
@@ -104,6 +106,7 @@ namespace UI.Inventory.View
 
             m_headerRect = transform.Find(HEADER_PATH) as RectTransform;
             m_equipSlotRect = transform.Find(EQUIP_SLOT_PATH) as RectTransform;
+            m_vectorIcon = transform.Find(VECTOR_ICON_PATH)?.gameObject;
             m_nameText = transform.Find(NAME_PATH)?.GetComponent<TMP_Text>();
             m_capacityText = transform.Find(CAPACITY_PATH)?.GetComponent<TMP_Text>();
             ResolveFallbackName();
@@ -126,12 +129,21 @@ namespace UI.Inventory.View
             SyncGridSize(vo);
             SyncSlotViews(vo);
             SyncItemViews(vo);
+            RenderVectorIcon(vo);
 
             if (m_nameText != null)
                 m_nameText.text = m_fallbackName;
 
             if (m_capacityText != null)
                 m_capacityText.text = $"{vo.UsedCellCount}/{vo.CellCount}";
+        }
+
+        //槽里放了东西就收起矢量底图, 空槽才显示占位图标
+        private void RenderVectorIcon(InventoryContainerVO vo)
+        {
+            if (m_vectorIcon == null) return;
+
+            m_vectorIcon.SetActive(vo.Items.Count == 0);
         }
 
         //表头常驻名: 配了默认名就用它, 没配就沿用预制体里本来写着的文案

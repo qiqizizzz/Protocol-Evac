@@ -16,7 +16,7 @@ namespace UI.Inventory.View
     public sealed class UIEquipmentPanel : ViewBase<EquipmentPanelViewModel>
     {
         //容量载体滚动视图节点路径
-        private const string SCROLL_VIEW_PATH = "ScrollView_Capacity";
+        private const string SCROLL_VIEW_PATH = "Layout_Storage/ScrollView_Capacity";
 
         [Header("载体设置")]
         [SerializeField] private UIInventoryCarrier[] Containers;
