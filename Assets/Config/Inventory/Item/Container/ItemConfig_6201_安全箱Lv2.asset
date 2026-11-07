@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: "ItemConfig_6201_\u5B89\u5168\u7BB1Lv2"
   m_EditorClassIdentifier: 
   ItemIdValue: 6201
-  DisplayNameValue: "\u5B89\u5168\u7BB1Lv1"
+  DisplayNameValue: "\u5B89\u5168\u7BB1Lv2"
   ItemTypeValue: 0
   CanRotateValue: 0
   MaxStackCountValue: 1

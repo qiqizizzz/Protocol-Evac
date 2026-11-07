@@ -30,5 +30,10 @@ namespace Module.Inventory.Core.Rule
         //旋转物品
         InventoryMoveResult CanRotate(InventoryContainer container, InventoryItemPlacement placement,
             out InventoryRotation nextRotation);
+
+        // 转移落点判定: 直落被占改判与原物品交换, 空间放不下时自动尝试其余朝向
+        InventoryMoveResult ResolveTransfer(InventoryContainer source, InventoryContainer target,
+            InventoryItemPlacement moving, Vector2Int cell, out InventoryRotation rotation,
+            out InventoryItemPlacement occupant);
     }
 }

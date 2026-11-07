@@ -261,10 +261,9 @@ namespace UI.Inventory
             if (!TryGetPlacement(source, instanceId, out InventoryItemPlacement placement))
                 return InventoryMoveResult.SourceNotFound;
 
-            //转移不改朝向, 拖过去是什么姿态就保持什么姿态
-            InventoryRotation rotation = placement.Rotation;
-            InventoryMoveResult verdict = ResolveTransfer(source, target, placement, cell, rotation,
-                out InventoryItemPlacement occupant);
+            //落点判定交给规则, 当前朝向放不下时会被自动转成能放下的朝向
+            InventoryMoveResult verdict = source.Rules.ResolveTransfer(source, target, placement, cell,
+                out InventoryRotation rotation, out InventoryItemPlacement occupant);
 
             if (verdict != InventoryMoveResult.Success) return verdict;
 
@@ -277,35 +276,22 @@ namespace UI.Inventory
         }
 
         public InventoryMoveResult PeekTransferItem(int sourceContainerId, int targetContainerId, int instanceId,
-            Vector2Int cell, out bool willSwap)
+            Vector2Int cell, out bool willSwap, out InventoryRotation rotation)
         {
             willSwap = false;
+            rotation = InventoryRotation.None;
 
             //悬停每帧都会问, 配错容器由 Try 路径报错, 预判这里静默免得刷屏
             if (!TryGetContainer(sourceContainerId, out InventoryContainer source)) return InventoryMoveResult.None;
             if (!TryGetContainer(targetContainerId, out InventoryContainer target)) return InventoryMoveResult.None;
             if (!TryGetPlacement(source, instanceId, out InventoryItemPlacement placement)) return InventoryMoveResult.None;
 
-            InventoryMoveResult verdict = ResolveTransfer(source, target, placement, cell, placement.Rotation,
-                out InventoryItemPlacement occupant);
+            InventoryMoveResult verdict = source.Rules.ResolveTransfer(source, target, placement, cell,
+                out rotation, out InventoryItemPlacement occupant);
 
             //被第三方物品压住才会改判交换, 落回自己身上不算
             willSwap = occupant != null && verdict == InventoryMoveResult.Success;
             return verdict;
-        }
-
-        //转移落点判定: 直落被占就改判与原物品交换, 试移与预判共用这一条规则
-        private static InventoryMoveResult ResolveTransfer(InventoryContainer source, InventoryContainer target,
-            InventoryItemPlacement moving, Vector2Int cell, InventoryRotation rotation, out InventoryItemPlacement occupant)
-        {
-            occupant = null;
-
-            InventoryMoveResult verdict = source.Rules.CanMove(source, target, moving, cell, rotation);
-            if (verdict != InventoryMoveResult.Occupied) return verdict;
-
-            if (!target.Grid.TryGetPlacementAt(cell, out occupant)) return InventoryMoveResult.Occupied;
-
-            return source.Rules.CanSwap(source, target, moving, occupant, cell, rotation);
         }
 
         public InventoryMoveResult TryRotateItem(int containerId, int instanceId)

@@ -11,6 +11,7 @@ using Framework.QTower.MVVM.View;
 using Framework.QTower.MVVM.ViewModel;
 using Framework.QTower.MVVM.ViewModel.Interfaces;
 using Module.Inventory.Core.Config;
+using Module.Inventory.Core.Config.Type;
 using Module.Inventory.Core.Defines;
 using Module.Inventory.Core.Rule.Extensions;
 using Module.Inventory.Core.Rule.Type;
@@ -344,18 +345,22 @@ namespace UI.Inventory
                 return false;
 
             InventoryMoveResult verdict = m_model.PeekTransferItem(sourceContainerId, m_containerId, instanceId, cell,
-                out bool willSwap);
+                out bool willSwap, out InventoryRotation rotation);
 
             if (verdict == InventoryMoveResult.None || verdict == InventoryMoveResult.SameSpot) return false;
 
-            size = ResolvePreviewSize(sourceContainerId, item);
+            size = ResolvePreviewSize(sourceContainerId, item, rotation);
             mark = ToCellMark(verdict, willSwap);
             return true;
         }
 
         //拖出装备槽时按目标容器还原物品配置尺寸, 避免预览仍沿用装备槽的 1x1 足迹
-        private Vector2Int ResolvePreviewSize(int sourceContainerId, InventoryItemVO item)
+        private Vector2Int ResolvePreviewSize(int sourceContainerId, InventoryItemVO item, InventoryRotation rotation)
         {
+            //自动旋转改过朝向时预览足迹必须跟着转, 否则高亮框还是玩家手上的旧形状
+            if (rotation != item.Rotation && ItemRegistry.TryGet(item.ItemId, out InventoryItemConfigSO rotated))
+                return rotated.GetSizeAt(rotation);
+
             if (!InventoryContainerIds.TryGetEquipSlotRole(sourceContainerId, out _))
                 return item.Size;
 
@@ -363,7 +368,7 @@ namespace UI.Inventory
                 return Vector2Int.one;
 
             if (ItemRegistry.TryGet(item.ItemId, out InventoryItemConfigSO config))
-                return config.GetSizeAt(item.Rotation);
+                return config.GetSizeAt(rotation);
 
             return item.Size;
         }

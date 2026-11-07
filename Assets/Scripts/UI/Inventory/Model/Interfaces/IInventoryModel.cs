@@ -47,12 +47,12 @@ namespace UI.Inventory
         //物品移动
         InventoryMoveResult TryMoveItem(int containerId, int instanceId, Vector2Int cell, InventoryRotation rotation);
         
-        //转移物品, 目标位置被占则与原物品交换, 朝向保持当前不变
+        //转移物品, 目标位置被占则与原物品交换, 当前朝向放不下时自动改用能放下的朝向
         InventoryMoveResult TryTransferItem(int sourceContainerId, int targetContainerId, int instanceId, Vector2Int cell);
         
-        //预判转移落点, 纯查询不修改状态, 并返回该落点是否会触发交换
+        //预判转移落点, 纯查询不修改状态, 返回是否会触发交换与实际采用的朝向
         InventoryMoveResult PeekTransferItem(int sourceContainerId, int targetContainerId, int instanceId, Vector2Int cell,
-            out bool willSwap);
+            out bool willSwap, out InventoryRotation rotation);
         
         //物品旋转
         InventoryMoveResult TryRotateItem(int containerId, int instanceId);

@@ -8,6 +8,7 @@
 
 using System.Collections.Generic;
 using Module.Inventory.Core.Config;
+using Module.Inventory.Core.Config.Type;
 using Module.Inventory.Core.Data;
 using Module.Inventory.Core.Rule.Type;
 using NUnit.Framework;
@@ -328,10 +329,11 @@ namespace Tests.Inventory
             int moving = AddItem(m_sourceId, 2, 1, new Vector2Int(0, 0));
 
             InventoryMoveResult verdict = m_model.PeekTransferItem(m_sourceId, m_targetId, moving,
-                new Vector2Int(1, 1), out bool willSwap);
+                new Vector2Int(1, 1), out bool willSwap, out InventoryRotation adopted);
 
             Assert.AreEqual(InventoryMoveResult.Success, verdict);
             Assert.IsFalse(willSwap);
+            Assert.AreEqual(InventoryRotation.None, adopted, "能原样放下就不该动朝向");
         }
 
         [Test]
@@ -341,10 +343,11 @@ namespace Tests.Inventory
             AddItem(m_sourceId, 1, 1, new Vector2Int(2, 2));
 
             InventoryMoveResult verdict = m_model.PeekTransferItem(m_sourceId, m_sourceId, moving,
-                new Vector2Int(2, 2), out bool willSwap);
+                new Vector2Int(2, 2), out bool willSwap, out InventoryRotation adopted);
 
             Assert.AreEqual(InventoryMoveResult.Success, verdict);
             Assert.IsTrue(willSwap, "顶开第三方就该预报为交换");
+            Assert.AreEqual(InventoryRotation.None, adopted);
         }
 
         [Test]
@@ -356,7 +359,7 @@ namespace Tests.Inventory
             int version = m_model.GetContainerVO(notchedId).Version;
 
             Assert.AreEqual(InventoryMoveResult.OutOfBounds,
-                m_model.PeekTransferItem(notchedId, notchedId, moving, HOLE, out bool willSwap));
+                m_model.PeekTransferItem(notchedId, notchedId, moving, HOLE, out bool willSwap, out _));
             Assert.IsFalse(willSwap);
             Assert.AreEqual(version, m_model.GetContainerVO(notchedId).Version);
 
@@ -373,9 +376,9 @@ namespace Tests.Inventory
 
             // 悬停每帧都在问, 这里必须静默, 一旦走 QLog 就会刷屏
             Assert.AreEqual(InventoryMoveResult.None,
-                m_model.PeekTransferItem(missingId, m_sourceId, moving, Vector2Int.zero, out bool _));
+                m_model.PeekTransferItem(missingId, m_sourceId, moving, Vector2Int.zero, out bool _, out _));
             Assert.AreEqual(InventoryMoveResult.None,
-                m_model.PeekTransferItem(m_sourceId, missingId, moving, Vector2Int.zero, out _));
+                m_model.PeekTransferItem(m_sourceId, missingId, moving, Vector2Int.zero, out _, out _));
         }
 
         [Test]
@@ -386,7 +389,7 @@ namespace Tests.Inventory
 
             for (int y = 0; y < GRID_WIDTH; y++)
             for (int x = 0; x < GRID_WIDTH; x++)
-                m_model.PeekTransferItem(m_sourceId, m_sourceId, moving, new Vector2Int(x, y), out bool _);
+                m_model.PeekTransferItem(m_sourceId, m_sourceId, moving, new Vector2Int(x, y), out bool _, out _);
 
             Assert.AreEqual(version, m_model.GetContainerVO(m_sourceId).Version, "预判不该提交任何版本");
             Assert.AreEqual(new Vector2Int(0, 0), ItemOf(m_sourceId, moving).Origin);

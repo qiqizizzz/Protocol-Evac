@@ -1,6 +1,6 @@
 ﻿/*
 * ┌──────────────────────────────────┐
-* │  描    述: 背包转移与交换测试, 覆盖同容器换位、双方足迹重叠、跨容器交换、超重与拖拽链路
+* │  描    述: 背包转移与交换测试, 覆盖同容器换位、双方足迹重叠、跨容器交换、超重、自动旋转与拖拽链路
 * │  类    名: QInventoryTransferTests.cs
 * │  创    建: By qiqizizzz
 * └──────────────────────────────────┘
@@ -169,7 +169,7 @@ namespace Tests.Inventory
 
             // 悬停预判: 子弹落 (0,0) 顶起步枪, 应报可交换
             Assert.AreEqual(InventoryMoveResult.Success,
-                m_model.PeekTransferItem(wideId, wideId, bullet, new Vector2Int(0, 0), out bool willSwap));
+                m_model.PeekTransferItem(wideId, wideId, bullet, new Vector2Int(0, 0), out bool willSwap, out _));
             Assert.IsTrue(willSwap, "落点压住第三方物品, 预判就该报交换");
 
             // 真落地走同一条 ResolveTransfer 规则, 结论必须和预判一致
@@ -253,11 +253,13 @@ namespace Tests.Inventory
         {
             int moving = AddItem(m_sourceId, 3, 1, new Vector2Int(0, 0));
             int smallId = m_kit.NewContainerId();
-            Register(smallId, 4, 4);
+            // 2x2 的容器横竖都塞不下三格长的条, 换朝向也救不了
+            Register(smallId, 2, 2);
 
             Assert.AreEqual(InventoryMoveResult.OutOfBounds,
-                m_model.TryTransferItem(m_sourceId, smallId, moving, new Vector2Int(2, 0)));
+                m_model.TryTransferItem(m_sourceId, smallId, moving, new Vector2Int(0, 0)));
             Assert.AreEqual(new Vector2Int(0, 0), ItemOf(m_sourceId, moving).Origin);
+            Assert.AreEqual(InventoryRotation.None, ItemOf(m_sourceId, moving).Rotation, "转不动就不该动过朝向");
         }
 
         [Test]
@@ -473,6 +475,113 @@ namespace Tests.Inventory
 
             AssertAbsent(m_sourceId, moving);
             Assert.AreEqual(new Vector2Int(0, 0), ItemOf(m_targetId, moving).Origin);
+        }
+        #endregion
+
+        #region 自动旋转
+        [Test]
+        public void Transfer_WhenCurrentRotationDoesNotFit_AutoRotatesAtSameOrigin()
+        {
+            int moving = AddItem(m_sourceId, 3, 1, new Vector2Int(0, 0));
+
+            // 横条落 (2,0) 要伸出右边界, 竖起来刚好占 (2,0)-(2,2)
+            Assert.AreEqual(InventoryMoveResult.Success,
+                m_model.TryTransferItem(m_sourceId, m_sourceId, moving, new Vector2Int(2, 0)));
+
+            InventoryItemVO landed = ItemOf(m_sourceId, moving);
+            Assert.AreEqual(new Vector2Int(2, 0), landed.Origin, "自动旋转只转朝向, 不该偷偷挪锚点");
+            Assert.AreEqual(InventoryRotation.Rotate90, landed.Rotation);
+            Assert.AreEqual(new Vector2Int(1, 3), landed.Size);
+        }
+
+        [Test]
+        public void PeekTransferItem_ReportsAdoptedRotationAndMatchesRealDrop()
+        {
+            int moving = AddItem(m_sourceId, 3, 1, new Vector2Int(0, 0));
+
+            InventoryMoveResult verdict = m_model.PeekTransferItem(m_sourceId, m_sourceId, moving,
+                new Vector2Int(2, 0), out bool willSwap, out InventoryRotation rotation);
+
+            Assert.AreEqual(InventoryMoveResult.Success, verdict);
+            Assert.IsFalse(willSwap);
+            Assert.AreEqual(InventoryRotation.Rotate90, rotation, "预览必须拿到实际会采用的朝向");
+
+            // 预判和真落必须给同一个结论, 否则玩家会看到绿灯却放不下
+            Assert.AreEqual(InventoryMoveResult.Success,
+                m_model.TryTransferItem(m_sourceId, m_sourceId, moving, new Vector2Int(2, 0)));
+            Assert.AreEqual(InventoryRotation.Rotate90, ItemOf(m_sourceId, moving).Rotation);
+        }
+
+        [Test]
+        public void Transfer_PrefersCurrentRotationWhenItAlreadyFits()
+        {
+            int moving = AddItem(m_sourceId, 1, 2, new Vector2Int(0, 0));
+
+            Assert.AreEqual(InventoryMoveResult.Success,
+                m_model.TryTransferItem(m_sourceId, m_sourceId, moving, new Vector2Int(1, 1)));
+
+            InventoryItemVO landed = ItemOf(m_sourceId, moving);
+            Assert.AreEqual(InventoryRotation.None, landed.Rotation, "原本就放得下时绝不能自己转");
+            Assert.AreEqual(new Vector2Int(1, 2), landed.Size);
+        }
+
+        [Test]
+        public void Transfer_AutoRotationPrefersFittingOverSwappingTheNeighbour()
+        {
+            // 横条落 (0,1) 会压住 (2,1) 的竖条, 而竖条顶回 (0,0) 又和横条自己撞上
+            int moving = AddItem(m_sourceId, 3, 1, new Vector2Int(0, 0));
+            int occupant = AddItem(m_sourceId, 1, 2, new Vector2Int(2, 1));
+
+            Assert.AreEqual(InventoryMoveResult.Success,
+                m_model.PeekTransferItem(m_sourceId, m_sourceId, moving, new Vector2Int(0, 1),
+                    out bool willSwap, out InventoryRotation rotation));
+            Assert.IsFalse(willSwap, "转个方向就空得下, 不该把邻居顶走");
+            Assert.AreEqual(InventoryRotation.Rotate90, rotation);
+
+            Assert.AreEqual(InventoryMoveResult.Success,
+                m_model.TryTransferItem(m_sourceId, m_sourceId, moving, new Vector2Int(0, 1)));
+
+            Assert.AreEqual(new Vector2Int(2, 1), ItemOf(m_sourceId, occupant).Origin, "邻居原位不动");
+            Assert.AreEqual(new Vector2Int(1, 3), ItemOf(m_sourceId, moving).Size);
+        }
+
+        [Test]
+        public void Transfer_NonRotatableItem_KeepsTheSpatialRejection()
+        {
+            int itemId = m_kit.CreateItem(3, 1, canRotate: false).ItemId;
+            Assert.AreEqual(InventoryMoveResult.Success, m_model.TryAddItem(m_sourceId, itemId, 1, new Vector2Int(0, 3)));
+            Assert.IsTrue(m_model.TryGetInstanceIdAt(m_sourceId, new Vector2Int(0, 3), out int moving));
+
+            Assert.AreEqual(InventoryMoveResult.OutOfBounds,
+                m_model.TryTransferItem(m_sourceId, m_sourceId, moving, new Vector2Int(2, 0)));
+
+            InventoryItemVO landed = ItemOf(m_sourceId, moving);
+            Assert.AreEqual(new Vector2Int(0, 3), landed.Origin);
+            Assert.AreEqual(InventoryRotation.None, landed.Rotation);
+        }
+
+        [Test]
+        public void Transfer_SquareFootprint_AutoRotationChangesNothing()
+        {
+            int moving = AddItem(m_sourceId, 2, 2, new Vector2Int(0, 0));
+
+            // 方块转几圈还是 2x2, 换朝向帮不上忙, 判错要保持原样
+            Assert.AreEqual(InventoryMoveResult.OutOfBounds,
+                m_model.TryTransferItem(m_sourceId, m_sourceId, moving, new Vector2Int(3, 3)));
+            Assert.AreEqual(new Vector2Int(0, 0), ItemOf(m_sourceId, moving).Origin);
+        }
+
+        [Test]
+        public void Transfer_WeightFailureIsNotMaskedByAutoRotation()
+        {
+            int moving = AddItem(m_sourceId, 3, 1, new Vector2Int(0, 0), 5f);
+            int tightId = m_kit.NewContainerId();
+            // 竖起来明明放得下, 但超重才是真正的原因, 不能被旋转掩盖
+            Register(tightId, 2, 4, 1f);
+
+            Assert.AreEqual(InventoryMoveResult.WeightExceeded,
+                m_model.TryTransferItem(m_sourceId, tightId, moving, new Vector2Int(0, 0)));
+            Assert.AreEqual(InventoryRotation.None, ItemOf(m_sourceId, moving).Rotation);
         }
         #endregion
 

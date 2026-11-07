@@ -1,6 +1,6 @@
 ﻿/*
 * ┌──────────────────────────────────┐
-* │  描    述: 背包面板视图模型测试, 覆盖选中、旋转保朝向、放置失败与响应式联动
+* │  描    述: 背包面板视图模型测试, 覆盖选中、旋转保朝向、自动旋转、放置失败与响应式联动
 * │  类    名: QInventoryViewModelTests.cs
 * │  创    建: By qiqizizzz
 * └──────────────────────────────────┘
@@ -220,7 +220,8 @@ namespace Tests.Inventory
         public void PlaceSelectedItem_OntoClippedByNeighbour_ReportsFailureAndKeepsOriginalCells()
         {
             AddItem(1, 1, new Vector2Int(1, 1));
-            int instanceId = AddItem(2, 1, Vector2Int.zero);
+            // 钉成不可旋转, 否则自动旋转会把它转开放下, 这条失败路径就测不到了
+            int instanceId = AddItem(2, 1, Vector2Int.zero, false);
             m_viewModel.InteractAt(Vector2Int.zero);
             m_hintPulseCount = 0;
 
@@ -232,6 +233,23 @@ namespace Tests.Inventory
             Assert.AreEqual(instanceId, m_viewModel.SelectedInstanceId.Value);
             Assert.AreEqual(Vector2Int.zero, ItemOf(instanceId).Origin);
             AssertSelected(0, 0, true);
+        }
+
+        [Test]
+        public void PlaceSelectedItem_OntoClippedByNeighbour_AutoRotatesToFit()
+        {
+            AddItem(1, 1, new Vector2Int(1, 1));
+            int instanceId = AddItem(2, 1, Vector2Int.zero);
+
+            m_viewModel.InteractAt(Vector2Int.zero);
+            m_viewModel.InteractAt(new Vector2Int(0, 1));
+
+            InventoryItemVO landed = ItemOf(instanceId);
+            Assert.AreEqual(InventoryMoveResult.Success, m_viewModel.LastMoveResult);
+            Assert.AreEqual(new Vector2Int(0, 1), landed.Origin, "锚点仍是玩家点的那格");
+            Assert.AreEqual(InventoryRotation.Rotate90, landed.Rotation, "横条竖过来才让得开邻居");
+            Assert.AreEqual(new Vector2Int(1, 2), landed.Size);
+            Assert.AreEqual(NO_SELECTION, m_viewModel.SelectedInstanceId.Value);
         }
 
         [Test]
