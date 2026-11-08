@@ -17,7 +17,7 @@ namespace Module.Inventory.Core.Rule
 {
     public class InventoryRules : IInventoryRules
     {
-        //四步轮转一周, 与 CanRotate 的朝向推进保持一致
+        // 四次旋转构成一周, 与 CanRotate 的朝向推进保持一致
         private const int ROTATION_COUNT = 4;
 
         //默认无状态单例
@@ -130,7 +130,7 @@ namespace Module.Inventory.Core.Rule
             return CanMove(container, container, placement, placement.Position, nextRotation);
         }
 
-        // 转移落点判定: 先按玩家手上的朝向判, 只有空间放不下才依次试其余朝向
+        // 转移落点判定：先按当前朝向判定, 空间不足时依次尝试其余朝向
         public InventoryMoveResult ResolveTransfer(InventoryContainer source, InventoryContainer target,
             InventoryItemPlacement moving, Vector2Int cell, out InventoryRotation rotation,
             out InventoryItemPlacement occupant)
@@ -138,10 +138,10 @@ namespace Module.Inventory.Core.Rule
             rotation = moving.Rotation;
             InventoryMoveResult verdict = EvaluateTransfer(source, target, moving, cell, rotation, out occupant);
 
-            //超重与部位不符转方向也转不开, 直接保留原始判错, 免得吞掉真正的原因
+            // 超重与部位不符与朝向无关, 保留原始判定结果
             if (!verdict.IsSpatialFailure() || !CanAutoRotate(target, moving)) return verdict;
 
-            //当前朝向优先, 命中即停, 保证能原样放下时绝不会自己动手
+            // 当前朝向优先, 命中即返回, 可原样放置时不改变朝向
             for (int step = 1; step < ROTATION_COUNT; step++)
             {
                 InventoryRotation candidate = (InventoryRotation)(((int)moving.Rotation + step) % ROTATION_COUNT);
@@ -159,7 +159,7 @@ namespace Module.Inventory.Core.Rule
         }
         #endregion
         
-        //单朝向落点判定: 直落被占则改判与原物品交换
+        // 单朝向落点判定：目标被占用时改判为与原物品交换
         private InventoryMoveResult EvaluateTransfer(InventoryContainer source, InventoryContainer target,
             InventoryItemPlacement moving, Vector2Int cell, InventoryRotation rotation, out InventoryItemPlacement occupant)
         {
@@ -173,7 +173,7 @@ namespace Module.Inventory.Core.Rule
             return CanSwap(source, target, moving, occupant, cell, rotation);
         }
 
-        //自动旋转前置条件: 物品本身允许旋转, 且目标不是朝向无意义的单格装备槽
+        // 自动旋转前置条件：物品允许旋转, 且目标不是单格装备槽
         private static bool CanAutoRotate(InventoryContainer target, InventoryItemPlacement moving)
             => moving.Instance.Config.CanRotate && !target.IsEquipSlot;
 

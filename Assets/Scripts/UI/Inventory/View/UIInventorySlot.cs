@@ -57,7 +57,7 @@ namespace UI.Inventory.View
 
         public void OnPointerClick(PointerEventData eventData)
         {
-            //右键留给物品菜单, 空格子只认左键
+            // 右键用于物品菜单, 空格子仅响应左键
             if (eventData.button != PointerEventData.InputButton.Left) return;
 
             ViewModel.NotifyClicked();
@@ -65,18 +65,18 @@ namespace UI.Inventory.View
 
         public void OnDrop(PointerEventData eventData)
         {
-            ViewModel.NotifyDropped();
+            ViewModel.NotifyDropped(UIInventoryItem.ResolveDropAnchor(eventData, m_rect, ViewModel.Cell));
         }
 
         public void OnPointerEnter(PointerEventData eventData)
         {
-            UIInventoryItem.SnapGhostTo(eventData, m_rect);
-            ViewModel.NotifyHovered(true);
+            ViewModel.NotifyHovered(true, UIInventoryItem.ResolveDropAnchor(eventData, m_rect, ViewModel.Cell));
         }
 
+        // 空格子占一格, 离开时按自身格号上报
         public void OnPointerExit(PointerEventData eventData)
         {
-            ViewModel.NotifyHovered(false);
+            ViewModel.NotifyHovered(false, Vector2Int.zero);
         }
 
         #region Private Function

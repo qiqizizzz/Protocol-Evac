@@ -11,6 +11,7 @@ using Framework.QTower.MVVM.Binding;
 using TMPro;
 using Module.Inventory.Core.Config;
 using Module.Inventory.Core.Defines;
+using UI.Inventory.View.Tools;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -23,6 +24,7 @@ namespace UI.Inventory.View
     {
         private const int DRAG_GHOST_SORTING_ORDER = 100; //拖影排序层级, 高于面板默认层级
         private const float DRAG_GHOST_ALPHA = 0.75f; //拖影期间的不透明度
+        private const float DRAG_LIFT_THRESHOLD_SQR = 36f; //抬起拖影所需的指针位移平方, 约 6 像素
 
         private const int NO_SELECTION = -1; //无选中
 
@@ -47,9 +49,21 @@ namespace UI.Inventory.View
 
         private InventoryViewModel m_viewModel;
         private Vector2Int m_origin;
+        private Vector2Int m_cellFootprint; // 自身占格
+        private Vector2Int m_previewCell; // 最近一次上报的预览锚点格
         private Vector2 m_homeAnchoredPosition;
-        private RectTransform m_snapTarget;
+        private RectTransform m_dragPlaneRect; // 拖影投影所用的物品层矩形
+        private Camera m_dragCamera; // 拖影投影相机, Overlay 画布为 null
+        private Vector2 m_dragPointerPosition; // 指针屏幕坐标
+        private RectTransform m_hoverLayer; // 悬停容器的物品层, 为空表示指针不在任何网格上
+        private Vector2 m_hoverStep; // 悬停容器的格步长
+        private Vector2Int m_hoverGridCount; // 悬停容器的格数
+        private Vector2Int m_ghostFootprint; // 拖影在悬停容器中的占格
+        private Vector2Int m_anchorCell; // 拖影当前吸附的锚点格
+        private Vector2Int m_hoverTargetCell; // 最近一次悬停目标自身的格号
         private bool m_isDragging;
+        private bool m_isPendingDrag; // 已按下但位移未达阈值
+        private Vector2 m_pendingDragStart; // 按下时的指针屏幕坐标
         private PointerEventData.InputButton m_dragButton;
         private Vector2 m_dragOriginSize;
 
@@ -90,9 +104,15 @@ namespace UI.Inventory.View
             InstanceId = item.InstanceId;
 
             m_origin = item.Origin;
-            m_rect.sizeDelta = FootprintSize(item.Size);
+            m_cellFootprint = item.Size;
             m_homeAnchoredPosition = CellOrigin(item.Origin);
-            m_rect.anchoredPosition = m_homeAnchoredPosition;
+
+            // 拖拽期间不重设几何, 否则快照刷新会把浮动的拖影拽回格子
+            if (!m_isDragging)
+            {
+                m_rect.sizeDelta = FootprintSize(item.Size);
+                m_rect.anchoredPosition = m_homeAnchoredPosition;
+            }
 
             m_background.enabled = true;
             m_countText.enabled = true;
@@ -111,22 +131,28 @@ namespace UI.Inventory.View
         }
 
         /// <summary>
-        /// 拖拽中将物品视图对齐到目标格子的左上角原点
+        /// 拖拽悬停时按指针重排拖影, 并算出落点锚格相对悬停目标的偏移
         /// </summary>
         /// <param name="eventData">当前指针事件</param>
         /// <param name="target">被悬停格子或物品的 RectTransform</param>
-        public static void SnapGhostTo(PointerEventData eventData, RectTransform target)
+        /// <param name="targetCell">被悬停目标自身的格号</param>
+        /// <returns>落点锚格相对目标格的偏移, 非拖拽状态返回零</returns>
+        public static Vector2Int ResolveDropAnchor(PointerEventData eventData, RectTransform target,
+            Vector2Int targetCell)
         {
-            if (eventData == null || eventData.pointerDrag == null) return;
-            if (!eventData.pointerDrag.TryGetComponent(out UIInventoryItem ghost)) return;
-            if (!ghost.m_isDragging) return;
+            if (eventData == null || eventData.pointerDrag == null) return Vector2Int.zero;
+            if (!eventData.pointerDrag.TryGetComponent(out UIInventoryItem ghost)) return Vector2Int.zero;
+            if (!ghost.m_isDragging) return Vector2Int.zero;
 
-            ghost.m_snapTarget = target;
-            ghost.SnapToCell(target);
+            ghost.m_hoverTargetCell = targetCell;
+            ghost.TrackHoveredContainer(target);
+            ghost.SyncGhost();
+
+            return ghost.m_anchorCell - targetCell;
         }
 
         #region UI事件
-        //左键开详情, 右键开按钮集合, 中键不响应
+        // 左键打开详情, 右键打开操作菜单, 中键不响应
         public void OnPointerClick(PointerEventData eventData)
         {
             switch (eventData.button)
@@ -142,47 +168,124 @@ namespace UI.Inventory.View
 
         public void OnPointerEnter(PointerEventData eventData)
         {
-            SnapGhostTo(eventData, m_rect);
-            m_viewModel.PreviewDropAt(m_origin);
+            m_previewCell = m_origin + ResolveDropAnchor(eventData, m_rect, m_origin);
+            m_viewModel.PreviewDropAt(m_previewCell);
         }
 
-        public void OnPointerExit(PointerEventData eventData) => m_viewModel.ClearDropPreview(m_origin);
+        // 按上次上报的锚点格撤销预览, 居中后锚点可能不等于自身格号
+        public void OnPointerExit(PointerEventData eventData) => m_viewModel.ClearDropPreview(m_previewCell);
 
         public void OnBeginDrag(PointerEventData eventData)
         {
             // 同一次拖拽的重复回调只认第一次, 否则会叠加出第二个嵌套 Canvas 把裁切彻底弄丢
-            if (m_isDragging) return;
+            if (m_isDragging || m_isPendingDrag) return;
 
-            m_viewModel.BeginDragAt(m_origin);
-
-            m_isDragging = true;
+            m_isPendingDrag = true;
             m_dragButton = eventData.button;
-            BeginDragGhost();
+            m_pendingDragStart = eventData.position;
+            m_dragPointerPosition = eventData.position;
         }
 
         public void OnDrag(PointerEventData eventData)
         {
-            if (m_snapTarget != null)
-                SnapToCell(m_snapTarget);
+            m_dragPointerPosition = eventData.position;
+
+            if (m_isDragging || !m_isPendingDrag) return;
+            if ((eventData.position - m_pendingDragStart).sqrMagnitude < DRAG_LIFT_THRESHOLD_SQR) return;
+
+            LiftGhost(eventData);
         }
 
         public void OnDrop(PointerEventData eventData)
         {
             if (eventData.pointerDrag == gameObject) return;
 
-            m_viewModel.PlaceDraggedItemAt(m_origin);
+            // 落点与拖影当前位置同源, 避免预览格子与实际放置格子不一致
+            m_viewModel.PlaceDraggedItemAt(m_origin + ResolveDropAnchor(eventData, m_rect, m_origin));
         }
 
         public void OnEndDrag(PointerEventData eventData) => FinishDrag();
         #endregion
 
         #region Private Function
-        private void SnapToCell(RectTransform target)
+        // 位移达到阈值才真正抬起: 登记拖拽状态、关掉射线并把拖影中心对到指针
+        private void LiftGhost(PointerEventData eventData)
         {
-            ApplyTargetCellMetrics(target);
+            m_isPendingDrag = false;
+            m_isDragging = true;
 
-            Rect targetRect = target.rect;
-            m_rect.position = target.TransformPoint(new Vector3(targetRect.xMin, targetRect.yMax, 0f));
+            m_viewModel.BeginDragAt(m_origin);
+            CaptureDragPlane(eventData);
+            BeginDragGhost();
+            SeedHoverFromOrigin();
+
+            SyncGhost();
+        }
+
+        // 记录投影平面与相机: 拖影在物品层所在平面上跟随指针, Overlay 画布下相机为空
+        private void CaptureDragPlane(PointerEventData eventData)
+        {
+            m_dragPlaneRect = m_rect.parent as RectTransform;
+            m_dragCamera = eventData.pressEventCamera;
+        }
+
+        // 抬起瞬间用源容器预置跟随参数, 保证首帧就按指针摆好拖影并算出锚点格
+        private void SeedHoverFromOrigin()
+        {
+            m_anchorCell = m_origin;
+            m_hoverTargetCell = m_origin;
+            m_ghostFootprint = m_cellFootprint;
+            m_hoverStep = m_cellSize + m_cellSpacing;
+            m_hoverLayer = m_dragPlaneRect;
+
+            if (m_viewModel == null) return;
+
+            InventoryContainerVO vo = m_viewModel.Snapshot.Value;
+            m_hoverGridCount = new Vector2Int(vo.Width, vo.Height);
+        }
+
+        // 指针投影到物品层, 折算成相对首格左上角的偏移, 向下为负
+        private bool TryPointerOffset(RectTransform layer, out Vector2 pointerOffset)
+        {
+            pointerOffset = Vector2.zero;
+            if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(layer, m_dragPointerPosition,
+                m_dragCamera, out Vector2 local)) return false;
+
+            pointerOffset = DragAnchorCentering.PointerOffset(layer.rect, local);
+            return true;
+        }
+
+        // 每帧同步拖影: 本体让中心贴着指针连续移动, 锚点格再折算到格阵, 高亮与落点始终同源
+        private void SyncGhost()
+        {
+            // 悬停容器解析失败时退回源物品层, 拖影继续跟手, 落点就是悬停格本身
+            RectTransform layer = m_hoverLayer != null ? m_hoverLayer : m_dragPlaneRect;
+            if (layer == null) return;
+            if (!TryPointerOffset(layer, out Vector2 pointerOffset)) return;
+
+            Vector2 ghostOffset = DragAnchorCentering.GhostOffset(pointerOffset, m_rect.rect.size);
+            PlaceGhostAtOffset(layer, ghostOffset);
+
+            if (m_hoverLayer == null)
+            {
+                m_anchorCell = m_hoverTargetCell;
+                return;
+            }
+
+            m_anchorCell = DragAnchorCentering.ClampAnchor(
+                DragAnchorCentering.LatticeAnchor(ghostOffset, m_hoverStep), m_ghostFootprint, m_hoverGridCount);
+        }
+
+        // 把拖影左上角落到物品层的连续偏移上, 只按矩形自身角点折算, 与枢轴和缩放无关
+        private void PlaceGhostAtOffset(RectTransform layer, Vector2 ghostOffset)
+        {
+            Rect layerRect = layer.rect;
+            Vector3 cornerWorld = layer.TransformPoint(
+                new Vector3(layerRect.xMin + ghostOffset.x, layerRect.yMax + ghostOffset.y, 0f));
+            Rect rect = m_rect.rect;
+            Vector3 pivotToCorner = m_rect.TransformPoint(new Vector3(rect.xMin, rect.yMax, 0f)) - m_rect.position;
+
+            m_rect.position = cornerWorld - pivotToCorner;
         }
 
         private void Update()
@@ -196,6 +299,14 @@ namespace UI.Inventory.View
             }
 
             if (m_dragButton != PointerEventData.InputButton.Right && Input.GetMouseButtonDown(1)) FinishDrag();
+        }
+
+        // 悬停换容器会改写拖影尺寸, 落点也要跟着重算, 因此每帧渲染前再同步一次
+        private void LateUpdate()
+        {
+            if (!m_isDragging) return;
+
+            SyncGhost();
         }
 
         private void BeginDragGhost()
@@ -217,22 +328,30 @@ namespace UI.Inventory.View
             m_canvasGroup.blocksRaycasts = false;
         }
 
-        //拖影尺寸跟随悬停容器的格子配置, 避免从 160 的装备槽拖到 80 的背包时仍沿用源容器尺寸
-        private void ApplyTargetCellMetrics(RectTransform target)
+        // 记录悬停容器的物品层、格阵与占格, 并把拖影尺寸换成该容器的外接矩形
+        private void TrackHoveredContainer(RectTransform target)
         {
-            if (target == null) return;
+            UIInventoryCarrier targetCarrier = target != null ? target.GetComponentInParent<UIInventoryCarrier>() : null;
+            Vector2Int resolved = targetCarrier != null ? ResolveTargetFootprint(targetCarrier) : Vector2Int.zero;
 
-            UIInventoryCarrier targetCarrier = target.GetComponentInParent<UIInventoryCarrier>();
-            if (targetCarrier == null) return;
-
-            Vector2Int footprint = ResolveTargetFootprint(targetCarrier);
-            if (footprint.x <= 0 || footprint.y <= 0) return;
+            // 容器或占格无法解析时交回自由跟随, 落点就是悬停格本身
+            if (targetCarrier == null || targetCarrier.ItemLayer == null || resolved.x <= 0 || resolved.y <= 0)
+            {
+                m_hoverLayer = null;
+                m_anchorCell = m_hoverTargetCell;
+                return;
+            }
 
             Vector2 cell = targetCarrier.CellSize;
             Vector2 spacing = targetCarrier.CellSpacing;
             m_rect.sizeDelta = new Vector2(
-                footprint.x * cell.x + (footprint.x - 1) * spacing.x,
-                footprint.y * cell.y + (footprint.y - 1) * spacing.y);
+                resolved.x * cell.x + (resolved.x - 1) * spacing.x,
+                resolved.y * cell.y + (resolved.y - 1) * spacing.y);
+
+            m_hoverLayer = targetCarrier.ItemLayer;
+            m_hoverStep = cell + spacing;
+            m_hoverGridCount = targetCarrier.GridCount;
+            m_ghostFootprint = resolved;
         }
 
         //装备槽里的物品按 1x1 展示, 其余容器按物品配置的真实占格
@@ -260,9 +379,7 @@ namespace UI.Inventory.View
         // 按配置的单元格尺寸算物品左上角锚点位置
         private Vector2 CellOrigin(Vector2Int origin)
         {
-            return new Vector2(
-                origin.x * (m_cellSize.x + m_cellSpacing.x),
-                -origin.y * (m_cellSize.y + m_cellSpacing.y));
+            return DragAnchorCentering.CellCornerOffset(origin, m_cellSize + m_cellSpacing);
         }
 
         private void EndDragGhost()
@@ -303,10 +420,16 @@ namespace UI.Inventory.View
 
         private void FinishDrag()
         {
+            // 未达阈值的按下不算拖拽, 抬起流程没走过就只需清待命状态
+            if (m_isPendingDrag)
+            {
+                m_isPendingDrag = false;
+                return;
+            }
+
             if (!m_isDragging) return;
 
             m_isDragging = false;
-            m_snapTarget = null;
             EndDragGhost();
             m_rect.anchoredPosition = m_homeAnchoredPosition;
             m_viewModel.CancelDrag();

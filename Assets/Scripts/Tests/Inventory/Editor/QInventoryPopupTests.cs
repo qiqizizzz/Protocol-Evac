@@ -18,8 +18,8 @@ using UnityEngine;
 namespace Tests.Inventory
 {
     /// <summary>
-    /// 左键详情 / 右键菜单测试：不挂 View, 直接验 InventoryViewModel 的三个浮层信号与两个浮层 VM 的行为
-    /// 左键只开详情不建选中态, 右键只建选中态不开详情, 两条链路互不串门
+    /// 左键详情与右键菜单测试：不实例化 View, 直接验证 InventoryViewModel 的浮层信号与浮层视图模型行为
+    /// 左键仅打开详情不建立选中态, 右键仅建立选中态不打开详情, 两条链路相互独立
     /// </summary>
     public class QInventoryPopupTests
     {
@@ -38,7 +38,7 @@ namespace Tests.Inventory
         private IDisposable m_menuSubscription;
         private IDisposable m_closeSubscription;
 
-        // 记下本用例开过的浮层 VM, 拆除时一并回收
+        // 记录用例内创建的浮层视图模型, 拆除时统一回收
         private readonly List<ViewModelBase> m_popups = new List<ViewModelBase>();
 
         [SetUp]
@@ -67,7 +67,7 @@ namespace Tests.Inventory
         [TearDown]
         public void TearDown()
         {
-            // 与 ViewBase 的拆除顺序保持一致: 先解绑停广播, 再释放, 最后回收响应式成员
+            // 与 ViewBase 拆除顺序一致：先解绑停止广播, 再释放, 最后回收响应式成员
             m_detailSubscription.Dispose();
             m_menuSubscription.Dispose();
             m_closeSubscription.Dispose();
@@ -356,13 +356,13 @@ namespace Tests.Inventory
         #endregion
 
         #region Helpers
-        // 往模型塞一件测试物品, 返回它的运行时实例号
+        // 向模型添加一件测试物品, 返回运行时实例号
         private int AddItem(int width, int height, Vector2Int cell, bool canRotate = true)
         {
             return AddItem(m_kit.CreateItem(width, height, canRotate).ItemId, cell);
         }
 
-        // 用已有物品号塞一件测试物品
+        // 用指定物品号添加一件测试物品
         private int AddItem(int itemId, Vector2Int cell)
         {
             Assert.AreEqual(InventoryMoveResult.Success, m_model.TryAddItem(m_containerId, itemId, 1, cell));
@@ -377,7 +377,7 @@ namespace Tests.Inventory
             return item;
         }
 
-        // 造一个已绑定的详情 VM 并记进拆除清单
+        // 创建已绑定的详情视图模型并登记到拆除清单
         private ItemDetailViewModel CreateDetail()
         {
             ItemDetailViewModel detail = new ItemDetailViewModel(m_model);
@@ -386,7 +386,7 @@ namespace Tests.Inventory
             return detail;
         }
 
-        // 造一个已绑定的菜单 VM 并记进拆除清单
+        // 创建已绑定的菜单视图模型并登记到拆除清单
         private ItemMenuViewModel CreateMenu()
         {
             ItemMenuViewModel menu = new ItemMenuViewModel(m_model);
@@ -395,7 +395,7 @@ namespace Tests.Inventory
             return menu;
         }
 
-        // 按 ViewBase 的拆除顺序回收浮层 VM
+        // 按 ViewBase 拆除顺序回收浮层视图模型
         private static void DisposeViewModel(ViewModelBase viewModel)
         {
             viewModel.OnUnbind();

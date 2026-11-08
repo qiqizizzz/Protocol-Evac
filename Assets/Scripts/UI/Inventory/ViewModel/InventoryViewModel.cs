@@ -26,7 +26,7 @@ namespace UI.Inventory
 
         public IReadOnlyReactiveProperty<InventoryContainerVO> Snapshot => m_snapshot;
         public IReadOnlyReactiveProperty<int> SelectedInstanceId => m_selectedInstanceId;
-        //左键要看详情的那件, 与「选中」分开, 免得看个详情顺带把物品抓在手里
+        // 左键查看详情的目标, 与选中状态分开记录
         public IReadOnlyReactiveProperty<int> DetailInstanceId => m_detailInstanceId;
         public IReadOnlyReactiveProperty<InventoryHintKind> HintKind => m_hintKind;
         public IReadOnlyReactiveProperty<bool> CanRotate => m_canRotate;
@@ -123,7 +123,7 @@ namespace UI.Inventory
         #region 上行方法
         public InventorySlotViewModel GetSlot(int index) => m_slots[index];
 
-        //左键交互格子: 只看详情, 不改选中态, 也不把物品放到点过的格子上
+        // 左键交互：仅打开详情, 不改变选中态, 不放置物品
         public void InteractAt(Vector2Int cell)
         {
             if (m_model.TryGetInstanceIdAt(m_containerId, cell, out int instanceId))
@@ -133,13 +133,13 @@ namespace UI.Inventory
                 return;
             }
 
-            //空格子: 视作点了空白处, 收起残留浮层, 顺手擦掉右键留下的选中高亮
+            // 空格子：按点击空白处理, 隐藏浮层并清除选中高亮
             if (m_selectedInstanceId.Value != NO_SELECTION) ResetSelection(InventoryHintKind.Idle);
             else m_popupClosed.Fire();
         }
         
         /// <summary>
-        /// 右键请求物品菜单: 强制把该物品置为选中, 不做反选切换
+        /// 右键请求物品菜单：将该物品置为选中, 不执行反选切换
         /// </summary>
         /// <param name="cell">被右键点击的格子</param>
         public void OpenMenuAt(Vector2Int cell)
@@ -202,7 +202,7 @@ namespace UI.Inventory
             m_dragInstanceId = NO_DRAG;
             m_lastMoveResult = result;
 
-            //放下了就把选中态交还出去, 这次操作已经完成; 放不下则留着高亮, 玩家还能改向再试
+            // 放置成功清除选中态, 失败保留高亮以便调整朝向后重试
             if (result.IsSuccessOrSame()) ResetSelection(InventoryHintKind.Placed);
             else SetHint(ToHintKind(result));
 
@@ -320,7 +320,7 @@ namespace UI.Inventory
             RefreshCanRotate();
         }
 
-        //只有真正拖在手上的东西才有落点预览, 光选中不足以说明玩家想往哪放
+        // 仅拖拽状态下提供落点预览, 选中本身不构成放置意图
         private bool CanPreviewDrop => IsDragging || m_owner?.DragSource != null;
 
         private void ResetDropPreview()
@@ -389,7 +389,7 @@ namespace UI.Inventory
         //拖出装备槽时按目标容器还原物品配置尺寸, 避免预览仍沿用装备槽的 1x1 足迹
         private Vector2Int ResolvePreviewSize(int sourceContainerId, InventoryItemVO item, InventoryRotation rotation)
         {
-            //自动旋转改过朝向时预览足迹必须跟着转, 否则高亮框还是玩家手上的旧形状
+            // 自动旋转改变朝向时, 预览足迹同步旋转
             if (rotation != item.Rotation && ItemRegistry.TryGet(item.ItemId, out InventoryItemConfigSO rotated))
                 return rotated.GetSizeAt(rotation);
 
@@ -470,7 +470,7 @@ namespace UI.Inventory
             }
         }
 
-        //选中指定物品并刷亮它的占格
+        // 选中指定物品并高亮其占格
         private void SelectItem(int instanceId)
         {
             m_selectedInstanceId.TrySet(instanceId);

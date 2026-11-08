@@ -55,10 +55,10 @@ namespace UI.Inventory
             RefreshCanRotate();
         }
 
-        //点空白处收起菜单, 不做任何操作
+        // 点击空白处收起菜单, 不执行任何操作
         public void Dismiss() => m_dismissed.Fire();
 
-        //旋转物品, 无论成败都收摊, 放不下时由日志给出原因
+        // 旋转物品, 无论成功与否都关闭菜单, 失败原因由日志输出
         public void Rotate()
         {
             if (m_instanceId == NO_ITEM) return;

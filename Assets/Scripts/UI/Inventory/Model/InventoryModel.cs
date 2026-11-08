@@ -261,7 +261,7 @@ namespace UI.Inventory
             if (!TryGetPlacement(source, instanceId, out InventoryItemPlacement placement))
                 return InventoryMoveResult.SourceNotFound;
 
-            //落点判定交给规则, 当前朝向放不下时会被自动转成能放下的朝向
+            // 落点判定由规则层处理, 当前朝向不可放置时自动改用可用朝向
             InventoryMoveResult verdict = source.Rules.ResolveTransfer(source, target, placement, cell,
                 out InventoryRotation rotation, out InventoryItemPlacement occupant);
 

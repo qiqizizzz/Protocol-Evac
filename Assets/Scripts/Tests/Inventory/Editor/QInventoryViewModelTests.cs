@@ -48,7 +48,7 @@ namespace Tests.Inventory
         [TearDown]
         public void TearDown()
         {
-            // 与 ViewBase 的拆除顺序保持一致: 先解绑停广播, 再释放, 最后回收响应式成员
+            // 与 ViewBase 拆除顺序一致：先解绑停止广播, 再释放, 最后回收响应式成员
             m_hintSubscription.Dispose();
             m_viewModel.OnUnbind();
             m_viewModel.OnDispose();
@@ -259,7 +259,7 @@ namespace Tests.Inventory
         public void PlaceDraggedItemAt_OntoClippedByNeighbour_ReportsFailureAndKeepsTheHighlight()
         {
             AddItem(1, 1, new Vector2Int(1, 1));
-            // 钉成不可旋转, 否则自动旋转会把它转开放下, 这条失败路径就测不到了
+            // 设为不可旋转, 避免自动旋转修正后无法覆盖该失败路径
             int instanceId = AddItem(2, 1, Vector2Int.zero, false);
             m_viewModel.OpenMenuAt(Vector2Int.zero);
             m_viewModel.BeginDragAt(Vector2Int.zero);
@@ -390,7 +390,7 @@ namespace Tests.Inventory
         }
         #endregion
 
-        // 往模型塞一件测试物品, 返回它的运行时实例号
+        // 向模型添加一件测试物品, 返回运行时实例号
         private int AddItem(int width, int height, Vector2Int cell, bool canRotate = true)
         {
             int itemId = m_kit.CreateItem(width, height, canRotate).ItemId;

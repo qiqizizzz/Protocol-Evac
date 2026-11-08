@@ -41,7 +41,7 @@ namespace Tests.Inventory
             m_model = new InventoryModel(m_kit.CreateInventoryConfig());
             m_model.OnRegister();
 
-            // 两张 4x4 且不限重的容器, 需要别的几何或限重时在用例里另开容器号
+            // 两张 4x4 不限重容器, 其他几何请在用例内另开容器号
             m_sourceId = m_kit.NewContainerId();
             m_targetId = m_kit.NewContainerId();
             Register(m_sourceId, 4, 4);
@@ -112,7 +112,7 @@ namespace Tests.Inventory
         [Test]
         public void Transfer_SameContainer_NewFootprintsOverlap_ReturnsOccupied()
         {
-            // 5x3 的扁容器, 专门造「 mover 的新足迹压住 occupant 被顶回去的新足迹」
+            // 5x3 容器, 用于构造交换后双方新足迹重叠的场景
             int wideId = m_kit.NewContainerId();
             Register(wideId, 5, 3);
 
@@ -120,7 +120,7 @@ namespace Tests.Inventory
             int occupant = AddItem(wideId, 3, 1, new Vector2Int(2, 0));
             int version = m_model.GetContainerVO(wideId).Version;
 
-            // 方块落到 (2,0) 后, 横条顶回 (0,0) 会横跨到 (2,0), 与方块的新足迹撞在一起
+            // 方块落 (2,0) 后, 横条回位 (0,0) 横跨至 (2,0), 与方块新足迹重叠
             Assert.AreEqual(InventoryMoveResult.Occupied,
                 m_model.TryTransferItem(wideId, wideId, moving, new Vector2Int(2, 0)));
 
@@ -138,7 +138,7 @@ namespace Tests.Inventory
             int moving = AddItem(m_sourceId, 1, 1, new Vector2Int(3, 3));
             int occupant = AddItem(m_sourceId, 3, 1, new Vector2Int(0, 0));
 
-            // 方块落到 (0,0) 本身没问题, 但横条顶回 (3,3) 会伸出右边界
+            // 方块落 (0,0) 成立, 但横条回位 (3,3) 超出右边界
             Assert.AreEqual(InventoryMoveResult.OutOfBounds,
                 m_model.TryTransferItem(m_sourceId, m_sourceId, moving, new Vector2Int(0, 0)));
 
@@ -199,7 +199,7 @@ namespace Tests.Inventory
         {
             int moving = AddItem(m_sourceId, 2, 2, new Vector2Int(0, 0));
 
-            // 目标容器的 (0,0) 空着, 两张网格互不相干, 坐标相同不算冲突
+            // 跨容器不共用网格, 坐标相同不构成冲突
             Assert.AreEqual(InventoryMoveResult.Success,
                 m_model.TryTransferItem(m_sourceId, m_targetId, moving, new Vector2Int(0, 0)));
 
@@ -253,7 +253,7 @@ namespace Tests.Inventory
         {
             int moving = AddItem(m_sourceId, 3, 1, new Vector2Int(0, 0));
             int smallId = m_kit.NewContainerId();
-            // 2x2 的容器横竖都塞不下三格长的条, 换朝向也救不了
+            // 2x2 容器无法容纳 3 格长物品, 旋转后仍不成立
             Register(smallId, 2, 2);
 
             Assert.AreEqual(InventoryMoveResult.OutOfBounds,
@@ -395,7 +395,7 @@ namespace Tests.Inventory
             int other = AddItem(m_sourceId, 2, 1, new Vector2Int(0, 0));
             int version = m_model.GetContainerVO(m_sourceId).Version;
 
-            // 独立载体没有上层面板, 别人拖过来的东西落到这里只能被丢弃
+            // 独立载体没有上层面板, 外部拖入的物品会被丢弃
             viewModel.PlaceDraggedItemAt(new Vector2Int(1, 2));
 
             Assert.AreEqual(version, m_model.GetContainerVO(m_sourceId).Version);
@@ -468,7 +468,7 @@ namespace Tests.Inventory
             int moving = AddItem(m_sourceId, 1, 1, new Vector2Int(2, 2));
 
             left.BeginDragAt(new Vector2Int(2, 2));
-            // 别的载体来销账, 不能把 left 的拖拽记录抹掉
+            // 其他载体结束拖拽不应清除 left 的拖拽记录
             panel.NotifyDragEnded(right);
 
             right.PlaceDraggedItemAt(new Vector2Int(0, 0));
@@ -484,7 +484,7 @@ namespace Tests.Inventory
         {
             int moving = AddItem(m_sourceId, 3, 1, new Vector2Int(0, 0));
 
-            // 横条落 (2,0) 要伸出右边界, 竖起来刚好占 (2,0)-(2,2)
+            // 横条落 (2,0) 超出右边界, 竖放占 (2,0)-(2,2)
             Assert.AreEqual(InventoryMoveResult.Success,
                 m_model.TryTransferItem(m_sourceId, m_sourceId, moving, new Vector2Int(2, 0)));
 
@@ -506,7 +506,7 @@ namespace Tests.Inventory
             Assert.IsFalse(willSwap);
             Assert.AreEqual(InventoryRotation.Rotate90, rotation, "预览必须拿到实际会采用的朝向");
 
-            // 预判和真落必须给同一个结论, 否则玩家会看到绿灯却放不下
+            // 预判与实际放置的判定结果必须一致
             Assert.AreEqual(InventoryMoveResult.Success,
                 m_model.TryTransferItem(m_sourceId, m_sourceId, moving, new Vector2Int(2, 0)));
             Assert.AreEqual(InventoryRotation.Rotate90, ItemOf(m_sourceId, moving).Rotation);
@@ -528,7 +528,7 @@ namespace Tests.Inventory
         [Test]
         public void Transfer_AutoRotationPrefersFittingOverSwappingTheNeighbour()
         {
-            // 横条落 (0,1) 会压住 (2,1) 的竖条, 而竖条顶回 (0,0) 又和横条自己撞上
+            // 横条落 (0,1) 覆盖 (2,1) 竖条, 竖条回位 (0,0) 与横条新位置重叠
             int moving = AddItem(m_sourceId, 3, 1, new Vector2Int(0, 0));
             int occupant = AddItem(m_sourceId, 1, 2, new Vector2Int(2, 1));
 
@@ -565,7 +565,7 @@ namespace Tests.Inventory
         {
             int moving = AddItem(m_sourceId, 2, 2, new Vector2Int(0, 0));
 
-            // 方块转几圈还是 2x2, 换朝向帮不上忙, 判错要保持原样
+            // 正方形旋转后尺寸不变, 判定结果应保持原样
             Assert.AreEqual(InventoryMoveResult.OutOfBounds,
                 m_model.TryTransferItem(m_sourceId, m_sourceId, moving, new Vector2Int(3, 3)));
             Assert.AreEqual(new Vector2Int(0, 0), ItemOf(m_sourceId, moving).Origin);
@@ -576,7 +576,7 @@ namespace Tests.Inventory
         {
             int moving = AddItem(m_sourceId, 3, 1, new Vector2Int(0, 0), 5f);
             int tightId = m_kit.NewContainerId();
-            // 竖起来明明放得下, 但超重才是真正的原因, 不能被旋转掩盖
+            // 竖放可容纳时超重仍优先返回, 不应被自动旋转掩盖
             Register(tightId, 2, 4, 1f);
 
             Assert.AreEqual(InventoryMoveResult.WeightExceeded,

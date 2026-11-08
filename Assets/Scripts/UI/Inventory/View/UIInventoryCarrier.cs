@@ -76,6 +76,25 @@ namespace UI.Inventory.View
         /// </summary>
         public Vector2 CellSpacing => m_gridLayout.spacing;
 
+        /// <summary>
+        /// 物品所在的物品层, 拖影跟随与锚点格折算以此为基准
+        /// </summary>
+        public RectTransform ItemLayer => m_itemRect;
+
+        /// <summary>
+        /// 当前载体的网格格数, 视图模型未就绪时返回零
+        /// </summary>
+        public Vector2Int GridCount
+        {
+            get
+            {
+                if (ViewModel == null) return Vector2Int.zero;
+
+                InventoryContainerVO vo = ViewModel.Snapshot.Value;
+                return new Vector2Int(vo.Width, vo.Height);
+            }
+        }
+
         #region 生命周期
         protected override InventoryViewModel CreateViewModel() => new InventoryViewModel();
 
@@ -138,7 +157,7 @@ namespace UI.Inventory.View
                 m_capacityText.text = $"{vo.UsedCellCount}/{vo.CellCount}";
         }
 
-        //槽里放了东西就收起矢量底图, 空槽才显示占位图标
+        // 槽位有物品时隐藏矢量底图, 空槽显示占位图标
         private void RenderVectorIcon(InventoryContainerVO vo)
         {
             if (m_vectorIcon == null) return;

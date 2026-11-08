@@ -25,7 +25,7 @@ namespace UI.Inventory.View
 
         private ScrollRect m_capacityScroll;
 
-        //弹窗当前归属哪个容器, 只有它自己的点击与拖拽有权把弹窗收走
+        // 记录弹窗当前归属容器, 仅该容器的点击与拖拽可隐藏弹窗
         private InventoryViewModel m_popupOwner;
         private bool m_detailOpening;
         private bool m_menuOpening;
@@ -53,7 +53,7 @@ namespace UI.Inventory.View
                 Scope.CreateChild(Containers[i].gameObject);
                 Containers[i].Show(container);
 
-                //弹窗显隐只由面板编排, 载体只管发出「我要看详情」「我要收弹窗」的请求
+                // 弹窗显隐由面板统一编排, 载体只发出详情与关闭请求
                 Scope.Bind(container.DetailRequested, () => OpenDetailPopup(container));
                 Scope.Bind(container.MenuRequested, () => OpenMenuPopup(container));
                 Scope.Bind(container.PopupClosed, () => CloseOwnedPopups(container));
@@ -67,7 +67,7 @@ namespace UI.Inventory.View
             m_capacityScroll.verticalNormalizedPosition = 1f;
         }
 
-        //战备面板收起时弹窗一并走, 否则按 B 关掉面板后详情还挂在屏幕上
+        // 战备面板隐藏时同步隐藏弹窗, 避免面板关闭后弹窗残留
         protected override void OnHide()
         {
             m_popupOwner = null;
@@ -76,12 +76,12 @@ namespace UI.Inventory.View
         #endregion
 
         #region Private Function
-        //左键详情: 详情与菜单同一时间只留一张
+        // 左键详情：详情与菜单同时只保留一个
         private void OpenDetailPopup(InventoryViewModel container)
         {
             m_popupOwner = container;
 
-            //预制体首次加载要等一帧, 这期间重复请求直接丢弃, 否则窗口服务会被同键注册两次
+            // 预制体首次加载需等待一帧, 期间的重复请求忽略, 避免同一键重复注册
             if (m_detailOpening) return;
             m_detailOpening = true;
 
@@ -89,7 +89,7 @@ namespace UI.Inventory.View
             ShowDetailAsync(container).Forget();
         }
 
-        //右键菜单: 视图模型已经在 OpenMenuAt 里把该物品置为选中
+        // 右键菜单：OpenMenuAt 已在视图模型中将该物品置为选中
         private void OpenMenuPopup(InventoryViewModel container)
         {
             m_popupOwner = container;
@@ -116,7 +116,7 @@ namespace UI.Inventory.View
             m_menuOpening = false;
         }
 
-        //反选、点空白、起拖都只收起属于自己那个容器的弹窗
+        // 反选、点击空白、开始拖拽时仅隐藏本容器的弹窗
         private void CloseOwnedPopups(InventoryViewModel container)
         {
             if (!ReferenceEquals(m_popupOwner, container)) return;
@@ -131,7 +131,7 @@ namespace UI.Inventory.View
             HidePopup<UIItemMenuPanel>();
         }
 
-        //没打开过就不动它, Windows.Hide 在未打开时会报错
+        // 未打开时不处理, Windows.Hide 在窗口未打开时会报错
         private static void HidePopup<TView>() where TView : class, IView
         {
             if (MvvmRoot.Instance.Windows.TryGet(out TView popup)) popup.Hide();

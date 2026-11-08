@@ -38,8 +38,18 @@ namespace UI.Inventory
 
         public void NotifyClicked() => m_clickHandler(Cell);
 
-        public void NotifyDropped() => m_dropHandler?.Invoke(Cell);
+        /// <summary>
+        /// 松手落点：本格与拖影居中偏移之和
+        /// </summary>
+        /// <param name="anchorOffset">锚点格相对本格的偏移</param>
+        public void NotifyDropped(Vector2Int anchorOffset) => m_dropHandler?.Invoke(Cell + anchorOffset);
 
-        public void NotifyHovered(bool isEnter) => m_hoverHandler?.Invoke(Cell, isEnter);
+        /// <summary>
+        /// 指针进出：本格与拖影居中偏移之和
+        /// </summary>
+        /// <param name="isEnter">True 为进入, False 为离开</param>
+        /// <param name="anchorOffset">锚点格相对本格的偏移, 离开时传零</param>
+        public void NotifyHovered(bool isEnter, Vector2Int anchorOffset) =>
+            m_hoverHandler?.Invoke(Cell + anchorOffset, isEnter);
     }
 }

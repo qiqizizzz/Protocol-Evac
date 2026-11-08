@@ -23,7 +23,7 @@ namespace UI.Inventory.View
         private const string SPEC_PATH = CARD_PATH + "/Txt_Spec";
         private const string CLOSE_PATH = CARD_PATH + "/Btn_Close";
 
-        //卡片左上角相对鼠标的避让量, 向右下错开, 免得盖住指针本身
+        // 卡片左上角相对鼠标的偏移量, 向右下错开避免遮挡指针
         private static readonly Vector2 m_cursorOffset = new Vector2(12f, -12f);
 
         private RectTransform m_rect;
@@ -55,7 +55,7 @@ namespace UI.Inventory.View
             Scope.Bind(viewModel.Title, text => m_nameText.text = text);
             Scope.Bind(viewModel.Tags, text => m_tagsText.text = text);
             Scope.Bind(viewModel.Specs, text => m_specText.text = text);
-            //没有图标的物品留一块空底板, 比糊一张白图干净
+            // 无图标物品保留空白底板, 不加载占位贴图
             Scope.Bind(viewModel.Icon, icon =>
             {
                 m_iconImage.sprite = icon;
@@ -64,14 +64,14 @@ namespace UI.Inventory.View
             Scope.Bind(viewModel.HideRequested, Hide);
         }
 
-        //每次打开都换一件物品重看, 所以定位与刷新全部走 OnShow
+        // 每次打开对应不同物品, 定位与刷新均在 OnShow 处理
         protected override void OnShow(params object[] args)
         {
             if (!ItemPopupPlacement.TryReadCursorArgs(args, out int containerId, out int instanceId,
                     out Vector3 screenPos))
                 return;
 
-            //档位压过面板才接得住自己那颗关闭按钮的点击, 同级排序只决定后开的盖住前开的
+            // 排序需高于面板才能接收关闭按钮点击, 同级排序仅决定显示先后
             ItemPopupPlacement.RaiseAbovePanels(gameObject);
             transform.SetAsLastSibling();
             ViewModel.Open(containerId, instanceId);

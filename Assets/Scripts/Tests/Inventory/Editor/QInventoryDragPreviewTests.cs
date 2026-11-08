@@ -186,7 +186,7 @@ namespace Tests.Inventory
             InventoryViewModel viewModel = BindCarrier(m_sourceId);
             AddItem(m_sourceId, 2, 1, new Vector2Int(0, 0));
 
-            // 右键选中只是标出操作对象, 没把东西拖起来就不该画落点预览
+            // 右键选中仅标记操作对象, 未开始拖拽时不生成落点预览
             viewModel.OpenMenuAt(new Vector2Int(0, 0));
             viewModel.PreviewDropAt(new Vector2Int(2, 3));
 
@@ -364,7 +364,7 @@ namespace Tests.Inventory
             Assert.IsFalse(willSwap);
             Assert.AreEqual(version, m_model.GetContainerVO(notchedId).Version);
 
-            // 预判和真落必须给同一个结论, 否则玩家会看到绿灯却放不下
+            // 预判与实际放置的判定结果必须一致
             Assert.AreEqual(InventoryMoveResult.OutOfBounds,
                 m_model.TryTransferItem(notchedId, notchedId, moving, HOLE));
         }

@@ -540,7 +540,7 @@ namespace UI.Inventory.Editor
             File.WriteAllBytes(full, png);
             ConfigureImporter(entry.OutputFile, width);
 
-            // 输入和输出是同一张图, 导出后角度已经烘焙进 PNG, 当前预览必须回到 0
+            // 输入与输出为同一张贴图, 导出后角度已写入 PNG, 预览角度重置为 0
             entry.Angle = 0f;
             entry.Flip = false;
             MarkChanged();

@@ -65,7 +65,7 @@ namespace UI.Inventory.Editor
         private static readonly Color m_selectedBorderColor = new Color(0.31f, 0.76f, 1f, 1f);
         private const string CJK_FONT_PATH = "Assets/Fonts/miSans/MiSans-Regular SDF.asset";
 
-        // 弹窗卡片底板与遮罩: 详情卡片不吃射线, 菜单卡片必须吃住, 全屏遮罩只用来点空白收起
+        // 弹窗卡片与遮罩：详情卡片不接收射线, 菜单卡片接收射线, 全屏遮罩用于点击空白隐藏
         private static readonly Color m_popupBgColor = new Color(0.086f, 0.098f, 0.118f, 0.97f);
         private static readonly Color m_popupDimColor = new Color(0f, 0f, 0f, 0.25f);
         private static readonly Color m_popupButtonColor = new Color(1f, 1f, 1f, 0.12f);
@@ -195,16 +195,16 @@ namespace UI.Inventory.Editor
             }
         }
 
-        // 只产出物品详情弹窗, 战备面板与三张模板一概不动
+        // 仅生成物品详情弹窗, 不修改战备面板与三张模板
         [MenuItem("Tools/背包7a/9.生成物品详情弹窗预制体")]
         public static void BuildDetailPopup() => BuildPopup(BuildDetailCard, DETAIL_PATH, UIDefines.UIItemDetailPanel);
 
-        // 只产出物品右键菜单弹窗
+        // 仅生成物品右键菜单弹窗
         [MenuItem("Tools/背包7a/10.生成物品右键菜单预制体")]
         public static void BuildMenuPopup() => BuildPopup(BuildMenuCard, MENU_PATH, UIDefines.UIItemMenuPanel);
 
         // ==================== Private Function ====================
-        // 在临时空场景里搭弹窗节点, 存成预制体并登记 Addressables, 全程不碰正在编辑的场景
+        // 在临时空场景构建弹窗节点, 保存为预制体并登记 Addressables, 不影响当前场景
         private static void BuildPopup(Func<GameObject> builder, string path, string address)
         {
             if (PrefabStageUtility.GetCurrentPrefabStage() != null)
@@ -232,7 +232,7 @@ namespace UI.Inventory.Editor
             }
         }
 
-        // 详情弹窗: 铺满屏幕的根 + 一张左上角轴心的卡片, 卡片位置由 View 按鼠标摆
+        // 详情弹窗：全屏根节点与左上角轴心卡片, 卡片位置由 View 依据鼠标设置
         private static GameObject BuildDetailCard()
         {
             GameObject root = NewNode("UIItemDetailPanel", null);
@@ -243,7 +243,7 @@ namespace UI.Inventory.Editor
                 new Vector2(DETAIL_CARD_WIDTH, DETAIL_CARD_HEIGHT), Vector2.zero);
             Image cardImage = card.AddComponent<Image>();
             cardImage.color = m_popupBgColor;
-            // 卡片不设射线, 点卡片以外的地方直接落到底下的载体, 由交互逻辑决定收起还是换一件
+            // 卡片不接收射线, 卡片外的点击落到下层载体, 由交互逻辑决定隐藏或切换物品
             cardImage.raycastTarget = false;
 
             GameObject icon = NewNode("Img_Icon", card.transform);
@@ -253,7 +253,7 @@ namespace UI.Inventory.Editor
             iconImage.color = Color.white;
             iconImage.preserveAspect = true;
             iconImage.raycastTarget = false;
-            // 无 Sprite 的 Image 会画成一块纯白, 图标改由 View 绑到 Sprite 时才启用
+            // 无 Sprite 的 Image 渲染为纯白, 图标组件在 View 绑定 Sprite 后启用
             iconImage.enabled = false;
 
             GameObject nameNode = NewNode("Txt_Name", card.transform);
@@ -283,7 +283,7 @@ namespace UI.Inventory.Editor
             return root;
         }
 
-        // 右键菜单弹窗: 全屏透明遮罩负责点空白收起, 卡片竖排按钮负责具体操作
+        // 右键菜单弹窗：全屏透明遮罩用于点击空白隐藏, 卡片竖排按钮执行操作
         private static GameObject BuildMenuCard()
         {
             GameObject root = NewNode("UIItemMenuPanel", null);
@@ -294,19 +294,19 @@ namespace UI.Inventory.Editor
             AddButton(dismiss, m_popupDimColor);
 
             GameObject card = NewNode("Panel_Menu", root.transform);
-            // 高度只是落盘的初始值, 真实尺寸由 ContentSizeFitter 按按钮数量现算
+            // 高度仅为初始值, 实际尺寸由 ContentSizeFitter 按按钮数量计算
             SetRect(card.GetComponent<RectTransform>(), m_centerAnchor, m_centerAnchor, m_topLeftAnchor,
                 new Vector2(MENU_CARD_WIDTH, MENU_BUTTON_HEIGHT + POPUP_EDGE * 2), Vector2.zero);
             Image cardImage = card.AddComponent<Image>();
             cardImage.color = m_popupBgColor;
-            // 卡片必须挡住遮罩, 否则点按钮会连带触发收起
+            // 卡片需遮挡遮罩射线, 否则点击按钮会同时触发隐藏
             cardImage.raycastTarget = true;
 
             VerticalLayoutGroup cardLayout = card.AddComponent<VerticalLayoutGroup>();
             cardLayout.padding = new RectOffset(POPUP_EDGE, POPUP_EDGE, POPUP_EDGE, POPUP_EDGE);
             cardLayout.spacing = 4;
             cardLayout.childAlignment = TextAnchor.UpperCenter;
-            // 按钮尺寸自己说话, 布局只负责竖排, 后面加出售与放回不用再改这套参数
+            // 布局仅负责竖向排列, 按钮尺寸由自身参数决定, 后续新增项无需调整
             cardLayout.childControlWidth = false;
             cardLayout.childControlHeight = false;
             cardLayout.childForceExpandWidth = false;

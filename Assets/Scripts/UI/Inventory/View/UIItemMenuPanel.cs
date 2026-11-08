@@ -19,7 +19,7 @@ namespace UI.Inventory.View
         private const string CARD_PATH = "Panel_Menu";
         private const string ROTATE_PATH = CARD_PATH + "/Btn_Rotate";
 
-        //卡片左上角相对鼠标的避让量, 与详情面板保持一致
+        // 卡片左上角相对鼠标的偏移量, 与详情面板一致
         private static readonly Vector2 m_cursorOffset = new Vector2(12f, -12f);
 
         private RectTransform m_rect;
@@ -43,24 +43,24 @@ namespace UI.Inventory.View
             m_dismissButton.onClick.AddListener(viewModel.Dismiss);
             m_rotateButton.onClick.AddListener(viewModel.Rotate);
 
-            //不可旋转的物品按钮照样在, 只是按不下去, 玩家才知道这件东西为什么转不了
+            // 不可旋转时按钮保留但置为不可用, 用于提示该物品不支持旋转
             Scope.Bind(viewModel.CanRotate, interactable => m_rotateButton.interactable = interactable);
             Scope.Bind(viewModel.Dismissed, Hide);
         }
 
-        //每次右键都换一件物品, 可用性、摆位全部走 OnShow 重算
+        // 每次右键对应不同物品, 可用性与位置均在 OnShow 重新计算
         protected override void OnShow(params object[] args)
         {
             if (!ItemPopupPlacement.TryReadCursorArgs(args, out int containerId, out int instanceId,
                     out Vector3 screenPos))
                 return;
 
-            //菜单卡片浮在网格上时, 档位不高于面板就收不到旋转按钮的点击
+            // 菜单卡片位于网格之上, 排序低于面板时旋转按钮无法接收点击
             ItemPopupPlacement.RaiseAbovePanels(gameObject);
             transform.SetAsLastSibling();
             ViewModel.Open(containerId, instanceId);
 
-            //卡片高度由 VerticalLayoutGroup 现算, 先重建一次才量得到真实尺寸再定位
+            // 卡片高度由 VerticalLayoutGroup 计算, 先重建布局再取实际尺寸定位
             LayoutRebuilder.ForceRebuildLayoutImmediate(m_cardRect);
             ItemPopupPlacement.AnchorToCursor(m_rect, m_cardRect, screenPos, m_cursorOffset);
         }

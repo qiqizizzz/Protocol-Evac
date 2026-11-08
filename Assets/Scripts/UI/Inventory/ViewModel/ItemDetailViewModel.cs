@@ -78,7 +78,7 @@ namespace UI.Inventory
             Refresh();
         }
 
-        //关闭按钮: 详情是随点随开的浮层, 关掉只收起不销毁
+        // 关闭按钮：详情为临时浮层, 关闭时仅隐藏不销毁
         public void Close() => m_hideRequested.Fire();
         #endregion
 
@@ -90,7 +90,7 @@ namespace UI.Inventory
             Refresh();
         }
 
-        //从模型取最新一件物品, 物品或容器没了就请求收起
+        // 从模型读取最新物品, 物品或容器不存在时请求隐藏
         private void Refresh()
         {
             InventoryContainerVO vo = m_model.IsContainerRegistered(m_containerId)
@@ -115,14 +115,14 @@ namespace UI.Inventory
             m_icon.Set(item.Icon);
         }
 
-        //标签行: 类型 · 品质 · 所在容器
+        // 标签行：类型 · 品质 · 所在容器
         private static string BuildTags(InventoryItemVO item, InventoryItemConfigSO config, string containerName)
         {
             string typeName = config != null ? TypeName(config.ItemType) : "未知类型";
             return $"{typeName} · {RarityName(item.Rarity)} · {containerName}";
         }
 
-        //规格行: 一行一项, 缺配置的行直接不写, 不留空白占位
+        // 规格行：每项一行, 未配置的行不生成
         private static string BuildSpecs(InventoryItemVO item, InventoryItemConfigSO config)
         {
             StringBuilder builder = new StringBuilder();
@@ -146,7 +146,7 @@ namespace UI.Inventory
 
         private static string FormatWeight(float weight) => weight.ToString("0.##", CultureInfo.InvariantCulture);
 
-        //配置里的中文只在 InspectorName 上, 运行期取不到, 这里自己映射一层
+        // 配置的中文名为 InspectorName, 运行期不可读, 此处另行映射
         private static string TypeName(InventoryItemType type) => type switch
         {
             InventoryItemType.Weapon => "武器",
