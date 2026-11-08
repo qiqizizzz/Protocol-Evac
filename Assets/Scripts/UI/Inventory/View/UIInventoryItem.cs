@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using Framework.QTower.MVVM.Binding;
 using TMPro;
 using Module.Inventory.Core.Config;
+using Module.Inventory.Core.Config.Type;
 using Module.Inventory.Core.Defines;
 using UI.Inventory.View.Tools;
 using UnityEngine;
@@ -31,6 +32,8 @@ namespace UI.Inventory.View
         private const string ICON_PATH = "Img_Icon";
         private const string COUNT_PATH = "Txt_Count";
         private const string SELECTED_PATH = "Img_Selected";
+
+        private static readonly Vector2 m_centerAnchor = new Vector2(0.5f, 0.5f);
 
         private RectTransform m_rect;
         private Image m_background;
@@ -56,9 +59,14 @@ namespace UI.Inventory.View
         private Camera m_dragCamera; // 拖影投影相机, Overlay 画布为 null
         private Vector2 m_dragPointerPosition; // 指针屏幕坐标
         private RectTransform m_hoverLayer; // 悬停容器的物品层, 为空表示指针不在任何网格上
+        private UIInventoryCarrier m_hoverCarrier; // 悬停容器载体, 为空表示指针不在任何网格上
+        private Vector2 m_hoverCell; // 悬停容器的单元格边长
+        private Vector2 m_hoverSpacing; // 悬停容器的单元格间距
+        private bool m_hoverIsEquipSlot; // 悬停容器是否单格装备槽
         private Vector2 m_hoverStep; // 悬停容器的格步长
         private Vector2Int m_hoverGridCount; // 悬停容器的格数
         private Vector2Int m_ghostFootprint; // 拖影在悬停容器中的占格
+        private InventoryRotation m_modelRotation; // 快照里的物品朝向
         private Vector2Int m_anchorCell; // 拖影当前吸附的锚点格
         private Vector2Int m_hoverTargetCell; // 最近一次悬停目标自身的格号
         private bool m_isDragging;
@@ -68,6 +76,13 @@ namespace UI.Inventory.View
         private Vector2 m_dragOriginSize;
 
         public int InstanceId { get; private set; }
+
+        // 本视图所属容器是否为按单格收纳的装备槽
+        private bool IsOwnContainerEquipSlot => m_viewModel != null &&
+            InventoryContainerIds.TryGetEquipSlotRole(m_viewModel.ContainerId, out _);
+
+        // 拖影当前朝向: 未绑定视图模型时沿用快照里的朝向
+        private InventoryRotation DraggedRotation => m_viewModel != null ? m_viewModel.DragRotation : m_modelRotation;
 
         private void Awake()
         {
@@ -105,6 +120,7 @@ namespace UI.Inventory.View
 
             m_origin = item.Origin;
             m_cellFootprint = item.Size;
+            m_modelRotation = item.Rotation;
             m_homeAnchoredPosition = CellOrigin(item.Origin);
 
             // 拖拽期间不重设几何, 否则快照刷新会把浮动的拖影拽回格子
@@ -112,6 +128,8 @@ namespace UI.Inventory.View
             {
                 m_rect.sizeDelta = FootprintSize(item.Size);
                 m_rect.anchoredPosition = m_homeAnchoredPosition;
+                ApplyIconGeometry(item.Size, IsOwnContainerEquipSlot ? InventoryRotation.None : item.Rotation,
+                    m_cellSize, m_cellSpacing);
             }
 
             m_background.enabled = true;
@@ -237,6 +255,10 @@ namespace UI.Inventory.View
             m_ghostFootprint = m_cellFootprint;
             m_hoverStep = m_cellSize + m_cellSpacing;
             m_hoverLayer = m_dragPlaneRect;
+            m_hoverCarrier = null;
+            m_hoverCell = m_cellSize;
+            m_hoverSpacing = m_cellSpacing;
+            m_hoverIsEquipSlot = IsOwnContainerEquipSlot;
 
             if (m_viewModel == null) return;
 
@@ -298,6 +320,8 @@ namespace UI.Inventory.View
                 return;
             }
 
+            if (Input.GetKeyDown(KeyCode.R)) RotateGhostDuringDrag();
+
             if (m_dragButton != PointerEventData.InputButton.Right && Input.GetMouseButtonDown(1)) FinishDrag();
         }
 
@@ -328,30 +352,40 @@ namespace UI.Inventory.View
             m_canvasGroup.blocksRaycasts = false;
         }
 
-        // 记录悬停容器的物品层、格阵与占格, 并把拖影尺寸换成该容器的外接矩形
         private void TrackHoveredContainer(RectTransform target)
+            => ApplyHoveredContainer(target != null ? target.GetComponentInParent<UIInventoryCarrier>() : null);
+
+        // 记录悬停容器的物品层、格阵与占格, 并把拖影尺寸与图标朝向换成该容器的配置
+        private void ApplyHoveredContainer(UIInventoryCarrier targetCarrier)
         {
-            UIInventoryCarrier targetCarrier = target != null ? target.GetComponentInParent<UIInventoryCarrier>() : null;
             Vector2Int resolved = targetCarrier != null ? ResolveTargetFootprint(targetCarrier) : Vector2Int.zero;
 
             // 容器或占格无法解析时交回自由跟随, 落点就是悬停格本身
             if (targetCarrier == null || targetCarrier.ItemLayer == null || resolved.x <= 0 || resolved.y <= 0)
             {
+                m_hoverCarrier = null;
+                m_hoverIsEquipSlot = false;
                 m_hoverLayer = null;
                 m_anchorCell = m_hoverTargetCell;
+                ApplyGhostIconRotation();
                 return;
             }
 
             Vector2 cell = targetCarrier.CellSize;
             Vector2 spacing = targetCarrier.CellSpacing;
-            m_rect.sizeDelta = new Vector2(
-                resolved.x * cell.x + (resolved.x - 1) * spacing.x,
-                resolved.y * cell.y + (resolved.y - 1) * spacing.y);
+            m_rect.sizeDelta = FootprintSize(resolved, cell, spacing);
 
+            m_hoverCarrier = targetCarrier;
+            m_hoverCell = cell;
+            m_hoverSpacing = spacing;
+            m_hoverIsEquipSlot = targetCarrier.ViewModel != null &&
+                InventoryContainerIds.TryGetEquipSlotRole(targetCarrier.ViewModel.ContainerId, out _);
             m_hoverLayer = targetCarrier.ItemLayer;
             m_hoverStep = cell + spacing;
             m_hoverGridCount = targetCarrier.GridCount;
             m_ghostFootprint = resolved;
+
+            ApplyGhostIconRotation();
         }
 
         //装备槽里的物品按 1x1 展示, 其余容器按物品配置的真实占格
@@ -363,17 +397,54 @@ namespace UI.Inventory.View
 
             if (m_viewModel != null && m_viewModel.Snapshot.Value.TryGetItem(InstanceId, out InventoryItemVO item) &&
                 ItemRegistry.TryGet(item.ItemId, out InventoryItemConfigSO config))
-                return config.GetSizeAt(item.Rotation);
+                return config.GetSizeAt(DraggedRotation);
 
             return Vector2Int.zero;
         }
 
         // 按配置的单元格尺寸算物品占格的外接矩形
-        private Vector2 FootprintSize(Vector2Int size)
+        private Vector2 FootprintSize(Vector2Int size) => FootprintSize(size, m_cellSize, m_cellSpacing);
+
+        // 按指定格参数算占格外接矩形, 供跨容器拖影复用
+        private static Vector2 FootprintSize(Vector2Int size, Vector2 cell, Vector2 spacing)
         {
             return new Vector2(
-                size.x * m_cellSize.x + (size.x - 1) * m_cellSpacing.x,
-                size.y * m_cellSize.y + (size.y - 1) * m_cellSpacing.y);
+                size.x * cell.x + (size.x - 1) * spacing.x,
+                size.y * cell.y + (size.y - 1) * spacing.y);
+        }
+
+        // 图标按未旋转时的外形铺满占格, 换向交给 Z 轴整体旋转, 避免非等比拉伸
+        private void ApplyIconGeometry(Vector2Int footprint, InventoryRotation rotation, Vector2 cell, Vector2 spacing)
+        {
+            RectTransform rect = m_icon.rectTransform;
+
+            rect.anchorMin = m_centerAnchor;
+            rect.anchorMax = m_centerAnchor;
+            rect.pivot = m_centerAnchor;
+            rect.anchoredPosition = Vector2.zero;
+            rect.sizeDelta = FootprintSize(UnrotateFootprint(footprint, rotation), cell, spacing);
+            rect.localEulerAngles = new Vector3(0f, 0f, -(int)rotation * 90f);
+        }
+
+        // 奇数朝向时占格是外形宽高互换, 还原成旋转前的外形
+        private static Vector2Int UnrotateFootprint(Vector2Int footprint, InventoryRotation rotation)
+            => (int)rotation % 2 == 1 ? new Vector2Int(footprint.y, footprint.x) : footprint;
+
+        // 拖影图标朝向跟随拖拽中的朝向, 落进单格装备槽时摆正
+        private void ApplyGhostIconRotation()
+        {
+            if (m_ghostFootprint.x <= 0 || m_ghostFootprint.y <= 0) return;
+
+            InventoryRotation display = m_hoverIsEquipSlot ? InventoryRotation.None : DraggedRotation;
+            ApplyIconGeometry(m_ghostFootprint, display, m_hoverCell, m_hoverSpacing);
+        }
+
+        // 拖拽中推进朝向后重算拖影外形与图标朝向
+        private void RotateGhostDuringDrag()
+        {
+            if (m_viewModel == null || !m_viewModel.RotateDraggedItem()) return;
+
+            ApplyHoveredContainer(m_hoverCarrier);
         }
 
         // 按配置的单元格尺寸算物品左上角锚点位置
@@ -385,6 +456,8 @@ namespace UI.Inventory.View
         private void EndDragGhost()
         {
             m_rect.sizeDelta = m_dragOriginSize;
+            ApplyIconGeometry(m_cellFootprint, IsOwnContainerEquipSlot ? InventoryRotation.None : m_modelRotation,
+                m_cellSize, m_cellSpacing);
             m_background.enabled = true;
             m_countText.enabled = true;
             RenderSelected(m_viewModel != null ? m_viewModel.SelectedInstanceId.Value : NO_SELECTION);

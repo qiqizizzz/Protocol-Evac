@@ -130,21 +130,47 @@ namespace Module.Inventory.Core.Rule
             return CanMove(container, container, placement, placement.Position, nextRotation);
         }
 
-        // 转移落点判定：先按当前朝向判定, 空间不足时依次尝试其余朝向
+        // 同类可堆物品的落点判定：数量能并入占格那一堆时视为可放, 不要求腾出整块空间
+        public bool CanMerge(InventoryContainer source, InventoryContainer target,
+            InventoryItemPlacement moving, InventoryItemPlacement occupant)
+        {
+            if (!source.Contains(moving) || !target.Contains(occupant)) return false;
+            if (ReferenceEquals(moving, occupant)) return false;
+
+            // 装备槽按单格收纳整件装备, 不做堆叠合并
+            if (target.IsEquipSlot) return false;
+
+            InventoryItemInstance dragged = moving.Instance;
+            InventoryItemInstance destination = occupant.Instance;
+            if (!dragged.IsStackable || !destination.IsStackable) return false;
+            if (dragged.ItemId != destination.ItemId) return false;
+
+            int absorbed = Mathf.Min(destination.MaxStackCount - destination.StackCount, dragged.StackCount);
+            if (absorbed <= 0) return false;
+
+            // 跨容器并堆时目标容器只承接真正过去的那部分净重
+            if (!ReferenceEquals(source, target) &&
+                IsOverWeight(target, destination.Config.UnitWeight * absorbed)) return false;
+
+            return true;
+        }
+
+        // 转移落点判定：先按指定朝向判定, 空间不足时依次尝试其余朝向
         public InventoryMoveResult ResolveTransfer(InventoryContainer source, InventoryContainer target,
-            InventoryItemPlacement moving, Vector2Int cell, out InventoryRotation rotation,
+            InventoryItemPlacement moving, Vector2Int cell, InventoryRotation preferredRotation,
+            out InventoryRotation rotation,
             out InventoryItemPlacement occupant)
         {
-            rotation = moving.Rotation;
-            InventoryMoveResult verdict = EvaluateTransfer(source, target, moving, cell, rotation, out occupant);
+            rotation = preferredRotation;
+            InventoryMoveResult verdict = EvaluateTransfer(source, target, moving, cell, preferredRotation, out occupant);
 
             // 超重与部位不符与朝向无关, 保留原始判定结果
             if (!verdict.IsSpatialFailure() || !CanAutoRotate(target, moving)) return verdict;
 
-            // 当前朝向优先, 命中即返回, 可原样放置时不改变朝向
+            // 指定朝向优先, 命中即返回, 可原样放置时不改变朝向
             for (int step = 1; step < ROTATION_COUNT; step++)
             {
-                InventoryRotation candidate = (InventoryRotation)(((int)moving.Rotation + step) % ROTATION_COUNT);
+                InventoryRotation candidate = (InventoryRotation)(((int)preferredRotation + step) % ROTATION_COUNT);
                 InventoryMoveResult candidateVerdict = EvaluateTransfer(source, target, moving, cell, candidate,
                     out InventoryItemPlacement candidateOccupant);
 
@@ -159,7 +185,7 @@ namespace Module.Inventory.Core.Rule
         }
         #endregion
         
-        // 单朝向落点判定：目标被占用时改判为与原物品交换
+        // 单朝向落点判定：目标被占用时依次改判为与占格物品合并或交换
         private InventoryMoveResult EvaluateTransfer(InventoryContainer source, InventoryContainer target,
             InventoryItemPlacement moving, Vector2Int cell, InventoryRotation rotation, out InventoryItemPlacement occupant)
         {
@@ -169,6 +195,9 @@ namespace Module.Inventory.Core.Rule
             if (verdict != InventoryMoveResult.Occupied) return verdict;
 
             if (!target.Grid.TryGetPlacementAt(cell, out occupant)) return InventoryMoveResult.Occupied;
+
+            // 落点上是同类可堆物品时优先并堆, 并堆不受大件压不进小堆的空间限制
+            if (CanMerge(source, target, moving, occupant)) return InventoryMoveResult.Success;
 
             return CanSwap(source, target, moving, occupant, cell, rotation);
         }

@@ -1,6 +1,6 @@
 ﻿/*
  * ┌──────────────────────────────────┐
-* │  描    述: 背包预制体生成器，产出载体与格子、物品三张模板，另可单独重出物品模板、战备面板与两张物品弹窗
+* │  描    述: 背包预制体生成器，产出载体与格子、物品三张模板，另可单独重出物品模板、战备面板与三张物品弹窗
  * │  类    名: InventoryPrefabBuilder.cs
  * │  创    建: By qiqizizzz
  * └──────────────────────────────────┘
@@ -44,6 +44,8 @@ namespace UI.Inventory.Editor
         private const string DETAIL_PATH = PREFAB_DIR + "/UIItemDetailPanel.prefab";
         private const string MENU_SCRIPT = "UI.Inventory.View.UIItemMenuPanel";
         private const string MENU_PATH = PREFAB_DIR + "/UIItemMenuPanel.prefab";
+        private const string SPLIT_SCRIPT = "UI.Inventory.View.UIItemSplitPanel";
+        private const string SPLIT_PATH = PREFAB_DIR + "/UIItemSplitPanel.prefab";
 
         private const int CELL_SIZE = 80;
         private const int CELL_SPACING = 4;
@@ -92,6 +94,21 @@ namespace UI.Inventory.Editor
         private const int MENU_BUTTON_HEIGHT = 36;
         private const int CLOSE_BUTTON_WIDTH = 56;
         private const int CLOSE_BUTTON_HEIGHT = 28;
+
+        // 拆分弹窗：卡片两行定宽布局, 滑条行与操作行均由 HorizontalLayoutGroup 排布
+        private const int SPLIT_CARD_WIDTH = 288;
+        private const int SPLIT_ROW_WIDTH = 272;
+        private const int SPLIT_COUNT_HEIGHT = 28;
+        private const int SPLIT_ROW_HEIGHT = 32;
+        private const int SPLIT_STEP_BUTTON_SIZE = 32;
+        private const int SPLIT_SLIDER_WIDTH = 192;
+        private const int SPLIT_ACTION_BUTTON_WIDTH = 132;
+        private const int SLIDER_HANDLE_WIDTH = 20;
+        private const int SLIDER_FILL_INSET = 13;
+
+        private static readonly Color m_sliderBgColor = new Color(1f, 1f, 1f, 0.18f);
+        private static readonly Color m_sliderFillColor = new Color(0.62f, 0.68f, 0.75f, 0.9f);
+        private static readonly Color m_sliderHandleColor = new Color(0.9f, 0.93f, 0.98f, 1f);
 
         // 载体节点后缀， 顺序与 InventoryContainerIds.ROLE_SLOT_IDS 一致
         private static readonly string[] m_carrierNames = { "Backpack", "Rig", "Pockets", "SafeBox" };
@@ -202,6 +219,10 @@ namespace UI.Inventory.Editor
         // 仅生成物品右键菜单弹窗
         [MenuItem("Tools/背包7a/10.生成物品右键菜单预制体")]
         public static void BuildMenuPopup() => BuildPopup(BuildMenuCard, MENU_PATH, UIDefines.UIItemMenuPanel);
+
+        // 仅生成物品拆分弹窗
+        [MenuItem("Tools/背包7a/11.生成物品拆分弹窗预制体")]
+        public static void BuildSplitPopup() => BuildPopup(BuildSplitCard, SPLIT_PATH, UIDefines.UIItemSplitPanel);
 
         // ==================== Private Function ====================
         // 在临时空场景构建弹窗节点, 保存为预制体并登记 Addressables, 不影响当前场景
@@ -323,7 +344,87 @@ namespace UI.Inventory.Editor
             SetStretch(rotateText.GetComponent<RectTransform>(), 0f);
             AddTmp(rotateText, "旋转", 20, TextAlignmentOptions.Midline, m_textPrimaryColor);
 
+            GameObject split = NewNode("Btn_Split", card.transform);
+            split.GetComponent<RectTransform>().sizeDelta = new Vector2(MENU_BUTTON_WIDTH, MENU_BUTTON_HEIGHT);
+            AddButton(split, m_popupButtonColor);
+            GameObject splitText = NewNode("Txt_Split", split.transform);
+            SetStretch(splitText.GetComponent<RectTransform>(), 0f);
+            AddTmp(splitText, "拆分", 20, TextAlignmentOptions.Midline, m_textPrimaryColor);
+
             AttachScript(root, MENU_SCRIPT);
+            return root;
+        }
+
+        // 拆分弹窗：全屏遮罩用于点击空白隐藏, 卡片竖排数量文本、滑条行与操作行
+        private static GameObject BuildSplitCard()
+        {
+            GameObject root = NewNode("UIItemSplitPanel", null);
+            SetStretch(root.GetComponent<RectTransform>(), 0f);
+
+            GameObject dismiss = NewNode("Btn_Dismiss", root.transform);
+            SetStretch(dismiss.GetComponent<RectTransform>(), 0f);
+            AddButton(dismiss, m_popupDimColor);
+
+            GameObject card = NewNode("Panel_Split", root.transform);
+            // 高度仅为初始值, 实际尺寸由 ContentSizeFitter 按三行内容计算
+            SetRect(card.GetComponent<RectTransform>(), m_centerAnchor, m_centerAnchor, m_topLeftAnchor,
+                new Vector2(SPLIT_CARD_WIDTH, SPLIT_COUNT_HEIGHT + SPLIT_ROW_HEIGHT * 2 + POPUP_EDGE * 4), Vector2.zero);
+            Image cardImage = card.AddComponent<Image>();
+            cardImage.color = m_popupBgColor;
+            // 卡片需遮挡遮罩射线, 否则拖动滑条会同时触发隐藏
+            cardImage.raycastTarget = true;
+
+            VerticalLayoutGroup cardLayout = card.AddComponent<VerticalLayoutGroup>();
+            cardLayout.padding = new RectOffset(POPUP_EDGE, POPUP_EDGE, POPUP_EDGE, POPUP_EDGE);
+            cardLayout.spacing = POPUP_EDGE;
+            cardLayout.childAlignment = TextAnchor.UpperCenter;
+            // 布局仅负责竖向排列, 行尺寸由自身参数决定
+            cardLayout.childControlWidth = false;
+            cardLayout.childControlHeight = false;
+            cardLayout.childForceExpandWidth = false;
+            cardLayout.childForceExpandHeight = false;
+
+            ContentSizeFitter cardFitter = card.AddComponent<ContentSizeFitter>();
+            cardFitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            cardFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            GameObject count = NewNode("Txt_Count", card.transform);
+            count.GetComponent<RectTransform>().sizeDelta = new Vector2(SPLIT_ROW_WIDTH, SPLIT_COUNT_HEIGHT);
+            AddTmp(count, "数量：0/0", 20, TextAlignmentOptions.MidlineLeft, m_textPrimaryColor);
+
+            GameObject sliderRow = NewNode("Layout_Slider", card.transform);
+            sliderRow.GetComponent<RectTransform>().sizeDelta = new Vector2(SPLIT_ROW_WIDTH, SPLIT_ROW_HEIGHT);
+            AddHBoxLayout(sliderRow);
+
+            GameObject decrease = NewNode("Btn_Decrease", sliderRow.transform);
+            SetRect(decrease.GetComponent<RectTransform>(), m_centerAnchor, m_centerAnchor, m_centerAnchor,
+                new Vector2(SPLIT_STEP_BUTTON_SIZE, SPLIT_STEP_BUTTON_SIZE), Vector2.zero);
+            AddButton(decrease, m_popupButtonColor);
+            GameObject decreaseText = NewNode("Txt_Decrease", decrease.transform);
+            SetStretch(decreaseText.GetComponent<RectTransform>(), 0f);
+            AddTmp(decreaseText, "-", 20, TextAlignmentOptions.Midline, m_textPrimaryColor);
+
+            GameObject slider = NewNode("Slider_Count", sliderRow.transform);
+            SetRect(slider.GetComponent<RectTransform>(), m_centerAnchor, m_centerAnchor, m_centerAnchor,
+                new Vector2(SPLIT_SLIDER_WIDTH, SPLIT_ROW_HEIGHT), Vector2.zero);
+            AddSlider(slider, m_sliderBgColor, m_sliderFillColor, m_sliderHandleColor);
+
+            GameObject increase = NewNode("Btn_Increase", sliderRow.transform);
+            SetRect(increase.GetComponent<RectTransform>(), m_centerAnchor, m_centerAnchor, m_centerAnchor,
+                new Vector2(SPLIT_STEP_BUTTON_SIZE, SPLIT_STEP_BUTTON_SIZE), Vector2.zero);
+            AddButton(increase, m_popupButtonColor);
+            GameObject increaseText = NewNode("Txt_Increase", increase.transform);
+            SetStretch(increaseText.GetComponent<RectTransform>(), 0f);
+            AddTmp(increaseText, "+", 20, TextAlignmentOptions.Midline, m_textPrimaryColor);
+
+            GameObject actionRow = NewNode("Layout_Actions", card.transform);
+            actionRow.GetComponent<RectTransform>().sizeDelta = new Vector2(SPLIT_ROW_WIDTH, SPLIT_ROW_HEIGHT);
+            AddHBoxLayout(actionRow);
+
+            AddStepButton(actionRow.transform, "Btn_Cancel", "取消", SPLIT_ACTION_BUTTON_WIDTH);
+            AddStepButton(actionRow.transform, "Btn_Confirm", "拆分", SPLIT_ACTION_BUTTON_WIDTH);
+
+            AttachScript(root, SPLIT_SCRIPT);
             return root;
         }
 
@@ -693,6 +794,76 @@ namespace UI.Inventory.Editor
             image.color = backgroundColor;
             image.raycastTarget = true;
             return node.AddComponent<Button>();
+        }
+
+        // 横向排布行: 子节点尺寸由自身参数决定, 行内只负责等距摆放
+        private static void AddHBoxLayout(GameObject node)
+        {
+            HorizontalLayoutGroup group = node.AddComponent<HorizontalLayoutGroup>();
+            group.spacing = POPUP_EDGE;
+            group.childAlignment = TextAnchor.MiddleCenter;
+            group.childControlWidth = false;
+            group.childControlHeight = false;
+            group.childForceExpandWidth = false;
+            group.childForceExpandHeight = false;
+        }
+
+        // 拆分弹窗的按钮项: 定宽底板加居中文字, 子文字不接收射线
+        private static void AddStepButton(Transform parent, string name, string label, int width)
+        {
+            GameObject button = NewNode(name, parent);
+            SetRect(button.GetComponent<RectTransform>(), m_centerAnchor, m_centerAnchor, m_centerAnchor,
+                new Vector2(width, SPLIT_ROW_HEIGHT), Vector2.zero);
+            AddButton(button, m_popupButtonColor);
+
+            GameObject labelNode = NewNode(name.Replace("Btn_", "Txt_"), button.transform);
+            SetStretch(labelNode.GetComponent<RectTransform>(), 0f);
+            AddTmp(labelNode, label, 20, TextAlignmentOptions.Midline, m_textPrimaryColor);
+        }
+
+        // 滑条: 按 Unity 默认结构补出轨道、填充区与手柄, 轨道与手柄接收射线以便点击与拖动
+        private static Slider AddSlider(GameObject node, Color trackColor, Color fillColor, Color handleColor)
+        {
+            Vector2 trackMin = new Vector2(0f, 0.325f);
+            Vector2 trackMax = new Vector2(1f, 0.675f);
+            Vector2 stretchMin = Vector2.zero;
+            Vector2 stretchMax = Vector2.one;
+
+            GameObject track = NewNode("Background", node.transform);
+            SetRect(track.GetComponent<RectTransform>(), trackMin, trackMax, m_centerAnchor, Vector2.zero, Vector2.zero);
+            Image trackImage = track.AddComponent<Image>();
+            trackImage.color = trackColor;
+            trackImage.raycastTarget = true;
+
+            // 填充区左右各内缩, 与 Unity 默认滑条一致, 使填充末端略微压在手柄之下
+            GameObject fillArea = NewNode("Fill Area", node.transform);
+            SetRect(fillArea.GetComponent<RectTransform>(), trackMin, trackMax, m_centerAnchor,
+                new Vector2(-SLIDER_FILL_INSET, 0f), Vector2.zero);
+            GameObject fill = NewNode("Fill", fillArea.transform);
+            SetRect(fill.GetComponent<RectTransform>(), new Vector2(0f, 0f), new Vector2(0f, 1f),
+                new Vector2(0f, 0.5f), Vector2.zero, Vector2.zero);
+            Image fillImage = fill.AddComponent<Image>();
+            fillImage.color = fillColor;
+            fillImage.raycastTarget = false;
+
+            GameObject handleArea = NewNode("Handle Slide Area", node.transform);
+            SetRect(handleArea.GetComponent<RectTransform>(), stretchMin, stretchMax, m_centerAnchor,
+                new Vector2(-SLIDER_HANDLE_WIDTH, 0f), Vector2.zero);
+            GameObject handle = NewNode("Handle", handleArea.transform);
+            SetRect(handle.GetComponent<RectTransform>(), new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), m_centerAnchor,
+                new Vector2(SLIDER_HANDLE_WIDTH, 0f), Vector2.zero);
+            Image handleImage = handle.AddComponent<Image>();
+            handleImage.color = handleColor;
+            handleImage.raycastTarget = true;
+
+            Slider slider = node.AddComponent<Slider>();
+            slider.minValue = 0f;
+            slider.maxValue = 1f;
+            slider.value = 0.5f;
+            slider.fillRect = fill.GetComponent<RectTransform>();
+            slider.handleRect = handle.GetComponent<RectTransform>();
+            slider.targetGraphic = handleImage;
+            return slider;
         }
 
         // 选中描边框: 一个父节点带四条边, 未选中时整体隐藏

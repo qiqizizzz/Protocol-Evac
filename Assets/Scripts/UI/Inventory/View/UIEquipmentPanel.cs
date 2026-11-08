@@ -97,6 +97,7 @@ namespace UI.Inventory.View
             m_menuOpening = true;
 
             HidePopup<UIItemDetailPanel>();
+            HidePopup<UIItemSplitPanel>();
             ShowMenuAsync(container).Forget();
         }
 
@@ -129,6 +130,7 @@ namespace UI.Inventory.View
         {
             HidePopup<UIItemDetailPanel>();
             HidePopup<UIItemMenuPanel>();
+            HidePopup<UIItemSplitPanel>();
         }
 
         // 未打开时不处理, Windows.Hide 在窗口未打开时会报错

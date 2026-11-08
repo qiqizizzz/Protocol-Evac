@@ -29,6 +29,9 @@ namespace UI.Inventory.View
         [Tooltip("会与占格物品交换的落点色")]
         [SerializeField] private Color DropSwapColor = new Color(1.00f, 0.66f, 0.20f, 0.55f);
 
+        [Tooltip("会与同类物品堆叠合并的落点色")]
+        [SerializeField] private Color DropMergeColor = new Color(0.30f, 0.85f, 0.75f, 0.55f);
+
         [Tooltip("被规则拒绝的落点色")]
         [SerializeField] private Color DropInvalidColor = new Color(0.92f, 0.27f, 0.26f, 0.55f);
 
@@ -110,6 +113,7 @@ namespace UI.Inventory.View
                 case InventoryCellMark.Selected: return SelectedColor;
                 case InventoryCellMark.DropValid: return DropValidColor;
                 case InventoryCellMark.DropSwap: return DropSwapColor;
+                case InventoryCellMark.DropMerge: return DropMergeColor;
                 case InventoryCellMark.DropInvalid: return DropInvalidColor;
                 default: return NormalColor;
             }

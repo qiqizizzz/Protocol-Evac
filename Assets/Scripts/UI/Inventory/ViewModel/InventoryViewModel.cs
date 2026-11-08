@@ -23,6 +23,7 @@ namespace UI.Inventory
     {
         private const int NO_SELECTION = -1; //未选中任何物品的标记号
         private const int NO_DRAG = -1; //本面板当前没有物品在被拖拽
+        private const int ROTATION_COUNT = 4; //四次旋转构成一周
 
         public IReadOnlyReactiveProperty<InventoryContainerVO> Snapshot => m_snapshot;
         public IReadOnlyReactiveProperty<int> SelectedInstanceId => m_selectedInstanceId;
@@ -37,6 +38,8 @@ namespace UI.Inventory
         public ISignal PopupClosed => m_popupClosed;
         public InventoryMoveResult LastMoveResult => m_lastMoveResult;
         public int DraggingInstanceId => m_dragInstanceId;
+        // 拖拽中使用的朝向, 与快照里的实际朝向分开记录
+        public InventoryRotation DragRotation => m_dragRotation;
         public int ContainerId => m_containerId;
         public bool IsDragging => m_dragInstanceId != NO_DRAG;
         
@@ -44,6 +47,7 @@ namespace UI.Inventory
         private readonly int m_containerId;
         private readonly EquipmentPanelViewModel m_owner;
         private int m_dragInstanceId = NO_DRAG; //本面板当前被拖起的物品
+        private InventoryRotation m_dragRotation; //拖拽中暂定的落点朝向
         public int SlotCount => m_slots.Count;
         
         private readonly ReactiveProperty<InventoryContainerVO> m_snapshot;
@@ -167,6 +171,9 @@ namespace UI.Inventory
             if (!m_model.TryGetInstanceIdAt(m_containerId, cell, out int instanceId)) return;
 
             m_dragInstanceId = instanceId;
+            m_dragRotation = m_snapshot.Value.TryGetItem(instanceId, out InventoryItemVO item)
+                ? item.Rotation
+                : InventoryRotation.None;
             m_popupClosed.Fire();
             m_owner?.NotifyDragBegan(this);
         }
@@ -178,7 +185,8 @@ namespace UI.Inventory
 
             if (m_dragInstanceId != NO_DRAG)
             {
-                ApplyTransferResult(m_model.TryTransferItem(m_containerId, m_containerId, m_dragInstanceId, cell));
+                ApplyTransferResult(m_model.TryTransferItem(m_containerId, m_containerId, m_dragInstanceId, cell,
+                    m_dragRotation));
                 return;
             }
 
@@ -192,7 +200,22 @@ namespace UI.Inventory
             if (m_dragInstanceId == NO_DRAG) return;
 
             m_dragInstanceId = NO_DRAG;
+            m_dragRotation = InventoryRotation.None;
             m_owner?.NotifyDragEnded(this);
+        }
+
+        // 拖拽中推进朝向: 只改本面板的拖拽状态, 落点可行性交给下一次预判
+        public bool RotateDraggedItem()
+        {
+            if (m_dragInstanceId == NO_DRAG) return false;
+
+            // 装备槽内的整件装备不参与旋转
+            if (InventoryContainerIds.TryGetEquipSlotRole(m_containerId, out _)) return false;
+            if (!m_snapshot.Value.TryGetItem(m_dragInstanceId, out InventoryItemVO item)) return false;
+            if (!ItemRegistry.TryGet(item.ItemId, out InventoryItemConfigSO config) || !config.CanRotate) return false;
+
+            m_dragRotation = (InventoryRotation)(((int)m_dragRotation + 1) % ROTATION_COUNT);
+            return true;
         }
 
         //应用一次转移结果
@@ -200,6 +223,7 @@ namespace UI.Inventory
         {
             ResetDropPreview();
             m_dragInstanceId = NO_DRAG;
+            m_dragRotation = InventoryRotation.None;
             m_lastMoveResult = result;
 
             // 放置成功清除选中态, 失败保留高亮以便调整朝向后重试
@@ -373,42 +397,37 @@ namespace UI.Inventory
             size = Vector2Int.one;
             mark = InventoryCellMark.None;
 
-            if (!TryResolveDropCandidate(out int sourceContainerId, out int instanceId, out InventoryItemVO item))
+            if (!TryResolveDropCandidate(out int sourceContainerId, out int instanceId, out InventoryItemVO item,
+                    out InventoryRotation preferredRotation))
                 return false;
 
             InventoryMoveResult verdict = m_model.PeekTransferItem(sourceContainerId, m_containerId, instanceId, cell,
-                out bool willSwap, out InventoryRotation rotation);
+                preferredRotation, out bool willSwap, out bool willMerge, out InventoryRotation rotation);
 
             if (verdict == InventoryMoveResult.None || verdict == InventoryMoveResult.SameSpot) return false;
 
-            size = ResolvePreviewSize(sourceContainerId, item, rotation);
-            mark = ToCellMark(verdict, willSwap);
+            size = ResolvePreviewSize(item, rotation);
+            mark = ToCellMark(verdict, willSwap, willMerge);
             return true;
         }
 
-        //拖出装备槽时按目标容器还原物品配置尺寸, 避免预览仍沿用装备槽的 1x1 足迹
-        private Vector2Int ResolvePreviewSize(int sourceContainerId, InventoryItemVO item, InventoryRotation rotation)
+        //预览外形按落点实际采用的朝向取值, 拖出装备槽时不再沿用单格足迹
+        private Vector2Int ResolvePreviewSize(InventoryItemVO item, InventoryRotation rotation)
         {
-            // 自动旋转改变朝向时, 预览足迹同步旋转
-            if (rotation != item.Rotation && ItemRegistry.TryGet(item.ItemId, out InventoryItemConfigSO rotated))
-                return rotated.GetSizeAt(rotation);
+            // 装备槽恒为单格, 其余容器按朝向取配置外形
+            if (InventoryContainerIds.TryGetEquipSlotRole(m_containerId, out _)) return Vector2Int.one;
 
-            if (!InventoryContainerIds.TryGetEquipSlotRole(sourceContainerId, out _))
-                return item.Size;
-
-            if (InventoryContainerIds.TryGetEquipSlotRole(m_containerId, out _))
-                return Vector2Int.one;
-
-            if (ItemRegistry.TryGet(item.ItemId, out InventoryItemConfigSO config))
-                return config.GetSizeAt(rotation);
+            if (ItemRegistry.TryGet(item.ItemId, out InventoryItemConfigSO config)) return config.GetSizeAt(rotation);
 
             return item.Size;
         }
 
-        private bool TryResolveDropCandidate(out int sourceContainerId, out int instanceId, out InventoryItemVO item)
+        private bool TryResolveDropCandidate(out int sourceContainerId, out int instanceId, out InventoryItemVO item,
+            out InventoryRotation preferredRotation)
         {
             InventoryViewModel source = m_owner?.DragSource ?? this;
 
+            preferredRotation = InventoryRotation.None;
             instanceId = source.DraggingInstanceId;
             if (instanceId == NO_DRAG)
             {
@@ -418,12 +437,14 @@ namespace UI.Inventory
             }
 
             sourceContainerId = source.ContainerId;
+            preferredRotation = source.DragRotation;
             return source.Snapshot.Value.TryGetItem(instanceId, out item);
         }
 
-        private static InventoryCellMark ToCellMark(InventoryMoveResult verdict, bool willSwap)
+        private static InventoryCellMark ToCellMark(InventoryMoveResult verdict, bool willSwap, bool willMerge)
         {
             if (!verdict.IsSuccessOrSame()) return InventoryCellMark.DropInvalid;
+            if (willMerge) return InventoryCellMark.DropMerge;
 
             return willSwap ? InventoryCellMark.DropSwap : InventoryCellMark.DropValid;
         }

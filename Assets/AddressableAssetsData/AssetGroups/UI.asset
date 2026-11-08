@@ -32,6 +32,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4f57cf35a445ed5479006513604cdd6d
+    m_Address: UIItemSplitPanel
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 717aebcffa4c12c4383e553f0f639bde
     m_Address: UISummary
     m_ReadOnly: 0

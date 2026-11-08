@@ -16,5 +16,6 @@ namespace Framework.QTower.Common.Defines
         public const string UIEquipmentPanel = "UIEquipmentPanel";
         public const string UIItemDetailPanel = "UIItemDetailPanel";
         public const string UIItemMenuPanel = "UIItemMenuPanel";
+        public const string UIItemSplitPanel = "UIItemSplitPanel";
     }
 }

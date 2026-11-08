@@ -1,6 +1,6 @@
 /*
 * ┌──────────────────────────────────┐
-* │  描    述: 物品右键菜单视图模型
+* │  描    述: 物品右键菜单视图模型, 汇总旋转与拆分两项操作的可用性并转发操作请求
 * │  类    名: ItemMenuViewModel.cs
 * │  创    建: By qiqizizzz
 * └──────────────────────────────────┘
@@ -21,11 +21,19 @@ namespace UI.Inventory
         private const int NO_ITEM = -1; //当前没有要操作的物品
 
         public IReadOnlyReactiveProperty<bool> CanRotate => m_canRotate;
+        public IReadOnlyReactiveProperty<bool> CanSplit => m_canSplit;
         public ISignal Dismissed => m_dismissed;
+        public ISignal SplitRequested => m_splitRequested;
+
+        // 拆分弹窗沿用菜单当前锁定的操作对象
+        public int TargetContainerId => m_containerId;
+        public int TargetInstanceId => m_instanceId;
 
         private readonly IInventoryModel m_model;
         private readonly ReactiveProperty<bool> m_canRotate;
+        private readonly ReactiveProperty<bool> m_canSplit;
         private readonly Signal m_dismissed;
+        private readonly Signal m_splitRequested;
 
         private int m_containerId;
         private int m_instanceId = NO_ITEM;
@@ -39,7 +47,9 @@ namespace UI.Inventory
             m_model = model;
 
             m_canRotate = CreateProperty(false);
+            m_canSplit = CreateProperty(false);
             m_dismissed = CreateSignal();
+            m_splitRequested = CreateSignal();
         }
 
         #region Public Function
@@ -52,7 +62,7 @@ namespace UI.Inventory
         {
             m_containerId = containerId;
             m_instanceId = instanceId;
-            RefreshCanRotate();
+            RefreshActions();
         }
 
         // 点击空白处收起菜单, 不执行任何操作
@@ -68,19 +78,36 @@ namespace UI.Inventory
 
             m_dismissed.Fire();
         }
+
+        // 请求拆分当前物品, 菜单收起并打开拆分弹窗
+        public void Split()
+        {
+            if (m_instanceId == NO_ITEM) return;
+
+            m_splitRequested.Fire();
+            m_dismissed.Fire();
+        }
         #endregion
 
         #region Private Function
-        private void RefreshCanRotate()
+        // 一次查询同时刷新旋转与拆分的可用性, 避免重复走容器与配置表
+        private void RefreshActions()
         {
             bool canRotate = false;
+            bool canSplit = false;
 
             if (m_model.IsContainerRegistered(m_containerId) &&
-                m_model.GetContainerVO(m_containerId).TryGetItem(m_instanceId, out InventoryItemVO item) &&
-                ItemRegistry.TryGet(item.ItemId, out InventoryItemConfigSO config))
-                canRotate = config.CanRotate;
+                m_model.GetContainerVO(m_containerId).TryGetItem(m_instanceId, out InventoryItemVO item))
+            {
+                if (ItemRegistry.TryGet(item.ItemId, out InventoryItemConfigSO config))
+                    canRotate = config.CanRotate;
+
+                // 只剩一份时无可拆分的余量, 拆分按钮置灰
+                canSplit = item.StackCount > 1;
+            }
 
             m_canRotate.Set(canRotate);
+            m_canSplit.Set(canSplit);
         }
         #endregion
     }

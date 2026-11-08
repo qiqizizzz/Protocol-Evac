@@ -1,11 +1,12 @@
 /*
  * ┌──────────────────────────────────┐
- * │  描    述: 物品右键菜单视图, 贴着鼠标摆一张按钮卡片, 点卡片外任意处收起
- * │  类    名: UIItemMenuPanel.cs
- * │  创    建: By qiqizizzz
- * └──────────────────────────────────┘
- */
+* │  描    述: 物品右键菜单视图, 贴着鼠标摆一张按钮卡片, 点卡片外任意处收起, 拆分项转交拆分弹窗
+* │  类    名: UIItemMenuPanel.cs
+* │  创    建: By qiqizizzz
+* └──────────────────────────────────┘
+*/
 
+using Cysharp.Threading.Tasks;
 using Framework.QTower.MVVM.View;
 using UI.Inventory.View.Tools;
 using UnityEngine;
@@ -18,6 +19,7 @@ namespace UI.Inventory.View
         private const string DISMISS_PATH = "Btn_Dismiss";
         private const string CARD_PATH = "Panel_Menu";
         private const string ROTATE_PATH = CARD_PATH + "/Btn_Rotate";
+        private const string SPLIT_PATH = CARD_PATH + "/Btn_Split";
 
         // 卡片左上角相对鼠标的偏移量, 与详情面板一致
         private static readonly Vector2 m_cursorOffset = new Vector2(12f, -12f);
@@ -26,6 +28,10 @@ namespace UI.Inventory.View
         private RectTransform m_cardRect;
         private Button m_dismissButton;
         private Button m_rotateButton;
+        private Button m_splitButton;
+
+        // 拆分弹窗预制体首次加载需等待一帧, 期间的重复请求忽略
+        private bool m_splitOpening;
 
         #region 生命周期
         protected override ItemMenuViewModel CreateViewModel() => new ItemMenuViewModel();
@@ -36,15 +42,20 @@ namespace UI.Inventory.View
             m_cardRect = FindComponent<RectTransform>(CARD_PATH);
             m_dismissButton = FindComponent<Button>(DISMISS_PATH);
             m_rotateButton = FindComponent<Button>(ROTATE_PATH);
+            m_splitButton = FindComponent<Button>(SPLIT_PATH);
         }
 
         protected override void BindViewModel(ItemMenuViewModel viewModel)
         {
             m_dismissButton.onClick.AddListener(viewModel.Dismiss);
             m_rotateButton.onClick.AddListener(viewModel.Rotate);
+            m_splitButton.onClick.AddListener(viewModel.Split);
 
             // 不可旋转时按钮保留但置为不可用, 用于提示该物品不支持旋转
             Scope.Bind(viewModel.CanRotate, interactable => m_rotateButton.interactable = interactable);
+            // 不足两份时没有可拆的余量, 同样保留按钮并置灰
+            Scope.Bind(viewModel.CanSplit, interactable => m_splitButton.interactable = interactable);
+            Scope.Bind(viewModel.SplitRequested, () => ShowSplitAsync(viewModel).Forget());
             Scope.Bind(viewModel.Dismissed, Hide);
         }
 
@@ -63,6 +74,20 @@ namespace UI.Inventory.View
             // 卡片高度由 VerticalLayoutGroup 计算, 先重建布局再取实际尺寸定位
             LayoutRebuilder.ForceRebuildLayoutImmediate(m_cardRect);
             ItemPopupPlacement.AnchorToCursor(m_rect, m_cardRect, screenPos, m_cursorOffset);
+        }
+        #endregion
+
+        #region Private Function
+        // 菜单收起后按同一目标与鼠标位置打开拆分弹窗
+        private async UniTaskVoid ShowSplitAsync(ItemMenuViewModel viewModel)
+        {
+            if (m_splitOpening) return;
+            m_splitOpening = true;
+
+            await MvvmRoot.Instance.Windows.ShowAsync<UIItemSplitPanel>(viewModel.TargetContainerId,
+                viewModel.TargetInstanceId, Input.mousePosition);
+
+            m_splitOpening = false;
         }
         #endregion
     }

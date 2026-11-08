@@ -47,13 +47,25 @@ namespace UI.Inventory
         //物品移动
         InventoryMoveResult TryMoveItem(int containerId, int instanceId, Vector2Int cell, InventoryRotation rotation);
         
-        // 转移物品, 目标位置被占用则与原物品交换, 当前朝向不可放置时自动改用可用朝向
+        // 转移物品, 落点被占用则与占格物品合并或交换, 当前朝向不可放置时自动改用可用朝向
         InventoryMoveResult TryTransferItem(int sourceContainerId, int targetContainerId, int instanceId, Vector2Int cell);
+
+        // 转移物品, 以指定朝向为优先尝试, 指定朝向不可放置时自动改用其余可用朝向
+        InventoryMoveResult TryTransferItem(int sourceContainerId, int targetContainerId, int instanceId, Vector2Int cell,
+            InventoryRotation preferredRotation);
         
         // 预判转移落点：不修改状态, 返回是否会触发交换与实际采用的朝向
         InventoryMoveResult PeekTransferItem(int sourceContainerId, int targetContainerId, int instanceId, Vector2Int cell,
             out bool willSwap, out InventoryRotation rotation);
+
+        // 预判转移落点：不修改状态, 额外返回落点会并堆还是交换
+        InventoryMoveResult PeekTransferItem(int sourceContainerId, int targetContainerId, int instanceId,
+            Vector2Int cell, InventoryRotation preferredRotation, out bool willSwap, out bool willMerge,
+            out InventoryRotation rotation);
         
+        // 把物品堆里的一部分拆成同容器的新堆, 新堆落进第一块放得下的连续空格
+        InventoryMoveResult TrySplitItem(int containerId, int instanceId, int count, out int newInstanceId);
+
         //物品旋转
         InventoryMoveResult TryRotateItem(int containerId, int instanceId);
         

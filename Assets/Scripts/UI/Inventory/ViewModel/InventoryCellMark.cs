@@ -22,6 +22,9 @@ namespace UI.Inventory
         //落点会与占格物品交换
         DropSwap,
 
+        //落点会与同类物品堆叠合并
+        DropMerge,
+
         //落点被规则拒绝
         DropInvalid
     }

@@ -130,6 +130,31 @@ namespace Module.Inventory.Core.Data
 
             return InventoryMoveResult.Success;
         }
+
+        // 把 moving 的堆叠数量并入 occupant, 整堆并走时 moving 从网格摘除, 剩余数量原地保留
+        public InventoryMoveResult TryAbsorb(InventoryContainer target, InventoryItemPlacement moving,
+            InventoryItemPlacement occupant, out int transferred)
+        {
+            transferred = 0;
+            if (!m_rules.CanMerge(this, target, moving, occupant)) return InventoryMoveResult.None;
+
+            InventoryItemInstance dragged = moving.Instance;
+            InventoryItemInstance destination = occupant.Instance;
+            int absorbed = Mathf.Min(destination.MaxStackCount - destination.StackCount, dragged.StackCount);
+
+            if (!destination.TryAddStack(absorbed, out int accepted) || accepted != absorbed)
+                return InventoryMoveResult.None;
+
+            if (accepted == dragged.StackCount) Grid.Remove(moving);
+            else dragged.TryReduceStack(accepted);
+
+            transferred = accepted;
+            Commit();
+            if (!ReferenceEquals(this, target)) target.Commit();
+
+            return InventoryMoveResult.Success;
+        }
+
         //旋转物品
         public InventoryMoveResult TryRotate(InventoryItemPlacement placement)
         {

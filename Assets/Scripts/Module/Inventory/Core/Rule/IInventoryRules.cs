@@ -31,9 +31,14 @@ namespace Module.Inventory.Core.Rule
         InventoryMoveResult CanRotate(InventoryContainer container, InventoryItemPlacement placement,
             out InventoryRotation nextRotation);
 
-        // 转移落点判定：目标被占用时改判为与原物品交换, 空间不足时自动尝试其余朝向
+        // 同类可堆物品的落点判定：数量能并入占格那一堆时视为可放, 不要求腾出整块空间
+        bool CanMerge(InventoryContainer source, InventoryContainer target,
+            InventoryItemPlacement moving, InventoryItemPlacement occupant);
+
+        // 转移落点判定：目标被占用时改判为合并或交换, 指定朝向不可放置时自动尝试其余朝向
         InventoryMoveResult ResolveTransfer(InventoryContainer source, InventoryContainer target,
-            InventoryItemPlacement moving, Vector2Int cell, out InventoryRotation rotation,
+            InventoryItemPlacement moving, Vector2Int cell, InventoryRotation preferredRotation,
+            out InventoryRotation rotation,
             out InventoryItemPlacement occupant);
     }
 }

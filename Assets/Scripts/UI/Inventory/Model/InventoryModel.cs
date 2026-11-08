@@ -246,6 +246,21 @@ namespace UI.Inventory
 
         public InventoryMoveResult TryTransferItem(int sourceContainerId, int targetContainerId, int instanceId, Vector2Int cell)
         {
+            return TransferItem(sourceContainerId, targetContainerId, instanceId, cell, null, out _);
+        }
+
+        public InventoryMoveResult TryTransferItem(int sourceContainerId, int targetContainerId, int instanceId, Vector2Int cell,
+            InventoryRotation preferredRotation)
+        {
+            return TransferItem(sourceContainerId, targetContainerId, instanceId, cell, preferredRotation, out _);
+        }
+
+        // 转移落点的共同实现: preferredRotation 为空时沿用物品当前朝向, 落点被同类物品占住时优先并堆
+        private InventoryMoveResult TransferItem(int sourceContainerId, int targetContainerId, int instanceId, Vector2Int cell,
+            InventoryRotation? preferredRotation, out InventoryRotation rotation)
+        {
+            rotation = InventoryRotation.None;
+
             if (!TryGetContainer(sourceContainerId, out InventoryContainer source))
             {
                 QLog.Error($"容器未注册：{sourceContainerId}");
@@ -261,11 +276,19 @@ namespace UI.Inventory
             if (!TryGetPlacement(source, instanceId, out InventoryItemPlacement placement))
                 return InventoryMoveResult.SourceNotFound;
 
-            // 落点判定由规则层处理, 当前朝向不可放置时自动改用可用朝向
+            // 落点判定由规则层处理, 指定朝向不可放置时自动改用可用朝向
             InventoryMoveResult verdict = source.Rules.ResolveTransfer(source, target, placement, cell,
-                out InventoryRotation rotation, out InventoryItemPlacement occupant);
+                preferredRotation ?? placement.Rotation, out rotation, out InventoryItemPlacement occupant);
 
             if (verdict != InventoryMoveResult.Success) return verdict;
+
+            // 落点是同类可堆物品时并堆, 数量整堆或部分并走, 格子位置不变
+            if (occupant != null && source.Rules.CanMerge(source, target, placement, occupant))
+            {
+                InventoryMoveResult mergeResult = source.TryAbsorb(target, placement, occupant, out _);
+                if (mergeResult.IsSuccessOrSame()) SyncWornCapacities();
+                return mergeResult;
+            }
 
             InventoryMoveResult transferResult = occupant == null
                 ? source.TryMoveTo(target, placement, cell, rotation)
@@ -278,7 +301,24 @@ namespace UI.Inventory
         public InventoryMoveResult PeekTransferItem(int sourceContainerId, int targetContainerId, int instanceId,
             Vector2Int cell, out bool willSwap, out InventoryRotation rotation)
         {
+            return PeekTransfer(sourceContainerId, targetContainerId, instanceId, cell, null,
+                out willSwap, out _, out rotation);
+        }
+
+        public InventoryMoveResult PeekTransferItem(int sourceContainerId, int targetContainerId, int instanceId,
+            Vector2Int cell, InventoryRotation preferredRotation, out bool willSwap, out bool willMerge,
+            out InventoryRotation rotation)
+        {
+            return PeekTransfer(sourceContainerId, targetContainerId, instanceId, cell, preferredRotation,
+                out willSwap, out willMerge, out rotation);
+        }
+
+        // 落点预判的共同实现: 只判定不改状态, 供拖拽每帧的落点着色使用
+        private InventoryMoveResult PeekTransfer(int sourceContainerId, int targetContainerId, int instanceId, Vector2Int cell,
+            InventoryRotation? preferredRotation, out bool willSwap, out bool willMerge, out InventoryRotation rotation)
+        {
             willSwap = false;
+            willMerge = false;
             rotation = InventoryRotation.None;
 
             //悬停每帧都会问, 配错容器由 Try 路径报错, 预判这里静默免得刷屏
@@ -287,11 +327,46 @@ namespace UI.Inventory
             if (!TryGetPlacement(source, instanceId, out InventoryItemPlacement placement)) return InventoryMoveResult.None;
 
             InventoryMoveResult verdict = source.Rules.ResolveTransfer(source, target, placement, cell,
-                out rotation, out InventoryItemPlacement occupant);
+                preferredRotation ?? placement.Rotation, out rotation, out InventoryItemPlacement occupant);
 
-            //被第三方物品压住才会改判交换, 落回自己身上不算
-            willSwap = occupant != null && verdict == InventoryMoveResult.Success;
+            //被第三方物品压住才会改判并堆或交换, 落回自己身上不算
+            bool occupied = occupant != null && verdict == InventoryMoveResult.Success;
+            willMerge = occupied && source.Rules.CanMerge(source, target, placement, occupant);
+            willSwap = occupied && !willMerge;
             return verdict;
+        }
+
+        public InventoryMoveResult TrySplitItem(int containerId, int instanceId, int count, out int newInstanceId)
+        {
+            newInstanceId = 0;
+
+            if (!TryGetContainer(containerId, out InventoryContainer container))
+            {
+                QLog.Error($"容器未注册：{containerId}");
+                return InventoryMoveResult.None;
+            }
+
+            if (!TryGetPlacement(container, instanceId, out InventoryItemPlacement placement))
+                return InventoryMoveResult.SourceNotFound;
+
+            // 拆分要求留一整份在原堆, 拆出的数量也至少是一整份
+            if (count < 1 || count >= placement.Instance.StackCount) return InventoryMoveResult.None;
+            if (!TryFindFreeCell(container, placement.Size, out Vector2Int cell)) return InventoryMoveResult.OutOfBounds;
+
+            // 先减原堆再落新堆, 新堆放不下时把数量原样退回
+            placement.Instance.TryReduceStack(count);
+
+            InventoryItemPlacement split = container.TryAdd(
+                new InventoryItemInstance(placement.Instance.Config, count), cell, placement.Rotation);
+            if (split == null)
+            {
+                placement.Instance.TryAddStack(count, out _);
+                return InventoryMoveResult.Occupied;
+            }
+
+            newInstanceId = split.Instance.InstanceId;
+            SyncWornCapacities();
+            return InventoryMoveResult.Success;
         }
 
         public InventoryMoveResult TryRotateItem(int containerId, int instanceId)

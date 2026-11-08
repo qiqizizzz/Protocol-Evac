@@ -61,7 +61,7 @@ namespace UI.Inventory
             if (source == null || ReferenceEquals(source, target)) return;
 
             InventoryMoveResult result = m_model.TryTransferItem(source.ContainerId, target.ContainerId,
-                source.DraggingInstanceId, cell);
+                source.DraggingInstanceId, cell, source.DragRotation);
             source.ApplyTransferResult(result);
         }
 

@@ -64,8 +64,17 @@ namespace UI.Inventory.View.Tools
         {
             if (step.x <= 0f || step.y <= 0f) return Vector2Int.zero;
 
-            return new Vector2Int(Mathf.RoundToInt(ghostOffset.x / step.x),
-                Mathf.RoundToInt(-ghostOffset.y / step.y));
+            return new Vector2Int(NearestCell(ghostOffset.x / step.x),
+                NearestCell(-ghostOffset.y / step.y));
+        }
+
+        // 四舍五入且平局一律偏向较大格号: Mathf.RoundToInt 用的是银行家舍入, 偶数占格的拖影中心
+        // 贴着格心时商恰好是 .5, 舍入结果随格号奇偶摆动, 导致锚点跳格且部分格号永远取不到
+        private static int NearestCell(float value)
+        {
+            if (float.IsNaN(value)) return 0;
+
+            return Mathf.FloorToInt(value + 0.5f);
         }
 
         /// <summary>

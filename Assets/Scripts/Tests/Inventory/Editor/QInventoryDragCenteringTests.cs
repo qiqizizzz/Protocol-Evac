@@ -215,6 +215,71 @@ namespace Tests.Inventory
                 DragAnchorCentering.CellCornerOffset(new Vector2Int(3, 1), m_step), m_step));
         }
 
+        // 偶数占格的拖影中心恰好压在两格正中, 平局必须偏向固定一侧, 否则锚点格会随格号奇偶摆动
+        [Test]
+        public void LatticeAnchor_EvenFootprint_SweepsCellsMonotonically()
+        {
+            Vector2Int footprint = new Vector2Int(2, 2);
+            Vector2 size = FootprintSize(footprint);
+
+            for (int y = 0; y < GRID_HEIGHT; y++)
+            {
+                int lastAnchorX = int.MinValue;
+                int rowAnchorY = int.MinValue;
+                for (int x = 0; x < GRID_WIDTH; x++)
+                {
+                    Vector2 ghostOffset = DragAnchorCentering.GhostOffset(CellCenterOffset(new Vector2Int(x, y)), size);
+                    Vector2Int anchor = DragAnchorCentering.LatticeAnchor(ghostOffset, m_step);
+
+                    Assert.Greater(anchor.x, lastAnchorX, $"指针扫过格子 ({x},{y}) 时锚点格不得倒退");
+                    if (lastAnchorX != int.MinValue)
+                        Assert.AreEqual(1, anchor.x - lastAnchorX, $"指针扫过格子 ({x},{y}) 时锚点格不得跳格");
+                    if (x == 0) rowAnchorY = anchor.y;
+                    else Assert.AreEqual(rowAnchorY, anchor.y, $"指针在同一行内横向移动时锚点行号不得漂移 ({x},{y})");
+                    lastAnchorX = anchor.x;
+                }
+            }
+        }
+
+        // 逐格扫一遍后, 容器内的每一个合法锚点都应当至少被指到一次
+        [Test]
+        public void LatticeAnchor_EvenFootprint_ReachesEveryLegalAnchor()
+        {
+            Vector2Int footprint = new Vector2Int(2, 2);
+            Vector2 size = FootprintSize(footprint);
+            bool[,] reached = new bool[GRID_WIDTH - footprint.x + 1, GRID_HEIGHT - footprint.y + 1];
+            int reachedCount = 0;
+
+            for (int y = 0; y < GRID_HEIGHT; y++)
+            {
+                for (int x = 0; x < GRID_WIDTH; x++)
+                {
+                    Vector2 ghostOffset = DragAnchorCentering.GhostOffset(CellCenterOffset(new Vector2Int(x, y)), size);
+                    Vector2Int anchor = DragAnchorCentering.ClampAnchor(
+                        DragAnchorCentering.LatticeAnchor(ghostOffset, m_step), footprint, m_gridCount);
+
+                    if (reached[anchor.x, anchor.y]) continue;
+
+                    reached[anchor.x, anchor.y] = true;
+                    reachedCount++;
+                }
+            }
+
+            Assert.AreEqual(reached.GetLength(0) * reached.GetLength(1), reachedCount, "偶数占格存在永远拖不到的锚点格");
+        }
+
+        // 平局在格阵两侧都偏向较大格号, 跨零时同样成立, 否则首行首列永远拖不到
+        [Test]
+        public void LatticeAnchor_HalfStepTie_RoundsTowardLargerCell()
+        {
+            Assert.AreEqual(new Vector2Int(0, 0), DragAnchorCentering.LatticeAnchor(
+                new Vector2(-m_step.x * 0.5f, m_step.y * 0.5f), m_step));
+            Assert.AreEqual(new Vector2Int(1, 1), DragAnchorCentering.LatticeAnchor(
+                new Vector2(m_step.x * 0.5f, -m_step.y * 0.5f), m_step));
+            Assert.AreEqual(new Vector2Int(-1, -1), DragAnchorCentering.LatticeAnchor(
+                new Vector2(-m_step.x * 1.5f, m_step.y * 1.5f), m_step));
+        }
+
         [Test]
         public void LatticeAnchor_FlipsCellWhenGhostCrossesHalfStep()
         {
