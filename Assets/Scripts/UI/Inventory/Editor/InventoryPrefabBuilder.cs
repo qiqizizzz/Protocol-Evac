@@ -1,6 +1,6 @@
 ﻿/*
  * ┌──────────────────────────────────┐
- * │  描    述: 背包预制体生成器，产出载体与格子、物品三张模板，另可单独重出物品模板与战备面板
+* │  描    述: 背包预制体生成器，产出载体与格子、物品三张模板，另可单独重出物品模板、战备面板与两张物品弹窗
  * │  类    名: InventoryPrefabBuilder.cs
  * │  创    建: By qiqizizzz
  * └──────────────────────────────────┘
@@ -40,6 +40,11 @@ namespace UI.Inventory.Editor
         private const string EQUIPMENT_PATH = PREFAB_DIR + "/UIEquipmentPanel.prefab";
         private const string ADDRESSABLE_GROUP_NAME = "UI";
 
+        private const string DETAIL_SCRIPT = "UI.Inventory.View.UIItemDetailPanel";
+        private const string DETAIL_PATH = PREFAB_DIR + "/UIItemDetailPanel.prefab";
+        private const string MENU_SCRIPT = "UI.Inventory.View.UIItemMenuPanel";
+        private const string MENU_PATH = PREFAB_DIR + "/UIItemMenuPanel.prefab";
+
         private const int CELL_SIZE = 80;
         private const int CELL_SPACING = 4;
         private const int DEFAULT_COLUMNS = 8;
@@ -59,6 +64,34 @@ namespace UI.Inventory.Editor
         private static readonly Color m_itemDefaultColor = new Color(0.16f, 0.18f, 0.21f, 0.95f);
         private static readonly Color m_selectedBorderColor = new Color(0.31f, 0.76f, 1f, 1f);
         private const string CJK_FONT_PATH = "Assets/Fonts/miSans/MiSans-Regular SDF.asset";
+
+        // 弹窗卡片底板与遮罩: 详情卡片不吃射线, 菜单卡片必须吃住, 全屏遮罩只用来点空白收起
+        private static readonly Color m_popupBgColor = new Color(0.086f, 0.098f, 0.118f, 0.97f);
+        private static readonly Color m_popupDimColor = new Color(0f, 0f, 0f, 0.25f);
+        private static readonly Color m_popupButtonColor = new Color(1f, 1f, 1f, 0.12f);
+        private static readonly Color m_textPrimaryColor = new Color(0.9f, 0.93f, 0.98f, 1f);
+        private static readonly Color m_textSecondColor = new Color(0.62f, 0.68f, 0.75f, 1f);
+
+        private static readonly Vector2 m_centerAnchor = new Vector2(0.5f, 0.5f);
+        private static readonly Vector2 m_topLeftAnchor = new Vector2(0f, 1f);
+        private static readonly Vector2 m_topRightAnchor = new Vector2(1f, 1f);
+        private static readonly Vector2 m_topCenterAnchor = new Vector2(0.5f, 1f);
+
+        private const int DETAIL_CARD_WIDTH = 320;
+        private const int DETAIL_CARD_HEIGHT = 372;
+        private const int DETAIL_ICON_SIZE = 120;
+        private const int DETAIL_TEXT_WIDTH = 288;
+        private const int DETAIL_EDGE = 16;
+        private const int DETAIL_NAME_TOP = 148;
+        private const int DETAIL_TAGS_TOP = 182;
+        private const int DETAIL_SPEC_TOP = 214;
+        private const int DETAIL_SPEC_HEIGHT = 140;
+        private const int POPUP_EDGE = 8;
+        private const int MENU_CARD_WIDTH = 168;
+        private const int MENU_BUTTON_WIDTH = 152;
+        private const int MENU_BUTTON_HEIGHT = 36;
+        private const int CLOSE_BUTTON_WIDTH = 56;
+        private const int CLOSE_BUTTON_HEIGHT = 28;
 
         // 载体节点后缀， 顺序与 InventoryContainerIds.ROLE_SLOT_IDS 一致
         private static readonly string[] m_carrierNames = { "Backpack", "Rig", "Pockets", "SafeBox" };
@@ -162,7 +195,138 @@ namespace UI.Inventory.Editor
             }
         }
 
+        // 只产出物品详情弹窗, 战备面板与三张模板一概不动
+        [MenuItem("Tools/背包7a/9.生成物品详情弹窗预制体")]
+        public static void BuildDetailPopup() => BuildPopup(BuildDetailCard, DETAIL_PATH, UIDefines.UIItemDetailPanel);
+
+        // 只产出物品右键菜单弹窗
+        [MenuItem("Tools/背包7a/10.生成物品右键菜单预制体")]
+        public static void BuildMenuPopup() => BuildPopup(BuildMenuCard, MENU_PATH, UIDefines.UIItemMenuPanel);
+
         // ==================== Private Function ====================
+        // 在临时空场景里搭弹窗节点, 存成预制体并登记 Addressables, 全程不碰正在编辑的场景
+        private static void BuildPopup(Func<GameObject> builder, string path, string address)
+        {
+            if (PrefabStageUtility.GetCurrentPrefabStage() != null)
+            {
+                Debug.LogError(LOG + "当前处于 Prefab 编辑模式，请先退出再运行");
+                return;
+            }
+
+            m_missingScripts.Clear();
+
+            Scene tempScene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
+            try
+            {
+                SavePrefab(builder(), path);
+                RegisterAddressable(path, address);
+            }
+            finally
+            {
+                EditorSceneManager.CloseScene(tempScene, true);
+                AssetDatabase.SaveAssets();
+                AssetDatabase.Refresh();
+
+                if (m_missingScripts.Count > 0)
+                    Debug.LogWarning(LOG + "脚本还没敲，本次未挂上，敲完再点一次本菜单即可: " + string.Join(", ", m_missingScripts));
+            }
+        }
+
+        // 详情弹窗: 铺满屏幕的根 + 一张左上角轴心的卡片, 卡片位置由 View 按鼠标摆
+        private static GameObject BuildDetailCard()
+        {
+            GameObject root = NewNode("UIItemDetailPanel", null);
+            SetStretch(root.GetComponent<RectTransform>(), 0f);
+
+            GameObject card = NewNode("Panel_Detail", root.transform);
+            SetRect(card.GetComponent<RectTransform>(), m_centerAnchor, m_centerAnchor, m_topLeftAnchor,
+                new Vector2(DETAIL_CARD_WIDTH, DETAIL_CARD_HEIGHT), Vector2.zero);
+            Image cardImage = card.AddComponent<Image>();
+            cardImage.color = m_popupBgColor;
+            // 卡片不设射线, 点卡片以外的地方直接落到底下的载体, 由交互逻辑决定收起还是换一件
+            cardImage.raycastTarget = false;
+
+            GameObject icon = NewNode("Img_Icon", card.transform);
+            SetRect(icon.GetComponent<RectTransform>(), m_topCenterAnchor, m_topCenterAnchor, m_topCenterAnchor,
+                new Vector2(DETAIL_ICON_SIZE, DETAIL_ICON_SIZE), new Vector2(0f, -POPUP_EDGE * 2f));
+            Image iconImage = icon.AddComponent<Image>();
+            iconImage.color = Color.white;
+            iconImage.preserveAspect = true;
+            iconImage.raycastTarget = false;
+            // 无 Sprite 的 Image 会画成一块纯白, 图标改由 View 绑到 Sprite 时才启用
+            iconImage.enabled = false;
+
+            GameObject nameNode = NewNode("Txt_Name", card.transform);
+            SetRect(nameNode.GetComponent<RectTransform>(), m_topLeftAnchor, m_topLeftAnchor, m_topLeftAnchor,
+                new Vector2(DETAIL_TEXT_WIDTH, 30f), new Vector2(DETAIL_EDGE, -DETAIL_NAME_TOP));
+            AddTmp(nameNode, "物品名称", 24, TextAlignmentOptions.MidlineLeft, m_textPrimaryColor);
+
+            GameObject tags = NewNode("Txt_Tags", card.transform);
+            SetRect(tags.GetComponent<RectTransform>(), m_topLeftAnchor, m_topLeftAnchor, m_topLeftAnchor,
+                new Vector2(DETAIL_TEXT_WIDTH, 24f), new Vector2(DETAIL_EDGE, -DETAIL_TAGS_TOP));
+            AddTmp(tags, "类型 · 品质 · 容器", 18, TextAlignmentOptions.MidlineLeft, m_textSecondColor);
+
+            GameObject spec = NewNode("Txt_Spec", card.transform);
+            SetRect(spec.GetComponent<RectTransform>(), m_topLeftAnchor, m_topLeftAnchor, m_topLeftAnchor,
+                new Vector2(DETAIL_TEXT_WIDTH, DETAIL_SPEC_HEIGHT), new Vector2(DETAIL_EDGE, -DETAIL_SPEC_TOP));
+            AddTmp(spec, "占格  0x0", 18, TextAlignmentOptions.TopLeft, m_textSecondColor);
+
+            GameObject close = NewNode("Btn_Close", card.transform);
+            SetRect(close.GetComponent<RectTransform>(), m_topRightAnchor, m_topRightAnchor, m_topRightAnchor,
+                new Vector2(CLOSE_BUTTON_WIDTH, CLOSE_BUTTON_HEIGHT), new Vector2(-POPUP_EDGE, -POPUP_EDGE));
+            AddButton(close, m_popupButtonColor);
+            GameObject closeText = NewNode("Txt_Close", close.transform);
+            SetStretch(closeText.GetComponent<RectTransform>(), 0f);
+            AddTmp(closeText, "关闭", 16, TextAlignmentOptions.Midline, m_textPrimaryColor);
+
+            AttachScript(root, DETAIL_SCRIPT);
+            return root;
+        }
+
+        // 右键菜单弹窗: 全屏透明遮罩负责点空白收起, 卡片竖排按钮负责具体操作
+        private static GameObject BuildMenuCard()
+        {
+            GameObject root = NewNode("UIItemMenuPanel", null);
+            SetStretch(root.GetComponent<RectTransform>(), 0f);
+
+            GameObject dismiss = NewNode("Btn_Dismiss", root.transform);
+            SetStretch(dismiss.GetComponent<RectTransform>(), 0f);
+            AddButton(dismiss, m_popupDimColor);
+
+            GameObject card = NewNode("Panel_Menu", root.transform);
+            // 高度只是落盘的初始值, 真实尺寸由 ContentSizeFitter 按按钮数量现算
+            SetRect(card.GetComponent<RectTransform>(), m_centerAnchor, m_centerAnchor, m_topLeftAnchor,
+                new Vector2(MENU_CARD_WIDTH, MENU_BUTTON_HEIGHT + POPUP_EDGE * 2), Vector2.zero);
+            Image cardImage = card.AddComponent<Image>();
+            cardImage.color = m_popupBgColor;
+            // 卡片必须挡住遮罩, 否则点按钮会连带触发收起
+            cardImage.raycastTarget = true;
+
+            VerticalLayoutGroup cardLayout = card.AddComponent<VerticalLayoutGroup>();
+            cardLayout.padding = new RectOffset(POPUP_EDGE, POPUP_EDGE, POPUP_EDGE, POPUP_EDGE);
+            cardLayout.spacing = 4;
+            cardLayout.childAlignment = TextAnchor.UpperCenter;
+            // 按钮尺寸自己说话, 布局只负责竖排, 后面加出售与放回不用再改这套参数
+            cardLayout.childControlWidth = false;
+            cardLayout.childControlHeight = false;
+            cardLayout.childForceExpandWidth = false;
+            cardLayout.childForceExpandHeight = false;
+
+            ContentSizeFitter cardFitter = card.AddComponent<ContentSizeFitter>();
+            cardFitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            cardFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            GameObject rotate = NewNode("Btn_Rotate", card.transform);
+            rotate.GetComponent<RectTransform>().sizeDelta = new Vector2(MENU_BUTTON_WIDTH, MENU_BUTTON_HEIGHT);
+            AddButton(rotate, m_popupButtonColor);
+            GameObject rotateText = NewNode("Txt_Rotate", rotate.transform);
+            SetStretch(rotateText.GetComponent<RectTransform>(), 0f);
+            AddTmp(rotateText, "旋转", 20, TextAlignmentOptions.Midline, m_textPrimaryColor);
+
+            AttachScript(root, MENU_SCRIPT);
+            return root;
+        }
+
         // 战备面板: 背景 + 横向排开的四个容器载体, 载体本体是既有预制体实例
         private static GameObject BuildEquipment(GameObject carrierAsset)
         {

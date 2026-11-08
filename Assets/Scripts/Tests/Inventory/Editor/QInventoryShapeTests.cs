@@ -361,10 +361,10 @@ namespace Tests.Inventory
         }
 
         [Test]
-        public void InteractAt_OnSelectedItem_MarksItsWholeFootprintNextToTheHole()
+        public void OpenMenuAt_OnSelectedItem_MarksItsWholeFootprintNextToTheHole()
         {
             AddItem(2, 1, new Vector2Int(2, 1));
-            m_viewModel.InteractAt(new Vector2Int(2, 1));
+            m_viewModel.OpenMenuAt(new Vector2Int(2, 1));
 
             Assert.AreEqual(InventoryCellMark.Selected, m_viewModel.GetSlot(6).Mark.Value);
             Assert.AreEqual(InventoryCellMark.Selected, m_viewModel.GetSlot(7).Mark.Value);
@@ -373,17 +373,18 @@ namespace Tests.Inventory
         }
 
         [Test]
-        public void InteractAt_OnTheHole_WithItemSelected_ReportsFailedAndKeepsTheItem()
+        public void PlaceDraggedItemAt_OnTheHole_ReportsFailedAndKeepsTheItem()
         {
             int instanceId = AddItem(2, 1, new Vector2Int(0, 0));
-            m_viewModel.InteractAt(new Vector2Int(0, 0));
+            m_viewModel.OpenMenuAt(new Vector2Int(0, 0));
+            m_viewModel.BeginDragAt(new Vector2Int(0, 0));
             m_hintPulseCount = 0;
 
-            m_viewModel.InteractAt(HOLE);
+            m_viewModel.PlaceDraggedItemAt(HOLE);
 
             Assert.AreEqual(InventoryHintKind.Failed, m_viewModel.HintKind.Value);
             Assert.AreEqual(1, m_hintPulseCount);
-            Assert.AreEqual(instanceId, m_viewModel.SelectedInstanceId.Value);
+            Assert.AreEqual(instanceId, m_viewModel.SelectedInstanceId.Value, "放不下要留着高亮, 玩家还能改向再试");
             Assert.AreEqual(new Vector2Int(0, 0), ItemOf(instanceId).Origin);
         }
 

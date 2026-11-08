@@ -315,7 +315,7 @@ namespace Tests.Inventory
                 Assert.AreEqual(InventoryMoveResult.Success,
                     m_model.TryAddItemAuto(InventoryContainerIds.BACKPACK_SLOT, backpackId, 1));
 
-                viewModel.InteractAt(Vector2Int.zero);
+                viewModel.OpenMenuAt(Vector2Int.zero);
                 Assert.AreNotEqual(0, viewModel.SelectedInstanceId.Value);
 
                 viewModel.RotateSelectedItem();

@@ -1,6 +1,6 @@
 ﻿/*
 * ┌──────────────────────────────────┐
-* │  描    述: 背包面板视图模型测试, 覆盖选中、旋转保朝向、自动旋转、放置失败与响应式联动
+* │  描    述: 背包面板视图模型测试, 覆盖左键详情、右键选中、旋转保朝向、自动旋转与拖拽放置
 * │  类    名: QInventoryViewModelTests.cs
 * │  创    建: By qiqizizzz
 * └──────────────────────────────────┘
@@ -81,14 +81,31 @@ namespace Tests.Inventory
         }
         #endregion
 
-        #region 选中与反选
+        #region 左键详情与右键选中
         [Test]
-        public void InteractAt_OnOccupiedCell_SelectsItemAndLightsItsWholeFootprint()
+        public void InteractAt_OnOccupiedCell_OnlyOpensDetail_AndTouchesNothingElse()
         {
             int instanceId = AddItem(2, 1, new Vector2Int(1, 2));
             m_hintPulseCount = 0;
 
             m_viewModel.InteractAt(new Vector2Int(1, 2));
+
+            Assert.AreEqual(instanceId, m_viewModel.DetailInstanceId.Value);
+            Assert.AreEqual(NO_SELECTION, m_viewModel.SelectedInstanceId.Value, "左键不该把物品抓到手里");
+            Assert.AreEqual(InventoryHintKind.Idle, m_viewModel.HintKind.Value);
+            Assert.IsFalse(m_viewModel.CanRotate.Value);
+            Assert.AreEqual(0, m_hintPulseCount, "只看详情不该弹提示");
+            AssertSelected(1, 2, false);
+            AssertSelected(2, 2, false);
+        }
+
+        [Test]
+        public void OpenMenuAt_OnOccupiedCell_SelectsItemAndLightsItsWholeFootprint()
+        {
+            int instanceId = AddItem(2, 1, new Vector2Int(1, 2));
+            m_hintPulseCount = 0;
+
+            m_viewModel.OpenMenuAt(new Vector2Int(1, 2));
 
             Assert.AreEqual(instanceId, m_viewModel.SelectedInstanceId.Value);
             Assert.AreEqual(InventoryHintKind.Selected, m_viewModel.HintKind.Value);
@@ -102,26 +119,28 @@ namespace Tests.Inventory
         }
 
         [Test]
-        public void InteractAt_OnTheSameItemAgain_ClearsSelectionBackToIdle()
+        public void OpenMenuAt_OnTheSameItemAgain_KeepsSelectionInsteadOfTogglingOff()
         {
-            AddItem(2, 2, new Vector2Int(0, 0));
-            m_viewModel.InteractAt(new Vector2Int(0, 0));
-            m_viewModel.InteractAt(new Vector2Int(1, 1));
+            int instanceId = AddItem(2, 2, new Vector2Int(0, 0));
+            m_viewModel.OpenMenuAt(new Vector2Int(0, 0));
+            m_hintPulseCount = 0;
 
-            Assert.AreEqual(NO_SELECTION, m_viewModel.SelectedInstanceId.Value);
-            Assert.AreEqual(InventoryHintKind.Idle, m_viewModel.HintKind.Value);
-            Assert.IsFalse(m_viewModel.CanRotate.Value);
-            AssertSelected(0, 0, false);
+            m_viewModel.OpenMenuAt(new Vector2Int(1, 1));
+
+            Assert.AreEqual(instanceId, m_viewModel.SelectedInstanceId.Value);
+            Assert.AreEqual(InventoryHintKind.Selected, m_viewModel.HintKind.Value);
+            Assert.AreEqual(0, m_hintPulseCount, "重复右键同一件物品不该再刷一遍提示");
+            AssertSelected(0, 0, true);
         }
 
         [Test]
-        public void InteractAt_OnAnotherItem_SwitchesHighlightInsteadOfAdding()
+        public void OpenMenuAt_OnAnotherItem_SwitchesHighlightInsteadOfAdding()
         {
             int first = AddItem(1, 1, new Vector2Int(0, 0));
             int second = AddItem(1, 1, new Vector2Int(3, 3));
 
-            m_viewModel.InteractAt(new Vector2Int(0, 0));
-            m_viewModel.InteractAt(new Vector2Int(3, 3));
+            m_viewModel.OpenMenuAt(new Vector2Int(0, 0));
+            m_viewModel.OpenMenuAt(new Vector2Int(3, 3));
 
             Assert.AreEqual(second, m_viewModel.SelectedInstanceId.Value);
             Assert.AreNotEqual(first, m_viewModel.SelectedInstanceId.Value);
@@ -141,28 +160,48 @@ namespace Tests.Inventory
         }
 
         [Test]
-        public void SlotViewModel_NotifyClicked_RoutesIntoPanelSelection()
+        public void InteractAt_OnEmptyCell_ClearsTheHighlightLeftByTheContextMenu()
+        {
+            AddItem(2, 2, new Vector2Int(1, 1));
+            m_viewModel.OpenMenuAt(new Vector2Int(2, 2));
+            AssertSelected(1, 1, true);
+            m_hintPulseCount = 0;
+
+            m_viewModel.InteractAt(new Vector2Int(0, 0));
+
+            Assert.AreEqual(NO_SELECTION, m_viewModel.SelectedInstanceId.Value);
+            Assert.AreEqual(InventoryHintKind.Idle, m_viewModel.HintKind.Value);
+            Assert.IsFalse(m_viewModel.CanRotate.Value);
+            Assert.AreEqual(1, m_hintPulseCount);
+            AssertSelected(1, 1, false);
+        }
+
+        [Test]
+        public void SlotViewModel_NotifyClicked_RoutesIntoPanelDetail()
         {
             int instanceId = AddItem(1, 1, new Vector2Int(3, 0));
 
             m_viewModel.GetSlot(3).NotifyClicked();
 
-            Assert.AreEqual(instanceId, m_viewModel.SelectedInstanceId.Value);
-            AssertSelected(3, 0, true);
+            Assert.AreEqual(instanceId, m_viewModel.DetailInstanceId.Value);
+            Assert.AreEqual(NO_SELECTION, m_viewModel.SelectedInstanceId.Value, "格子左键只负责开详情");
+            AssertSelected(3, 0, false);
         }
         #endregion
-        #region 旋转与放置
+
+        #region 旋转与拖拽放置
         [Test]
-        public void RotateSelectedItem_ThenPlace_KeepsTheFacingThePlayerChose()
+        public void RotateSelectedItem_ThenDrag_KeepsTheFacingThePlayerChose()
         {
             int instanceId = AddItem(1, 2, Vector2Int.zero);
-            m_viewModel.InteractAt(Vector2Int.zero);
+            m_viewModel.OpenMenuAt(Vector2Int.zero);
 
             Assert.AreEqual(instanceId, m_viewModel.SelectedInstanceId.Value);
             m_viewModel.RotateSelectedItem();
             Assert.AreEqual(InventoryRotation.Rotate90, ItemOf(instanceId).Rotation);
 
-            m_viewModel.InteractAt(new Vector2Int(2, 2));
+            m_viewModel.BeginDragAt(Vector2Int.zero);
+            m_viewModel.PlaceDraggedItemAt(new Vector2Int(2, 2));
 
             InventoryItemVO placed = ItemOf(instanceId);
             Assert.AreEqual(new Vector2Int(2, 2), placed.Origin);
@@ -188,7 +227,7 @@ namespace Tests.Inventory
         {
             AddItem(1, 1, new Vector2Int(1, 0));
             int instanceId = AddItem(1, 2, Vector2Int.zero);
-            m_viewModel.InteractAt(Vector2Int.zero);
+            m_viewModel.OpenMenuAt(Vector2Int.zero);
             m_hintPulseCount = 0;
 
             m_viewModel.RotateSelectedItem();
@@ -207,7 +246,7 @@ namespace Tests.Inventory
             Assert.AreEqual(InventoryMoveResult.Success, m_model.TryAddItem(m_containerId, itemId, 1, Vector2Int.zero));
             int instanceId = ResolveInstanceId(Vector2Int.zero);
 
-            m_viewModel.InteractAt(Vector2Int.zero);
+            m_viewModel.OpenMenuAt(Vector2Int.zero);
             Assert.IsFalse(m_viewModel.CanRotate.Value);
 
             m_viewModel.RotateSelectedItem();
@@ -217,52 +256,54 @@ namespace Tests.Inventory
         }
 
         [Test]
-        public void PlaceSelectedItem_OntoClippedByNeighbour_ReportsFailureAndKeepsOriginalCells()
+        public void PlaceDraggedItemAt_OntoClippedByNeighbour_ReportsFailureAndKeepsTheHighlight()
         {
             AddItem(1, 1, new Vector2Int(1, 1));
             // 钉成不可旋转, 否则自动旋转会把它转开放下, 这条失败路径就测不到了
             int instanceId = AddItem(2, 1, Vector2Int.zero, false);
-            m_viewModel.InteractAt(Vector2Int.zero);
+            m_viewModel.OpenMenuAt(Vector2Int.zero);
+            m_viewModel.BeginDragAt(Vector2Int.zero);
             m_hintPulseCount = 0;
 
-            m_viewModel.InteractAt(new Vector2Int(0, 1));
+            m_viewModel.PlaceDraggedItemAt(new Vector2Int(0, 1));
 
             Assert.AreEqual(InventoryMoveResult.Occupied, m_viewModel.LastMoveResult);
             Assert.AreEqual(InventoryHintKind.Failed, m_viewModel.HintKind.Value);
             Assert.AreEqual(1, m_hintPulseCount);
-            Assert.AreEqual(instanceId, m_viewModel.SelectedInstanceId.Value);
+            Assert.AreEqual(instanceId, m_viewModel.SelectedInstanceId.Value, "放不下要留着高亮, 玩家还能改向再试");
             Assert.AreEqual(Vector2Int.zero, ItemOf(instanceId).Origin);
             AssertSelected(0, 0, true);
         }
 
         [Test]
-        public void PlaceSelectedItem_OntoClippedByNeighbour_AutoRotatesToFit()
+        public void PlaceDraggedItemAt_OntoClippedByNeighbour_AutoRotatesToFit()
         {
             AddItem(1, 1, new Vector2Int(1, 1));
             int instanceId = AddItem(2, 1, Vector2Int.zero);
 
-            m_viewModel.InteractAt(Vector2Int.zero);
-            m_viewModel.InteractAt(new Vector2Int(0, 1));
+            m_viewModel.BeginDragAt(Vector2Int.zero);
+            m_viewModel.PlaceDraggedItemAt(new Vector2Int(0, 1));
 
             InventoryItemVO landed = ItemOf(instanceId);
             Assert.AreEqual(InventoryMoveResult.Success, m_viewModel.LastMoveResult);
-            Assert.AreEqual(new Vector2Int(0, 1), landed.Origin, "锚点仍是玩家点的那格");
+            Assert.AreEqual(new Vector2Int(0, 1), landed.Origin, "锚点仍是玩家放的那格");
             Assert.AreEqual(InventoryRotation.Rotate90, landed.Rotation, "横条竖过来才让得开邻居");
             Assert.AreEqual(new Vector2Int(1, 2), landed.Size);
             Assert.AreEqual(NO_SELECTION, m_viewModel.SelectedInstanceId.Value);
         }
 
         [Test]
-        public void PlaceSelectedItem_IntoFreeArea_CommitsAndReleasesSelection()
+        public void PlaceDraggedItemAt_IntoFreeArea_CommitsAndReleasesSelection()
         {
             int instanceId = AddItem(2, 2, Vector2Int.zero);
-            m_viewModel.InteractAt(new Vector2Int(1, 1));
-            m_viewModel.InteractAt(new Vector2Int(2, 2));
+            m_viewModel.OpenMenuAt(new Vector2Int(1, 1));
+            m_viewModel.BeginDragAt(Vector2Int.zero);
+            m_viewModel.PlaceDraggedItemAt(new Vector2Int(2, 2));
 
             InventoryItemVO moved = ItemOf(instanceId);
             Assert.AreEqual(new Vector2Int(2, 2), moved.Origin);
             Assert.AreEqual(InventoryRotation.None, moved.Rotation);
-            Assert.AreEqual(NO_SELECTION, m_viewModel.SelectedInstanceId.Value);
+            Assert.AreEqual(NO_SELECTION, m_viewModel.SelectedInstanceId.Value, "放好了就把选中交还出去");
             Assert.AreEqual(InventoryHintKind.Placed, m_viewModel.HintKind.Value);
 
             for (int index = 0; index < m_viewModel.SlotCount; index++)
@@ -273,7 +314,7 @@ namespace Tests.Inventory
         public void ClearSelection_ClearsCellMarksAndRotateAvailability()
         {
             AddItem(2, 2, new Vector2Int(1, 1));
-            m_viewModel.InteractAt(new Vector2Int(2, 2));
+            m_viewModel.OpenMenuAt(new Vector2Int(2, 2));
             Assert.IsTrue(m_viewModel.CanRotate.Value);
 
             m_viewModel.ClearSelection();
@@ -319,7 +360,7 @@ namespace Tests.Inventory
         public void ModelChange_ThatRemovesTheSelectedItem_DropsSelectionToIdle()
         {
             AddItem(2, 2, Vector2Int.zero);
-            m_viewModel.InteractAt(new Vector2Int(1, 1));
+            m_viewModel.OpenMenuAt(new Vector2Int(1, 1));
             Assert.AreEqual(InventoryHintKind.Selected, m_viewModel.HintKind.Value);
 
             m_model.UnregisterContainer(m_containerId);

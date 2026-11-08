@@ -26,10 +26,15 @@ namespace UI.Inventory
 
         public IReadOnlyReactiveProperty<InventoryContainerVO> Snapshot => m_snapshot;
         public IReadOnlyReactiveProperty<int> SelectedInstanceId => m_selectedInstanceId;
+        //左键要看详情的那件, 与「选中」分开, 免得看个详情顺带把物品抓在手里
+        public IReadOnlyReactiveProperty<int> DetailInstanceId => m_detailInstanceId;
         public IReadOnlyReactiveProperty<InventoryHintKind> HintKind => m_hintKind;
         public IReadOnlyReactiveProperty<bool> CanRotate => m_canRotate;
         public IReadOnlyReactiveProperty<bool> Visible => m_visible;
         public ISignal HintPulse => m_hintPulse;
+        public ISignal DetailRequested => m_detailRequested;
+        public ISignal MenuRequested => m_menuRequested;
+        public ISignal PopupClosed => m_popupClosed;
         public InventoryMoveResult LastMoveResult => m_lastMoveResult;
         public int DraggingInstanceId => m_dragInstanceId;
         public int ContainerId => m_containerId;
@@ -43,10 +48,14 @@ namespace UI.Inventory
         
         private readonly ReactiveProperty<InventoryContainerVO> m_snapshot;
         private readonly ReactiveProperty<int> m_selectedInstanceId;
+        private readonly ReactiveProperty<int> m_detailInstanceId;
         private readonly ReactiveProperty<InventoryHintKind> m_hintKind;
         private readonly ReactiveProperty<bool> m_canRotate;
         private readonly ReactiveProperty<bool> m_visible;
         private readonly Signal m_hintPulse;
+        private readonly Signal m_detailRequested;
+        private readonly Signal m_menuRequested;
+        private readonly Signal m_popupClosed;
 
         private readonly List<InventorySlotViewModel>  m_slots = new List<InventorySlotViewModel>();
         private readonly List<ReactiveProperty<InventoryCellMark>> m_slotMarks = new List<ReactiveProperty<InventoryCellMark>>();
@@ -75,10 +84,14 @@ namespace UI.Inventory
 
             m_snapshot = CreateProperty(InventoryContainerVO.Empty);
             m_selectedInstanceId = CreateProperty(NO_SELECTION);
+            m_detailInstanceId = CreateProperty(NO_SELECTION);
             m_hintKind = CreateProperty(InventoryHintKind.Idle);
             m_canRotate = CreateProperty(false);
             m_visible = CreateProperty(false);
             m_hintPulse = CreateSignal();
+            m_detailRequested = CreateSignal();
+            m_menuRequested = CreateSignal();
+            m_popupClosed = CreateSignal();
         }
 
         #region 生命周期
@@ -110,21 +123,35 @@ namespace UI.Inventory
         #region 上行方法
         public InventorySlotViewModel GetSlot(int index) => m_slots[index];
 
-        //交互格子
+        //左键交互格子: 只看详情, 不改选中态, 也不把物品放到点过的格子上
         public void InteractAt(Vector2Int cell)
         {
             if (m_model.TryGetInstanceIdAt(m_containerId, cell, out int instanceId))
             {
-                ToggleItemSelection(instanceId);
+                m_detailInstanceId.TrySet(instanceId);
+                m_detailRequested.Fire();
                 return;
             }
-            
-            //空格子静默
-            if(m_selectedInstanceId.Value == NO_SELECTION) return;
-            
-            PlaceSelectedItem(cell);
+
+            //空格子: 视作点了空白处, 收起残留浮层, 顺手擦掉右键留下的选中高亮
+            if (m_selectedInstanceId.Value != NO_SELECTION) ResetSelection(InventoryHintKind.Idle);
+            else m_popupClosed.Fire();
         }
         
+        /// <summary>
+        /// 右键请求物品菜单: 强制把该物品置为选中, 不做反选切换
+        /// </summary>
+        /// <param name="cell">被右键点击的格子</param>
+        public void OpenMenuAt(Vector2Int cell)
+        {
+            if (!m_model.TryGetInstanceIdAt(m_containerId, cell, out int instanceId)) return;
+
+            if (m_selectedInstanceId.Value != instanceId)
+                SelectItem(instanceId);
+
+            m_menuRequested.Fire();
+        }
+
         //旋转选中物品
         public void RotateSelectedItem()
         {
@@ -140,6 +167,7 @@ namespace UI.Inventory
             if (!m_model.TryGetInstanceIdAt(m_containerId, cell, out int instanceId)) return;
 
             m_dragInstanceId = instanceId;
+            m_popupClosed.Fire();
             m_owner?.NotifyDragBegan(this);
         }
 
@@ -173,7 +201,11 @@ namespace UI.Inventory
             ResetDropPreview();
             m_dragInstanceId = NO_DRAG;
             m_lastMoveResult = result;
-            SetHint(result.IsSuccessOrSame() ? InventoryHintKind.Placed : ToHintKind(result));
+
+            //放下了就把选中态交还出去, 这次操作已经完成; 放不下则留着高亮, 玩家还能改向再试
+            if (result.IsSuccessOrSame()) ResetSelection(InventoryHintKind.Placed);
+            else SetHint(ToHintKind(result));
+
             m_owner?.NotifyDragEnded(this);
         }
 
@@ -288,8 +320,8 @@ namespace UI.Inventory
             RefreshCanRotate();
         }
 
-        private bool CanPreviewDrop => IsDragging || m_selectedInstanceId.Value != NO_SELECTION ||
-                                       m_owner?.DragSource != null;
+        //只有真正拖在手上的东西才有落点预览, 光选中不足以说明玩家想往哪放
+        private bool CanPreviewDrop => IsDragging || m_owner?.DragSource != null;
 
         private void ResetDropPreview()
         {
@@ -378,9 +410,7 @@ namespace UI.Inventory
             InventoryViewModel source = m_owner?.DragSource ?? this;
 
             instanceId = source.DraggingInstanceId;
-            if (instanceId == NO_DRAG) instanceId = source.SelectedInstanceId.Value;
-
-            if (instanceId == NO_SELECTION)
+            if (instanceId == NO_DRAG)
             {
                 sourceContainerId = NO_SELECTION;
                 item = null;
@@ -440,33 +470,13 @@ namespace UI.Inventory
             }
         }
 
-        private void ToggleItemSelection(int instanceId)
+        //选中指定物品并刷亮它的占格
+        private void SelectItem(int instanceId)
         {
-            if (m_selectedInstanceId.Value == instanceId)
-            {
-                ResetSelection(InventoryHintKind.Idle);
-                return;
-            }
-
             m_selectedInstanceId.TrySet(instanceId);
             RefreshCellMarks();
             RefreshCanRotate();
             SetHint(InventoryHintKind.Selected);
-        }
-
-        //放置选中物品
-        private void PlaceSelectedItem(Vector2Int cell)
-        {
-            int instanceId = m_selectedInstanceId.Value;
-            m_lastMoveResult = m_model.TryTransferItem(m_containerId, m_containerId, instanceId, cell);
-            
-            if(!m_lastMoveResult.IsSuccessOrSame())
-            {
-                SetHint(ToHintKind(m_lastMoveResult));
-                return;
-            }
-            
-            ResetSelection(InventoryHintKind.Placed);
         }
 
         //重置选中态, 清理相关交互表现
@@ -476,6 +486,7 @@ namespace UI.Inventory
             RefreshCellMarks();
             RefreshCanRotate();
             SetHint(hint);
+            m_popupClosed.Fire();
         }
         
         private InventoryHintKind ToHintKind(InventoryMoveResult result)

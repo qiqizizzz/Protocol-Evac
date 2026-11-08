@@ -57,6 +57,9 @@ namespace UI.Inventory.View
 
         public void OnPointerClick(PointerEventData eventData)
         {
+            //右键留给物品菜单, 空格子只认左键
+            if (eventData.button != PointerEventData.InputButton.Left) return;
+
             ViewModel.NotifyClicked();
         }
 

@@ -1,6 +1,6 @@
 ﻿/*
 * ┌──────────────────────────────────┐
-* │  描    述: 背包模块装配处, 按总配置登记物品表与容器并注册战备面板视图工厂
+* │  描    述: 背包模块装配处, 按总配置登记物品表与容器并注册战备面板与两张物品弹窗视图工厂
 * │  类    名: InventoryModule.cs
 * │  创    建: By qiqizizzz
 * └──────────────────────────────────┘
@@ -42,6 +42,10 @@ namespace UI.Inventory
 
             root.Windows.RegisterAsync<UIEquipmentPanel>(
                 parent => ResManager.InstantiateAsync(UIDefines.UIEquipmentPanel, parent));
+            root.Windows.RegisterAsync<UIItemDetailPanel>(
+                parent => ResManager.InstantiateAsync(UIDefines.UIItemDetailPanel, parent));
+            root.Windows.RegisterAsync<UIItemMenuPanel>(
+                parent => ResManager.InstantiateAsync(UIDefines.UIItemMenuPanel, parent));
         }
 
         /// <summary>

@@ -170,7 +170,7 @@ namespace Tests.Inventory
         }
 
         [Test]
-        public void PreviewDropAt_WithoutDragOrSelection_KeepsEveryCellPlain()
+        public void PreviewDropAt_WithoutDrag_KeepsEveryCellPlain()
         {
             InventoryViewModel viewModel = BindCarrier(m_sourceId);
             AddItem(m_sourceId, 2, 1, new Vector2Int(0, 0));
@@ -181,18 +181,18 @@ namespace Tests.Inventory
         }
 
         [Test]
-        public void PreviewDropAt_WithSelectionOnly_MarksDropValid()
+        public void PreviewDropAt_WithSelectionOnly_KeepsEveryCellPlain()
         {
             InventoryViewModel viewModel = BindCarrier(m_sourceId);
             AddItem(m_sourceId, 2, 1, new Vector2Int(0, 0));
 
-            // 不走拖拽, 只用点选也应拿到同一套落点反馈
-            viewModel.InteractAt(new Vector2Int(0, 0));
+            // 右键选中只是标出操作对象, 没把东西拖起来就不该画落点预览
+            viewModel.OpenMenuAt(new Vector2Int(0, 0));
             viewModel.PreviewDropAt(new Vector2Int(2, 3));
 
             Assert.AreEqual(InventoryCellMark.Selected, MarkAt(viewModel, 0, 0));
-            Assert.AreEqual(InventoryCellMark.DropValid, MarkAt(viewModel, 2, 3));
-            Assert.AreEqual(InventoryCellMark.DropValid, MarkAt(viewModel, 3, 3));
+            Assert.AreEqual(InventoryCellMark.None, MarkAt(viewModel, 2, 3));
+            Assert.AreEqual(InventoryCellMark.None, MarkAt(viewModel, 3, 3));
         }
 
         [Test]
@@ -201,7 +201,8 @@ namespace Tests.Inventory
             InventoryViewModel viewModel = BindCarrier(m_sourceId);
             AddItem(m_sourceId, 2, 2, new Vector2Int(0, 0));
 
-            viewModel.InteractAt(new Vector2Int(0, 0));
+            viewModel.OpenMenuAt(new Vector2Int(0, 0));
+            viewModel.BeginDragAt(new Vector2Int(0, 0));
             viewModel.PreviewDropAt(new Vector2Int(1, 1));
 
             // 一格只有一个颜色, 预览盖在选中之上

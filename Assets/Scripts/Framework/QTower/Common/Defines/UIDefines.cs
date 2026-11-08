@@ -14,5 +14,7 @@ namespace Framework.QTower.Common.Defines
         public const string UISummary = "UISummary";
         public const string UIInventoryCarrier = "UIInventoryCarrier";
         public const string UIEquipmentPanel = "UIEquipmentPanel";
+        public const string UIItemDetailPanel = "UIItemDetailPanel";
+        public const string UIItemMenuPanel = "UIItemMenuPanel";
     }
 }

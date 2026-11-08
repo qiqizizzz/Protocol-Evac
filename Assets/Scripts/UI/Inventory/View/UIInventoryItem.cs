@@ -126,7 +126,19 @@ namespace UI.Inventory.View
         }
 
         #region UI事件
-        public void OnPointerClick(PointerEventData eventData) => m_viewModel.InteractAt(m_origin);
+        //左键开详情, 右键开按钮集合, 中键不响应
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            switch (eventData.button)
+            {
+                case PointerEventData.InputButton.Left:
+                    m_viewModel.InteractAt(m_origin);
+                    break;
+                case PointerEventData.InputButton.Right:
+                    m_viewModel.OpenMenuAt(m_origin);
+                    break;
+            }
+        }
 
         public void OnPointerEnter(PointerEventData eventData)
         {

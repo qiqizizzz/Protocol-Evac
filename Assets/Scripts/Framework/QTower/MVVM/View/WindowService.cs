@@ -35,6 +35,9 @@ namespace Framework.QTower.MVVM.View
         public Transform Root => m_root;
         public int InstanceCount => m_instances.Count;
 
+        // 当前下发给面板 Canvas 的排序档位, 供浮层自行抬高做参照
+        public int SortingOrder => m_sortingOrder;
+
         public WindowService(Transform root, int sortingOrder = MvvmRoot.DEFAULT_SORTING_ORDER)
         {
             if (root == null)

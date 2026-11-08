@@ -328,7 +328,7 @@ namespace UI.Inventory.View
         {
             switch (kind)
             {
-                case InventoryHintKind.Selected: return "已选中, 点击格子放置";
+                case InventoryHintKind.Selected: return "已选中, 可拖拽移动";
                 case InventoryHintKind.Placed: return "已放置";
                 case InventoryHintKind.Failed: return "放不下";
                 case InventoryHintKind.Desync: return "数据异常";
