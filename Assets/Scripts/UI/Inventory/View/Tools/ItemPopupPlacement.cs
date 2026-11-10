@@ -1,6 +1,6 @@
 /*
  * ┌──────────────────────────────────┐
- * │  描    述: 弹窗定位工具, 把详情与菜单卡片钉到鼠标旁并夹在面板内
+ * │  描    述: 弹窗定位工具, 详情贴在物品占格旁, 菜单与拆分卡片贴在鼠标旁
  * │  类    名: ItemPopupPlacement.cs
  * │  创    建: By qiqizizzz
  * └──────────────────────────────────┘
@@ -18,6 +18,7 @@ namespace UI.Inventory.View.Tools
     public static class ItemPopupPlacement
     {
         private const int ARG_COUNT = 3;
+        private const int ITEM_RECT_ARG_COUNT = 3;
 
         // 浮层相对面板排序的抬升量：窗口服务为每个面板分配相同的 sortingOrder,
         // 同排序时射线由网格的 GraphicRaycaster 接收, 浮层按钮无法点击
@@ -73,6 +74,38 @@ namespace UI.Inventory.View.Tools
         }
 
         /// <summary>
+        /// 读出详情弹窗打开参数：容器号、实例号、物品完整占格的屏幕矩形
+        /// </summary>
+        /// <param name="args">ShowAsync 透传的打开参数</param>
+        /// <param name="containerId">物品所在容器号</param>
+        /// <param name="instanceId">物品实例号</param>
+        /// <param name="itemScreenRect">物品完整占格在屏幕空间中的矩形</param>
+        public static bool TryReadItemRectArgs(object[] args, out int containerId, out int instanceId,
+            out Rect itemScreenRect)
+        {
+            containerId = 0;
+            instanceId = 0;
+            itemScreenRect = default;
+
+            if (args == null || args.Length < ITEM_RECT_ARG_COUNT)
+            {
+                QLog.Error($"详情弹窗打开参数不足: 依次需要 容器号 实例号 物品屏幕矩形, 实际 {(args == null ? 0 : args.Length)} 个");
+                return false;
+            }
+
+            if (args[0] is not int first || args[1] is not int second || args[2] is not Rect rect)
+            {
+                QLog.Error("详情弹窗打开参数类型不符: 依次应为 int, int, Rect");
+                return false;
+            }
+
+            containerId = first;
+            instanceId = second;
+            itemScreenRect = rect;
+            return true;
+        }
+
+        /// <summary>
         /// 将卡片定位到鼠标附近, 并按卡片尺寸限制在面板范围内
         /// </summary>
         /// <param name="root">铺满屏幕的弹窗根节点</param>
@@ -96,6 +129,48 @@ namespace UI.Inventory.View.Tools
             pos.y = Mathf.Clamp(pos.y, Mathf.Max(-half.y, -half.y + size.y), half.y);
 
             card.anchoredPosition = pos;
+        }
+
+        /// <summary>
+        /// 将卡片定位到物品完整占格的右侧, 右侧放不下时翻到左侧, 并限制在面板范围内
+        /// </summary>
+        /// <param name="root">铺满屏幕的弹窗根节点</param>
+        /// <param name="card">卡片节点, 锚点居中、轴心左上</param>
+        /// <param name="itemScreenRect">物品完整占格在屏幕空间中的矩形</param>
+        /// <param name="gap">卡片与物品占格之间的间距</param>
+        public static void AnchorToScreenRect(RectTransform root, RectTransform card, Rect itemScreenRect, float gap)
+        {
+            if (root == null || card == null) return;
+
+            Camera camera = ResolveCamera(root);
+            if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(root, itemScreenRect.min, camera,
+                    out Vector2 localMin) ||
+                !RectTransformUtility.ScreenPointToLocalPointInRectangle(root, itemScreenRect.max, camera,
+                    out Vector2 localMax))
+                return;
+
+            Rect itemRect = Rect.MinMaxRect(
+                Mathf.Min(localMin.x, localMax.x),
+                Mathf.Min(localMin.y, localMax.y),
+                Mathf.Max(localMin.x, localMax.x),
+                Mathf.Max(localMin.y, localMax.y));
+
+            Vector2 half = root.rect.size * 0.5f;
+            Vector2 size = card.rect.size;
+            float rightX = itemRect.xMax + gap;
+            float leftX = itemRect.xMin - gap - size.x;
+            float x;
+
+            // 右侧优先, 不够时翻到左侧; 两侧都放不下才按屏幕边界夹紧
+            if (rightX + size.x <= half.x)
+                x = rightX;
+            else if (leftX >= -half.x)
+                x = leftX;
+            else
+                x = Mathf.Clamp(rightX, -half.x, Mathf.Max(-half.x, half.x - size.x));
+
+            float y = Mathf.Clamp(itemRect.yMax, Mathf.Max(-half.y, -half.y + size.y), half.y);
+            card.anchoredPosition = new Vector2(x, y);
         }
 
         // Overlay 画布需传 null, 仅 Camera 画布需要世界相机

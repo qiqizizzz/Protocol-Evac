@@ -1,6 +1,6 @@
 /*
  * ┌──────────────────────────────────┐
- * │  描    述: 物品详情弹窗视图, 左键点中物品后把名称、标签与规格钉在鼠标旁
+ * │  描    述: 物品详情弹窗视图, 左键点中物品后把名称、标签与规格钉在完整占格右侧
  * │  类    名: UIItemDetailPanel.cs
  * │  创    建: By qiqizizzz
  * └──────────────────────────────────┘
@@ -23,8 +23,7 @@ namespace UI.Inventory.View
         private const string SPEC_PATH = CARD_PATH + "/Txt_Spec";
         private const string CLOSE_PATH = CARD_PATH + "/Btn_Close";
 
-        // 卡片左上角相对鼠标的偏移量, 向右下错开避免遮挡指针
-        private static readonly Vector2 m_cursorOffset = new Vector2(12f, -12f);
+        private const float ITEM_GAP = 12f;
 
         private RectTransform m_rect;
         private RectTransform m_cardRect;
@@ -67,15 +66,16 @@ namespace UI.Inventory.View
         // 每次打开对应不同物品, 定位与刷新均在 OnShow 处理
         protected override void OnShow(params object[] args)
         {
-            if (!ItemPopupPlacement.TryReadCursorArgs(args, out int containerId, out int instanceId,
-                    out Vector3 screenPos))
+            if (!ItemPopupPlacement.TryReadItemRectArgs(args, out int containerId, out int instanceId,
+                    out Rect itemScreenRect))
                 return;
 
             // 排序需高于面板才能接收关闭按钮点击, 同级排序仅决定显示先后
             ItemPopupPlacement.RaiseAbovePanels(gameObject);
             transform.SetAsLastSibling();
             ViewModel.Open(containerId, instanceId);
-            ItemPopupPlacement.AnchorToCursor(m_rect, m_cardRect, screenPos, m_cursorOffset);
+            LayoutRebuilder.ForceRebuildLayoutImmediate(m_cardRect);
+            ItemPopupPlacement.AnchorToScreenRect(m_rect, m_cardRect, itemScreenRect, ITEM_GAP);
         }
         #endregion
     }

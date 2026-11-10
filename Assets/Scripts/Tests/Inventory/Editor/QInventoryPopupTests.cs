@@ -99,14 +99,14 @@ namespace Tests.Inventory
         }
 
         [Test]
-        public void InteractAt_OnTheSameItemAgain_ReopensDetailAtTheNewCursor()
+        public void InteractAt_OnTheSameItemAgain_ReopensDetailWithoutClosing()
         {
             int instanceId = AddItem(2, 1, new Vector2Int(1, 2));
             m_viewModel.InteractAt(new Vector2Int(1, 2));
 
             m_viewModel.InteractAt(new Vector2Int(2, 2));
 
-            Assert.AreEqual(2, m_detailCount, "再点一次就按新光标位置重开详情");
+            Assert.AreEqual(2, m_detailCount, "再点一次仍重开详情, 由视图按物品完整占格重新定位");
             Assert.AreEqual(0, m_closeCount);
             Assert.AreEqual(instanceId, m_viewModel.DetailInstanceId.Value);
         }

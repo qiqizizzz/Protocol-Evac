@@ -149,6 +149,33 @@ namespace UI.Inventory.View
         }
 
         /// <summary>
+        /// 读取物品完整占格在屏幕空间中的矩形
+        /// </summary>
+        /// <param name="screenRect">物品完整占格的屏幕矩形</param>
+        public bool TryGetScreenRect(out Rect screenRect)
+        {
+            screenRect = default;
+            if (m_rect == null) return false;
+
+            Canvas canvas = m_rect.GetComponentInParent<Canvas>();
+            Camera camera = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay
+                ? canvas.worldCamera
+                : null;
+
+            Vector3[] corners = new Vector3[4];
+            m_rect.GetWorldCorners(corners);
+
+            Vector2 first = RectTransformUtility.WorldToScreenPoint(camera, corners[0]);
+            Vector2 second = RectTransformUtility.WorldToScreenPoint(camera, corners[2]);
+            screenRect = Rect.MinMaxRect(
+                Mathf.Min(first.x, second.x),
+                Mathf.Min(first.y, second.y),
+                Mathf.Max(first.x, second.x),
+                Mathf.Max(first.y, second.y));
+            return true;
+        }
+
+        /// <summary>
         /// 拖拽悬停时按指针重排拖影, 并算出落点锚格相对悬停目标的偏移
         /// </summary>
         /// <param name="eventData">当前指针事件</param>

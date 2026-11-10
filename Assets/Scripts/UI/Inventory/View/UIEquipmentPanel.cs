@@ -103,8 +103,14 @@ namespace UI.Inventory.View
 
         private async UniTaskVoid ShowDetailAsync(InventoryViewModel container)
         {
+            if (!TryGetItemScreenRect(container, out Rect itemScreenRect))
+            {
+                m_detailOpening = false;
+                return;
+            }
+
             await MvvmRoot.Instance.Windows.ShowAsync<UIItemDetailPanel>(container.ContainerId,
-                container.DetailInstanceId.Value, Input.mousePosition);
+                container.DetailInstanceId.Value, itemScreenRect);
 
             m_detailOpening = false;
         }
@@ -115,6 +121,26 @@ namespace UI.Inventory.View
                 container.SelectedInstanceId.Value, Input.mousePosition);
 
             m_menuOpening = false;
+        }
+
+        // 详情定位以物品完整占格为准, 与鼠标落在物品内的具体位置无关
+        private bool TryGetItemScreenRect(InventoryViewModel container, out Rect itemScreenRect)
+        {
+            itemScreenRect = default;
+
+            for (int i = 0; i < Containers.Length; i++)
+            {
+                if (!ReferenceEquals(Containers[i].ViewModel, container)) continue;
+
+                if (Containers[i].TryGetItemScreenRect(container.DetailInstanceId.Value, out itemScreenRect))
+                    return true;
+
+                QLog.Error($"详情物品视图不存在, 容器 {container.ContainerId}, 实例 {container.DetailInstanceId.Value}");
+                return false;
+            }
+
+            QLog.Error($"详情物品所属载体不存在, 容器 {container.ContainerId}");
+            return false;
         }
 
         // 反选、点击空白、开始拖拽时仅隐藏本容器的弹窗

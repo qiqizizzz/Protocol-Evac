@@ -8,6 +8,7 @@
 
 using System.Collections.Generic;
 using Framework.QTower.MVVM.View;
+using Module.Inventory.Core.Defines;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -25,6 +26,7 @@ namespace UI.Inventory.View
         private const string HEADER_PATH = "Layout_Header";
         private const string EQUIP_SLOT_PATH = "Slot_Equipment";
         private const string VECTOR_ICON_PATH = "Img_Icon";
+        private const string LOCK_ICON_PATH = "Img_locked";
         private const string CAPACITY_PATH = "Layout_Header/Txt_Capacity";
         private const string NAME_PATH = "Layout_Header/Txt_Name";
 
@@ -47,6 +49,7 @@ namespace UI.Inventory.View
         private Transform m_itemRoot;
         private GameObject m_visibleRoot;
         private GameObject m_vectorIcon; //装备槽根节点下的矢量底图, 容量载体没有该节点
+        private GameObject m_lockIcon; //安全箱装备槽的锁定标记, 普通装备槽没有该节点
         private GridLayoutGroup m_gridLayout;
         private TMP_Text m_capacityText;
         private TMP_Text m_nameText;
@@ -80,6 +83,19 @@ namespace UI.Inventory.View
         /// 物品所在的物品层, 拖影跟随与锚点格折算以此为基准
         /// </summary>
         public RectTransform ItemLayer => m_itemRect;
+
+        /// <summary>
+        /// 读取指定物品完整占格在屏幕空间中的矩形
+        /// </summary>
+        /// <param name="instanceId">物品实例号</param>
+        /// <param name="screenRect">物品完整占格的屏幕矩形</param>
+        public bool TryGetItemScreenRect(int instanceId, out Rect screenRect)
+        {
+            screenRect = default;
+            if (!m_itemViews.TryGetValue(instanceId, out UIInventoryItem itemView)) return false;
+
+            return itemView.TryGetScreenRect(out screenRect);
+        }
 
         /// <summary>
         /// 当前载体的网格格数, 视图模型未就绪时返回零
@@ -126,6 +142,7 @@ namespace UI.Inventory.View
             m_headerRect = transform.Find(HEADER_PATH) as RectTransform;
             m_equipSlotRect = transform.Find(EQUIP_SLOT_PATH) as RectTransform;
             m_vectorIcon = transform.Find(VECTOR_ICON_PATH)?.gameObject;
+            m_lockIcon = transform.Find(LOCK_ICON_PATH)?.gameObject;
             m_nameText = transform.Find(NAME_PATH)?.GetComponent<TMP_Text>();
             m_capacityText = transform.Find(CAPACITY_PATH)?.GetComponent<TMP_Text>();
             ResolveFallbackName();
@@ -149,6 +166,7 @@ namespace UI.Inventory.View
             SyncSlotViews(vo);
             SyncItemViews(vo);
             RenderVectorIcon(vo);
+            RenderLockIcon(vo);
 
             if (m_nameText != null)
                 m_nameText.text = m_fallbackName;
@@ -163,6 +181,14 @@ namespace UI.Inventory.View
             if (m_vectorIcon == null) return;
 
             m_vectorIcon.SetActive(vo.Items.Count == 0);
+        }
+
+        //安全箱装备槽在对局内保持锁定表现
+        private void RenderLockIcon(InventoryContainerVO vo)
+        {
+            if (m_lockIcon == null) return;
+
+            m_lockIcon.SetActive(vo.ContainerId == InventoryContainerIds.SAFEBOX_SLOT);
         }
 
         //表头常驻名: 配了默认名就用它, 没配就沿用预制体里本来写着的文案
