@@ -57,6 +57,10 @@ namespace UI.Inventory
         InventoryMoveResult TryTransferItem(int sourceContainerId, int targetContainerId, int instanceId, Vector2Int cell,
             InventoryRotation preferredRotation);
 
+        // 转移物品到目标容器里第一块放得下的空格, 找不到空格返回 Occupied, 容器号不变
+        // 地面堆收拢物品靠它, 调用方不必关心网格拓扑
+        InventoryMoveResult TryTransferItemAuto(int sourceContainerId, int targetContainerId, int instanceId);
+
         // 丢弃: 把整件物品连堆带朝向挪进一只按实际占格新建的地面容器, 失败时源容器分毫不动
         // groundContainerId 为新建的运行时容器号, 失败时是 -1; 世界坐标不进背包模型, 由调用方登记给地面模型
         InventoryMoveResult TryDropItem(int sourceContainerId, int instanceId, out int groundContainerId);

@@ -1,6 +1,6 @@
 ﻿/*
 * ┌──────────────────────────────────┐
-* │  描    述: 按 F 的交互桥接, 扫描最近物资箱后开模型容器并把面板拉到右侧
+* │  描    述: 按 F 的交互桥接, 扫描最近搜刮目标后把容器挂到战备面板右侧
 * │  类    名: LootBoxInteraction.cs
 * │  创    建: By qiqizizzz
 * └──────────────────────────────────┘
@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using Framework.QTower.MVVM.View;
 using Module.Inventory.Interaction;
+using Module.Inventory.Presentation;
 using UI.Inventory.View;
 using UnityEngine;
 using Utils.log;
@@ -17,7 +18,8 @@ using Utils.log;
 namespace UI.Inventory
 {
     /// <summary>
-    /// 物资箱交互桥接：把世界侧的扫描结果接到背包模型与战备面板, 世界层不认识 UI
+    /// 搜刮交互桥接：把世界侧扫到的最近目标接到背包模型与战备面板, 世界层不认识 UI
+    /// 物资箱要现摇一次掉落, 地面堆本来就是容器, 直接用它身上的容器号
     /// </summary>
     public sealed class LootBoxInteraction
     {
@@ -26,32 +28,44 @@ namespace UI.Inventory
         private bool m_hasValidatedBoxes;
 
         /// <summary>
-        /// 与 origin 附近最近的物资箱交互, 打开装备面板并把该箱容器挂到右侧动态载体
+        /// 与 origin 附近最近的搜刮目标交互, 打开装备面板并把它的容器挂到右侧动态载体
         /// </summary>
         /// <param name="origin">交互原点, 一般是玩家位置</param>
         public void TryInteract(Vector3 origin)
         {
             ValidateSceneBoxes();
 
-            LootBoxController box = m_scanner.ScanNearest(origin);
-            if (box == null)
+            ILootInteractable target = m_scanner.ScanNearest(origin);
+            if (target == null)
             {
-                QLog.Info($"附近没有可交互的物资箱, 原点 {origin}");
+                QLog.Info($"附近没有可搜刮的目标, 原点 {origin}");
                 return;
             }
 
             MvvmRoot root = MvvmRoot.Instance;
             if (root == null)
             {
-                QLog.Error($"场景缺少 {nameof(MvvmRoot)}, 物资箱无法打开");
+                QLog.Error($"场景缺少 {nameof(MvvmRoot)}, 搜刮目标无法打开");
                 return;
             }
 
             IInventoryModel model = root.Models.Get<IInventoryModel>();
-            int containerId = model.OpenLootContainer(box.EntityId, box.LootConfig, box.ResolveSeed());
+            int containerId = ResolveContainerId(model, target);
             if (containerId < 0) return;
 
             OpenPanelAndShow(root, containerId).Forget();
+        }
+
+        // 把世界目标换成一只可打开的容器号, 认不出的目标直接报错, 不静默退回
+        private int ResolveContainerId(IInventoryModel model, ILootInteractable target)
+        {
+            if (target is LootBoxController box)
+                return model.OpenLootContainer(box.EntityId, box.LootConfig, box.ResolveSeed());
+
+            if (target is GroundPileView pile) return pile.ContainerId;
+
+            QLog.Error($"未接入的搜刮目标类型：{target.GetType().Name}");
+            return -1;
         }
 
         // 面板已显示就直接换箱, 否则先开面板再换箱, 避免两次 Show 抢同一份视图模型

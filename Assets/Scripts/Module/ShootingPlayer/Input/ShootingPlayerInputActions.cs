@@ -111,6 +111,15 @@ namespace Module.ShootingPlayer.Input
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""InspectGround"",
+                    ""type"": ""Button"",
+                    ""id"": ""4f0b1c27-9a63-4dd2-8f2b-0d7ce9d51b18"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -135,6 +144,17 @@ namespace Module.ShootingPlayer.Input
                     ""action"": ""Interact"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""7c2e5a90-31d4-4b6f-9d05-2ab7e3f64c21"",
+                    ""path"": ""<Keyboard>/h"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": "";KeyboardMouse"",
+                    ""action"": ""InspectGround"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -157,6 +177,7 @@ namespace Module.ShootingPlayer.Input
             m_UI = asset.FindActionMap("UI", throwIfNotFound: true);
             m_UI_ToggleInventory = m_UI.FindAction("ToggleInventory", throwIfNotFound: true);
             m_UI_Interact = m_UI.FindAction("Interact", throwIfNotFound: true);
+            m_UI_InspectGround = m_UI.FindAction("InspectGround", throwIfNotFound: true);
         }
 
         ~@ShootingPlayerInputActions()
@@ -239,6 +260,7 @@ namespace Module.ShootingPlayer.Input
         private List<IUIActions> m_UIActionsCallbackInterfaces = new List<IUIActions>();
         private readonly InputAction m_UI_ToggleInventory;
         private readonly InputAction m_UI_Interact;
+        private readonly InputAction m_UI_InspectGround;
         /// <summary>
         /// Provides access to input actions defined in input action map "UI".
         /// </summary>
@@ -258,6 +280,10 @@ namespace Module.ShootingPlayer.Input
             /// Provides access to the underlying input action "UI/Interact".
             /// </summary>
             public InputAction @Interact => m_Wrapper.m_UI_Interact;
+            /// <summary>
+            /// Provides access to the underlying input action "UI/InspectGround".
+            /// </summary>
+            public InputAction @InspectGround => m_Wrapper.m_UI_InspectGround;
             /// <summary>
             /// Provides access to the underlying input action map instance.
             /// </summary>
@@ -290,6 +316,9 @@ namespace Module.ShootingPlayer.Input
                 @Interact.started += instance.OnInteract;
                 @Interact.performed += instance.OnInteract;
                 @Interact.canceled += instance.OnInteract;
+                @InspectGround.started += instance.OnInspectGround;
+                @InspectGround.performed += instance.OnInspectGround;
+                @InspectGround.canceled += instance.OnInspectGround;
             }
 
             /// <summary>
@@ -307,6 +336,9 @@ namespace Module.ShootingPlayer.Input
                 @Interact.started -= instance.OnInteract;
                 @Interact.performed -= instance.OnInteract;
                 @Interact.canceled -= instance.OnInteract;
+                @InspectGround.started -= instance.OnInspectGround;
+                @InspectGround.performed -= instance.OnInspectGround;
+                @InspectGround.canceled -= instance.OnInspectGround;
             }
 
             /// <summary>
@@ -374,6 +406,13 @@ namespace Module.ShootingPlayer.Input
             /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
             /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
             void OnInteract(InputAction.CallbackContext context);
+            /// <summary>
+            /// Method invoked when associated input action "InspectGround" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+            /// </summary>
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+            void OnInspectGround(InputAction.CallbackContext context);
         }
     }
 }

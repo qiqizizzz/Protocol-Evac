@@ -36,7 +36,7 @@ namespace UI.Inventory
             }
 
             IInventoryModel model = root.Models.Register<IInventoryModel>(new InventoryModel(config));
-            root.Models.Register<IGroundItemModel>(new GroundItemModel());
+            root.Models.Register<IGroundPileModel>(new GroundPileModel());
 
             config.RegisterItems();
             ApplyLoadout(model, config.Loadout);

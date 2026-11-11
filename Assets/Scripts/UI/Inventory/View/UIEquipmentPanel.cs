@@ -20,16 +20,13 @@ namespace UI.Inventory.View
     {
         //容量载体滚动视图节点路径
         private const string SCROLL_VIEW_PATH = "Layout_Storage/ScrollView_Capacity";
-        //容量载体排布容器节点路径, 动态物资箱载体挂在它末尾
-        private const string CAPACITY_CONTENT_PATH = SCROLL_VIEW_PATH + "/Viewport/Content";
+        //右侧物资箱独立列节点路径, 打开的物资箱载体只挂在这里
+        private const string LOOT_ROOT_PATH = "Layout_Loot";
         //左侧独立装备槽节点路径
         private const string EQUIPMENT_SLOTS_PATH = "Layout_EquipmentSlots";
 
         //动态物资箱载体的节点名, 只为在层级里认得出来
         private const string LOOT_CARRIER_NAME = "Carrier_Loot";
-
-        //世界包围盒取极值用的四角缓存, 静态复用避免每次分配
-        private static readonly Vector3[] m_worldCorners = new Vector3[4];
 
         [Header("载体设置")]
         [SerializeField] private UIInventoryCarrier[] Containers;
@@ -39,8 +36,7 @@ namespace UI.Inventory.View
         [SerializeField] private UIInventoryCarrier LootCarrierTemplate;
 
         private ScrollRect m_capacityScroll;
-        private RectTransform m_capacityContent;
-        private RectTransform m_capacityViewport; //容量区滚动视口, 用来判断动态载体是否落在可见区域内
+        private RectTransform m_lootRoot;
         private RectTransform m_equipmentSlots;
         private UIInventoryCarrier m_lootCarrier; //当前挂在右侧的物资箱载体, 未开箱时为空
 
@@ -55,15 +51,14 @@ namespace UI.Inventory.View
         protected override void OnAwake()
         {
             m_capacityScroll = FindComponent<ScrollRect>(SCROLL_VIEW_PATH);
-            m_capacityContent = FindComponent<RectTransform>(CAPACITY_CONTENT_PATH);
+            m_lootRoot = FindComponent<RectTransform>(LOOT_ROOT_PATH);
             m_equipmentSlots = FindComponent<RectTransform>(EQUIPMENT_SLOTS_PATH);
-            m_capacityViewport = m_capacityContent != null ? m_capacityContent.parent as RectTransform : null;
 
             if (LootCarrierTemplate != null && LootCarrierTemplate.gameObject.activeSelf)
-                QLog.Error($"{nameof(LootCarrierTemplate)} 模板处于激活态, 会在容量区里白占一行, 请停用该节点");
+                QLog.Error($"{nameof(LootCarrierTemplate)} 模板处于激活态, 会在右侧列里白占一块, 请停用该节点");
 
-            if (m_capacityViewport == null)
-                QLog.Error($"容量区视口未找到, 动态载体无法自动滚入可见区, 请检查节点 {SCROLL_VIEW_PATH}/Viewport");
+            if (m_lootRoot == null)
+                QLog.Error($"右侧物资箱列未找到, 开箱载体无处可挂, 请检查节点 {LOOT_ROOT_PATH}");
         }
 
         protected override void BindViewModel(EquipmentPanelViewModel viewModel)
@@ -121,13 +116,13 @@ namespace UI.Inventory.View
             InventoryViewModel container = ViewModel.LootContainer;
             if (container == null) return;
 
-            if (LootCarrierTemplate == null)
+            if (LootCarrierTemplate == null || m_lootRoot == null)
             {
-                QLog.Error($"未配置 {nameof(LootCarrierTemplate)}, 物资箱载体无法显示, 请检查节点 {CAPACITY_CONTENT_PATH}");
+                QLog.Error($"未配置 {nameof(LootCarrierTemplate)} 或节点 {LOOT_ROOT_PATH}, 物资箱载体无法显示");
                 return;
             }
 
-            GameObject carrierObject = Instantiate(LootCarrierTemplate.gameObject, m_capacityContent);
+            GameObject carrierObject = Instantiate(LootCarrierTemplate.gameObject, m_lootRoot);
             carrierObject.name = LOOT_CARRIER_NAME;
 
             m_lootCarrier = carrierObject.GetComponent<UIInventoryCarrier>();
@@ -139,49 +134,7 @@ namespace UI.Inventory.View
 
             // 动态载体随开随毁, 订阅挂在它自己的作用域上, 销毁时一并收敛, 不给面板留悬空条目
             BindPopupRequests(m_lootCarrier.Scope, container);
-            LayoutRebuilder.ForceRebuildLayoutImmediate(m_capacityContent);
-            EnsureLootCarrierVisible();
-        }
-
-        // 载体排在容量区末尾, 前面的容器一撑高就会把它顶出视口, 只在确实没露全时贴到底部
-        private void EnsureLootCarrierVisible()
-        {
-            if (m_lootCarrier == null || m_capacityViewport == null) return;
-
-            Canvas.ForceUpdateCanvases();
-
-            Rect viewportRect = GetWorldRect(m_capacityViewport);
-            Rect carrierRect = GetWorldRect(m_lootCarrier.transform as RectTransform);
-
-            // 已经完整可见就尊重玩家当前滚动位置, 不硬拉视图
-            if (IsRectInside(viewportRect, carrierRect)) return;
-
-            m_capacityScroll.verticalNormalizedPosition = 0f;
-            Canvas.ForceUpdateCanvases();
-        }
-
-        // Rect 只提供点的包含判断, 矩形是否完整落在视口内要自己比四条边
-        private static bool IsRectInside(Rect outer, Rect inner)
-        {
-            return inner.xMin >= outer.xMin && inner.xMax <= outer.xMax
-                && inner.yMin >= outer.yMin && inner.yMax <= outer.yMax;
-        }
-
-        // 取节点在世界空间的包围矩形, UI 不做倾斜, 按四角取极值即可
-        private static Rect GetWorldRect(RectTransform rectTransform)
-        {
-            rectTransform.GetWorldCorners(m_worldCorners);
-
-            Vector2 min = new Vector2(float.MaxValue, float.MaxValue);
-            Vector2 max = new Vector2(float.MinValue, float.MinValue);
-
-            for (int i = 0; i < m_worldCorners.Length; i++)
-            {
-                min = Vector2.Min(min, m_worldCorners[i]);
-                max = Vector2.Max(max, m_worldCorners[i]);
-            }
-
-            return new Rect(min.x, min.y, max.x - min.x, max.y - min.y);
+            LayoutRebuilder.ForceRebuildLayoutImmediate(m_lootRoot);
         }
 
         // 停用立即生效以先收敛绑定, 真正的销毁 Unity 排在帧末

@@ -6,31 +6,35 @@
 * └──────────────────────────────────┘
 */
 
+using System;
 using UnityEngine;
 using Utils.log;
 
 namespace Module.Inventory.Interaction
 {
     /// <summary>
-    /// 物资箱交互扫描器：按 F 时一次性 OverlapSphere 粗筛, 不维护常驻的附近箱子表
+    /// 搜刮扫描器：按 F 时一次性 OverlapSphere 粗筛, 物资箱与地面堆一并圈进候选, 不维护常驻表
     /// </summary>
     public sealed class LootInteractableScanner
     {
         private const int MAX_RESULTS = 32;
         private const float SCAN_RADIUS = 8f;
 
+        // 交互契约是接口, 只能按 Type 取组件
+        private static readonly Type m_interactableType = typeof(ILootInteractable);
+
         private readonly Collider[] m_hits = new Collider[MAX_RESULTS];
-        private readonly LootBoxController[] m_candidates = new LootBoxController[MAX_RESULTS];
+        private readonly ILootInteractable[] m_candidates = new ILootInteractable[MAX_RESULTS];
 
         private int m_layerMask = -1;
         private bool m_hasReportedLayer;
         private bool m_hasWarnedCapacity;
 
         /// <summary>
-        /// 以 origin 为球心粗筛一轮, 返回最近的可交互物资箱, 没有则返回 null
+        /// 以 origin 为球心粗筛一轮, 返回最近的可交互目标, 没有则返回 null
         /// </summary>
         /// <param name="origin">查询原点, 一般是玩家位置</param>
-        public LootBoxController ScanNearest(Vector3 origin)
+        public ILootInteractable ScanNearest(Vector3 origin)
         {
             if (!TryResolveLayerMask()) return null;
 
@@ -50,11 +54,11 @@ namespace Module.Inventory.Interaction
                 Collider hit = m_hits[i];
                 if (hit == null) continue;
 
-                // 交互体是 LootBoxController 自建的子节点, 组件在父级身上
-                LootBoxController controller = hit.GetComponentInParent<LootBoxController>();
-                if (controller == null) continue;
+                // 交互体是目标自建的子节点, 契约实现在父级身上
+                ILootInteractable target = hit.GetComponentInParent(m_interactableType) as ILootInteractable;
+                if (target == null) continue;
 
-                m_candidates[candidateCount++] = controller;
+                m_candidates[candidateCount++] = target;
             }
 
             return InteractableTargetSelector.SelectNearest(m_candidates, candidateCount, origin);

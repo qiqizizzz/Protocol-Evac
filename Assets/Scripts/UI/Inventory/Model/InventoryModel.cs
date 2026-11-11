@@ -302,6 +302,38 @@ namespace UI.Inventory
         }
 
         /// <summary>
+        /// 把整件物品收进目标容器里第一块放得下的空格, 容器身份不变, 两侧都放不下时不做任何改动
+        /// </summary>
+        /// <param name="sourceContainerId">物品当前所在容器号</param>
+        /// <param name="targetContainerId">要收物品的容器号</param>
+        /// <param name="instanceId">要转移的物品实例号</param>
+        public InventoryMoveResult TryTransferItemAuto(int sourceContainerId, int targetContainerId, int instanceId)
+        {
+            if (!TryGetContainer(sourceContainerId, out InventoryContainer source))
+            {
+                QLog.Error($"容器未注册：{sourceContainerId}");
+                return InventoryMoveResult.None;
+            }
+
+            if (!TryGetContainer(targetContainerId, out InventoryContainer target))
+            {
+                QLog.Error($"容器未注册：{targetContainerId}");
+                return InventoryMoveResult.None;
+            }
+
+            if (!TryGetPlacement(source, instanceId, out InventoryItemPlacement placement))
+                return InventoryMoveResult.SourceNotFound;
+
+            // 先按当前朝向找位, 找不到再退回物品原始朝向试一次, 堆是矩形网格所以两次就够
+            Vector2Int footprint = placement.Instance.Config.GetSizeAt(placement.Rotation);
+            if (!TryFindFreeCell(target, footprint, out Vector2Int cell)
+                && !TryFindFreeCell(target, placement.Instance.Config.Size, out cell))
+                return InventoryMoveResult.Occupied;
+
+            return TryTransferItem(sourceContainerId, targetContainerId, instanceId, cell);
+        }
+
+        /// <summary>
         /// 丢弃: 把整件物品连堆带朝向挪进一只按实际占格新建的地面容器, 失败时源容器分毫不动
         /// </summary>
         /// <param name="sourceContainerId">物品当前所在容器号</param>

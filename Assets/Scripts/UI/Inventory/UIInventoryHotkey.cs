@@ -1,6 +1,6 @@
 ﻿/*
  * ┌──────────────────────────────────┐
- * │  描    述: 背包快捷键宿主, 运行期自建常驻, 按 B 开关战备面板, 兼作丢弃落点的统一出口
+ * │  描    述: 背包快捷键宿主, 运行期自建常驻, 按 B 开关面板, 兼管搜刮、丢弃与查看地面物
  * │  类    名: UIInventoryHotkey.cs
  * │  创    建: By qiqizizzz
  * └──────────────────────────────────┘
@@ -53,6 +53,7 @@ namespace UI.Inventory
         {
             m_inputActions.UI.ToggleInventory.performed += OnToggleInventory;
             m_inputActions.UI.Interact.performed += OnInteract;
+            m_inputActions.UI.InspectGround.performed += OnInspectGround;
             m_inputActions.UI.Enable();
         }
 
@@ -60,6 +61,7 @@ namespace UI.Inventory
         {
             m_inputActions.UI.ToggleInventory.performed -= OnToggleInventory;
             m_inputActions.UI.Interact.performed -= OnInteract;
+            m_inputActions.UI.InspectGround.performed -= OnInspectGround;
             m_inputActions.UI.Disable();
         }
 
@@ -124,6 +126,14 @@ namespace UI.Inventory
             if (!TryResolvePlayerPosition(out Vector3 origin)) return;
 
             m_lootInteraction.TryInteract(origin);
+        }
+
+        // 响应查看地面丢弃物快捷键, 原点同样用玩家位置
+        private void OnInspectGround(InputAction.CallbackContext context)
+        {
+            if (!TryResolvePlayerPosition(out Vector3 origin)) return;
+
+            GroundPilePresenter.ReportNearby(origin);
         }
 
         // 缓存玩家变换, 换射击玩家后只改这一处来源

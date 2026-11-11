@@ -63,7 +63,7 @@ namespace Tests.Inventory
             LootBoxController middle = BuildBox("loot_middle_01", new Vector3(0f, 0f, 0f), m_loot);
             LootBoxController right = BuildBox("loot_right_01", new Vector3(3f, 0f, 0f), m_loot);
 
-            LootBoxController picked = InteractableTargetSelector.SelectNearest(
+            ILootInteractable picked = InteractableTargetSelector.SelectNearest(
                 new[] { left, middle, right }, 3, new Vector3(2f, 0f, 0f));
 
             Assert.AreSame(right, picked, "原点在右侧, 应该选中 3 米处那只箱子");
@@ -79,7 +79,7 @@ namespace Tests.Inventory
             // 报错按到达顺序核对, 所以要等建箱噪音消化完再登记这一条
             ExpectConfigError(MISSING_LOOT_PATTERN);
 
-            LootBoxController picked = InteractableTargetSelector.SelectNearest(
+            ILootInteractable picked = InteractableTargetSelector.SelectNearest(
                 new[] { unusable, usable }, 2, Vector3.zero);
 
             Assert.AreSame(usable, picked, "最近的一只不可交互时必须顺延到次近的候选");
@@ -94,7 +94,7 @@ namespace Tests.Inventory
             ExpectConfigError(EMPTY_ENTITY_ID_PATTERN);
             ExpectConfigError(MISSING_LOOT_PATTERN);
 
-            LootBoxController picked = InteractableTargetSelector.SelectNearest(
+            ILootInteractable picked = InteractableTargetSelector.SelectNearest(
                 new[] { noEntityId, noLoot }, 2, Vector3.zero);
 
             Assert.IsNull(picked, "候选全都缺配置时不应该返回任何箱子");
@@ -107,7 +107,7 @@ namespace Tests.Inventory
             LootBoxController stale = BuildBox("loot_stale_01", new Vector3(0f, 0f, 9f), m_loot);
 
             // 复用缓冲里上一轮残留的引用不能被算进本轮结果, 所以只交给选择器 1 个有效项
-            LootBoxController picked = InteractableTargetSelector.SelectNearest(
+            ILootInteractable picked = InteractableTargetSelector.SelectNearest(
                 new[] { valid, stale, null, null }, 1, Vector3.zero);
 
             Assert.AreSame(valid, picked, "count 之外的数组槽位必须视为不存在");
@@ -118,7 +118,7 @@ namespace Tests.Inventory
         {
             LootBoxController box = BuildBox("loot_ignore_01", Vector3.zero, m_loot);
 
-            LootBoxController picked = InteractableTargetSelector.SelectNearest(
+            ILootInteractable picked = InteractableTargetSelector.SelectNearest(
                 new[] { box }, 0, Vector3.zero);
 
             Assert.IsNull(picked, "零候选是正常情况, 返回 null 而不是异常");

@@ -7,6 +7,7 @@
 */
 
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using Framework.QTower.MVVM.ViewModel;
 using Module.Inventory.Core.Config;
 using Module.Inventory.Core.Data;
@@ -15,6 +16,7 @@ using NUnit.Framework;
 using UI.Inventory;
 using UI.Inventory.View.Tools;
 using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace Tests.Inventory
 {
@@ -26,9 +28,12 @@ namespace Tests.Inventory
         private const int NO_ITEM = -1;
         private const float INTERVAL = 0.3f;
 
+        // 阶梯四档全撑不进一件超大物品时, 模型侧会留下一条回滚报错, 报错按条数逐条预期
+        private const int RESIZE_FAILURE_LOG_COUNT = 4;
+
         private QInventoryTestKit m_kit;
         private InventoryModel m_model;
-        private GroundItemModel m_groundModel;
+        private GroundPileModel m_pileModel;
         private int m_sourceId;
         private readonly List<ViewModelBase> m_popups = new List<ViewModelBase>();
 
@@ -38,8 +43,8 @@ namespace Tests.Inventory
             m_kit = new QInventoryTestKit();
             m_model = new InventoryModel(m_kit.CreateInventoryConfig());
             m_model.OnRegister();
-            m_groundModel = new GroundItemModel();
-            m_groundModel.OnRegister();
+            m_pileModel = new GroundPileModel();
+            m_pileModel.OnRegister();
 
             m_sourceId = m_kit.NewContainerId();
             m_model.RegisterContainer(m_sourceId,
@@ -53,7 +58,7 @@ namespace Tests.Inventory
                 DisposeViewModel(m_popups[i]);
             m_popups.Clear();
 
-            m_groundModel.OnUnregister();
+            m_pileModel.OnUnregister();
             m_model.OnUnregister();
             m_kit.Dispose();
         }
@@ -179,34 +184,139 @@ namespace Tests.Inventory
         }
         #endregion
 
-        #region 落地登记链路
+        #region 地面堆收拢
         [Test]
-        public void GroundDropInteraction_Success_RegistersGroundItemAtOrigin()
+        public void GroundDropInteraction_FirstDrop_CreatesPileAtTheDropOrigin()
         {
-            int instanceId = PutItemIntoSource(2, 3, 4, 10);
+            int instanceId = PutItemIntoSource(1, 1, 3, 10);
             Vector3 origin = new Vector3(1.5f, 0f, -2f);
-            GroundDropInteraction interaction = new GroundDropInteraction(m_model, m_groundModel);
+            GroundDropInteraction interaction = new GroundDropInteraction(m_model, m_pileModel);
 
             Assert.IsTrue(interaction.TryDrop(m_sourceId, instanceId, origin));
             Assert.AreEqual(0, m_model.GetContainerVO(m_sourceId).Items.Count, "源箱腾空");
 
-            List<GroundItemVO> nearby = new List<GroundItemVO>(m_groundModel.QueryNearby(origin, 0.5f));
-            Assert.AreEqual(1, nearby.Count, "丢出去的物品要能在落点查到");
-            Assert.AreEqual(instanceId, nearby[0].Item.InstanceId, "登记的是同一堆物品");
-            Assert.AreEqual(4, nearby[0].Item.StackCount, "整堆数量带进地面快照");
-            Assert.IsTrue(m_model.IsContainerRegistered(nearby[0].ContainerId), "地面容器号要真实可用, 捡回来靠它做转移");
+            Assert.AreEqual(1, m_pileModel.Piles.Count, "脚边没堆就新起一座");
+            GroundPileVO pile = m_pileModel.Piles[0];
+            Assert.AreEqual(origin, pile.AnchorPosition, "堆锚点就是落点");
+            Assert.IsTrue(m_model.IsContainerRegistered(pile.ContainerId), "堆容器号要真实可用, 捡回来靠它做转移");
+
+            InventoryContainerVO pileContainer = m_model.GetContainerVO(pile.ContainerId);
+            Assert.AreEqual(2, pileContainer.Width, "起堆按阶梯第一档开格");
+            Assert.AreEqual(2, pileContainer.Height);
+            Assert.AreEqual(1, pileContainer.Items.Count);
+            Assert.AreEqual(3, pileContainer.Items[0].StackCount, "整堆数量跟着落地面");
         }
 
         [Test]
-        public void GroundDropInteraction_FailedDrop_RegistersNothing()
+        public void GroundDropInteraction_NearbyDrop_MergesIntoTheSamePile()
+        {
+            Vector3 origin = new Vector3(0f, 0f, 1f);
+            GroundDropInteraction interaction = new GroundDropInteraction(m_model, m_pileModel);
+
+            Assert.IsTrue(interaction.TryDrop(m_sourceId, PutItemIntoSource(1, 1, 1), origin));
+            string pileId = m_pileModel.Piles[0].PileId;
+            int pileContainerId = m_pileModel.Piles[0].ContainerId;
+
+            // 第二件只丢在 0.4 米外, 落在收拢半径内, 该并进同一座堆而不是又起一座
+            Assert.IsTrue(interaction.TryDrop(m_sourceId, PutItemIntoSource(1, 1, 1),
+                origin + new Vector3(0.4f, 0f, 0f)));
+
+            Assert.AreEqual(1, m_pileModel.Piles.Count, "脚边的堆要合并");
+            Assert.AreEqual(pileId, m_pileModel.Piles[0].PileId, "合并保留先起的那座堆号");
+            Assert.AreEqual(pileContainerId, m_pileModel.Piles[0].ContainerId, "合并共用同一只容器");
+            Assert.AreEqual(2, m_model.GetContainerVO(pileContainerId).Items.Count, "两件都在这座堆里");
+        }
+
+        [Test]
+        public void GroundDropInteraction_DropBeyondMergeRadius_StartsANewPile()
+        {
+            GroundDropInteraction interaction = new GroundDropInteraction(m_model, m_pileModel);
+
+            Assert.IsTrue(interaction.TryDrop(m_sourceId, PutItemIntoSource(1, 1, 1), Vector3.zero));
+            // 隔到 8 米外, 远超收拢半径, 不该被吸进同一座堆
+            Assert.IsTrue(interaction.TryDrop(m_sourceId, PutItemIntoSource(1, 1, 1), new Vector3(8f, 0f, 0f)));
+
+            Assert.AreEqual(2, m_pileModel.Piles.Count, "远处要另起一座堆");
+        }
+
+        [Test]
+        public void GroundDropInteraction_FullPile_ExpandsToTheNextLadderStep()
+        {
+            Vector3 origin = new Vector3(2f, 0f, 2f);
+            GroundDropInteraction interaction = new GroundDropInteraction(m_model, m_pileModel);
+
+            // 首件 2x2 把 2x2 的堆占满, 次件必须推着堆往上升一档才塞得下
+            Assert.IsTrue(interaction.TryDrop(m_sourceId, PutItemIntoSource(2, 2, 1), origin));
+            Assert.AreEqual(2, m_model.GetContainerVO(m_pileModel.Piles[0].ContainerId).Width);
+
+            Assert.IsTrue(interaction.TryDrop(m_sourceId, PutItemIntoSource(1, 1, 1), origin));
+
+            Assert.AreEqual(1, m_pileModel.Piles.Count, "升档不算新起一堆");
+            InventoryContainerVO grown = m_model.GetContainerVO(m_pileModel.Piles[0].ContainerId);
+            Assert.AreEqual(3, grown.Width, "2x2 塞满后升到 3x3");
+            Assert.AreEqual(3, grown.Height);
+            Assert.AreEqual(2, grown.Items.Count);
+        }
+
+        [Test]
+        public void GroundDropInteraction_BigItemSkipsTheStepWithNoRoomForItsShape()
+        {
+            Vector3 origin = new Vector3(-3f, 0f, 4f);
+            GroundDropInteraction interaction = new GroundDropInteraction(m_model, m_pileModel);
+
+            // 2x2 占满 2x2 的堆后, 3x3 里剩的是边条, 再放一件 2x2 就凑不出整块 2x2 空位
+            // 所以这一件要跳过 3x3 直接升到 4x3, 升档失败时不能把已经拿走的物品退回去
+            Assert.IsTrue(interaction.TryDrop(m_sourceId, PutItemIntoSource(2, 2, 1), origin));
+            Assert.IsTrue(interaction.TryDrop(m_sourceId, PutItemIntoSource(2, 2, 1), origin));
+
+            InventoryContainerVO grown = m_model.GetContainerVO(m_pileModel.Piles[0].ContainerId);
+            Assert.AreEqual(1, m_pileModel.Piles.Count);
+            Assert.AreEqual(4, grown.Width, "3x3 塞不下整块 2x2, 要继续升档");
+            Assert.AreEqual(3, grown.Height);
+            Assert.AreEqual(2, grown.Items.Count);
+            Assert.AreEqual(0, m_model.GetContainerVO(m_sourceId).Items.Count, "两件都已离开源箱");
+        }
+
+        [Test]
+        public void GroundDropInteraction_ItemLargerThanTheTopLadder_KeepsItsOwnFootprint()
+        {
+            // 阶梯最大只到 4x4, 这件 5x1 一档都撑不进, 只能按物品自身轮廓起堆
+            int oversizedSource = m_kit.NewContainerId();
+            m_model.RegisterContainer(oversizedSource,
+                new InventoryContainerSpec(6, 6, float.MaxValue, null, "超大件源箱"));
+
+            InventoryItemConfigSO config = m_kit.CreateItem(5, 1, false);
+            Assert.AreEqual(InventoryMoveResult.Success,
+                m_model.TryAddItemAuto(oversizedSource, config.ItemId, 1));
+
+            InventoryContainerVO source = m_model.GetContainerVO(oversizedSource);
+            int instanceId = source.Items[source.Items.Count - 1].InstanceId;
+
+            for (int i = 0; i < RESIZE_FAILURE_LOG_COUNT; i++)
+                LogAssert.Expect(LogType.Error, new Regex("容器换尺寸放不下现有内容"));
+
+            GroundDropInteraction interaction = new GroundDropInteraction(m_model, m_pileModel);
+            Assert.IsTrue(interaction.TryDrop(oversizedSource, instanceId, Vector3.zero),
+                "撑到顶也要保住物品, 收回容器等于物品凭空消失");
+
+            Assert.AreEqual(1, m_pileModel.Piles.Count);
+            InventoryContainerVO pileContainer = m_model.GetContainerVO(m_pileModel.Piles[0].ContainerId);
+            Assert.AreEqual(5, pileContainer.Width, "撑不进阶梯就按原尺寸保号");
+            Assert.AreEqual(1, pileContainer.Height);
+            Assert.AreEqual(1, pileContainer.Items.Count);
+            Assert.AreEqual(0, m_model.GetContainerVO(oversizedSource).Items.Count, "源箱腾空");
+        }
+
+        [Test]
+        public void GroundDropInteraction_FailedDrop_RegistersNoPile()
         {
             PutItemIntoSource(2, 2, 1);
-            GroundDropInteraction interaction = new GroundDropInteraction(m_model, m_groundModel);
+            GroundDropInteraction interaction = new GroundDropInteraction(m_model, m_pileModel);
 
             Assert.IsFalse(interaction.TryDrop(m_sourceId, NO_ITEM, Vector3.zero), "查不到物品时丢弃失败");
 
             Assert.AreEqual(1, m_model.GetContainerVO(m_sourceId).Items.Count, "失败不能把源箱物品弄丢");
-            Assert.AreEqual(0, m_groundModel.QueryNearby(Vector3.zero, float.MaxValue).Count, "失败的丢弃不留地面登记");
+            Assert.AreEqual(0, m_pileModel.Piles.Count, "失败的丢弃不留地面堆");
         }
         #endregion
 

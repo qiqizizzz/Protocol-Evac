@@ -16,7 +16,7 @@ namespace Module.Inventory.Interaction
     /// 野外物资箱：实体号与掉落配置写在场景实例上，交互体在 Awake 按渲染包围盒自建
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class LootBoxController : MonoBehaviour
+    public sealed class LootBoxController : MonoBehaviour, ILootInteractable
     {
         private const string INTERACT_TRIGGER_NAME = "LootInteractTrigger";
         private const string LOOT_INTERACTABLE_LAYER_NAME = "LootInteractable";

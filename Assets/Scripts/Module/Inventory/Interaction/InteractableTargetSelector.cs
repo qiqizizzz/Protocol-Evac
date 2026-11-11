@@ -22,18 +22,18 @@ namespace Module.Inventory.Interaction
         /// <param name="candidates">候选数组, 由调用方复用, 可能含空槽</param>
         /// <param name="count">本轮有效候选数量</param>
         /// <param name="origin">查询原点, 一般是玩家位置</param>
-        public static LootBoxController SelectNearest(LootBoxController[] candidates, int count, Vector3 origin)
+        public static ILootInteractable SelectNearest(ILootInteractable[] candidates, int count, Vector3 origin)
         {
             if (candidates == null) throw new ArgumentNullException(nameof(candidates));
             if (count > candidates.Length)
                 throw new ArgumentException($"有效数量 {count} 超出数组长度 {candidates.Length}", nameof(count));
 
-            LootBoxController nearest = null;
+            ILootInteractable nearest = null;
             float nearestSqrDistance = float.MaxValue;
 
             for (int i = 0; i < count; i++)
             {
-                LootBoxController candidate = candidates[i];
+                ILootInteractable candidate = candidates[i];
                 if (candidate == null || !candidate.CanInteract()) continue;
 
                 float sqrDistance = (candidate.InteractionCenter - origin).sqrMagnitude;
