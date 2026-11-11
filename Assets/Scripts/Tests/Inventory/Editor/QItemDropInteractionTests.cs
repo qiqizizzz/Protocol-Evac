@@ -28,9 +28,6 @@ namespace Tests.Inventory
         private const int NO_ITEM = -1;
         private const float INTERVAL = 0.3f;
 
-        // 阶梯四档全撑不进一件超大物品时, 模型侧会留下一条回滚报错, 报错按条数逐条预期
-        private const int RESIZE_FAILURE_LOG_COUNT = 4;
-
         private QInventoryTestKit m_kit;
         private InventoryModel m_model;
         private GroundPileModel m_pileModel;
@@ -292,8 +289,8 @@ namespace Tests.Inventory
             InventoryContainerVO source = m_model.GetContainerVO(oversizedSource);
             int instanceId = source.Items[source.Items.Count - 1].InstanceId;
 
-            for (int i = 0; i < RESIZE_FAILURE_LOG_COUNT; i++)
-                LogAssert.Expect(LogType.Error, new Regex("容器换尺寸放不下现有内容"));
+            // 撑不进的档位会被直接跳过, 不会留下换尺寸失败的回滚报错, 只在起堆后告警一次
+            LogAssert.Expect(LogType.Warning, new Regex("超出地面堆最大档位"));
 
             GroundDropInteraction interaction = new GroundDropInteraction(m_model, m_pileModel);
             Assert.IsTrue(interaction.TryDrop(oversizedSource, instanceId, Vector3.zero),

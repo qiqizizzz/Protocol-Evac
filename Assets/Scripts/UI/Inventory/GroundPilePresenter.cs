@@ -205,7 +205,9 @@ namespace UI.Inventory
             InventoryContainerVO container = m_inventoryModel.GetContainerVO(containerId);
             if (container.Items.Count == 0)
             {
+                // 先把堆摘掉再收回容器, 收回时的那次广播落在无堆的容器上直接返回, 不会二次触发
                 m_pileModel.RemovePile(pile.PileId);
+                m_inventoryModel.UnregisterContainer(containerId);
                 return;
             }
 

@@ -103,6 +103,9 @@ namespace UI.Inventory
             InventoryMoveResult result = m_model.TryTransferItem(source.ContainerId, target.ContainerId,
                 source.DraggingInstanceId, cell, source.DragRotation);
             source.ApplyTransferResult(result);
+
+            // 从开箱载体上搬走最后一件就该收箱, 否则右侧会一直挂着一张空壳网格
+            CloseLootContainerIfExhausted(source.ContainerId);
         }
 
         #region 生命周期
@@ -131,6 +134,20 @@ namespace UI.Inventory
             m_lootContainer.OnDispose();
             m_lootContainer.Dispose();
             m_lootContainer = null;
+        }
+
+        /// <summary>
+        /// 开箱载体跟着容器走: 只有当前开着的那只容器被搬空或已被收回, 才关掉右侧那一列
+        /// </summary>
+        /// <param name="containerId">刚被取走物品的容器号</param>
+        public void CloseLootContainerIfExhausted(int containerId)
+        {
+            if (m_lootContainer == null || m_lootContainer.ContainerId != containerId) return;
+
+            if (m_model.IsContainerRegistered(containerId) &&
+                m_model.GetContainerVO(containerId).Items.Count > 0) return;
+
+            CloseLootContainer();
         }
         #endregion
     }

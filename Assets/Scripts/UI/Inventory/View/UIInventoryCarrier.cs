@@ -45,6 +45,10 @@ namespace UI.Inventory.View
         [Tooltip("容器表头固定显示的名称, 留空则沿用预制体 Txt_Name 的原文案")]
         [SerializeField] private string DefaultName;
 
+        [Header("尺寸设置")]
+        [Tooltip("载体宽度是否跟随网格收合, 右侧开箱载体靠它把表头压到和网格一样宽")]
+        [SerializeField] private bool AutoSizeWidth;
+
         private Transform m_gridRoot;
         private Transform m_itemRoot;
         private GameObject m_visibleRoot;
@@ -248,7 +252,9 @@ namespace UI.Inventory.View
             {
                 m_containerRect.anchoredPosition = new Vector2(m_containerRect.anchoredPosition.x, -GridTopOffset());
                 m_containerRect.sizeDelta = new Vector2(gridWidth, gridHeight);
-                m_rect.sizeDelta = new Vector2(m_rect.sizeDelta.x, GridTopOffset() + Mathf.Max(gridHeight, EquipSlotHeight()) + BOTTOM_GAP);
+                // 收合宽度只在开关打开时生效, 左侧背包列继续用预制体里写死的宽度
+                float carrierWidth = AutoSizeWidth ? gridWidth : m_rect.sizeDelta.x;
+                m_rect.sizeDelta = new Vector2(carrierWidth, GridTopOffset() + Mathf.Max(gridHeight, EquipSlotHeight()) + BOTTOM_GAP);
             }
 
             RebuildLayout();

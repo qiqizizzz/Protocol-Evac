@@ -394,6 +394,74 @@ namespace Tests.Inventory
         }
 
         [Test]
+        public void HandleCrossContainerDrop_LastItemLeavesLoot_ClosesTheCarrier()
+        {
+            int lootContainerId = RegisterLootContainer("搬空收场", 2, 2);
+            int itemId = m_kit.CreateItem(1, 1).ItemId;
+            Assert.AreEqual(InventoryMoveResult.Success,
+                m_model.TryAddItem(lootContainerId, itemId, 1, Vector2Int.zero));
+
+            m_viewModel.OpenLootContainer(lootContainerId);
+            InventoryViewModel loot = m_viewModel.LootContainer;
+            loot.OnBind();
+
+            loot.BeginDragAt(Vector2Int.zero);
+            m_viewModel.GetContainer(0).PlaceDraggedItemAt(Vector2Int.zero);
+
+            Assert.IsNull(m_viewModel.LootContainer, "开箱载体被搬空后右侧不该留一张空壳网格");
+            Assert.AreEqual(2, m_lootChangedCount, "开一次箱收一次箱, 各广播一次");
+            Assert.AreEqual(0, m_model.GetContainerVO(lootContainerId).Items.Count);
+            Assert.AreEqual(1, m_model.GetContainerVO(m_containerIds[0]).Items.Count, "物品要落到固定载体里");
+        }
+
+        [Test]
+        public void HandleCrossContainerDrop_LootContainerUnregistered_ClosesTheCarrier()
+        {
+            int lootContainerId = RegisterLootContainer("容器先没", 2, 2);
+            int itemId = m_kit.CreateItem(1, 1).ItemId;
+            Assert.AreEqual(InventoryMoveResult.Success,
+                m_model.TryAddItem(lootContainerId, itemId, 1, Vector2Int.zero));
+
+            m_viewModel.OpenLootContainer(lootContainerId);
+            InventoryViewModel loot = m_viewModel.LootContainer;
+            loot.OnBind();
+
+            loot.BeginDragAt(Vector2Int.zero);
+            // 地面堆在物品被搬空的同一帧被收掉, 视图侧不能再攥着这只已注销的容器
+            m_model.UnregisterContainer(lootContainerId);
+            LogAssert.Expect(LogType.Error, new Regex($"容器未注册：{lootContainerId}"));
+
+            m_viewModel.GetContainer(0).PlaceDraggedItemAt(Vector2Int.zero);
+
+            Assert.IsNull(m_viewModel.LootContainer, "容器都没了, 右侧载体必须跟着收");
+            Assert.AreEqual(2, m_lootChangedCount);
+        }
+
+        [Test]
+        public void CloseLootContainerIfExhausted_OtherContainerOrStillFull_KeepsTheCarrier()
+        {
+            int lootContainerId = RegisterLootContainer("还剩货", 2, 2);
+            int itemId = m_kit.CreateItem(1, 1).ItemId;
+            Assert.AreEqual(InventoryMoveResult.Success, m_model.TryAddItem(lootContainerId, itemId, 1, Vector2Int.zero));
+            Assert.AreEqual(InventoryMoveResult.Success, m_model.TryAddItem(lootContainerId, itemId, 1, new Vector2Int(1, 0)));
+
+            m_viewModel.OpenLootContainer(lootContainerId);
+            m_viewModel.LootContainer.OnBind();
+
+            int instanceId = m_model.GetContainerVO(lootContainerId).Items[0].InstanceId;
+            Assert.AreEqual(InventoryMoveResult.Success,
+                m_model.TryDropItem(lootContainerId, instanceId, out int groundContainerId));
+            Assert.AreEqual(1, m_model.GetContainerVO(lootContainerId).Items.Count, "箱里该剩最后一件");
+
+            // 别人家的容器空了不动右侧, 自己这只还剩一件也不收
+            m_viewModel.CloseLootContainerIfExhausted(m_containerIds[0]);
+            m_viewModel.CloseLootContainerIfExhausted(groundContainerId);
+
+            Assert.IsNotNull(m_viewModel.LootContainer);
+            Assert.AreEqual(1, m_lootChangedCount, "箱里还有货就不该有多余的收箱广播");
+        }
+
+        [Test]
         public void Dispose_OfPanel_ReleasesLootChildAndKeepsModelContainer()
         {
             int lootContainerId = RegisterLootContainer("面板收场", 2, 1);

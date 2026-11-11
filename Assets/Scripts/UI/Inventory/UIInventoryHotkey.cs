@@ -23,6 +23,9 @@ namespace UI.Inventory
     /// </summary>
     public sealed class UIInventoryHotkey : MonoBehaviour
     {
+        // 丢弃落点沿玩家身前推进的距离(米), 相机就在头顶, 丢在脚下的堆不在视野里
+        private const float DROP_FORWARD_DISTANCE = 0.9f;
+
         private static UIInventoryHotkey m_instance;
         private ShootingPlayerInputActions m_inputActions;
         private LootBoxInteraction m_lootInteraction;
@@ -86,10 +89,18 @@ namespace UI.Inventory
                 return false;
             }
 
-            if (!m_instance.TryResolvePlayerPosition(out Vector3 origin)) return false;
+            if (!m_instance.TryResolvePlayerPosition(out Vector3 playerPos)) return false;
+
+            // 统一往前推一段再落地, 关掉面板后转身就能看到自己丢的东西
+            Vector3 origin = playerPos + ResolveDropForward(m_instance.m_playerTransform) * DROP_FORWARD_DISTANCE;
 
             m_instance.m_dropInteraction ??= new GroundDropInteraction();
-            return m_instance.m_dropInteraction.TryDrop(containerId, instanceId, origin);
+
+            if (!m_instance.m_dropInteraction.TryDrop(containerId, instanceId, origin)) return false;
+
+            // 从开箱载体上丢最后一件也会把箱子掏空, 顺手收掉右侧那张空壳
+            CloseLootCarrierIfEmptied(containerId);
+            return true;
         }
 
         /// <summary>
@@ -114,6 +125,16 @@ namespace UI.Inventory
         }
 
         // ==================== Private Function ====================
+        // 面板开着且右侧正显示这只容器时, 让它复核是否已被搬空
+        private static void CloseLootCarrierIfEmptied(int containerId)
+        {
+            MvvmRoot root = MvvmRoot.Instance;
+            if (root == null) return;
+            if (!root.Windows.TryGet(out UIEquipmentPanel panel) || !panel.IsVisible) return;
+
+            panel.ViewModel.CloseLootContainerIfExhausted(containerId);
+        }
+
         // 响应背包开关快捷键
         private void OnToggleInventory(InputAction.CallbackContext context)
         {
@@ -159,6 +180,15 @@ namespace UI.Inventory
 
             position = m_playerTransform.position;
             return true;
+        }
+
+        // 取玩家水平朝向, 朝向退化到竖直时用世界前方兜底
+        private static Vector3 ResolveDropForward(Transform playerTransform)
+        {
+            Vector3 forward = playerTransform.forward;
+            forward.y = 0f;
+
+            return forward.sqrMagnitude < 0.0001f ? Vector3.forward : forward.normalized;
         }
     }
 }

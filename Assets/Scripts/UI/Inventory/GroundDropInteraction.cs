@@ -112,8 +112,12 @@ namespace UI.Inventory
         // 把模型刚建的临时容器原地升级成一座新堆, 容器号不变, 只把网格撑到起堆尺寸
         private bool PromoteToPile(int dropContainerId, Vector3 dropOrigin)
         {
+            // 临时容器已经带着刚丢的那件物品, 比它小的档位撑不下, 试了只会白报一次放不下
+            InventoryContainerVO current = m_inventoryModel.GetContainerVO(dropContainerId);
             for (int i = 0; i < PILE_LADDER.Length; i++)
             {
+                if (PILE_LADDER[i].x < current.Width || PILE_LADDER[i].y < current.Height) continue;
+
                 if (!m_inventoryModel.TryResizeContainer(dropContainerId, BuildPileSpec(PILE_LADDER[i]))) continue;
 
                 if (m_pileModel.CreatePile(dropContainerId, dropOrigin) != null) return true;

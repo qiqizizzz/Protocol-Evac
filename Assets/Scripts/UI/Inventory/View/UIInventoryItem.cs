@@ -543,7 +543,9 @@ namespace UI.Inventory.View
             m_isDragging = false;
             EndDragGhost();
             m_rect.anchoredPosition = m_homeAnchoredPosition;
-            m_viewModel.CancelDrag();
+
+            // 源容器可能在落点回调里被当场收掉, 视图模型已释放就不要再往属性里写
+            if (!m_viewModel.IsDisposed) m_viewModel.CancelDrag();
         }
 
         private void RenderSelected(int selectedInstanceId)
