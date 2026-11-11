@@ -1,4 +1,4 @@
-﻿/*
+/*
 * ┌──────────────────────────────────┐
 * │  描    述: 野外物资箱测试, 覆盖权重抽取的确定性、拆堆规则与模型开箱链路
 * │  类    名: QInventoryLootTests.cs
@@ -26,6 +26,10 @@ namespace Tests.Inventory
     public class QInventoryLootTests
     {
         private const int SEED = 20261105;
+
+        //两只互不相干的物资箱实体, 用来验证同配置不串货
+        private const string ENTITY_A = "Props/Plastic_Box_03";
+        private const string ENTITY_B = "Props/Plastic_Box_03 (1)";
 
         private QInventoryTestKit m_kit;
         private InventoryModel m_model;
@@ -172,13 +176,106 @@ namespace Tests.Inventory
         }
         #endregion
 
+        #region 运行时容器分配
+        [Test]
+        public void CreateRuntimeContainer_AllocatesIdsAboveTheLootRange()
+        {
+            int containerId = m_model.CreateRuntimeContainer(new InventoryContainerSpec(3, 2, float.MaxValue, null, "临时容器"));
+
+            Assert.GreaterOrEqual(containerId, InventoryContainerIds.LOOT, "运行时容器号要从 LOOT 段起分配");
+            Assert.IsTrue(m_model.IsContainerRegistered(containerId));
+        }
+
+        [Test]
+        public void CreateRuntimeContainer_ConsecutiveCalls_NeverShareAnId()
+        {
+            InventoryContainerSpec spec = new InventoryContainerSpec(2, 2, float.MaxValue);
+
+            int first = m_model.CreateRuntimeContainer(spec);
+            int second = m_model.CreateRuntimeContainer(spec);
+
+            Assert.AreNotEqual(first, second, "分配器把同一个号发给两只容器, 后面必然串货");
+            Assert.IsTrue(m_model.IsContainerRegistered(first));
+            Assert.IsTrue(m_model.IsContainerRegistered(second));
+        }
+
+        [Test]
+        public void CreateRuntimeContainer_AfterUnregister_ReusesTheFreedId()
+        {
+            InventoryContainerSpec spec = new InventoryContainerSpec(2, 2, float.MaxValue);
+            int first = m_model.CreateRuntimeContainer(spec);
+            int keep = m_model.CreateRuntimeContainer(spec);
+
+            m_model.UnregisterContainer(first);
+            int reused = m_model.CreateRuntimeContainer(spec);
+
+            Assert.AreEqual(first, reused, "空出来的容器号要被下一只容器接走");
+            Assert.AreNotEqual(keep, reused, "仍在注册的容器号不许被抢");
+        }
+
+        [Test]
+        public void CreateRuntimeContainer_ZeroSize_ReturnsInvalidId()
+        {
+            LogAssert.Expect(LogType.Error, new Regex("容器规格无效"));
+
+            Assert.Less(m_model.CreateRuntimeContainer(new InventoryContainerSpec(0, 3, float.MaxValue)), 0);
+        }
+        #endregion
+
         #region 模型开箱
+        [Test]
+        public void OpenLootContainer_TwoEntitiesWithSameConfig_DoNotShareContainer()
+        {
+            LootContainerConfigSO loot = BuildSupplyBox(3, 5);
+
+            int boxA = m_model.OpenLootContainer(ENTITY_A, loot, SEED);
+            int boxB = m_model.OpenLootContainer(ENTITY_B, loot, SEED);
+
+            Assert.AreNotEqual(boxA, boxB, "两只同配置箱子共用一个容器, 玩家翻一只就等于翻完全部");
+
+            m_model.TryAddItem(boxA, m_kit.CreateItem(1, 1).ItemId, 1, Vector2Int.zero);
+            Assert.AreNotEqual(m_model.GetContainerVO(boxA).Items.Count, m_model.GetContainerVO(boxB).Items.Count,
+                "往一只箱子里塞东西, 另一只不许跟着变");
+        }
+
+        [Test]
+        public void OpenLootContainer_SameEntityTwice_KeepsTheOpenedContainer()
+        {
+            LootContainerConfigSO loot = BuildSupplyBox(3, 5);
+            int opened = m_model.OpenLootContainer(ENTITY_A, loot, SEED);
+
+            Assert.AreEqual(opened, m_model.OpenLootContainer(ENTITY_A, loot, SEED), "同一只箱子重开必须沿用旧容器");
+        }
+
+        [Test]
+        public void OpenLootContainer_EmptyEntityId_ReturnsInvalidId()
+        {
+            LootContainerConfigSO loot = BuildSupplyBox(1, 2);
+            LogAssert.Expect(LogType.Error, new Regex("物资箱实体号为空"));
+
+            Assert.Less(m_model.OpenLootContainer(string.Empty, loot, SEED), 0);
+            Assert.Less(m_model.OpenLootContainer(null, loot, SEED), 0);
+        }
+
+        [Test]
+        public void OpenLootContainer_ChangingLootWhileOpen_IsRejected()
+        {
+            LootContainerConfigSO supply = BuildSupplyBox(3, 5);
+            LootContainerConfigSO weapon = BuildWeaponBox(2, 3);
+            int opened = m_model.OpenLootContainer(ENTITY_A, supply, SEED);
+
+            LogAssert.Expect(LogType.Error, new Regex("未关闭就更换掉落配置"));
+            Assert.Less(m_model.OpenLootContainer(ENTITY_A, weapon, SEED), 0,
+                "同一只箱子开着时换表会让残货对不上配置, 必须拒开而不是静默沿用");
+            Assert.AreEqual(opened, m_model.GetContainerVO(opened).ContainerId, "被拒绝的重开不许动到已开的箱子");
+        }
+
         [Test]
         public void OpenLootContainer_RegistersTheGridDescribedByLootConfig()
         {
             LootContainerConfigSO loot = BuildSupplyBox(3, 5);
 
-            int containerId = m_model.OpenLootContainer(loot, SEED);
+            int containerId = m_model.OpenLootContainer(ENTITY_A, loot, SEED);
 
             Assert.GreaterOrEqual(containerId, InventoryContainerIds.LOOT, "物资箱容器号要从 LOOT 段起分配");
 
@@ -195,7 +292,7 @@ namespace Tests.Inventory
             LootContainerConfigSO loot = m_kit.CreateLoot(string.Empty, m_kit.CreateContainer(4, 3, "野战补给箱"),
                 1, 2, m_kit.CreateLootEntry(m_kit.CreateItem(1, 1), 1));
 
-            int containerId = m_model.OpenLootContainer(loot, SEED);
+            int containerId = m_model.OpenLootContainer(ENTITY_A, loot, SEED);
 
             Assert.AreEqual("野战补给箱", m_model.GetContainerVO(containerId).DisplayName);
         }
@@ -206,7 +303,7 @@ namespace Tests.Inventory
             LootContainerConfigSO loot = BuildSupplyBox(3, 6);
             HashSet<int> allowed = CollectEntryItemIds(loot);
 
-            int containerId = m_model.OpenLootContainer(loot, SEED);
+            int containerId = m_model.OpenLootContainer(ENTITY_A, loot, SEED);
 
             IReadOnlyList<InventoryItemVO> items = m_model.GetContainerVO(containerId).Items;
             for (int i = 0; i < items.Count; i++) Assert.IsTrue(allowed.Contains(items[i].ItemId));
@@ -216,10 +313,10 @@ namespace Tests.Inventory
         public void OpenLootContainer_ReopensTheSameContainerWhileItStaysRegistered()
         {
             LootContainerConfigSO loot = BuildSupplyBox(3, 5);
-            int opened = m_model.OpenLootContainer(loot, SEED);
+            int opened = m_model.OpenLootContainer(ENTITY_A, loot, SEED);
             int residue = m_model.GetContainerVO(opened).Items.Count;
 
-            int reopened = m_model.OpenLootContainer(loot, SEED + 9999);
+            int reopened = m_model.OpenLootContainer(ENTITY_A, loot, SEED + 9999);
 
             Assert.AreEqual(opened, reopened, "没关闭的物资箱重开必须沿用旧容器, 让玩家继续翻残货");
             Assert.AreEqual(residue, m_model.GetContainerVO(reopened).Items.Count, "重开不许刷新箱内已有的东西");
@@ -230,13 +327,13 @@ namespace Tests.Inventory
         {
             LootContainerConfigSO closed = BuildSupplyBox(3, 5);
             LootContainerConfigSO neighbour = BuildWeaponBox(2, 3);
-            int firstId = m_model.OpenLootContainer(closed, SEED);
+            int firstId = m_model.OpenLootContainer(ENTITY_A, closed, SEED);
 
             m_model.UnregisterContainer(firstId);
-            int neighbourId = m_model.OpenLootContainer(neighbour, SEED);
+            int neighbourId = m_model.OpenLootContainer(ENTITY_B, neighbour, SEED);
             Assert.AreEqual(firstId, neighbourId, "空出来的容器号应该被下一只箱子复用");
 
-            int reRolledId = m_model.OpenLootContainer(closed, SEED);
+            int reRolledId = m_model.OpenLootContainer(ENTITY_A, closed, SEED);
             Assert.AreNotEqual(neighbourId, reRolledId, "关箱时没清掉物资箱映射, 会让重开的箱子认领别人的容器");
             AssertContentsMatchTable(neighbourId, neighbour);
             AssertContentsMatchTable(reRolledId, closed);
@@ -250,7 +347,7 @@ namespace Tests.Inventory
             LootContainerConfigSO loot = m_kit.CreateLoot("小箱子", m_kit.CreateContainer(2, 2, "测试网格"),
                 4, 4, m_kit.CreateLootEntry(oversized, 1), m_kit.CreateLootEntry(fitting, 1));
 
-            int containerId = m_model.OpenLootContainer(loot, SEED);
+            int containerId = m_model.OpenLootContainer(ENTITY_A, loot, SEED);
 
             IReadOnlyList<InventoryItemVO> items = m_model.GetContainerVO(containerId).Items;
             Assert.IsNotEmpty(items, "塞不下的东西被跳过, 能塞下的还要照常进箱");
@@ -264,7 +361,7 @@ namespace Tests.Inventory
             LootContainerConfigSO loot = m_kit.CreateLoot("重货箱", m_kit.CreateContainer(3, 2, "测试网格"),
                 3, 3, m_kit.CreateLootEntry(heavy, 1));
 
-            int containerId = m_model.OpenLootContainer(loot, SEED);
+            int containerId = m_model.OpenLootContainer(ENTITY_A, loot, SEED);
 
             InventoryContainerVO snapshot = m_model.GetContainerVO(containerId);
             Assert.AreEqual(float.MaxValue, snapshot.WeightLimit, "物资箱自身不设负重上限");
@@ -278,7 +375,7 @@ namespace Tests.Inventory
             List<int> changedIds = new List<int>();
             m_model.OnChanged += changedIds.Add;
 
-            int containerId = m_model.OpenLootContainer(loot, SEED);
+            int containerId = m_model.OpenLootContainer(ENTITY_A, loot, SEED);
 
             Assert.Contains(containerId, changedIds, "新开的物资箱要广播出去, 界面才知道该刷一张新网格");
         }
@@ -288,7 +385,7 @@ namespace Tests.Inventory
         {
             LogAssert.Expect(LogType.Error, new Regex("物资箱配置为空"));
 
-            Assert.Less(m_model.OpenLootContainer(null, SEED), 0);
+            Assert.Less(m_model.OpenLootContainer(ENTITY_A, null, SEED), 0);
         }
 
         [Test]
@@ -298,7 +395,7 @@ namespace Tests.Inventory
                 m_kit.CreateLootEntry(m_kit.CreateItem(1, 1), 1));
             LogAssert.Expect(LogType.Error, new Regex("缺少网格定义"));
 
-            Assert.Less(m_model.OpenLootContainer(loot, SEED), 0);
+            Assert.Less(m_model.OpenLootContainer(ENTITY_A, loot, SEED), 0);
         }
         #endregion
 

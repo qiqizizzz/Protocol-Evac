@@ -8,6 +8,7 @@
 
 using Cysharp.Threading.Tasks;
 using Framework.QTower.MVVM.View;
+using Module.ShootingPlayer.Input;
 using UI.Inventory.View;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -21,6 +22,7 @@ namespace UI.Inventory
     public sealed class UIInventoryHotkey : MonoBehaviour
     {
         private static UIInventoryHotkey m_instance;
+        private ShootingPlayerInputActions m_inputActions;
 
         /// <summary>
         /// 场景加载后自建常驻宿主
@@ -35,8 +37,26 @@ namespace UI.Inventory
             m_instance = host.AddComponent<UIInventoryHotkey>();
         }
 
+        private void Awake()
+        {
+            m_inputActions = new ShootingPlayerInputActions();
+        }
+
+        private void OnEnable()
+        {
+            m_inputActions.UI.ToggleInventory.performed += OnToggleInventory;
+            m_inputActions.UI.Enable();
+        }
+
+        private void OnDisable()
+        {
+            m_inputActions.UI.ToggleInventory.performed -= OnToggleInventory;
+            m_inputActions.UI.Disable();
+        }
+
         private void OnDestroy()
         {
+            m_inputActions.Dispose();
             if (m_instance == this) m_instance = null;
         }
 
@@ -49,7 +69,7 @@ namespace UI.Inventory
             MvvmRoot root = MvvmRoot.Instance;
             if (root == null)
             {
-                QLog.Error($"[{nameof(UIInventoryHotkey)}] 场景缺少 {nameof(MvvmHost)}, 战备面板无法打开");
+                QLog.Error($"场景缺少 {nameof(MvvmHost)}, 战备面板无法打开");
                 return;
             }
 
@@ -63,14 +83,9 @@ namespace UI.Inventory
         }
 
         // ==================== Private Function ====================
-        private void Update()
+        // 响应背包开关快捷键
+        private void OnToggleInventory(InputAction.CallbackContext context)
         {
-            Keyboard keyboard = Keyboard.current;
-
-            // 无键盘设备时不响应
-            if (keyboard == null) return;
-            if (!keyboard.bKey.wasPressedThisFrame) return;
-
             TogglePanel();
         }
     }

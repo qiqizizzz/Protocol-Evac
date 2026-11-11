@@ -23,6 +23,10 @@ namespace UI.Inventory
         //注册容器
         void RegisterContainer(int containerId, InventoryContainerSpec spec);
         
+        //在运行时容器段自动分配一个未占用的容器号并注册, 物资箱与地面临时容器共用这一入口
+        int CreateRuntimeContainer(InventoryContainerSpec spec);
+        
+        
         //注销容器
         void UnregisterContainer(int containerId);
         
@@ -35,8 +39,8 @@ namespace UI.Inventory
         //自动找第一块空位塞入新物品, 穿戴装备与造演示物品的主路径
         InventoryMoveResult TryAddItemAuto(int containerId, int itemId, int amount);
         
-        //打开野外物资箱, 摇一次掉落并注册成运行时容器; 同一份配置未关闭前重复打开返回原容器号
-        int OpenLootContainer(LootContainerConfigSO loot, int seed);
+        //按实体号打开野外物资箱, 摇一次掉落并注册成运行时容器; 同一只箱子未关闭前重复打开返回原容器号
+        int OpenLootContainer(string entityId, LootContainerConfigSO loot, int seed);
         
         //获取容器快照
         InventoryContainerVO GetContainerVO(int containerId);

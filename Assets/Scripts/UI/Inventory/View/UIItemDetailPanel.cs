@@ -67,7 +67,7 @@ namespace UI.Inventory.View
         protected override void OnShow(params object[] args)
         {
             if (!ItemPopupPlacement.TryReadItemRectArgs(args, out int containerId, out int instanceId,
-                    out Rect itemScreenRect))
+                    out Rect itemScreenRect, out bool preferLeft))
                 return;
 
             // 排序需高于面板才能接收关闭按钮点击, 同级排序仅决定显示先后
@@ -75,7 +75,7 @@ namespace UI.Inventory.View
             transform.SetAsLastSibling();
             ViewModel.Open(containerId, instanceId);
             LayoutRebuilder.ForceRebuildLayoutImmediate(m_cardRect);
-            ItemPopupPlacement.AnchorToScreenRect(m_rect, m_cardRect, itemScreenRect, ITEM_GAP);
+            ItemPopupPlacement.AnchorToScreenRect(m_rect, m_cardRect, itemScreenRect, ITEM_GAP, preferLeft);
         }
         #endregion
     }

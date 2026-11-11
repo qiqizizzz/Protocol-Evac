@@ -19,11 +19,14 @@ namespace UI.Inventory.View
     {
         //容量载体滚动视图节点路径
         private const string SCROLL_VIEW_PATH = "Layout_Storage/ScrollView_Capacity";
+        //左侧独立装备槽节点路径
+        private const string EQUIPMENT_SLOTS_PATH = "Layout_EquipmentSlots";
 
         [Header("载体设置")]
         [SerializeField] private UIInventoryCarrier[] Containers;
 
         private ScrollRect m_capacityScroll;
+        private RectTransform m_equipmentSlots;
 
         // 记录弹窗当前归属容器, 仅该容器的点击与拖拽可隐藏弹窗
         private InventoryViewModel m_popupOwner;
@@ -36,6 +39,7 @@ namespace UI.Inventory.View
         protected override void OnAwake()
         {
             m_capacityScroll = FindComponent<ScrollRect>(SCROLL_VIEW_PATH);
+            m_equipmentSlots = FindComponent<RectTransform>(EQUIPMENT_SLOTS_PATH);
         }
 
         protected override void BindViewModel(EquipmentPanelViewModel viewModel)
@@ -103,14 +107,14 @@ namespace UI.Inventory.View
 
         private async UniTaskVoid ShowDetailAsync(InventoryViewModel container)
         {
-            if (!TryGetItemScreenRect(container, out Rect itemScreenRect))
+            if (!TryGetItemScreenRect(container, out Rect itemScreenRect, out bool preferLeft))
             {
                 m_detailOpening = false;
                 return;
             }
 
             await MvvmRoot.Instance.Windows.ShowAsync<UIItemDetailPanel>(container.ContainerId,
-                container.DetailInstanceId.Value, itemScreenRect);
+                container.DetailInstanceId.Value, itemScreenRect, preferLeft);
 
             m_detailOpening = false;
         }
@@ -124,14 +128,17 @@ namespace UI.Inventory.View
         }
 
         // 详情定位以物品完整占格为准, 与鼠标落在物品内的具体位置无关
-        private bool TryGetItemScreenRect(InventoryViewModel container, out Rect itemScreenRect)
+        private bool TryGetItemScreenRect(InventoryViewModel container, out Rect itemScreenRect,
+            out bool preferLeft)
         {
             itemScreenRect = default;
+            preferLeft = false;
 
             for (int i = 0; i < Containers.Length; i++)
             {
                 if (!ReferenceEquals(Containers[i].ViewModel, container)) continue;
 
+                preferLeft = Containers[i].transform.IsChildOf(m_equipmentSlots);
                 if (Containers[i].TryGetItemScreenRect(container.DetailInstanceId.Value, out itemScreenRect))
                     return true;
 

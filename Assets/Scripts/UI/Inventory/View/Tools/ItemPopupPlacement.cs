@@ -18,7 +18,7 @@ namespace UI.Inventory.View.Tools
     public static class ItemPopupPlacement
     {
         private const int ARG_COUNT = 3;
-        private const int ITEM_RECT_ARG_COUNT = 3;
+        private const int ITEM_RECT_ARG_COUNT = 4;
 
         // 浮层相对面板排序的抬升量：窗口服务为每个面板分配相同的 sortingOrder,
         // 同排序时射线由网格的 GraphicRaycaster 接收, 浮层按钮无法点击
@@ -74,34 +74,38 @@ namespace UI.Inventory.View.Tools
         }
 
         /// <summary>
-        /// 读出详情弹窗打开参数：容器号、实例号、物品完整占格的屏幕矩形
+        /// 读出详情弹窗打开参数：容器号、实例号、物品完整占格的屏幕矩形与是否优先左侧
         /// </summary>
         /// <param name="args">ShowAsync 透传的打开参数</param>
         /// <param name="containerId">物品所在容器号</param>
         /// <param name="instanceId">物品实例号</param>
         /// <param name="itemScreenRect">物品完整占格在屏幕空间中的矩形</param>
+        /// <param name="preferLeft">是否优先将卡片放在物品左侧</param>
         public static bool TryReadItemRectArgs(object[] args, out int containerId, out int instanceId,
-            out Rect itemScreenRect)
+            out Rect itemScreenRect, out bool preferLeft)
         {
             containerId = 0;
             instanceId = 0;
             itemScreenRect = default;
+            preferLeft = false;
 
             if (args == null || args.Length < ITEM_RECT_ARG_COUNT)
             {
-                QLog.Error($"详情弹窗打开参数不足: 依次需要 容器号 实例号 物品屏幕矩形, 实际 {(args == null ? 0 : args.Length)} 个");
+                QLog.Error($"详情弹窗打开参数不足: 依次需要 容器号 实例号 物品屏幕矩形 优先左侧, 实际 {(args == null ? 0 : args.Length)} 个");
                 return false;
             }
 
-            if (args[0] is not int first || args[1] is not int second || args[2] is not Rect rect)
+            if (args[0] is not int first || args[1] is not int second || args[2] is not Rect rect ||
+                args[3] is not bool prefer)
             {
-                QLog.Error("详情弹窗打开参数类型不符: 依次应为 int, int, Rect");
+                QLog.Error("详情弹窗打开参数类型不符: 依次应为 int, int, Rect, bool");
                 return false;
             }
 
             containerId = first;
             instanceId = second;
             itemScreenRect = rect;
+            preferLeft = prefer;
             return true;
         }
 
@@ -132,13 +136,15 @@ namespace UI.Inventory.View.Tools
         }
 
         /// <summary>
-        /// 将卡片定位到物品完整占格的右侧, 右侧放不下时翻到左侧, 并限制在面板范围内
+        /// 将卡片定位到物品完整占格旁, 按优先方向选择左右侧, 并限制在面板范围内
         /// </summary>
         /// <param name="root">铺满屏幕的弹窗根节点</param>
         /// <param name="card">卡片节点, 锚点居中、轴心左上</param>
         /// <param name="itemScreenRect">物品完整占格在屏幕空间中的矩形</param>
         /// <param name="gap">卡片与物品占格之间的间距</param>
-        public static void AnchorToScreenRect(RectTransform root, RectTransform card, Rect itemScreenRect, float gap)
+        /// <param name="preferLeft">是否优先将卡片放在物品左侧</param>
+        public static void AnchorToScreenRect(RectTransform root, RectTransform card, Rect itemScreenRect, float gap,
+            bool preferLeft = false)
         {
             if (root == null || card == null) return;
 
@@ -159,12 +165,16 @@ namespace UI.Inventory.View.Tools
             Vector2 size = card.rect.size;
             float rightX = itemRect.xMax + gap;
             float leftX = itemRect.xMin - gap - size.x;
+            bool rightFits = rightX + size.x <= half.x;
+            bool leftFits = leftX >= -half.x;
             float x;
 
-            // 右侧优先, 不够时翻到左侧; 两侧都放不下才按屏幕边界夹紧
-            if (rightX + size.x <= half.x)
+            // 左侧装备优先向左展开, 空间不足时回退到另一侧
+            if (preferLeft && leftFits)
+                x = leftX;
+            else if (rightFits)
                 x = rightX;
-            else if (leftX >= -half.x)
+            else if (leftFits)
                 x = leftX;
             else
                 x = Mathf.Clamp(rightX, -half.x, Mathf.Max(-half.x, half.x - size.x));

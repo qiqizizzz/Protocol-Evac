@@ -13,7 +13,7 @@ using UnityEngine;
 namespace Tests.Inventory
 {
     /// <summary>
-    /// 详情弹窗定位测试：固定卡片与物品完整占格之间的间距, 并验证右侧不足时翻到左侧
+    /// 详情弹窗定位测试：验证左右侧优先级、翻转规则与固定间距
     /// </summary>
     public class QItemPopupPlacementTests
     {
@@ -57,15 +57,17 @@ namespace Tests.Inventory
             Rect itemScreenRect = new Rect(100f, 400f, 200f, 100f);
 
             bool result = ItemPopupPlacement.TryReadItemRectArgs(
-                new object[] { 7, 19, itemScreenRect },
+                new object[] { 7, 19, itemScreenRect, true },
                 out int containerId,
                 out int instanceId,
-                out Rect actualItemScreenRect);
+                out Rect actualItemScreenRect,
+                out bool preferLeft);
 
-            Assert.IsTrue(result, "三个有效参数应能打开详情弹窗");
+            Assert.IsTrue(result, "四个有效参数应能打开详情弹窗");
             Assert.AreEqual(7, containerId);
             Assert.AreEqual(19, instanceId);
             Assert.AreEqual(itemScreenRect, actualItemScreenRect);
+            Assert.IsTrue(preferLeft);
         }
 
         [Test]
@@ -88,6 +90,28 @@ namespace Tests.Inventory
 
             Assert.AreEqual(new Vector2(-232f, 0f), m_card.anchoredPosition,
                 "右侧放不下时, 卡片右边界应距物品左边界 12 像素");
+        }
+
+        [Test]
+        public void AnchorToScreenRect_WhenPreferLeftAndLeftSideFits_UsesLeftSideWithGap()
+        {
+            Rect itemScreenRect = new Rect(400f, 400f, 100f, 100f);
+
+            ItemPopupPlacement.AnchorToScreenRect(m_root, m_card, itemScreenRect, ITEM_GAP, true);
+
+            Assert.AreEqual(new Vector2(-432f, 0f), m_card.anchoredPosition,
+                "左侧能完整容纳时, 卡片应优先显示在物品左侧并保留 12 像素间距");
+        }
+
+        [Test]
+        public void AnchorToScreenRect_WhenPreferLeftButLeftSideDoesNotFit_UsesRightSide()
+        {
+            Rect itemScreenRect = new Rect(100f, 400f, 200f, 100f);
+
+            ItemPopupPlacement.AnchorToScreenRect(m_root, m_card, itemScreenRect, ITEM_GAP, true);
+
+            Assert.AreEqual(new Vector2(-188f, 0f), m_card.anchoredPosition,
+                "左侧放不下时, 卡片应回退到物品右侧");
         }
     }
 }

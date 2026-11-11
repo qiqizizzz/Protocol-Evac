@@ -40,12 +40,13 @@ namespace UI.Inventory
         //背包总配置: 仅在构建快照时查询稀有度底色
         private readonly InventoryConfigSO m_config;
 
-        //已开的物资箱: 配置到容器号, 同一份配置没关掉就重开要沿用旧箱
-        private readonly Dictionary<LootContainerConfigSO, int> m_lootContainers =
-            new Dictionary<LootContainerConfigSO, int>();
+        //已开的物资箱: 实体号到运行时记录, 同一只箱子没关掉就重开要沿用旧箱
+        private readonly Dictionary<string, LootContainerRecord> m_lootContainers =
+            new Dictionary<string, LootContainerRecord>();
 
-        //注销容器时反查待清理的物资箱键
-        private readonly List<LootContainerConfigSO> m_staleLootKeys = new List<LootContainerConfigSO>();
+        //容器号反查运行时记录, 注销与换尺寸时不用遍历整张物资箱表
+        private readonly Dictionary<int, LootContainerRecord> m_lootContainerRecords =
+            new Dictionary<int, LootContainerRecord>();
 
         public event Action<int> OnChanged;
 
@@ -90,6 +91,20 @@ namespace UI.Inventory
             OnChanged?.Invoke(containerId);
         }
 
+        //运行时容器号从 LOOT 段起分配, 物资箱与地面丢弃物容器都走这里, 避免两套分配器撞号
+        public int CreateRuntimeContainer(InventoryContainerSpec spec)
+        {
+            if (spec.Width <= 0 || spec.Height <= 0)
+            {
+                QLog.Error($"容器规格无效, 无法分配容器号：{spec.Width}x{spec.Height}");
+                return INVALID_CONTAINER_ID;
+            }
+
+            int containerId = AllocateRuntimeContainerId();
+            RegisterContainer(containerId, spec);
+            return containerId;
+        }
+
         public void UnregisterContainer(int containerId)
         {
             if(!m_containers.TryGetValue(containerId, out InventoryContainer container)) return;
@@ -122,13 +137,21 @@ namespace UI.Inventory
             InventoryContainerSpec origin = ToSpec(current);
             List<InventoryItemPlacement> contents = CollectOrdered(current);
 
+            //换尺寸靠注销重注册完成, 先把物资箱记录摘出来, 拓扑落定后原样挂回
+            m_lootContainerRecords.TryGetValue(containerId, out LootContainerRecord lootRecord);
+
             UnregisterContainer(containerId);
             RegisterContainer(containerId, spec);
-            if (RestorePlacements(m_containers[containerId], contents)) return true;
+            if (RestorePlacements(m_containers[containerId], contents))
+            {
+                RebindLootContainer(ref lootRecord, containerId);
+                return true;
+            }
 
             //新网格塞不下旧内容, 连拓扑一起退回原样
             UnregisterContainer(containerId);
             RegisterContainer(containerId, origin);
+            RebindLootContainer(ref lootRecord, containerId);
             if (!RestorePlacements(m_containers[containerId], contents))
                 QLog.Error($"容器回滚后内容仍复原失败：{containerId}");
 
@@ -185,18 +208,38 @@ namespace UI.Inventory
                 container.DisplayName);
         }
 
-        public int OpenLootContainer(LootContainerConfigSO loot, int seed)
+        public int OpenLootContainer(string entityId, LootContainerConfigSO loot, int seed)
         {
+            //实体号是物资箱的唯一身份, 缺了它两只同配置箱子会共用一个容器
+            if (string.IsNullOrEmpty(entityId))
+            {
+                QLog.Error("物资箱实体号为空, 无法打开");
+                return INVALID_CONTAINER_ID;
+            }
+
             if (!TryGetLootGrid(loot, out InventoryContainerConfigSO grid)) return INVALID_CONTAINER_ID;
 
             //搜刮到一半的箱子重开是继续翻残货, 不再摇一次掉落
-            if (m_lootContainers.TryGetValue(loot, out int openedId) && m_containers.ContainsKey(openedId))
-                return openedId;
+            if (m_lootContainers.TryGetValue(entityId, out LootContainerRecord opened) &&
+                m_containers.ContainsKey(opened.ContainerId))
+            {
+                //同一只箱子开着的时候换掉落表, 残货就和配置对不上了, 直接拒绝
+                if (opened.Loot != loot)
+                {
+                    QLog.Error($"物资箱 {entityId} 未关闭就更换掉落配置, 拒绝重开");
+                    return INVALID_CONTAINER_ID;
+                }
 
-            int containerId = AllocateLootContainerId();
-            RegisterContainer(containerId, new InventoryContainerSpec(grid.Width, grid.Height, LOOT_WEIGHT_LIMIT,
-                grid.Mask, ResolveLootName(loot, grid)));
-            m_lootContainers[loot] = containerId;
+                return opened.ContainerId;
+            }
+
+            int containerId = CreateRuntimeContainer(new InventoryContainerSpec(grid.Width, grid.Height,
+                LOOT_WEIGHT_LIMIT, grid.Mask, ResolveLootName(loot, grid)));
+            if (containerId == INVALID_CONTAINER_ID) return INVALID_CONTAINER_ID;
+
+            LootContainerRecord record = new LootContainerRecord(entityId, containerId, loot);
+            m_lootContainers[entityId] = record;
+            m_lootContainerRecords[containerId] = record;
 
             FillLootContainer(m_containers[containerId], loot, seed);
             return containerId;
@@ -570,8 +613,8 @@ namespace UI.Inventory
             return string.IsNullOrEmpty(loot.DisplayName) ? grid.DisplayName : loot.DisplayName;
         }
 
-        //物资箱容器号从 LOOT 起顺序分配, 跳过已被占用的号
-        private int AllocateLootContainerId()
+        //运行时容器号从 LOOT 起顺序分配, 跳过已被占用的号
+        private int AllocateRuntimeContainerId()
         {
             int containerId = InventoryContainerIds.LOOT;
             while (m_containers.ContainsKey(containerId)) containerId++;
@@ -609,18 +652,38 @@ namespace UI.Inventory
             return false;
         }
 
-        //容器注销后同一份物资箱配置下次打开要重新掉落, 所以连带清掉这条反向记录
+        //容器注销后同一只箱子下次打开要重新掉落, 所以连带清掉这一对映射
         private void ForgetLootContainer(int containerId)
         {
-            if (m_lootContainers.Count == 0) return;
+            if (!m_lootContainerRecords.TryGetValue(containerId, out LootContainerRecord record)) return;
 
-            foreach (KeyValuePair<LootContainerConfigSO, int> pair in m_lootContainers)
+            m_lootContainerRecords.Remove(containerId);
+            m_lootContainers.Remove(record.EntityId);
+        }
+
+        //换尺寸走注销重注册时会顺带清掉物资箱映射, 拓扑落定后按新容器号挂回去
+        private void RebindLootContainer(ref LootContainerRecord record, int containerId)
+        {
+            if (string.IsNullOrEmpty(record.EntityId)) return;
+
+            record = new LootContainerRecord(record.EntityId, containerId, record.Loot);
+            m_lootContainers[record.EntityId] = record;
+            m_lootContainerRecords[containerId] = record;
+        }
+
+        //一只开着物资箱的运行时身份
+        private readonly struct LootContainerRecord
+        {
+            public readonly string EntityId;
+            public readonly int ContainerId;
+            public readonly LootContainerConfigSO Loot;
+
+            public LootContainerRecord(string entityId, int containerId, LootContainerConfigSO loot)
             {
-                if (pair.Value == containerId) m_staleLootKeys.Add(pair.Key);
+                EntityId = entityId;
+                ContainerId = containerId;
+                Loot = loot;
             }
-
-            for (int i = 0; i < m_staleLootKeys.Count; i++) m_lootContainers.Remove(m_staleLootKeys[i]);
-            m_staleLootKeys.Clear();
         }
 
         private bool TryGetContainer(int containerId, out InventoryContainer container)
