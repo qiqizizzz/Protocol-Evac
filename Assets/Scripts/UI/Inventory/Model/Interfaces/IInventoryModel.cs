@@ -26,7 +26,6 @@ namespace UI.Inventory
         //在运行时容器段自动分配一个未占用的容器号并注册, 物资箱与地面临时容器共用这一入口
         int CreateRuntimeContainer(InventoryContainerSpec spec);
         
-        
         //注销容器
         void UnregisterContainer(int containerId);
         
@@ -57,7 +56,11 @@ namespace UI.Inventory
         // 转移物品, 以指定朝向为优先尝试, 指定朝向不可放置时自动改用其余可用朝向
         InventoryMoveResult TryTransferItem(int sourceContainerId, int targetContainerId, int instanceId, Vector2Int cell,
             InventoryRotation preferredRotation);
-        
+
+        // 丢弃: 把整件物品连堆带朝向挪进一只按实际占格新建的地面容器, 失败时源容器分毫不动
+        // groundContainerId 为新建的运行时容器号, 失败时是 -1; 世界坐标不进背包模型, 由调用方登记给地面模型
+        InventoryMoveResult TryDropItem(int sourceContainerId, int instanceId, out int groundContainerId);
+
         // 预判转移落点：不修改状态, 返回是否会触发交换与实际采用的朝向
         InventoryMoveResult PeekTransferItem(int sourceContainerId, int targetContainerId, int instanceId, Vector2Int cell,
             out bool willSwap, out InventoryRotation rotation);

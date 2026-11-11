@@ -102,6 +102,15 @@ namespace Module.ShootingPlayer.Input
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Interact"",
+                    ""type"": ""Button"",
+                    ""id"": ""cdc59fd7-6b1c-4a3d-83b5-b7ab881125ed"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -113,6 +122,17 @@ namespace Module.ShootingPlayer.Input
                     ""processors"": """",
                     ""groups"": "";KeyboardMouse"",
                     ""action"": ""ToggleInventory"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""e1a684e4-7e93-4e31-879a-c2909ab41c58"",
+                    ""path"": ""<Keyboard>/f"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": "";KeyboardMouse"",
+                    ""action"": ""Interact"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -136,6 +156,7 @@ namespace Module.ShootingPlayer.Input
             // UI
             m_UI = asset.FindActionMap("UI", throwIfNotFound: true);
             m_UI_ToggleInventory = m_UI.FindAction("ToggleInventory", throwIfNotFound: true);
+            m_UI_Interact = m_UI.FindAction("Interact", throwIfNotFound: true);
         }
 
         ~@ShootingPlayerInputActions()
@@ -217,6 +238,7 @@ namespace Module.ShootingPlayer.Input
         private readonly InputActionMap m_UI;
         private List<IUIActions> m_UIActionsCallbackInterfaces = new List<IUIActions>();
         private readonly InputAction m_UI_ToggleInventory;
+        private readonly InputAction m_UI_Interact;
         /// <summary>
         /// Provides access to input actions defined in input action map "UI".
         /// </summary>
@@ -232,6 +254,10 @@ namespace Module.ShootingPlayer.Input
             /// Provides access to the underlying input action "UI/ToggleInventory".
             /// </summary>
             public InputAction @ToggleInventory => m_Wrapper.m_UI_ToggleInventory;
+            /// <summary>
+            /// Provides access to the underlying input action "UI/Interact".
+            /// </summary>
+            public InputAction @Interact => m_Wrapper.m_UI_Interact;
             /// <summary>
             /// Provides access to the underlying input action map instance.
             /// </summary>
@@ -261,6 +287,9 @@ namespace Module.ShootingPlayer.Input
                 @ToggleInventory.started += instance.OnToggleInventory;
                 @ToggleInventory.performed += instance.OnToggleInventory;
                 @ToggleInventory.canceled += instance.OnToggleInventory;
+                @Interact.started += instance.OnInteract;
+                @Interact.performed += instance.OnInteract;
+                @Interact.canceled += instance.OnInteract;
             }
 
             /// <summary>
@@ -275,6 +304,9 @@ namespace Module.ShootingPlayer.Input
                 @ToggleInventory.started -= instance.OnToggleInventory;
                 @ToggleInventory.performed -= instance.OnToggleInventory;
                 @ToggleInventory.canceled -= instance.OnToggleInventory;
+                @Interact.started -= instance.OnInteract;
+                @Interact.performed -= instance.OnInteract;
+                @Interact.canceled -= instance.OnInteract;
             }
 
             /// <summary>
@@ -335,6 +367,13 @@ namespace Module.ShootingPlayer.Input
             /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
             /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
             void OnToggleInventory(InputAction.CallbackContext context);
+            /// <summary>
+            /// Method invoked when associated input action "Interact" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+            /// </summary>
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+            void OnInteract(InputAction.CallbackContext context);
         }
     }
 }

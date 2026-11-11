@@ -41,14 +41,23 @@
 ## Current Facts
 
 - 物资箱容器段：`InventoryContainerIds.LOOT = 20`。
-- 当前物资箱缓存键是 `LootContainerConfigSO`，两个同配置实体目前会串货。
-- 当前物资箱入口：`int OpenLootContainer(LootContainerConfigSO loot, int seed)`。
+- 物资箱缓存已改成实体号键：`Dictionary<string, LootContainerRecord>`，同配置多实体不再串货。
+- 物资箱入口已改为 `int OpenLootContainer(string entityId, LootContainerConfigSO loot, int seed)`，无旧重载。
+- 运行时容器号分配已收口到 `int CreateRuntimeContainer(InventoryContainerSpec spec)`。
+- `Inventory.asmdef` 只引用 `Utils.asmdef`，asmdef 无法反向引用 Assembly-CSharp，这条边界决定脚本能放哪。
 - 右侧容量区路径：`UIEquipmentPanel/Layout_Storage/ScrollView_Capacity/Viewport/Content`。
 - 动态载体模板：`Assets/Prefabs/UI/Inventory/UIInventoryCarrier.prefab`。
 - 右键菜单节点：`Panel_Menu/Btn_Rotate`、`Panel_Menu/Btn_Split`。
 - 当前 `UIInventoryItem.OnPointerClick()` 只处理左键详情和右键菜单。
 - 当前 `GameManager.Update()` 占用 `H` 打开 GM Console。
 - 现有物资箱配置位于 `Assets/Config/Inventory/Loot/`。
+
+T3 与 T4 落地的新事实：
+
+- 丢弃入口是 `IInventoryModel.TryDropItem(sourceContainerId, instanceId, out groundContainerId)`，写在 `InventoryModel` 里，不建 Service 层，返回值直接复用 `InventoryMoveResult`。
+- 丢弃新建的地面容器与物资箱共用 `CreateRuntimeContainer` 的运行时号段，显示名为「地面」，容器尺寸按 `Config.GetSizeAt(placement.Rotation)` 取真实占格。
+- 地面物品登记表契约在 `UI.Inventory.IGroundItemModel`，实现 `GroundItemModel` 已由 `InventoryModule.Register` 注册，登记号形如 `ground-000001`。
+- 世界坐标不进 `InventoryModel`：丢弃成功后由调用方拿 `GetContainerVO(groundId).Items[0]` 去 `IGroundItemModel.Register`。
 
 ## 目标流程
 
@@ -62,7 +71,49 @@
 
 ---
 
+## 文件结构
+
+按职责与领域分目录，不设 `World/` 这类语义宽泛的杂项层；`UI/` 只放 2D 界面。
+
+```text
+Assets/Scripts/Module/Inventory/                [asmdef: Inventory，只引用 Utils]
+|-- Interaction/LootBoxController.cs            场景 Override 标记组件，Awake 自建根触发体与配置校验 T6
+|-- Interaction/LootInteractableScanner.cs      OverlapSphereNonAlloc 一次性粗筛 + TryGetComponent  T6
+|-- Interaction/InteractableTargetSelector.cs   纯静态“选最近”平方距离，不依赖场景，EditMode 可测    T6
+`-- Presentation/GroundItemView.cs              3D 表现：出生、billboard、抛物线、弹跳              T8 T10
+
+Assets/Scripts/UI/Inventory/                    [Assembly-CSharp，能碰 IInventoryModel 与 MvvmRoot]
+|-- LootBoxInteraction.cs                       按 F 的桥接：扫描 -> OpenLootContainer -> ShowAsync  T6
+|-- GroundItemBinders.cs                        订阅地面物品事件，取图标与预制体喂给 GroundItemView   T8
+|-- Model/Interfaces/IGroundItemModel.cs        地面物品登记表契约                                  T3
+|-- Model/Interfaces/IInventoryModel.cs         丢弃入口 TryDropItem 的契约位置                      T4
+|-- Model/InventoryModel.cs                     TryDropItem 落在这里，不开 Service 层                T4
+|-- Model/GroundItemModel.cs                    登记表实现，只暴露数据与 event                       T3
+|-- VO/GroundItemVO.cs                          地面物品快照：登记号+容器号+物品+落点+时刻          T3
+|-- ViewModel/GroundItemPanelViewModel.cs       附近物品列表面板 VM                                  T9
+`-- View/UIGroundItemPanel.cs                   附近物品 2D 列表面板                                 T9
+
+Assets/Prefabs/
+|-- UI/Inventory/UIGroundItemPanel.prefab       2D 列表面板                                          T9
+`-- Loot/GroundItemView.prefab                  丢弃物世界预制体：Mesh+图标+Rigidbody                T8
+
+Assets/Scripts/Tests/Inventory/Editor/
+|-- QInventoryLootTests.cs                      已补运行时分配与实体隔离用例                         T1 T2
+|-- QInventoryDropTests.cs                      原子丢弃与失败回滚                                   T4
+|-- QGroundItemModelTests.cs                    登记表增删查                                         T3
+`-- QInteractableTargetSelectorTests.cs         最近目标选择                                         T6
+```
+
+`GroundItemView` 下沉进 `Module/Inventory/Presentation/` 的代价是它读不到 QTower 的 `ResManager`，
+所以图标与世界预制体由 Assembly-CSharp 侧的 `GroundItemBinders` 注入；这条接缝将来换成服务器下发的
+表现指令也不用改表现层。
+
+---
+
 ## Task 1：补齐运行时容器分配
+
+已完成，落地方式与计划一致：`CreateRuntimeContainer` 从 `LOOT` 段找第一个空闲号并注册，
+`OpenLootContainer` 与后续地面容器共用这一入口；规格宽高非正时报错并返回负值。
 
 **Files**
 
@@ -118,6 +169,14 @@ feat(inventory): add runtime container allocation
 ---
 
 ## Task 2：按物资箱实体隔离缓存
+
+已完成，与计划有两处出入：
+
+- 不保留 `OpenLootContainer(LootContainerConfigSO, int)` 旧重载，工程内除测试外没有调用方，
+  留着等于把串货路径留在代码里，13 处测试调用一起迁移。
+- 缓存值从裸容器号升成 `LootContainerRecord`（实体号+容器号+开箱时的掉落配置），
+  顺带补两条防线：同一只箱子开着时换掉落表直接报错拒开；`TryResizeContainer` 走注销重注册时
+  把记录摘出来再按新容器号挂回，避免换尺寸把物资箱身份洗掉。
 
 **Files**
 
@@ -175,11 +234,13 @@ fix(inventory): isolate loot containers by entity id
 
 ## Task 3：建立地面物品运行时模型
 
+**状态：已完成（2026-11-11）**
+
 **Files**
 
-- Add: `Assets/Scripts/UI/Inventory/Model/Ground/IGroundItemModel.cs`
-- Add: `Assets/Scripts/UI/Inventory/Model/Ground/GroundItemModel.cs`
 - Add: `Assets/Scripts/UI/Inventory/VO/GroundItemVO.cs`
+- Add: `Assets/Scripts/UI/Inventory/Model/Interfaces/IGroundItemModel.cs`
+- Add: `Assets/Scripts/UI/Inventory/Model/GroundItemModel.cs`
 - Modify: `Assets/Scripts/UI/Inventory/InventoryModule.cs`
 - Add: `Assets/Scripts/Tests/Inventory/Editor/QGroundItemModelTests.cs`
 
@@ -203,10 +264,10 @@ public interface IGroundItemModel : IModel
 }
 ```
 
-`GroundItemVO` 至少包含：
+`GroundItemVO` 实际包含：
 
-- `GroundItemId`
-- `ContainerId`
+- `string GroundItemId`
+- `int ContainerId`
 - `InventoryItemVO Item`
 - `Vector3 WorldPosition`
 - `float DropTime`
@@ -217,6 +278,7 @@ public interface IGroundItemModel : IModel
 2. 查询结果按距离升序排列。
 3. `Unregister` 后不再返回该物品。
 4. 空 ID 或不存在 ID 查询返回 `false`。
+5. 补：登记号递增不撞号、压线半径算圈内、坏参数主动报错、快照不被下一次查询清空、广播只在真动过东西时发。
 
 **Implementation**
 
@@ -225,10 +287,19 @@ public interface IGroundItemModel : IModel
 3. `QueryNearby` 过滤距离后按 `sqrMagnitude` 排序。
 4. 在 `InventoryModule.Register` 注册 `IGroundItemModel`，不把地面模型塞进 `InventoryModel`。
 
+**与计划的出入**
+
+- 接口和实现没有塞进 `Model/Ground/` 子目录，直接沿用 `Model/` 与 `Model/Interfaces/`，和 `IInventoryModel`/`InventoryModel` 保持一致。
+- `QueryNearby` 内部用一张复用表排序，交出去前 `ToArray()`，否则下一次查询会把调用方手上的清单清空。
+- `Register` 传空物品快照、`QueryNearby` 传负半径都在编辑器下 `QLog.Error` 主动报错，不静默返回。
+- 测试夹具会复用同一个测试实例，所以广播计数必须在 `SetUp` 里显式归零，靠字段初始值会串味。
+
 **Verification**
 
 - 运行 `QGroundItemModelTests`。
 - 运行完整 EditMode 测试，确认模型注册不影响背包初始化。
+
+实测：14 个用例全过，`Tests.Inventory` 全量 370 通过 / 0 失败。
 
 **Commit**
 
@@ -238,86 +309,100 @@ feat(inventory): add ground item runtime model
 
 ---
 
-## Task 4：实现原子丢弃服务
+## Task 4：实现原子丢弃
+
+**状态：已完成（2026-11-11）**
 
 **Files**
 
-- Add: `Assets/Scripts/UI/Inventory/Model/Ground/InventoryDropService.cs`
-- Add: `Assets/Scripts/UI/Inventory/Model/Ground/InventoryDropResult.cs`
-- Modify: `Assets/Scripts/UI/Inventory/InventoryModule.cs`
+- Modify: `Assets/Scripts/UI/Inventory/Model/Interfaces/IInventoryModel.cs`
+- Modify: `Assets/Scripts/UI/Inventory/Model/InventoryModel.cs`
 - Add: `Assets/Scripts/Tests/Inventory/Editor/QInventoryDropTests.cs`
 
 **Consumes**
 
 - `IInventoryModel.CreateRuntimeContainer`
 - `IInventoryModel.TryTransferItem`
-- `IGroundItemModel.Register`
-- `ItemRegistry`
-- `InventoryItemConfigSO.GetSizeAt`
+
+**不消费**
+
+- `IGroundItemModel.Register`：世界坐标不进背包模型，登记地面物品由调用方（T7 的 VM）做
+- `ItemRegistry`：占格直接取源容器里那份 placement 的配置，不必按 itemId 反查
 
 **Produces**
 
 ```csharp
-public sealed class InventoryDropService
-{
-    public InventoryDropResult TryDrop(
-        int sourceContainerId,
-        int instanceId,
-        Vector3 worldPosition);
-}
+// 丢弃：把整件物品连堆带朝向挪进一只按实际占格新建的地面容器，失败时源容器分毫不动
+InventoryMoveResult TryDropItem(int sourceContainerId, int instanceId, out int groundContainerId);
 ```
 
-`InventoryDropResult` 至少包含：
-
-- `bool Success`
-- `int GroundContainerId`
-- `string GroundItemId`
-- `InventoryMoveResult MoveResult`
+返回值直接复用 `InventoryMoveResult`，`groundContainerId` 失败时为 `-1`。不再另造一个 `InventoryDropResult` 包装体：丢弃本来就是一次带临时容器的转移，多套一层结果只会让调用方多学一种错误码。
 
 流程：
 
 1. 读取源容器和目标物品。
-2. 用 `ItemRegistry` 取配置，计算 `config.GetSizeAt(item.Rotation)`。
-3. 创建同占格的临时地面容器。
+2. 按 `placement.Instance.Config.GetSizeAt(placement.Rotation)` 算真实占格。
+3. 用 `CreateRuntimeContainer` 开同占格的临时地面容器。
 4. 用 `TryTransferItem` 把整堆物品转移到临时容器 `Vector2Int.zero`。
-5. 转移成功后登记 `IGroundItemModel`。
-6. 任一步失败则注销临时容器，源容器保持原状。
+5. 任一步失败则注销临时容器，源容器保持原状。
 
 **TDD**
 
-1. `TryDrop_ValidItem_MovesWholeStackToGroundContainer`：断言数量、实例号、朝向完整保留。
-2. `TryDrop_EquipSlotItem_UsesConfiguredFootprint`：穿戴头盔或武器丢弃后，地面容器宽高等于配置占格，不是 `1x1`。
-3. `TryDrop_MissingItem_LeavesSourceUntouched`：失败后源容器仍有物品，不产生地面登记。
-4. `TryDrop_TransferFailure_DoesNotLeaveRuntimeContainer`：构造无法放置的临时容器或测试替身，断言临时容器已注销。
-5. 先写失败测试，再实现服务。
+1. `TryDropItem_StandingStack_MovesWholeStackToGroundContainer`：整堆数量、实例号、容器尺寸全部保留。
+2. `TryDropItem_RotatedItem_KeepsRotationAndOpensRotatedFootprint`：转倒过的物品按转倒后的占格开地面容器，朝向不许被转回来。
+3. `TryDropItem_EquippedHelmet_GroundContainerUsesRealFootprint`：装备槽把头盔压成单格，地面容器必须按头盔真实占格开，否则转移根本放不下。
+4. `TryDropItem_MissingInstance_LeavesSourceUntouched`：物品不存在时返回 `SourceNotFound`，源容器一件不少。
+5. `TryDropItem_FailedDrop_DoesNotLeakRuntimeContainerId`：失败的丢弃没占走运行时容器号。
+6. `TryDropItem_UnregisteredSource_ReportsErrorAndDropsNothing`：容器没注册时主动报错并返回 `None`。
+7. `TryDropItem_TwoDropsInARow_EachGetsItsOwnGroundContainer`：两次丢弃各占一只地面容器，前一件不被顶掉。
 
 **Implementation**
 
-1. 服务通过构造函数注入 `IInventoryModel` 和 `IGroundItemModel`。
+1. 丢弃写在 `InventoryModel` 里，不建 Service 层：源容器、临时容器、转移全是模型自己的状态，中间人只会多一层调用。
 2. 不使用 `InventoryContainer.TryRemove()` 直接删除物品。
 3. 使用临时容器作为唯一丢弃载体。
 4. 失败时只回滚本次创建的临时容器，不触碰源容器。
-5. 在 `InventoryModule.Register` 注册服务实例。
+5. 负重上限沿用 `float.MaxValue`，单容器这层不设限，与物资箱一致。
+6. `TryTransferItem` 内部已经调过 `SyncWornCapacities`，丢掉身上的容器装备后容量会自动回落，这里不再重复调。
+
+**与计划的出入**
+
+- 原计划的 `Model/Ground/InventoryDropService.cs` 与 `InventoryDropResult.cs` 两个文件不建，改成 `IInventoryModel.TryDropItem`。
+- 「转移失败不留运行时容器」这条分支在现有规则下构造不出来：临时容器尺寸就是按物品真实占格开的，负重又不设限，`ResolveTransfer` 不可能在这一步拒绝。所以改成验证失败的丢弃不会白占容器号，回滚分支作为防御保留在代码里。
 
 **Verification**
 
 - 运行 `QInventoryDropTests`。
 - 运行完整 EditMode 测试。
 
+实测：7 个用例全过，全量 `Tests.Inventory` 370 通过 / 0 失败。
+
 **Commit**
 
 ```text
-feat(inventory): add atomic item drop service
+feat(inventory): add atomic item drop
 ```
 
 ---
 
 ## Task 5：右侧动态物资箱载体
 
+已完成，与计划有一处出入：
+
+- 载体不走 Addressables 运行期加载，改在 `UIEquipmentPanel.prefab` 的容量区里放一只停用的
+  `Carrier_LootTemplate` 模板，运行期 `Instantiate` 它。好处是模板的布局、字号、格子尺寸和固定载体
+  天然同源，不用在脚本里补配置；代价是加箱样式要动预制体。
+- `UIInventoryCarrier` 表头名字改成三级回落：`DefaultName` 覆盖 > 容器 `DisplayName` > 预制体原文案，
+  动态载体没 `DefaultName`，于是直接显示箱子名。
+- 详情弹窗请求绑定在动态载体自己的 `Scope` 上，不借用面板 `Scope`；`preferLeft` 只对装备槽一侧成立，
+  物资箱继续右优先。
+
 **Files**
 
 - Modify: `Assets/Scripts/UI/Inventory/ViewModel/EquipmentPanelViewModel.cs`
 - Modify: `Assets/Scripts/UI/Inventory/View/UIEquipmentPanel.cs`
+- Modify: `Assets/Scripts/UI/Inventory/View/UIInventoryCarrier.cs`
+- Modify: `Assets/Prefabs/UI/Inventory/UIEquipmentPanel.prefab`
 - Modify: `Assets/Scripts/Tests/Inventory/Editor/QInventoryEquipmentPanelTests.cs`
 
 **Consumes**
@@ -373,10 +458,22 @@ feat(inventory): show dynamic loot container on equipment panel
 
 ## Task 6：物资箱实体与 F 交互
 
+**状态：已完成（2026-11-11）**
+
+与计划的出入：`Interact` 绑在 **`UI`** map（不是 `ShootingPlayer`），因为交互发生在面板打开时且不参与战斗输入；
+`Gas_Meter` / `Electric_Meter` 从容器清单里去掉（贴墙表箱，交互中心不正）；EditMode 不跑 `Awake`，
+`InteractionCenter` 回落到 `transform.position`；模板克隆后要先 `SetActive(true)` 再 `Show`；
+`RefreshLootCarrier` 加了 `EnsureLootCarrierVisible()` 自动滚动到物资箱；
+`Carrier_LootTemplate` 关闭 `Slot_Equipment` 并把 `Slot_Container.x` 归零。
+Play Mode 实测：靠近补给箱按 F，右侧显示「补给箱 15/24」与 7 件物品，格子完整落在视口内。
+
 **Files**
 
-- Add: `Assets/Scripts/Module/Inventory/World/Loot/LootBoxController.cs`
-- Add: `Assets/Scripts/Module/Inventory/World/Loot/LootInteractionController.cs`
+- Add: `Assets/Scripts/Module/Inventory/Interaction/LootBoxController.cs`
+- Add: `Assets/Scripts/Module/Inventory/Interaction/LootInteractableScanner.cs`
+- Add: `Assets/Scripts/Module/Inventory/Interaction/InteractableTargetSelector.cs`
+- Add: `Assets/Scripts/UI/Inventory/LootBoxInteraction.cs`
+- Add: `Assets/Scripts/Tests/Inventory/Editor/QInteractableTargetSelectorTests.cs`
 - Modify: `ProjectSettings/TagManager.asset`，新增 User Layer index 10 `LootInteractable`
 - Modify: `Assets/Config/Input/ShootingPlayerInputActions.inputactions`
 - Modify: `Assets/Scripts/Module/ShootingPlayer/Input/ShootingPlayerInputActions.cs`
@@ -410,8 +507,9 @@ public sealed class LootBoxController : MonoBehaviour
 **TDD**
 
 - `LootBoxController_StableEntityId_ReturnsSameSeed`。
-- `LootInteractionController_SelectsNearestInteractableBox`。
-- `LootInteractionController_NoBoxInRange_DoesNotOpenPanel`。
+- `InteractableTargetSelector_SelectsNearestBox`。
+- `InteractableTargetSelector_NoBoxInRange_ReturnsFalse`。
+- `LootBoxInteraction` 只在拿到目标时才打开面板，这条留给 Play Mode 手测。
 - 逻辑提取到纯方法或可注入查找器，避免 EditMode 依赖场景物理。
 
 **Implementation**
@@ -419,7 +517,7 @@ public sealed class LootBoxController : MonoBehaviour
 1. 不新建物资箱 Prefab，`LootBoxController` 以场景 Override 形式直接挂在 `TokyoStreet_DayEnvironment` 内的箱子实例上，交互体由 `Awake` 运行期自建，详见附录 B。
 2. 交互宿主运行期自动常驻，和 `UIInventoryHotkey` 一样不挂到玩家战斗对象上。
 3. Input Actions 的 `ShootingPlayer` Map 增加 `Interact = F`。
-4. `UIInventoryHotkey` 订阅 `Interact`，调用 `LootInteractionController`。
+4. `UIInventoryHotkey` 订阅 `Interact`，调用 `LootBoxInteraction`。
 5. 第一版只标附录 A 清单里的 8 个实例，不改 `Assets/Tokyo_Street` 下的商店预制体。
 
 **Verification**
@@ -438,6 +536,15 @@ feat(loot): add loot box interaction and F key
 
 ## Task 7：右键丢弃与左键双击丢弃
 
+**状态：已完成（2026-11-11）**
+
+与计划的出入：丢弃不写在视图模型里也不建 Service 层，改由普通类 `GroundDropInteraction`（模型原子丢弃 + 地面登记）
+承担，运行期宿主 `UIInventoryHotkey` 提供静态入口 `TryDropItemAtPlayer`，世界坐标始终不进 MVVM 层；
+`Btn_Drop` 是 `Btn_Split` 的克隆；双击判定器只记「上次点击的实例号 + 调用方传入的时刻」，第三击重新按首次算；
+双击丢弃成功后额外调 `InventoryViewModel.ClosePopups()` 关掉作废的详情。
+新增文件：`GroundDropInteraction.cs`、`QItemDropInteractionTests.cs`；改动文件：`UIInventoryHotkey.cs`、`InventoryViewModel.cs`。
+实测新增 9 个用例全过，`Tests.Inventory` 全量 434 总计 / 400 通过 / 0 失败。
+
 **Files**
 
 - Modify: `Assets/Prefabs/UI/Inventory/UIItemMenuPanel.prefab`
@@ -449,7 +556,6 @@ feat(loot): add loot box interaction and F key
 
 **Consumes**
 
-- Task 4 的 `InventoryDropService`
 - 现有 `UIItemMenuPanel` 的 `Panel_Menu` 布局
 - 现有 `UIInventoryItem.OnPointerClick`
 
@@ -466,10 +572,10 @@ public bool TryClick(int instanceId, float time, out bool isDoubleClick);
 行为：
 
 - 右键菜单新增 `Panel_Menu/Btn_Drop`，文案“丢弃”。
-- 点击丢弃关闭菜单并调用统一丢弃服务。
+- 点击丢弃关闭菜单，再走模型层的统一丢弃入口。
 - 左键第一次点击仍打开详情。
 - 同一物品在 `0.3s` 内再次左键点击触发丢弃。
-- 双击和右键丢弃调用同一个 `InventoryDropService`。
+- 双击和右键丢弃调用同一个 `TryDropItem`，落到地面后的登记也走同一条路。
 - 丢弃位置由运行时丢弃宿主提供，UI 不直接计算物理落点。
 
 **TDD**
@@ -508,9 +614,9 @@ feat(inventory): add context-menu and double-click drop
 
 **Files**
 
-- Add: `Assets/Scripts/Module/Inventory/World/Ground/GroundItemView.cs`
-- Add: `Assets/Scripts/Module/Inventory/World/Ground/GroundItemRenderer.cs`
-- Add: `Assets/Prefabs/World/Ground/GroundItemView.prefab`
+- Add: `Assets/Scripts/Module/Inventory/Presentation/GroundItemView.cs`
+- Add: `Assets/Scripts/UI/Inventory/GroundItemBinders.cs`
+- Add: `Assets/Prefabs/Loot/GroundItemView.prefab`
 - Modify: `Assets/Scripts/UI/Inventory/InventoryModule.cs`
 - Modify: `Assets/Scenes/GameScene.unity`
 
@@ -525,16 +631,15 @@ feat(inventory): add context-menu and double-click drop
 **Produces**
 
 ```csharp
-public sealed class GroundItemRenderer : MonoBehaviour
-{
-    public void Render(GroundItemVO vo);
-}
-
 public sealed class GroundItemView : MonoBehaviour
 {
     public string GroundItemId { get; }
+    public void Render(GroundItemVO vo, Sprite icon, GameObject iconPrefab);
 }
 ```
+
+渲染器不再单独成类：出生、billboard、抛物线、弹跳都是同一只视图的表现状态，拆开会逼着两边同步同一份
+`GroundItemId`。图标与世界预制体由 `GroundItemBinders` 从 Assembly-CSharp 侧注入。
 
 行为：
 
@@ -570,9 +675,9 @@ feat(inventory): render dropped items in world
 
 **Files**
 
-- Add: `Assets/Scripts/UI/Inventory/View/UINearbyGroundItemsPanel.cs`
-- Add: `Assets/Scripts/UI/Inventory/ViewModel/NearbyGroundItemsViewModel.cs`
-- Add: `Assets/Prefabs/UI/Inventory/UINearbyGroundItemsPanel.prefab`
+- Add: `Assets/Scripts/UI/Inventory/View/UIGroundItemPanel.cs`
+- Add: `Assets/Scripts/UI/Inventory/ViewModel/GroundItemPanelViewModel.cs`
+- Add: `Assets/Prefabs/UI/Inventory/UIGroundItemPanel.prefab`
 - Modify: `Assets/Scripts/UI/Inventory/InventoryModule.cs`
 - Modify: `Assets/Scripts/UI/Inventory/UIInventoryHotkey.cs`
 - Modify: `Assets/Config/Input/ShootingPlayerInputActions.inputactions`
@@ -608,8 +713,8 @@ public bool CanOpenNearbyList { get; }
 
 **TDD**
 
-1. `NearbyGroundItemsViewModel_Refresh_ReturnsOnlyItemsInRadius`。
-2. `NearbyGroundItemsViewModel_Refresh_SortsByDistance`。
+1. `GroundItemPanelViewModel_Refresh_ReturnsOnlyItemsInRadius`。
+2. `GroundItemPanelViewModel_Refresh_SortsByDistance`。
 3. `UIInventoryHotkey_InventoryOpen_BlocksNearbyList`。
 4. `UIInventoryHotkey_InventoryClosed_AllowsNearbyList`。
 5. 先运行测试，确认 API 不存在。
@@ -642,9 +747,9 @@ feat(inventory): add nearby ground item list on H
 
 **Files**
 
-- Modify: `Assets/Prefabs/World/Ground/GroundItemView.prefab`
-- Modify: `Assets/Scripts/Module/Inventory/World/Ground/GroundItemView.cs`
-- Modify: `Assets/Scripts/Module/Inventory/World/Ground/GroundItemRenderer.cs`
+- Modify: `Assets/Prefabs/Loot/GroundItemView.prefab`
+- Modify: `Assets/Scripts/Module/Inventory/Presentation/GroundItemView.cs`
+- Modify: `Assets/Scripts/UI/Inventory/GroundItemBinders.cs`
 
 **Consumes**
 
@@ -722,7 +827,7 @@ docs: archive loot and drop closed loop
 1. Task 1：运行时容器分配
 2. Task 2：物资箱实体隔离
 3. Task 3：地面物品模型
-4. Task 4：原子丢弃服务
+4. Task 4：原子丢弃
 5. Task 5：右侧动态物资箱
 6. Task 6：物资箱实体与 F 交互
 7. Task 7：右键与双击丢弃

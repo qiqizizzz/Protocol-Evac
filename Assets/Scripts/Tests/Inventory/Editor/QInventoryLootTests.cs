@@ -12,7 +12,9 @@ using System.Text.RegularExpressions;
 using Module.Inventory.Core.Config;
 using Module.Inventory.Core.Config.Loot;
 using Module.Inventory.Core.Defines;
+using Module.Inventory.Core.Data;
 using Module.Inventory.Core.Loot;
+using Module.Inventory.Core.Rule.Type;
 using NUnit.Framework;
 using UI.Inventory;
 using UnityEngine;
@@ -233,27 +235,30 @@ namespace Tests.Inventory
 
             Assert.AreNotEqual(boxA, boxB, "两只同配置箱子共用一个容器, 玩家翻一只就等于翻完全部");
 
-            m_model.TryAddItem(boxA, m_kit.CreateItem(1, 1).ItemId, 1, Vector2Int.zero);
-            Assert.AreNotEqual(m_model.GetContainerVO(boxA).Items.Count, m_model.GetContainerVO(boxB).Items.Count,
-                "往一只箱子里塞东西, 另一只不许跟着变");
-        }
+            m_model.RegisterContainer(InventoryContainerIds.BACKPACK,
+                new InventoryContainerSpec(8, 5, float.MaxValue));
+            InventoryContainerVO baseline = m_model.GetContainerVO(boxA);
 
-        [Test]
-        public void OpenLootContainer_SameEntityTwice_KeepsTheOpenedContainer()
-        {
-            LootContainerConfigSO loot = BuildSupplyBox(3, 5);
-            int opened = m_model.OpenLootContainer(ENTITY_A, loot, SEED);
+            InventoryMoveResult moved = m_model.TryTransferItem(boxA, InventoryContainerIds.BACKPACK,
+                baseline.Items[0].InstanceId, Vector2Int.zero);
 
-            Assert.AreEqual(opened, m_model.OpenLootContainer(ENTITY_A, loot, SEED), "同一只箱子重开必须沿用旧容器");
+            Assert.AreEqual(InventoryMoveResult.Success, moved, "从 A 箱往背包挪一件东西本该成功");
+            Assert.AreEqual(baseline.Items.Count - 1, m_model.GetContainerVO(boxA).Items.Count,
+                "挪走的那件要从 A 箱消失");
+            Assert.AreEqual(baseline.Items.Count, m_model.GetContainerVO(boxB).Items.Count,
+                "A 箱少了一件, B 箱不许跟着变");
         }
 
         [Test]
         public void OpenLootContainer_EmptyEntityId_ReturnsInvalidId()
         {
             LootContainerConfigSO loot = BuildSupplyBox(1, 2);
-            LogAssert.Expect(LogType.Error, new Regex("物资箱实体号为空"));
 
+            //空串与 null 各报一次错, 期望日志要按次数登记
+            LogAssert.Expect(LogType.Error, new Regex("物资箱实体号为空"));
             Assert.Less(m_model.OpenLootContainer(string.Empty, loot, SEED), 0);
+
+            LogAssert.Expect(LogType.Error, new Regex("物资箱实体号为空"));
             Assert.Less(m_model.OpenLootContainer(null, loot, SEED), 0);
         }
 

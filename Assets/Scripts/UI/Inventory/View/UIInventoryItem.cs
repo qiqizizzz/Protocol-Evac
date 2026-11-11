@@ -60,6 +60,7 @@ namespace UI.Inventory.View
         private Vector2 m_dragPointerPosition; // 指针屏幕坐标
         private RectTransform m_hoverLayer; // 悬停容器的物品层, 为空表示指针不在任何网格上
         private UIInventoryCarrier m_hoverCarrier; // 悬停容器载体, 为空表示指针不在任何网格上
+        private readonly DoubleClickDetector m_doubleClick = new DoubleClickDetector(); // 左键双击丢弃判定
         private Vector2 m_hoverCell; // 悬停容器的单元格边长
         private Vector2 m_hoverSpacing; // 悬停容器的单元格间距
         private bool m_hoverIsEquipSlot; // 悬停容器是否单格装备槽
@@ -116,6 +117,8 @@ namespace UI.Inventory.View
         {
             m_cellSize = cellSize;
             m_cellSpacing = cellSpacing;
+        // 视图复用给别的物品时旧的点击配对作废, 否则跨物品可能被误判成双击
+        if (InstanceId != item.InstanceId) m_doubleClick.Reset();
             InstanceId = item.InstanceId;
 
             m_origin = item.Origin;
@@ -197,12 +200,20 @@ namespace UI.Inventory.View
         }
 
         #region UI事件
-        // 左键打开详情, 右键打开操作菜单, 中键不响应
+        // 左键单击打开详情, 左键双击丢弃, 右键打开操作菜单, 中键不响应
         public void OnPointerClick(PointerEventData eventData)
         {
             switch (eventData.button)
             {
                 case PointerEventData.InputButton.Left:
+                    // 双击直接丢弃, 不再打开详情; 物品已离开格子, 浮层数据作废, 这里一并收起
+                    if (m_doubleClick.TryClick(InstanceId, Time.time, out bool isDoubleClick) && isDoubleClick)
+                    {
+                        if (UIInventoryHotkey.TryDropItemAtPlayer(m_viewModel.ContainerId, InstanceId))
+                            m_viewModel.ClosePopups();
+                        break;
+                    }
+
                     m_viewModel.InteractAt(m_origin);
                     break;
                 case PointerEventData.InputButton.Right:

@@ -32,6 +32,9 @@ namespace UI.Inventory
         //物资箱不设独立负重, 负重结算归角色整体
         private const float LOOT_WEIGHT_LIMIT = float.MaxValue;
 
+        //丢弃物临时容器的显示名, 载体表头与捡回提示都读它
+        private const string DROP_CONTAINER_NAME = "地面";
+
         //换尺寸复位内容时的落位顺序: 行优先, 让同一批内容每次都按同样次序复原
         private static readonly Comparison<InventoryItemPlacement> m_placementOrder = ComparePlacementRowFirst;
 
@@ -296,6 +299,43 @@ namespace UI.Inventory
             InventoryRotation preferredRotation)
         {
             return TransferItem(sourceContainerId, targetContainerId, instanceId, cell, preferredRotation, out _);
+        }
+
+        /// <summary>
+        /// 丢弃: 把整件物品连堆带朝向挪进一只按实际占格新建的地面容器, 失败时源容器分毫不动
+        /// </summary>
+        /// <param name="sourceContainerId">物品当前所在容器号</param>
+        /// <param name="instanceId">要丢弃的物品实例号</param>
+        /// <param name="groundContainerId">新建的地面容器号, 失败时为 -1</param>
+        public InventoryMoveResult TryDropItem(int sourceContainerId, int instanceId, out int groundContainerId)
+        {
+            groundContainerId = INVALID_CONTAINER_ID;
+
+            if (!TryGetContainer(sourceContainerId, out InventoryContainer container))
+            {
+                QLog.Error($"丢弃失败, 容器未注册：{sourceContainerId}");
+                return InventoryMoveResult.None;
+            }
+
+            if (!TryGetPlacement(container, instanceId, out InventoryItemPlacement placement))
+                return InventoryMoveResult.SourceNotFound;
+
+            //地面容器按物品真实占格开, 装备槽里压成的单格不是物品本身体积
+            Vector2Int footprint = placement.Instance.Config.GetSizeAt(placement.Rotation);
+            int dropContainerId = CreateRuntimeContainer(new InventoryContainerSpec(footprint.x, footprint.y,
+                LOOT_WEIGHT_LIMIT, null, DROP_CONTAINER_NAME));
+            if (dropContainerId == INVALID_CONTAINER_ID) return InventoryMoveResult.None;
+
+            InventoryMoveResult result = TryTransferItem(sourceContainerId, dropContainerId, instanceId, Vector2Int.zero);
+            if (!result.IsSuccessOrSame())
+            {
+                //转移没成就把刚开的临时容器收回, 否则容器号会被一只空箱白占住
+                UnregisterContainer(dropContainerId);
+                return result;
+            }
+
+            groundContainerId = dropContainerId;
+            return result;
         }
 
         // 转移落点的共同实现: preferredRotation 为空时沿用物品当前朝向, 落点被同类物品占住时优先并堆

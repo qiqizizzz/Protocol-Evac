@@ -156,6 +156,9 @@ namespace UI.Inventory
             m_menuRequested.Fire();
         }
 
+        // 收起本容器的详情与菜单: 物品被丢弃后浮层里的数据已经作废
+        public void ClosePopups() => m_popupClosed.Fire();
+
         //旋转选中物品
         public void RotateSelectedItem()
         {

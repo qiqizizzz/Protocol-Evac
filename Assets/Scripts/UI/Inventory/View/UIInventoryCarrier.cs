@@ -54,7 +54,7 @@ namespace UI.Inventory.View
         private TMP_Text m_capacityText;
         private TMP_Text m_nameText;
 
-        private string m_fallbackName; //表头固定显示的槽位类型名
+        private string m_prefabName; //表头在预制体里本来写着的文案
 
         private RectTransform m_rect;
         private RectTransform m_gridRect;
@@ -145,7 +145,7 @@ namespace UI.Inventory.View
             m_lockIcon = transform.Find(LOCK_ICON_PATH)?.gameObject;
             m_nameText = transform.Find(NAME_PATH)?.GetComponent<TMP_Text>();
             m_capacityText = transform.Find(CAPACITY_PATH)?.GetComponent<TMP_Text>();
-            ResolveFallbackName();
+            ResolvePrefabName();
 
             SyncItemLayerToGrid();
         }
@@ -167,9 +167,7 @@ namespace UI.Inventory.View
             SyncItemViews(vo);
             RenderVectorIcon(vo);
             RenderLockIcon(vo);
-
-            if (m_nameText != null)
-                m_nameText.text = m_fallbackName;
+            RenderName(vo);
 
             if (m_capacityText != null)
                 m_capacityText.text = $"{vo.UsedCellCount}/{vo.CellCount}";
@@ -191,16 +189,24 @@ namespace UI.Inventory.View
             m_lockIcon.SetActive(vo.ContainerId == InventoryContainerIds.SAFEBOX_SLOT);
         }
 
-        //表头常驻名: 配了默认名就用它, 没配就沿用预制体里本来写着的文案
-        private void ResolveFallbackName()
+        //表头名优先用载体上写死的覆盖名, 其次跟随模型给的容器显示名, 动态物资箱就是靠这一路拿到箱名
+        private void RenderName(InventoryContainerVO vo)
         {
+            if (m_nameText == null) return;
+
             if (!string.IsNullOrEmpty(DefaultName))
             {
-                m_fallbackName = DefaultName;
+                m_nameText.text = DefaultName;
                 return;
             }
 
-            m_fallbackName = m_nameText != null ? m_nameText.text : string.Empty;
+            m_nameText.text = string.IsNullOrEmpty(vo.DisplayName) ? m_prefabName : vo.DisplayName;
+        }
+
+        //记下预制体原始文案, 供没有名字的快照回落
+        private void ResolvePrefabName()
+        {
+            m_prefabName = m_nameText != null ? m_nameText.text : string.Empty;
         }
 
         // 容量视图只显隐容器区域，避免连带隐藏独立装备槽

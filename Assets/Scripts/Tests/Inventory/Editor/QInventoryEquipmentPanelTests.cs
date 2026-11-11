@@ -1,17 +1,20 @@
 ﻿/*
  * ┌──────────────────────────────────┐
- * │  描    述: 战备面板视图模型测试, 覆盖子载体装配、表头名链路、按容器收敛与级联释放
+ * │  描    述: 战备面板视图模型测试, 覆盖子载体装配、动态物资箱载体、表头名链路、按容器收敛与级联释放
  * │  类    名: QInventoryEquipmentPanelTests.cs
  * │  创    建: By qiqizizzz
  * └──────────────────────────────────┘
  */
 
+using System;
+using System.Text.RegularExpressions;
 using Module.Inventory.Core.Data;
 using Module.Inventory.Core.Defines;
 using Module.Inventory.Core.Rule.Type;
 using NUnit.Framework;
 using UI.Inventory;
 using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace Tests.Inventory
 {
@@ -27,11 +30,15 @@ namespace Tests.Inventory
         private InventoryModel m_model;
         private EquipmentPanelViewModel m_viewModel;
         private int[] m_containerIds;
+        private int m_lootChangedCount;
+        private IDisposable m_lootChangedSubscription;
 
         [SetUp]
         public void SetUp()
         {
             m_kit = new QInventoryTestKit();
+            // 用例夹具复用同一个实例, 计数器必须每次归零
+            m_lootChangedCount = 0;
             m_model = new InventoryModel(m_kit.CreateInventoryConfig());
             m_model.OnRegister();
 
@@ -46,6 +53,7 @@ namespace Tests.Inventory
 
             m_viewModel = new EquipmentPanelViewModel(m_model, m_containerIds);
             m_viewModel.OnBind();
+            m_lootChangedSubscription = m_viewModel.LootContainerChanged.Subscribe(() => m_lootChangedCount++);
 
             // 真实流程里子 VM 由各自载体的作用域绑定, 这里逐个补上等价于面板摆好了四张载体
             for (int i = 0; i < m_viewModel.ContainerCount; i++)
@@ -55,6 +63,12 @@ namespace Tests.Inventory
         [TearDown]
         public void TearDown()
         {
+            if (m_lootChangedSubscription != null)
+            {
+                m_lootChangedSubscription.Dispose();
+                m_lootChangedSubscription = null;
+            }
+
             for (int i = 0; i < m_viewModel.ContainerCount; i++)
                 m_viewModel.GetContainer(i).OnUnbind();
 
@@ -276,6 +290,133 @@ namespace Tests.Inventory
             // 面板收尸后模型再变化, 子 VM 若没退订就会对着已释放的属性写入并报错
             Assert.AreEqual(InventoryMoveResult.Success, m_model.TryAddItem(m_containerIds[0], itemId, 1, Vector2Int.zero));
             Assert.AreEqual(1, m_model.GetContainerVO(m_containerIds[0]).Items.Count);
+        }
+        #endregion
+
+        #region 右侧动态物资箱载体
+        [Test]
+        public void OpenLootContainer_BuildsDynamicChildOutsideTheFixedCarriers()
+        {
+            int lootContainerId = RegisterLootContainer("便利店纸箱", 3, 2);
+            Assert.IsNull(m_viewModel.LootContainer, "没开箱时不该有动态载体");
+
+            m_viewModel.OpenLootContainer(lootContainerId);
+            // 真实流程里子 VM 由动态载体的作用域绑定, 绑定才把快照拉起来
+            m_viewModel.LootContainer.OnBind();
+
+            Assert.IsNotNull(m_viewModel.LootContainer);
+            Assert.AreEqual(lootContainerId, m_viewModel.LootContainer.ContainerId);
+            Assert.AreEqual(SLOT_COUNT, m_viewModel.ContainerCount, "动态载体不许挤进固定数组");
+            Assert.AreEqual("便利店纸箱", m_viewModel.LootContainer.Snapshot.Value.DisplayName);
+            Assert.AreEqual(6, m_viewModel.LootContainer.Snapshot.Value.CellCount);
+            Assert.AreEqual(1, m_lootChangedCount, "开出一只箱子该通知视图一次");
+        }
+
+        [Test]
+        public void OpenLootContainer_SameContainerTwice_KeepsTheSameChildViewModel()
+        {
+            int lootContainerId = RegisterLootContainer("重复开箱", 2, 2);
+            m_viewModel.OpenLootContainer(lootContainerId);
+            InventoryViewModel first = m_viewModel.LootContainer;
+
+            m_viewModel.OpenLootContainer(lootContainerId);
+
+            Assert.AreSame(first, m_viewModel.LootContainer, "同一只箱子重复打开不该重建视图模型");
+            Assert.IsFalse(first.IsDisposed);
+            Assert.AreEqual(1, m_lootChangedCount, "重复打开不该再通知视图");
+        }
+
+        [Test]
+        public void OpenLootContainer_SwitchContainer_DisposesPreviousChild()
+        {
+            int firstContainerId = RegisterLootContainer("第一只", 2, 1);
+            int secondContainerId = RegisterLootContainer("第二只", 2, 1);
+            m_viewModel.OpenLootContainer(firstContainerId);
+            InventoryViewModel previous = m_viewModel.LootContainer;
+
+            m_viewModel.OpenLootContainer(secondContainerId);
+
+            Assert.IsTrue(previous.IsDisposed, "换箱子时旧视图模型必须收干净");
+            Assert.AreEqual(secondContainerId, m_viewModel.LootContainer.ContainerId);
+            Assert.AreEqual(2, m_lootChangedCount);
+        }
+
+        [Test]
+        public void CloseLootContainer_ClearsChildButKeepsModelContainer()
+        {
+            int lootContainerId = RegisterLootContainer("关箱留货", 2, 2);
+            m_viewModel.OpenLootContainer(lootContainerId);
+            m_viewModel.LootContainer.OnBind();
+
+            int itemId = m_kit.CreateItem(1, 1).ItemId;
+            Assert.AreEqual(InventoryMoveResult.Success, m_model.TryAddItemAuto(lootContainerId, itemId, 1));
+
+            m_viewModel.CloseLootContainer();
+
+            Assert.IsNull(m_viewModel.LootContainer);
+            Assert.AreEqual(2, m_lootChangedCount, "开与关各通知视图一次");
+            Assert.IsTrue(m_model.IsContainerRegistered(lootContainerId), "关箱只是收界面, 不该注销容器");
+            Assert.AreEqual(1, m_model.GetContainerVO(lootContainerId).Items.Count, "箱内物品必须留在模型里");
+        }
+
+        [Test]
+        public void CloseLootContainer_WhenNothingOpen_ChangesNothing()
+        {
+            m_viewModel.CloseLootContainer();
+
+            Assert.IsNull(m_viewModel.LootContainer);
+            Assert.AreEqual(0, m_lootChangedCount, "没开箱时关闭不该广播");
+        }
+
+        [Test]
+        public void CloseLootContainer_DropsDragSourceOwnedByTheLootChild()
+        {
+            int lootContainerId = RegisterLootContainer("拖拽收场", 2, 1);
+            m_viewModel.OpenLootContainer(lootContainerId);
+            m_viewModel.LootContainer.OnBind();
+            m_viewModel.NotifyDragBegan(m_viewModel.LootContainer);
+            Assert.AreSame(m_viewModel.LootContainer, m_viewModel.DragSource);
+
+            m_viewModel.CloseLootContainer();
+
+            Assert.IsNull(m_viewModel.DragSource, "旧载体收掉后不能再被当成拖拽来源");
+        }
+
+        [Test]
+        public void OpenLootContainer_UnregisteredContainer_LogsErrorAndOpensNothing()
+        {
+            LogAssert.Expect(LogType.Error, new Regex("打开物资箱载体失败, 容器未注册"));
+
+            m_viewModel.OpenLootContainer(m_kit.NewContainerId());
+
+            Assert.IsNull(m_viewModel.LootContainer);
+            Assert.AreEqual(0, m_lootChangedCount);
+        }
+
+        [Test]
+        public void Dispose_OfPanel_ReleasesLootChildAndKeepsModelContainer()
+        {
+            int lootContainerId = RegisterLootContainer("面板收场", 2, 1);
+            m_viewModel.OpenLootContainer(lootContainerId);
+            m_viewModel.LootContainer.OnBind();
+            InventoryViewModel lootChild = m_viewModel.LootContainer;
+
+            m_viewModel.OnUnbind();
+            m_viewModel.OnDispose();
+            m_viewModel.Dispose();
+
+            Assert.IsTrue(lootChild.IsDisposed, "面板收尸要连动态载体的子视图模型一起收");
+            Assert.IsTrue(m_model.IsContainerRegistered(lootContainerId), "面板销毁不该注销物资箱容器");
+        }
+
+        // 注册一只只在本用例内有效的物资箱容器, 返回它的容器号
+        private int RegisterLootContainer(string displayName, int width, int height)
+        {
+            int containerId = m_kit.NewContainerId();
+            m_model.RegisterContainer(containerId,
+                new InventoryContainerSpec(width, height, float.MaxValue, null, displayName));
+
+            return containerId;
         }
         #endregion
 

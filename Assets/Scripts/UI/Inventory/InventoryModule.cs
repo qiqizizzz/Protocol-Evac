@@ -36,6 +36,8 @@ namespace UI.Inventory
             }
 
             IInventoryModel model = root.Models.Register<IInventoryModel>(new InventoryModel(config));
+            root.Models.Register<IGroundItemModel>(new GroundItemModel());
+
             config.RegisterItems();
             ApplyLoadout(model, config.Loadout);
             SeedDemoItems(model);

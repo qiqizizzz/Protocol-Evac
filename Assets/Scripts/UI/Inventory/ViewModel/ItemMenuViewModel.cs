@@ -1,6 +1,6 @@
 /*
 * ┌──────────────────────────────────┐
-* │  描    述: 物品右键菜单视图模型, 汇总旋转与拆分两项操作的可用性并转发操作请求
+* │  描    述: 物品右键菜单视图模型, 汇总旋转拆分丢弃的可用性并转发操作请求
 * │  类    名: ItemMenuViewModel.cs
 * │  创    建: By qiqizizzz
 * └──────────────────────────────────┘
@@ -22,8 +22,10 @@ namespace UI.Inventory
 
         public IReadOnlyReactiveProperty<bool> CanRotate => m_canRotate;
         public IReadOnlyReactiveProperty<bool> CanSplit => m_canSplit;
+        public IReadOnlyReactiveProperty<bool> CanDrop => m_canDrop;
         public ISignal Dismissed => m_dismissed;
         public ISignal SplitRequested => m_splitRequested;
+        public ISignal DropRequested => m_dropRequested;
 
         // 拆分弹窗沿用菜单当前锁定的操作对象
         public int TargetContainerId => m_containerId;
@@ -32,8 +34,10 @@ namespace UI.Inventory
         private readonly IInventoryModel m_model;
         private readonly ReactiveProperty<bool> m_canRotate;
         private readonly ReactiveProperty<bool> m_canSplit;
+        private readonly ReactiveProperty<bool> m_canDrop;
         private readonly Signal m_dismissed;
         private readonly Signal m_splitRequested;
+        private readonly Signal m_dropRequested;
 
         private int m_containerId;
         private int m_instanceId = NO_ITEM;
@@ -48,8 +52,10 @@ namespace UI.Inventory
 
             m_canRotate = CreateProperty(false);
             m_canSplit = CreateProperty(false);
+            m_canDrop = CreateProperty(false);
             m_dismissed = CreateSignal();
             m_splitRequested = CreateSignal();
+            m_dropRequested = CreateSignal();
         }
 
         #region Public Function
@@ -87,18 +93,30 @@ namespace UI.Inventory
             m_splitRequested.Fire();
             m_dismissed.Fire();
         }
+
+        // 请求丢弃当前物品: 落点与登记都不在视图模型里, 交给运行期宿主, 菜单这里只收起
+        public void Drop()
+        {
+            if (m_instanceId == NO_ITEM) return;
+
+            m_dropRequested.Fire();
+            m_dismissed.Fire();
+        }
         #endregion
 
         #region Private Function
-        // 一次查询同时刷新旋转与拆分的可用性, 避免重复走容器与配置表
+        // 一次查询同时刷新三项操作的可用性, 避免重复走容器与配置表
         private void RefreshActions()
         {
             bool canRotate = false;
             bool canSplit = false;
+            bool canDrop = false;
 
             if (m_model.IsContainerRegistered(m_containerId) &&
                 m_model.GetContainerVO(m_containerId).TryGetItem(m_instanceId, out InventoryItemVO item))
             {
+                canDrop = true;
+
                 if (ItemRegistry.TryGet(item.ItemId, out InventoryItemConfigSO config))
                     canRotate = config.CanRotate;
 
@@ -108,6 +126,7 @@ namespace UI.Inventory
 
             m_canRotate.Set(canRotate);
             m_canSplit.Set(canSplit);
+            m_canDrop.Set(canDrop);
         }
         #endregion
     }
