@@ -200,17 +200,24 @@ namespace UI.Inventory.View
         }
 
         #region UI事件
-        // 左键单击打开详情, 左键双击丢弃, 右键打开操作菜单, 中键不响应
+        // 左键单击打开详情, 左键双击收纳或丢弃, 右键打开操作菜单, 中键不响应
         public void OnPointerClick(PointerEventData eventData)
         {
             switch (eventData.button)
             {
                 case PointerEventData.InputButton.Left:
-                    // 双击直接丢弃, 不再打开详情; 物品已离开格子, 浮层数据作废, 这里一并收起
+                    // 浮层先收起再动手: 收走最后一件会把整张开箱载体连同它的视图模型一起销毁,
+                    // 事后再收就打在已释放的信号上
                     if (m_doubleClick.TryClick(InstanceId, Time.time, out bool isDoubleClick) && isDoubleClick)
                     {
-                        if (UIInventoryHotkey.TryDropItemAtPlayer(m_viewModel.ContainerId, InstanceId))
-                            m_viewModel.ClosePopups();
+                        m_viewModel.ClosePopups();
+
+                        // 开箱载体里的物品是"收进背包", 玩家自己身上的才是"丢到地面"
+                        if (m_viewModel.IsLootContainer)
+                            m_viewModel.TryQuickMoveToOwnContainer(InstanceId);
+                        else
+                            UIInventoryHotkey.TryDropItemAtPlayer(m_viewModel.ContainerId, InstanceId);
+
                         break;
                     }
 

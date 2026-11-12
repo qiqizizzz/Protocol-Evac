@@ -73,6 +73,13 @@ namespace Module.Inventory.Core.Defines
             RIG, POCKETS, BACKPACK, SAFEBOX, CHESTRIG_SLOT, BACKPACK_SLOT, SAFEBOX_SLOT
         };
 
+        //双击快速收纳的候选容器, 按胸挂、口袋、背包的顺序找第一块空位
+        //安全箱要玩家亲手拖, 不参与自动收纳; 装备槽同理, 自动穿戴是另一条链路
+        public static readonly int[] QUICK_STOW_CONTAINER_IDS =
+        {
+            RIG, POCKETS, BACKPACK
+        };
+
         /// <summary>
         /// 容器号反查装备槽部位, 非装备槽返回 false
         /// </summary>

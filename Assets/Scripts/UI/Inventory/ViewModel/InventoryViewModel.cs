@@ -42,6 +42,8 @@ namespace UI.Inventory
         public InventoryRotation DragRotation => m_dragRotation;
         public int ContainerId => m_containerId;
         public bool IsDragging => m_dragInstanceId != NO_DRAG;
+        // 是否为开箱载体(地面垃圾堆 / 物资箱), 这类容器里的物品双击是收进背包而不是丢回地面
+        public bool IsLootContainer => m_owner != null && ReferenceEquals(m_owner.LootContainer, this);
         
         private readonly IInventoryModel m_model;
         private readonly int m_containerId;
@@ -234,6 +236,16 @@ namespace UI.Inventory
             else SetHint(ToHintKind(result));
 
             m_owner?.NotifyDragEnded(this);
+        }
+
+        // 双击开箱载体里的物品: 收进玩家自己的容量容器, 塞不下只给一次失败提示, 绝不落回地面
+        public bool TryQuickMoveToOwnContainer(int instanceId)
+        {
+            if (m_owner == null) return false;
+
+            InventoryMoveResult result = m_owner.TryStowLootItem(m_containerId, instanceId);
+            ApplyTransferResult(result);
+            return result.IsSuccessOrSame();
         }
 
         //取消当前选中

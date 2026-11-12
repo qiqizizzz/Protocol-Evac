@@ -98,8 +98,8 @@ namespace UI.Inventory
 
             if (!m_instance.m_dropInteraction.TryDrop(containerId, instanceId, origin)) return false;
 
-            // 从开箱载体上丢最后一件也会把箱子掏空, 顺手收掉右侧那张空壳
-            CloseLootCarrierIfEmptied(containerId);
+            // 从地面堆上丢东西会把堆掏空, 顺手收掉右侧那张空壳; 物资箱搬空仍然保留载体
+            CloseLootCarrierIfRemoved(containerId);
             return true;
         }
 
@@ -125,14 +125,14 @@ namespace UI.Inventory
         }
 
         // ==================== Private Function ====================
-        // 面板开着且右侧正显示这只容器时, 让它复核是否已被搬空
-        private static void CloseLootCarrierIfEmptied(int containerId)
+        // 面板开着且右侧正显示这只容器时, 让它复核容器是否已被收回
+        private static void CloseLootCarrierIfRemoved(int containerId)
         {
             MvvmRoot root = MvvmRoot.Instance;
             if (root == null) return;
             if (!root.Windows.TryGet(out UIEquipmentPanel panel) || !panel.IsVisible) return;
 
-            panel.ViewModel.CloseLootContainerIfExhausted(containerId);
+            panel.ViewModel.CloseLootContainerIfRemoved(containerId);
         }
 
         // 响应背包开关快捷键

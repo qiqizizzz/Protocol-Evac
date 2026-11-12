@@ -29,6 +29,7 @@ namespace UI.Inventory.View
         private const string LOCK_ICON_PATH = "Img_locked";
         private const string CAPACITY_PATH = "Layout_Header/Txt_Capacity";
         private const string NAME_PATH = "Layout_Header/Txt_Name";
+        private const string INFO_BUTTON_PATH = "Layout_Header/Btn_Info";
 
         private const int MIN_COLUMN_COUNT = 1;
         private const float HEADER_GAP = 8f; //表头底边到网格顶边的间距
@@ -57,6 +58,7 @@ namespace UI.Inventory.View
         private GridLayoutGroup m_gridLayout;
         private TMP_Text m_capacityText;
         private TMP_Text m_nameText;
+        private GameObject m_infoButton; //表头右侧的说明按钮, 独立装备槽没有该节点
 
         private string m_prefabName; //表头在预制体里本来写着的文案
 
@@ -149,6 +151,7 @@ namespace UI.Inventory.View
             m_lockIcon = transform.Find(LOCK_ICON_PATH)?.gameObject;
             m_nameText = transform.Find(NAME_PATH)?.GetComponent<TMP_Text>();
             m_capacityText = transform.Find(CAPACITY_PATH)?.GetComponent<TMP_Text>();
+            m_infoButton = transform.Find(INFO_BUTTON_PATH)?.gameObject;
             ResolvePrefabName();
 
             SyncItemLayerToGrid();
@@ -172,9 +175,23 @@ namespace UI.Inventory.View
             RenderVectorIcon(vo);
             RenderLockIcon(vo);
             RenderName(vo);
+            RenderHeaderTools(vo);
+        }
+
+        // 表头的容量与说明按钮只服务玩家自己的容器, 开箱载体只是借这块网格摆物品, 一律收起
+        private void RenderHeaderTools(InventoryContainerVO vo)
+        {
+            bool isLootContainer = ViewModel.IsLootContainer;
 
             if (m_capacityText != null)
-                m_capacityText.text = $"{vo.UsedCellCount}/{vo.CellCount}";
+            {
+                m_capacityText.gameObject.SetActive(!isLootContainer);
+                if (!isLootContainer)
+                    m_capacityText.text = $"{vo.UsedCellCount}/{vo.CellCount}";
+            }
+
+            if (m_infoButton != null)
+                m_infoButton.SetActive(!isLootContainer);
         }
 
         // 槽位有物品时隐藏矢量底图, 空槽显示占位图标

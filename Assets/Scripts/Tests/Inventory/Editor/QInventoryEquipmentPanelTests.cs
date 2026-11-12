@@ -8,6 +8,8 @@
 
 using System;
 using System.Text.RegularExpressions;
+using Module.Inventory.Core.Config;
+using Module.Inventory.Core.Config.Type;
 using Module.Inventory.Core.Data;
 using Module.Inventory.Core.Defines;
 using Module.Inventory.Core.Rule.Type;
@@ -394,9 +396,20 @@ namespace Tests.Inventory
         }
 
         [Test]
-        public void HandleCrossContainerDrop_LastItemLeavesLoot_ClosesTheCarrier()
+        public void LootContainer_FlaggedAsLootCarrier_FixedCarriersAreNot()
         {
-            int lootContainerId = RegisterLootContainer("搬空收场", 2, 2);
+            int lootContainerId = RegisterLootContainer("开箱标记", 2, 2);
+            m_viewModel.OpenLootContainer(lootContainerId);
+
+            Assert.IsTrue(m_viewModel.LootContainer.IsLootContainer, "右侧动态载体就是开箱载体");
+            for (int i = 0; i < m_viewModel.ContainerCount; i++)
+                Assert.IsFalse(m_viewModel.GetContainer(i).IsLootContainer, "玩家自己的载体不是开箱载体");
+        }
+
+        [Test]
+        public void HandleCrossContainerDrop_LastItemLeavesRegisteredLoot_KeepsTheCarrier()
+        {
+            int lootContainerId = RegisterLootContainer("搬空留壳", 2, 2);
             int itemId = m_kit.CreateItem(1, 1).ItemId;
             Assert.AreEqual(InventoryMoveResult.Success,
                 m_model.TryAddItem(lootContainerId, itemId, 1, Vector2Int.zero));
@@ -408,8 +421,8 @@ namespace Tests.Inventory
             loot.BeginDragAt(Vector2Int.zero);
             m_viewModel.GetContainer(0).PlaceDraggedItemAt(Vector2Int.zero);
 
-            Assert.IsNull(m_viewModel.LootContainer, "开箱载体被搬空后右侧不该留一张空壳网格");
-            Assert.AreEqual(2, m_lootChangedCount, "开一次箱收一次箱, 各广播一次");
+            Assert.IsNotNull(m_viewModel.LootContainer, "物资箱有容量, 搬空也只是空网格, 右侧那一列要留着");
+            Assert.AreEqual(1, m_lootChangedCount, "搬空不该多广播一次收箱");
             Assert.AreEqual(0, m_model.GetContainerVO(lootContainerId).Items.Count);
             Assert.AreEqual(1, m_model.GetContainerVO(m_containerIds[0]).Items.Count, "物品要落到固定载体里");
         }
@@ -438,7 +451,7 @@ namespace Tests.Inventory
         }
 
         [Test]
-        public void CloseLootContainerIfExhausted_OtherContainerOrStillFull_KeepsTheCarrier()
+        public void CloseLootContainerIfRemoved_EmptyButRegistered_KeepsTheCarrier()
         {
             int lootContainerId = RegisterLootContainer("还剩货", 2, 2);
             int itemId = m_kit.CreateItem(1, 1).ItemId;
@@ -453,12 +466,129 @@ namespace Tests.Inventory
                 m_model.TryDropItem(lootContainerId, instanceId, out int groundContainerId));
             Assert.AreEqual(1, m_model.GetContainerVO(lootContainerId).Items.Count, "箱里该剩最后一件");
 
-            // 别人家的容器空了不动右侧, 自己这只还剩一件也不收
-            m_viewModel.CloseLootContainerIfExhausted(m_containerIds[0]);
-            m_viewModel.CloseLootContainerIfExhausted(groundContainerId);
+            // 别人家的容器不动右侧, 自己这只还剩一件也不收
+            m_viewModel.CloseLootContainerIfRemoved(m_containerIds[0]);
+            m_viewModel.CloseLootContainerIfRemoved(groundContainerId);
 
             Assert.IsNotNull(m_viewModel.LootContainer);
             Assert.AreEqual(1, m_lootChangedCount, "箱里还有货就不该有多余的收箱广播");
+
+            // 最后一件也被搬走, 容器仍在册, 空网格照样留着
+            int lastInstanceId = m_model.GetContainerVO(lootContainerId).Items[0].InstanceId;
+            Assert.AreEqual(InventoryMoveResult.Success,
+                m_model.TryDropItem(lootContainerId, lastInstanceId, out int lastGroundContainerId));
+            m_viewModel.CloseLootContainerIfRemoved(lootContainerId);
+
+            Assert.IsNotNull(m_viewModel.LootContainer, "物资箱掏空后仍然在册, 载体不该跟着收");
+            Assert.AreEqual(1, m_lootChangedCount);
+        }
+
+        [Test]
+        public void CloseLootContainerIfRemoved_Unregistered_ClosesTheCarrier()
+        {
+            int lootContainerId = RegisterLootContainer("堆被收回", 2, 2);
+            int itemId = m_kit.CreateItem(1, 1).ItemId;
+            Assert.AreEqual(InventoryMoveResult.Success,
+                m_model.TryAddItem(lootContainerId, itemId, 1, Vector2Int.zero));
+
+            m_viewModel.OpenLootContainer(lootContainerId);
+            m_viewModel.LootContainer.OnBind();
+
+            int instanceId = m_model.GetContainerVO(lootContainerId).Items[0].InstanceId;
+            Assert.AreEqual(InventoryMoveResult.Success,
+                m_model.TryDropItem(lootContainerId, instanceId, out _));
+            // 地面堆掏空的同一帧会被收回注册, 右侧那列必须跟着收
+            m_model.UnregisterContainer(lootContainerId);
+
+            m_viewModel.CloseLootContainerIfRemoved(lootContainerId);
+
+            Assert.IsNull(m_viewModel.LootContainer, "容器已被收回, 右侧载体必须跟着收");
+            Assert.AreEqual(2, m_lootChangedCount);
+        }
+
+        [Test]
+        public void TryStowLootItem_TakesRigThenPocketsThenBackpackInOrder()
+        {
+            // 胸挂与背包的容量靠容器装备撑起, 口袋是先天容量, 和真实装配处一致
+            WearCapacityGear(InventoryContainerIds.CHESTRIG_SLOT, InventoryEquipSlot.ChestRig, 1, 1);
+            RegisterPocketContainer(1, 1);
+            WearCapacityGear(InventoryContainerIds.BACKPACK_SLOT, InventoryEquipSlot.Backpack, 1, 1);
+
+            int lootContainerId = RegisterLootContainer("依次收纳", 3, 1);
+            int itemId = m_kit.CreateItem(1, 1).ItemId;
+            Assert.AreEqual(InventoryMoveResult.Success, m_model.TryAddItem(lootContainerId, itemId, 1, new Vector2Int(0, 0)));
+            Assert.AreEqual(InventoryMoveResult.Success, m_model.TryAddItem(lootContainerId, itemId, 1, new Vector2Int(1, 0)));
+            Assert.AreEqual(InventoryMoveResult.Success, m_model.TryAddItem(lootContainerId, itemId, 1, new Vector2Int(2, 0)));
+
+            m_viewModel.OpenLootContainer(lootContainerId);
+            m_viewModel.LootContainer.OnBind();
+
+            int[] instanceIds = { m_model.GetContainerVO(lootContainerId).Items[0].InstanceId,
+                                  m_model.GetContainerVO(lootContainerId).Items[1].InstanceId,
+                                  m_model.GetContainerVO(lootContainerId).Items[2].InstanceId };
+
+            for (int i = 0; i < instanceIds.Length; i++)
+            {
+                Assert.AreEqual(InventoryMoveResult.Success, m_viewModel.TryStowLootItem(lootContainerId, instanceIds[i]),
+                    "第" + i + "件该收进玩家容器");
+            }
+
+            Assert.AreEqual(1, m_model.GetContainerVO(InventoryContainerIds.RIG).Items.Count, "第一件进胸挂");
+            Assert.AreEqual(1, m_model.GetContainerVO(InventoryContainerIds.POCKETS).Items.Count, "第二件进口袋");
+            Assert.AreEqual(1, m_model.GetContainerVO(InventoryContainerIds.BACKPACK).Items.Count, "第三件进背包");
+            Assert.AreEqual(0, m_model.GetContainerVO(lootContainerId).Items.Count);
+            Assert.IsNotNull(m_viewModel.LootContainer, "物资箱仍在册, 收纳完不该收掉右侧那一列");
+            Assert.AreEqual(1, m_lootChangedCount);
+        }
+
+        [Test]
+        public void TryStowLootItem_NoRoomAnywhere_KeepsItemInLoot()
+        {
+            WearCapacityGear(InventoryContainerIds.CHESTRIG_SLOT, InventoryEquipSlot.ChestRig, 1, 1);
+            RegisterPocketContainer(1, 1);
+            WearCapacityGear(InventoryContainerIds.BACKPACK_SLOT, InventoryEquipSlot.Backpack, 1, 1);
+
+            int fillerId = m_kit.CreateItem(1, 1).ItemId;
+            Assert.AreEqual(InventoryMoveResult.Success, m_model.TryAddItemAuto(InventoryContainerIds.RIG, fillerId, 1));
+            Assert.AreEqual(InventoryMoveResult.Success, m_model.TryAddItemAuto(InventoryContainerIds.POCKETS, fillerId, 1));
+            Assert.AreEqual(InventoryMoveResult.Success, m_model.TryAddItemAuto(InventoryContainerIds.BACKPACK, fillerId, 1));
+
+            int lootContainerId = RegisterLootContainer("塞不下", 2, 1);
+            int itemId = m_kit.CreateItem(1, 1).ItemId;
+            Assert.AreEqual(InventoryMoveResult.Success, m_model.TryAddItem(lootContainerId, itemId, 1, Vector2Int.zero));
+
+            m_viewModel.OpenLootContainer(lootContainerId);
+            InventoryViewModel loot = m_viewModel.LootContainer;
+            loot.OnBind();
+            int instanceId = m_model.GetContainerVO(lootContainerId).Items[0].InstanceId;
+
+            Assert.IsFalse(loot.TryQuickMoveToOwnContainer(instanceId),
+                "玩家容器全满时收纳失败, 但物品绝不能落回地面");
+
+            Assert.AreEqual(1, m_model.GetContainerVO(lootContainerId).Items.Count, "东西必须还留在箱里");
+            Assert.IsNotNull(m_viewModel.LootContainer);
+            Assert.IsFalse(loot.IsDragging, "收纳失败也要清掉拖拽身份, 否则下一次点击会串味");
+        }
+
+        [Test]
+        public void TryStowLootItem_SkipsUnregisteredCandidates()
+        {
+            // 只穿背包: 胸挂与口袋没撑起容量时不该报错, 直接跳到下一档
+            WearCapacityGear(InventoryContainerIds.BACKPACK_SLOT, InventoryEquipSlot.Backpack, 2, 1);
+            Assert.IsFalse(m_model.IsContainerRegistered(InventoryContainerIds.RIG), "没穿胸挂就没有胸挂容量");
+            Assert.IsFalse(m_model.IsContainerRegistered(InventoryContainerIds.POCKETS), "没配口袋底格就没有口袋容量");
+
+            int lootContainerId = RegisterLootContainer("只有背包", 2, 1);
+            int itemId = m_kit.CreateItem(1, 1).ItemId;
+            Assert.AreEqual(InventoryMoveResult.Success, m_model.TryAddItem(lootContainerId, itemId, 1, Vector2Int.zero));
+
+            m_viewModel.OpenLootContainer(lootContainerId);
+            InventoryViewModel loot = m_viewModel.LootContainer;
+            loot.OnBind();
+            int instanceId = m_model.GetContainerVO(lootContainerId).Items[0].InstanceId;
+
+            Assert.IsTrue(loot.TryQuickMoveToOwnContainer(instanceId), "没穿的档位跳过, 东西进背包");
+            Assert.AreEqual(1, m_model.GetContainerVO(InventoryContainerIds.BACKPACK).Items.Count);
         }
 
         [Test]
@@ -485,6 +615,23 @@ namespace Tests.Inventory
                 new InventoryContainerSpec(width, height, float.MaxValue, null, displayName));
 
             return containerId;
+        }
+
+        // 往装备槽塞一件容器装备, 模型顺势撑起它的容量容器: 卸下装备时容量会被收回, 所以收纳用例必须真穿
+        private void WearCapacityGear(int equipSlotId, InventoryEquipSlot role, int width, int height)
+        {
+            InventoryItemConfigSO gear = m_kit.CreateContainerItem(m_kit.CreateContainer(width, height),
+                equipSlot: role);
+
+            Assert.AreEqual(InventoryMoveResult.Success, m_model.TryAddItemAuto(equipSlotId, gear.ItemId, 1),
+                "容器装备穿戴失败：" + role);
+        }
+
+        // 口袋是先天常驻容量, 不经装备槽, 按规格直接注册
+        private void RegisterPocketContainer(int width, int height)
+        {
+            m_model.RegisterContainer(InventoryContainerIds.POCKETS,
+                new InventoryContainerSpec(width, height, float.MaxValue, null, "口袋"));
         }
         #endregion
 
