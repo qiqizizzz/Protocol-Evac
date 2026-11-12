@@ -18,6 +18,9 @@ namespace Module.Inventory.Interaction
         // 选择器用的判距中心, 交互体缺失时退回自身位置
         Vector3 InteractionCenter { get; }
 
+        // 遮挡采样用的世界包围盒
+        Bounds InteractionBounds { get; }
+
         // 配置齐备且还值得交互才返回 true
         bool CanInteract();
     }

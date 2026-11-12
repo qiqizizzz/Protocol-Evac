@@ -54,6 +54,10 @@ namespace Module.Inventory.Presentation
             ? m_interactTrigger.bounds.center
             : transform.position;
 
+        public Bounds InteractionBounds => m_interactTrigger != null
+            ? m_interactTrigger.bounds
+            : new Bounds(transform.position, Vector3.zero);
+
         // ==================== 生命周期 ====================
         private void Awake()
         {

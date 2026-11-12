@@ -39,6 +39,8 @@ namespace Module.Player.Core
         private const string VIEW_ROOT_PATH = "ViewRoot";
         private const string PLAYER_CAMERA_PATH = "ViewRoot/PlayerCamera";
         private const string MODEL_ROOT_MOTION_NODE_PATH = "Root";
+        private const float INTERACTION_ORIGIN_HEIGHT = 1.2f;
+        private const float MIN_FLAT_DIRECTION_SQR_MAGNITUDE = 0.0001f;
         #endregion
 
         #region 配置相关
@@ -96,6 +98,25 @@ namespace Module.Player.Core
 
         // 对外提供 GM 无敌状态的调试读取入口
         public bool IsGmInvincible => m_damageController != null && m_damageController.IsGmInvincible;
+
+        /// <summary>
+        /// 解析世界交互查询的胸口原点、相机水平朝向与遮挡层
+        /// </summary>
+        /// <param name="origin">玩家胸口高度的世界坐标</param>
+        /// <param name="forward">相机去掉俯仰后的水平朝向</param>
+        /// <param name="obstacleMask">墙体遮挡检测层</param>
+        public void ResolveInteractionQuery(out Vector3 origin, out Vector3 forward, out LayerMask obstacleMask)
+        {
+            origin = transform.position + Vector3.up * INTERACTION_ORIGIN_HEIGHT;
+
+            Vector3 cameraForward = m_playerCamera.transform.forward;
+            cameraForward.y = 0f;
+            forward = cameraForward.sqrMagnitude > MIN_FLAT_DIRECTION_SQR_MAGNITUDE
+                ? cameraForward.normalized
+                : Vector3.forward;
+
+            obstacleMask = Settings.ViewConfig.EnvironmentLayerMask;
+        }
         
         #region 生命周期
         private void Awake()

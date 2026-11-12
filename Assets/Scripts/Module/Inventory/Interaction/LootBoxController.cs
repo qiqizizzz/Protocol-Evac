@@ -40,6 +40,7 @@ namespace Module.Inventory.Interaction
         [SerializeField, Min(0f)] private float InteractRadiusValue = 1.2f;
 
         private Collider m_interactTrigger;
+        private Bounds m_visualBounds;
         private bool m_hasReportedConfig;
 
         // ==================== 属性 ====================
@@ -51,6 +52,11 @@ namespace Module.Inventory.Interaction
         public Vector3 InteractionCenter => m_interactTrigger != null
             ? m_interactTrigger.bounds.center
             : transform.position;
+
+        // 遮挡检测使用真实箱体范围, 不拿向外扩展的物理触发体虚增上沿
+        public Bounds InteractionBounds => m_interactTrigger != null
+            ? m_visualBounds
+            : new Bounds(transform.position, Vector3.zero);
 
         // ==================== 生命周期 ====================
         private void Awake()
@@ -151,6 +157,7 @@ namespace Module.Inventory.Interaction
         private void BuildInteractTrigger()
         {
             Bounds bounds = MergeRendererBounds();
+            m_visualBounds = bounds;
             bounds.Expand(InteractRadiusValue * 2f);
 
             GameObject triggerObject = new GameObject(INTERACT_TRIGGER_NAME);

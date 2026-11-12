@@ -8,6 +8,8 @@
 
 using Cysharp.Threading.Tasks;
 using Framework.QTower.MVVM.View;
+using Module.Inventory.Interaction;
+using Module.Inventory.Presentation;
 using Module.Player.Core;
 using Module.ShootingPlayer.Input;
 using UI.Inventory.View;
@@ -35,13 +37,24 @@ namespace UI.Inventory
         // 丢弃落点沿玩家身前推进的距离(米), 相机就在头顶, 丢在脚下的堆不在视野里
         private const float DROP_FORWARD_DISTANCE = 0.9f;
 
+        // 高亮扫描不跟着渲染帧跑, 远处容器状态用低频刷新已足够
+        private const float LOOT_HIGHLIGHT_SCAN_INTERVAL = 0.18f;
+
+        [SerializeField] private InteractionQueryConfig LootBoxQuery =
+            new InteractionQueryConfig(2.5f, 45f, 1.2f, 0.4f, 0.6f);
+
+        [Tooltip("物资箱可开启描边提示半径(米), 只影响视觉高亮, 不改变 F 交互范围")]
+        [SerializeField, Min(0f)] private float LootBoxHighlightDistance = 12f;
+
         private static UIInventoryHotkey m_instance;
         private ShootingPlayerInputActions m_inputActions;
         private LootBoxInteraction m_lootInteraction;
+        private LootBoxHighlightController m_lootHighlight;
         private GroundDropInteraction m_dropInteraction;
-        private Transform m_playerTransform;
+        private PlayerController m_playerController;
         private bool m_hasReportedMissingPlayer;
         private PanelOpenSource m_panelOpenSource;
+        private float m_nextLootHighlightScanTime;
 
         /// <summary>
         /// 场景加载后自建常驻宿主
@@ -60,6 +73,7 @@ namespace UI.Inventory
         {
             m_inputActions = new ShootingPlayerInputActions();
             m_lootInteraction = new LootBoxInteraction();
+            m_lootHighlight = new LootBoxHighlightController();
         }
 
         private void OnEnable()
@@ -71,8 +85,30 @@ namespace UI.Inventory
             m_inputActions.UI.Enable();
         }
 
+        private void Update()
+        {
+            if (Time.unscaledTime < m_nextLootHighlightScanTime) return;
+
+            m_nextLootHighlightScanTime = Time.unscaledTime + LOOT_HIGHLIGHT_SCAN_INTERVAL;
+            if (IsEquipmentPanelVisible())
+            {
+                m_lootHighlight.HideAll();
+                return;
+            }
+
+            if (!TryResolvePlayer(out PlayerController player))
+            {
+                m_lootHighlight.HideAll();
+                return;
+            }
+
+            player.ResolveInteractionQuery(out Vector3 origin, out Vector3 forward, out LayerMask obstacleMask);
+            m_lootHighlight.Refresh(origin, forward, LootBoxQuery, obstacleMask, LootBoxHighlightDistance);
+        }
+
         private void OnDisable()
         {
+            m_lootHighlight.HideAll();
             m_inputActions.UI.ToggleInventory.performed -= OnToggleInventory;
             m_inputActions.UI.Interact.performed -= OnInteract;
             m_inputActions.UI.InteractGroundPile.performed -= OnInteractGroundPile;
@@ -82,6 +118,7 @@ namespace UI.Inventory
 
         private void OnDestroy()
         {
+            m_lootHighlight.HideAll();
             m_inputActions.Dispose();
             if (m_instance == this) m_instance = null;
         }
@@ -104,7 +141,8 @@ namespace UI.Inventory
             if (!m_instance.TryResolvePlayerPosition(out Vector3 playerPos)) return false;
 
             // 统一往前推一段再落地, 关掉面板后转身就能看到自己丢的东西
-            Vector3 origin = playerPos + ResolveDropForward(m_instance.m_playerTransform) * DROP_FORWARD_DISTANCE;
+            Vector3 origin = playerPos + ResolveDropForward(m_instance.m_playerController.transform) *
+                DROP_FORWARD_DISTANCE;
 
             m_instance.m_dropInteraction ??= new GroundDropInteraction();
 
@@ -148,18 +186,27 @@ namespace UI.Inventory
             panel.ViewModel.CloseLootContainerIfRemoved(containerId);
         }
 
+        // 背包面板与独立交互面板都会遮住世界, 打开期间不再刷新描边
+        private static bool IsEquipmentPanelVisible()
+        {
+            MvvmRoot root = MvvmRoot.Instance;
+            return root != null && root.Windows.TryGet(out UIEquipmentPanel panel) && panel.IsVisible;
+        }
+
         // 响应背包开关快捷键
         private void OnToggleInventory(InputAction.CallbackContext context)
         {
             TogglePanel();
         }
 
-        // 响应通用交互快捷键, 原点用玩家位置
+        // 响应通用交互快捷键, 原点用玩家胸口, 朝向用相机水平前方
         private void OnInteract(InputAction.CallbackContext context)
         {
-            if (!TryResolvePlayerPosition(out Vector3 origin)) return;
+            if (!TryResolvePlayer(out PlayerController player)) return;
 
-            if (m_lootInteraction.TryInteract(origin))
+            player.ResolveInteractionQuery(out Vector3 origin, out Vector3 forward, out LayerMask obstacleMask);
+
+            if (m_lootInteraction.TryInteract(origin, forward, LootBoxQuery, obstacleMask))
                 m_panelOpenSource = PanelOpenSource.Interact;
         }
 
@@ -174,8 +221,9 @@ namespace UI.Inventory
                 return;
             }
 
-            if (!TryResolvePlayerPosition(out Vector3 origin)) return;
+            if (!TryResolvePlayer(out PlayerController player)) return;
 
+            Vector3 origin = player.transform.position;
             GroundPilePresenter.ReportNearby(origin);
             if (m_lootInteraction.TryInteractGroundPile(origin))
                 m_panelOpenSource = PanelOpenSource.GroundPile;
@@ -202,26 +250,40 @@ namespace UI.Inventory
         // 缓存玩家变换, 换射击玩家后只改这一处来源
         private bool TryResolvePlayerPosition(out Vector3 position)
         {
-            if (m_playerTransform == null)
+            if (!TryResolvePlayer(out PlayerController player))
             {
-                PlayerController player = Object.FindObjectOfType<PlayerController>();
-                if (player == null)
-                {
-                    if (!m_hasReportedMissingPlayer)
-                    {
-                        m_hasReportedMissingPlayer = true;
-                        QLog.Error("场景内找不到玩家, 搜刮交互无法定位原点");
-                    }
-
-                    position = default;
-                    return false;
-                }
-
-                m_playerTransform = player.transform;
+                position = default;
+                return false;
             }
 
-            position = m_playerTransform.position;
+            position = player.transform.position;
             return true;
+        }
+
+        // 缓存玩家控制器, 交互原点、相机朝向与丢弃方向都从同一实例取
+        private bool TryResolvePlayer(out PlayerController player)
+        {
+            if (m_playerController != null)
+            {
+                player = m_playerController;
+                return true;
+            }
+
+            m_playerController = Object.FindObjectOfType<PlayerController>();
+            if (m_playerController != null)
+            {
+                player = m_playerController;
+                return true;
+            }
+
+            if (!m_hasReportedMissingPlayer)
+            {
+                m_hasReportedMissingPlayer = true;
+                QLog.Error("场景内找不到玩家, 搜刮交互无法定位原点");
+            }
+
+            player = null;
+            return false;
         }
 
         // 取玩家水平朝向, 朝向退化到竖直时用世界前方兜底

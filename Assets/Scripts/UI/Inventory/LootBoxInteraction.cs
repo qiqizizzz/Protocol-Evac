@@ -23,20 +23,25 @@ namespace UI.Inventory
     /// </summary>
     public sealed class LootBoxInteraction
     {
+        private const float GROUND_PILE_SCAN_RADIUS = 8f;
+
         private readonly LootInteractableScanner m_scanner = new LootInteractableScanner();
 
         private bool m_hasValidatedBoxes;
 
         /// <summary>
-        /// 响应通用交互, 当前阶段从附近物资箱中打开最近的一只
+        /// 响应通用交互, 从距离、视角与视线都满足条件的物资箱中打开一只
         /// </summary>
-        /// <param name="origin">交互原点, 一般是玩家位置</param>
+        /// <param name="origin">交互原点, 一般是玩家胸口</param>
+        /// <param name="forward">相机水平朝向</param>
+        /// <param name="config">物资箱交互查询参数</param>
+        /// <param name="obstacleMask">墙体遮挡检测层</param>
         /// <returns>是否已接受本次打开请求</returns>
-        public bool TryInteract(Vector3 origin)
+        public bool TryInteract(Vector3 origin, Vector3 forward, InteractionQueryConfig config, LayerMask obstacleMask)
         {
             ValidateSceneBoxes();
 
-            ILootInteractable target = m_scanner.ScanNearest<LootBoxController>(origin);
+            ILootInteractable target = m_scanner.ScanBest<LootBoxController>(origin, forward, config, obstacleMask);
             if (target == null)
             {
                 QLog.Info($"附近没有物资箱, 原点 {origin}");
@@ -53,7 +58,7 @@ namespace UI.Inventory
         /// <returns>是否已接受本次打开请求</returns>
         public bool TryInteractGroundPile(Vector3 origin)
         {
-            ILootInteractable target = m_scanner.ScanNearest<GroundPileView>(origin);
+            ILootInteractable target = m_scanner.ScanNearest<GroundPileView>(origin, GROUND_PILE_SCAN_RADIUS);
             if (target == null) return false;
 
             return OpenInteractable(target);
