@@ -27,23 +27,17 @@ namespace Module.Inventory.Presentation
         }
 
         private const string OUTLINE_MATERIAL_RESOURCE_PATH = "Shaders/LootInteractableOutline";
+        private const string HIGHLIGHT_CONFIG_RESOURCE_PATH = "Config/Inventory/LootBoxHighlightConfig";
         private const string OUTLINE_NODE_PREFIX = "LootHighlightOutline";
-        private const float AVAILABLE_WIDTH = 0.012f;
-        private const float FOCUSED_WIDTH = 0.022f;
-        private const float AVAILABLE_PULSE_SPEED = 2.2f;
-        private const float FOCUSED_PULSE_SPEED = 5f;
-        private const float AVAILABLE_PULSE_AMOUNT = 0.06f;
-        private const float FOCUSED_PULSE_AMOUNT = 0.16f;
-
-        private static readonly Color S_AvailableColor = new Color(1f, 0.68f, 0.18f, 0.52f);
-        private static readonly Color S_FocusedColor = new Color(1f, 0.82f, 0.28f, 0.95f);
         private static readonly int S_OutlineColorId = Shader.PropertyToID("_OutlineColor");
         private static readonly int S_OutlineWidthId = Shader.PropertyToID("_OutlineWidth");
         private static readonly int S_PulseSpeedId = Shader.PropertyToID("_PulseSpeed");
         private static readonly int S_PulseAmountId = Shader.PropertyToID("_PulseAmount");
 
         private static Material s_outlineMaterial;
+        private static LootBoxHighlightConfigSO s_highlightConfig;
         private static bool s_hasReportedMaterial;
+        private static bool s_hasReportedConfig;
 
         private readonly List<MeshRenderer> m_sourceRenderers = new List<MeshRenderer>();
         private readonly List<MeshRenderer> m_outlineRenderers = new List<MeshRenderer>();
@@ -76,6 +70,9 @@ namespace Module.Inventory.Presentation
 
             Material material = ResolveOutlineMaterial();
             if (material == null) return;
+
+            LootBoxHighlightConfigSO config = ResolveHighlightConfig();
+            if (config == null) return;
 
             m_propertyBlock = new MaterialPropertyBlock();
             MeshRenderer[] sourceRenderers = GetComponentsInChildren<MeshRenderer>(true);
@@ -124,6 +121,9 @@ namespace Module.Inventory.Presentation
         {
             if (state == HighlightState.None) return;
 
+            LootBoxHighlightConfigSO config = ResolveHighlightConfig();
+            if (config == null) return;
+
             Color color;
             float width;
             float pulseSpeed;
@@ -131,17 +131,17 @@ namespace Module.Inventory.Presentation
 
             if (state == HighlightState.Focused)
             {
-                color = S_FocusedColor;
-                width = FOCUSED_WIDTH;
-                pulseSpeed = FOCUSED_PULSE_SPEED;
-                pulseAmount = FOCUSED_PULSE_AMOUNT;
+                color = config.FocusedColor;
+                width = config.FocusedWidth;
+                pulseSpeed = config.FocusedPulseSpeed;
+                pulseAmount = config.FocusedPulseAmount;
             }
             else
             {
-                color = S_AvailableColor;
-                width = AVAILABLE_WIDTH;
-                pulseSpeed = AVAILABLE_PULSE_SPEED;
-                pulseAmount = AVAILABLE_PULSE_AMOUNT;
+                color = config.AvailableColor;
+                width = config.AvailableWidth;
+                pulseSpeed = config.AvailablePulseSpeed;
+                pulseAmount = config.AvailablePulseAmount;
             }
 
             m_propertyBlock.Clear();
@@ -182,6 +182,19 @@ namespace Module.Inventory.Presentation
 
             s_hasReportedMaterial = true;
             QLog.Error($"物资箱高亮材质加载失败：Resources/{OUTLINE_MATERIAL_RESOURCE_PATH}");
+            return null;
+        }
+
+        // 首次加载高亮配置, 缺失时主动报错并让全部高亮保持关闭
+        private static LootBoxHighlightConfigSO ResolveHighlightConfig()
+        {
+            if (s_highlightConfig != null) return s_highlightConfig;
+
+            s_highlightConfig = Resources.Load<LootBoxHighlightConfigSO>(HIGHLIGHT_CONFIG_RESOURCE_PATH);
+            if (s_highlightConfig != null || s_hasReportedConfig) return s_highlightConfig;
+
+            s_hasReportedConfig = true;
+            QLog.Error($"物资箱高亮配置加载失败：Resources/{HIGHLIGHT_CONFIG_RESOURCE_PATH}");
             return null;
         }
     }

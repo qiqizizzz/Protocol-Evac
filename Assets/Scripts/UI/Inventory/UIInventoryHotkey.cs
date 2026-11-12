@@ -7,6 +7,8 @@
  */
 
 using Cysharp.Threading.Tasks;
+using Framework.QTower.Common.Defines;
+using Framework.QTower.Event;
 using Framework.QTower.MVVM.View;
 using Module.Inventory.Interaction;
 using Module.Inventory.Presentation;
@@ -53,6 +55,7 @@ namespace UI.Inventory
         private GroundDropInteraction m_dropInteraction;
         private PlayerController m_playerController;
         private bool m_hasReportedMissingPlayer;
+        private bool m_hasLootFocus;
         private PanelOpenSource m_panelOpenSource;
         private float m_nextLootHighlightScanTime;
 
@@ -93,22 +96,27 @@ namespace UI.Inventory
             if (IsEquipmentPanelVisible())
             {
                 m_lootHighlight.HideAll();
+                SetLootFocus(null);
                 return;
             }
 
             if (!TryResolvePlayer(out PlayerController player))
             {
                 m_lootHighlight.HideAll();
+                SetLootFocus(null);
                 return;
             }
 
             player.ResolveInteractionQuery(out Vector3 origin, out Vector3 forward, out LayerMask obstacleMask);
-            m_lootHighlight.Refresh(origin, forward, LootBoxQuery, obstacleMask, LootBoxHighlightDistance);
+            LootBoxController focused =
+                m_lootHighlight.Refresh(origin, forward, LootBoxQuery, obstacleMask, LootBoxHighlightDistance);
+            SetLootFocus(focused);
         }
 
         private void OnDisable()
         {
             m_lootHighlight.HideAll();
+            SetLootFocus(null);
             m_inputActions.UI.ToggleInventory.performed -= OnToggleInventory;
             m_inputActions.UI.Interact.performed -= OnInteract;
             m_inputActions.UI.InteractGroundPile.performed -= OnInteractGroundPile;
@@ -119,6 +127,7 @@ namespace UI.Inventory
         private void OnDestroy()
         {
             m_lootHighlight.HideAll();
+            SetLootFocus(null);
             m_inputActions.Dispose();
             if (m_instance == this) m_instance = null;
         }
@@ -284,6 +293,16 @@ namespace UI.Inventory
 
             player = null;
             return false;
+        }
+
+        // 仅在焦点布尔状态变化时发布, 避免准星每轮扫描都刷新事件
+        private void SetLootFocus(LootBoxController focused)
+        {
+            bool hasFocus = focused != null;
+            if (m_hasLootFocus == hasFocus) return;
+
+            m_hasLootFocus = hasFocus;
+            EventManager.PublishEvent(EventDefines.LootFocusStateChanged, hasFocus);
         }
 
         // 取玩家水平朝向, 朝向退化到竖直时用世界前方兜底

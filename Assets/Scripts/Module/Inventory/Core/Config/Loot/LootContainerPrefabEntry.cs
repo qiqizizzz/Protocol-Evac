@@ -1,0 +1,30 @@
+/*
+* ┌──────────────────────────────────┐
+* │  描    述: 物资箱预制体目录条目, 声明预制体是否可开启及对应掉落配置
+* │  类    名: LootContainerPrefabEntry.cs
+* │  创    建: By qiqizizzz
+* └──────────────────────────────────┘
+*/
+
+using System;
+using UnityEngine;
+
+namespace Module.Inventory.Core.Config.Loot
+{
+    [Serializable]
+    public sealed class LootContainerPrefabEntry
+    {
+        [Tooltip("物资箱外观预制体")]
+        [SerializeField] private GameObject PrefabValue;
+
+        [Tooltip("该预制体是否允许作为可搜刮物资箱生成")]
+        [SerializeField] private bool CanOpenValue = true;
+
+        [Tooltip("该物资箱使用的掉落配置")]
+        [SerializeField] private LootContainerConfigSO LootConfigValue;
+
+        public GameObject Prefab => PrefabValue;
+        public bool CanOpen => CanOpenValue;
+        public LootContainerConfigSO LootConfig => LootConfigValue;
+    }
+}

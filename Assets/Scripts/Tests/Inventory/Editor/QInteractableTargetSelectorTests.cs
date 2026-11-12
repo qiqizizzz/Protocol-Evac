@@ -363,7 +363,8 @@ namespace Tests.Inventory
             Physics.SyncTransforms();
 
             LootBoxHighlightController highlighter = new LootBoxHighlightController();
-            highlighter.Refresh(new Vector3(0f, 1f, 0f), Vector3.forward, CreateLootBoxQuery(), 0, 12f);
+            LootBoxController focusedBox =
+                highlighter.Refresh(new Vector3(0f, 1f, 0f), Vector3.forward, CreateLootBoxQuery(), 0, 12f);
 
             LootBoxHighlightView focusedView = focused.GetComponent<LootBoxHighlightView>();
             LootBoxHighlightView nearbyView = nearby.GetComponent<LootBoxHighlightView>();
@@ -372,6 +373,7 @@ namespace Tests.Inventory
                 "当前 F 目标必须使用强描边");
             Assert.AreEqual(LootBoxHighlightView.HighlightState.Available, nearbyView.State,
                 "超出 F 交互范围但仍在提示范围内的箱子必须保留弱描边");
+            Assert.AreSame(focused, focusedBox, "高亮控制器必须把当前聚焦物资箱返回给 HUD");
         }
 
         [Test]

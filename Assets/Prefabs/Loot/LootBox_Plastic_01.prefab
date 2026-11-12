@@ -1,0 +1,95 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &2073821237516861340
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 410146576670912010, guid: d5b74f4b7af26c24db8a79a75a356be4,
+        type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 410146576670912010, guid: d5b74f4b7af26c24db8a79a75a356be4,
+        type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 410146576670912010, guid: d5b74f4b7af26c24db8a79a75a356be4,
+        type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 410146576670912010, guid: d5b74f4b7af26c24db8a79a75a356be4,
+        type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 410146576670912010, guid: d5b74f4b7af26c24db8a79a75a356be4,
+        type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 410146576670912010, guid: d5b74f4b7af26c24db8a79a75a356be4,
+        type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 410146576670912010, guid: d5b74f4b7af26c24db8a79a75a356be4,
+        type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 410146576670912010, guid: d5b74f4b7af26c24db8a79a75a356be4,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 410146576670912010, guid: d5b74f4b7af26c24db8a79a75a356be4,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 410146576670912010, guid: d5b74f4b7af26c24db8a79a75a356be4,
+        type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1079441760645526704, guid: d5b74f4b7af26c24db8a79a75a356be4,
+        type: 3}
+      propertyPath: m_Name
+      value: LootBox_Plastic_01
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 1079441760645526704, guid: d5b74f4b7af26c24db8a79a75a356be4,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2995825392676700067}
+  m_SourcePrefab: {fileID: 100100000, guid: d5b74f4b7af26c24db8a79a75a356be4, type: 3}
+--- !u!1 &1314281305934252844 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1079441760645526704, guid: d5b74f4b7af26c24db8a79a75a356be4,
+    type: 3}
+  m_PrefabInstance: {fileID: 2073821237516861340}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &2995825392676700067
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1314281305934252844}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1a2442b36024d5e4bbe7c44ac04f3f29, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  EntityIdValue: 
+  LootConfigValue: {fileID: 0}
+  InteractRadiusValue: 1.2

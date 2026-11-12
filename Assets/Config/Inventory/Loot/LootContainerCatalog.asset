@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9d20232aa68c304a83309257b1f1c9f, type: 3}
+  m_Name: LootContainerCatalog
+  m_EditorClassIdentifier: 
+  EntriesValue:
+  - PrefabValue: {fileID: 1314281305934252844, guid: 673caf7ea7d833849a7af0536c06a348,
+      type: 3}
+    CanOpenValue: 1
+    LootConfigValue: {fileID: 11400000, guid: a0b57d75b61a06849ad039ff98e8581c, type: 2}
+  - PrefabValue: {fileID: 4441364404826488231, guid: fdf035fc503635f42aa6aa6888448585,
+      type: 3}
+    CanOpenValue: 1
+    LootConfigValue: {fileID: 11400000, guid: ff46ec55043d29b41a2c02667eb89b74, type: 2}
+  - PrefabValue: {fileID: 523918298492290171, guid: f68348fdb3766a148aa1c4876639f0a1,
+      type: 3}
+    CanOpenValue: 1
+    LootConfigValue: {fileID: 11400000, guid: 3aea9b0b886049648bc49db4b2e6dda9, type: 2}
+  - PrefabValue: {fileID: 2736907606026289645, guid: 6f59f86409feec440ae08e9335b6eff8,
+      type: 3}
+    CanOpenValue: 1
+    LootConfigValue: {fileID: 11400000, guid: 49b9b8ed5bf95c543b6f359f1e4666d7, type: 2}
+  - PrefabValue: {fileID: 2818352147440374057, guid: 9c00e5e9b20a4be4fa747494bfb8e146,
+      type: 3}
+    CanOpenValue: 1
+    LootConfigValue: {fileID: 11400000, guid: ff46ec55043d29b41a2c02667eb89b74, type: 2}
+  - PrefabValue: {fileID: 3263177435450555782, guid: 28506ab87c458374980efbdf92317991,
+      type: 3}
+    CanOpenValue: 1
+    LootConfigValue: {fileID: 11400000, guid: a0b57d75b61a06849ad039ff98e8581c, type: 2}
+  - PrefabValue: {fileID: 3270603504255372620, guid: 7a4cf2423a35cd9449f9c22f4ac77aaf,
+      type: 3}
+    CanOpenValue: 1
+    LootConfigValue: {fileID: 11400000, guid: a0b57d75b61a06849ad039ff98e8581c, type: 2}

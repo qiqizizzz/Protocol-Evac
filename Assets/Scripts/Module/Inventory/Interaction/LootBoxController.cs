@@ -9,6 +9,10 @@
 using Module.Inventory.Core.Config.Loot;
 using UnityEngine;
 using Utils.log;
+#if UNITY_EDITOR
+using UnityEditor;
+using UnityEditor.SceneManagement;
+#endif
 
 namespace Module.Inventory.Interaction
 {
@@ -66,8 +70,14 @@ namespace Module.Inventory.Interaction
 
         private void OnValidate()
         {
-            if (string.IsNullOrEmpty(EntityIdValue))
-                QLog.Error($"实体号为空, 该物资箱无法定位容器：{name}");
+            if (!string.IsNullOrEmpty(EntityIdValue)) return;
+
+#if UNITY_EDITOR
+            // 模板预制体不写固定实体号, 生成实例时由目录配置注入唯一值
+            if (PrefabStageUtility.GetPrefabStage(gameObject) != null) return;
+            if (PrefabUtility.IsPartOfPrefabAsset(gameObject)) return;
+#endif
+            QLog.Error($"实体号为空, 该物资箱无法定位容器：{name}");
         }
 
         private void OnDrawGizmosSelected()
@@ -96,6 +106,18 @@ namespace Module.Inventory.Interaction
                 QLog.Error($"未登记 Layer {LOOT_INTERACTABLE_LAYER_NAME}, 物资箱交互体无法进入物理粗筛");
 
             return m_layerIndexCache;
+        }
+
+        /// <summary>
+        /// 为动态生成的物资箱注入唯一实体号与掉落配置
+        /// </summary>
+        /// <param name="entityId">场景内唯一的物资箱实体号</param>
+        /// <param name="lootConfig">该实体使用的掉落配置</param>
+        public void Configure(string entityId, LootContainerConfigSO lootConfig)
+        {
+            EntityIdValue = entityId;
+            LootConfigValue = lootConfig;
+            m_hasReportedConfig = false;
         }
 
         /// <summary>

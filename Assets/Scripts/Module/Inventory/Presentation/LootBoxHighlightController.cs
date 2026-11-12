@@ -32,7 +32,8 @@ namespace Module.Inventory.Presentation
         /// <param name="queryConfig">F 交互目标查询参数</param>
         /// <param name="obstacleMask">焦点目标的墙体遮挡层</param>
         /// <param name="highlightRadius">物资箱可开启提示半径</param>
-        public void Refresh(Vector3 origin, Vector3 forward, InteractionQueryConfig queryConfig, LayerMask obstacleMask,
+        public LootBoxController Refresh(Vector3 origin, Vector3 forward, InteractionQueryConfig queryConfig,
+            LayerMask obstacleMask,
             float highlightRadius)
         {
             m_scanner.CollectNearby(origin, highlightRadius, m_nearbyBoxes);
@@ -55,6 +56,7 @@ namespace Module.Inventory.Presentation
             }
 
             HideStaleViews();
+            return focused;
         }
 
         /// <summary>
