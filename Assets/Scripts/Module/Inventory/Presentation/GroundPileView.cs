@@ -66,11 +66,9 @@ namespace Module.Inventory.Presentation
             m_labelTransform = transform.Find(LABEL_PATH);
             m_label = m_labelTransform != null ? m_labelTransform.gameObject : null;
 
-#if UNITY_EDITOR
-            if (m_heap == null) Debug.LogError($"[{nameof(GroundPileView)}] 未找到堆体节点：{name}/{HEAP_PATH}");
-            if (m_interactTrigger == null) Debug.LogError($"[{nameof(GroundPileView)}] 未找到交互体：{name}");
-            if (m_label == null) Debug.LogError($"[{nameof(GroundPileView)}] 未找到标签节点：{name}/{LABEL_PATH}");
-#endif
+            if (m_heap == null) QLog.Error($"未找到堆体节点：{name}/{HEAP_PATH}");
+            if (m_interactTrigger == null) QLog.Error($"未找到交互体：{name}");
+            if (m_label == null) QLog.Error($"未找到标签节点：{name}/{LABEL_PATH}");
 
             if (m_interactTrigger != null) m_interactTrigger.isTrigger = true;
 
