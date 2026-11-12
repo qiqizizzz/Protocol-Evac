@@ -7,6 +7,7 @@
  */
 
 using System.Collections.Generic;
+using System.Collections;
 using Framework.QTower.MVVM.Binding;
 using TMPro;
 using Module.Inventory.Core.Config;
@@ -21,13 +22,17 @@ using Utils.Find;
 namespace UI.Inventory.View
 {
     public sealed class UIInventoryItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler,
-        IDropHandler, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
+        IDropHandler, IPointerClickHandler, IPointerDownHandler, IPointerEnterHandler, IPointerExitHandler
     {
         private const int DRAG_GHOST_SORTING_ORDER = 100; //拖影排序层级, 高于面板默认层级
         private const float DRAG_GHOST_ALPHA = 0.75f; //拖影期间的不透明度
         private const float DRAG_LIFT_THRESHOLD_SQR = 36f; //抬起拖影所需的指针位移平方, 约 6 像素
 
         private const int NO_SELECTION = -1; //无选中
+
+        // 详情延迟窗口与双击配对窗口同源, 到点没等到第二击才把详情弹出来
+        private static readonly WaitForSecondsRealtime m_detailRevealDelay =
+            new WaitForSecondsRealtime(DoubleClickDetector.DOUBLE_CLICK_INTERVAL);
 
         private const string ICON_PATH = "Img_Icon";
         private const string COUNT_PATH = "Txt_Count";
@@ -61,6 +66,7 @@ namespace UI.Inventory.View
         private RectTransform m_hoverLayer; // 悬停容器的物品层, 为空表示指针不在任何网格上
         private UIInventoryCarrier m_hoverCarrier; // 悬停容器载体, 为空表示指针不在任何网格上
         private readonly DoubleClickDetector m_doubleClick = new DoubleClickDetector(); // 左键双击丢弃判定
+        private Coroutine m_pendingDetail; // 未到点的详情延迟协程, 双击或拖拽时掐掉
         private Vector2 m_hoverCell; // 悬停容器的单元格边长
         private Vector2 m_hoverSpacing; // 悬停容器的单元格间距
         private bool m_hoverIsEquipSlot; // 悬停容器是否单格装备槽
@@ -72,6 +78,7 @@ namespace UI.Inventory.View
         private Vector2Int m_hoverTargetCell; // 最近一次悬停目标自身的格号
         private bool m_isDragging;
         private bool m_isPendingDrag; // 已按下但位移未达阈值
+        private bool m_dragLiftedThisGesture; // 本次按下是否真抬成过拖拽, 抬起后的点击不再算单击
         private Vector2 m_pendingDragStart; // 按下时的指针屏幕坐标
         private PointerEventData.InputButton m_dragButton;
         private Vector2 m_dragOriginSize;
@@ -105,7 +112,11 @@ namespace UI.Inventory.View
         }
 
         // 面板关闭或载体隐藏时收不到 OnEndDrag, 这里兜底收尾, 避免拖影状态残留
-        private void OnDisable() => FinishDrag();
+        private void OnDisable()
+        {
+            StopDetailReveal();
+            FinishDrag();
+        }
 
         /// <summary>
         /// 按快照刷新物品的占格尺寸、位置与外观
@@ -117,8 +128,13 @@ namespace UI.Inventory.View
         {
             m_cellSize = cellSize;
             m_cellSpacing = cellSpacing;
-        // 视图复用给别的物品时旧的点击配对作废, 否则跨物品可能被误判成双击
-        if (InstanceId != item.InstanceId) m_doubleClick.Reset();
+
+            // 视图复用给别的物品时旧的点击配对作废, 否则跨物品可能被误判成双击
+            if (InstanceId != item.InstanceId)
+            {
+                m_doubleClick.Reset();
+                StopDetailReveal();
+            }
             InstanceId = item.InstanceId;
 
             m_origin = item.Origin;
@@ -149,6 +165,9 @@ namespace UI.Inventory.View
         {
             m_viewModel = viewModel;
             scope.Bind(viewModel.SelectedInstanceId, RenderSelected);
+
+            // 浮层被任何入口收起时, 未到点的详情延迟一起作废: 点空白、反选、拖拽都不该再补一次弹窗
+            scope.Bind(viewModel.PopupClosed, StopDetailReveal);
         }
 
         /// <summary>
@@ -200,16 +219,26 @@ namespace UI.Inventory.View
         }
 
         #region UI事件
-        // 左键单击打开详情, 左键双击收纳或丢弃, 右键打开操作菜单, 中键不响应
+        // 按下只作废上一手势的拖拽标记, 详情与菜单一律等抬起再判定, 拖拽起点不会误触
+        public void OnPointerDown(PointerEventData eventData) => m_dragLiftedThisGesture = false;
+
+        // 首次抬起只起延迟计时, 双击窗口内没有第二击才弹详情; 窗口内来了第二击就按双击直接走业务
         public void OnPointerClick(PointerEventData eventData)
         {
+            // 拖拽落点不算点击, 否则每拖完一件物品都会顺手弹一次详情
+            if (m_dragLiftedThisGesture) return;
+
             switch (eventData.button)
             {
                 case PointerEventData.InputButton.Left:
-                    // 浮层先收起再动手: 收走最后一件会把整张开箱载体连同它的视图模型一起销毁,
-                    // 事后再收就打在已释放的信号上
-                    if (m_doubleClick.TryClick(InstanceId, Time.time, out bool isDoubleClick) && isDoubleClick)
+                    // 配对窗口和详情延迟协程走同一块真实时钟, 缩放时间被改动时两头不会错开
+                    if (m_doubleClick.TryClick(InstanceId, Time.unscaledTime, out bool isDoubleClick) && isDoubleClick)
                     {
+                        // 双击打断: 掐掉第一击还没到点的延迟, 详情全程没机会画出来
+                        StopDetailReveal();
+
+                        // 浮层先收起再动手: 收走最后一件会把整张开箱载体连同它的视图模型一起销毁,
+                        // 事后再收就打在已释放的信号上
                         m_viewModel.ClosePopups();
 
                         // 开箱载体里的物品是"收进背包", 玩家自己身上的才是"丢到地面"
@@ -221,9 +250,11 @@ namespace UI.Inventory.View
                         break;
                     }
 
-                    m_viewModel.InteractAt(m_origin);
+                    ScheduleDetailReveal();
                     break;
                 case PointerEventData.InputButton.Right:
+                    // 菜单已经按用户意图弹出来, 之前那次左键的详情延迟就作废, 否则到点会把菜单顶掉
+                    StopDetailReveal();
                     m_viewModel.OpenMenuAt(m_origin);
                     break;
             }
@@ -276,6 +307,8 @@ namespace UI.Inventory.View
         {
             m_isPendingDrag = false;
             m_isDragging = true;
+            m_dragLiftedThisGesture = true;
+            StopDetailReveal();
 
             m_viewModel.BeginDragAt(m_origin);
             CaptureDragPlane(eventData);
@@ -558,6 +591,35 @@ namespace UI.Inventory.View
         private void RenderSelected(int selectedInstanceId)
         {
             m_selectedFrame.SetActive(selectedInstanceId == InstanceId);
+        }
+
+        // 首次左键抬起只记下目标物品并起延迟, 到点仍没有第二击才真的请求详情
+        private void ScheduleDetailReveal()
+        {
+            StopDetailReveal();
+            m_pendingDetail = StartCoroutine(RevealDetailCoroutine(m_origin, InstanceId));
+        }
+
+        // 掐掉未到点的详情延迟: 双击、抬成拖拽、换物品、右键菜单、载体销毁都要收
+        private void StopDetailReveal()
+        {
+            if (m_pendingDetail == null) return;
+
+            StopCoroutine(m_pendingDetail);
+            m_pendingDetail = null;
+        }
+
+        // 延迟到双击窗口结束再开详情, 期间物品可能已被别的入口收走, 迟到就作废
+        private IEnumerator RevealDetailCoroutine(Vector2Int origin, int instanceId)
+        {
+            yield return m_detailRevealDelay;
+
+            m_pendingDetail = null;
+
+            // 载体销毁会让视图模型先走, 换绑又可能把这件视图派给别的物品
+            if (m_viewModel.IsDisposed || InstanceId != instanceId) yield break;
+
+            m_viewModel.InteractAt(origin);
         }
         #endregion
     }

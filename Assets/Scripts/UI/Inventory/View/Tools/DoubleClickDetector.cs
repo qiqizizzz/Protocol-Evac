@@ -15,8 +15,8 @@ namespace UI.Inventory.View.Tools
     {
         private const int NO_ITEM = -1; //当前没有待配对的物品
 
-        //两次点击算作双击的最大间隔（秒）
-        private const float DOUBLE_CLICK_INTERVAL = 0.3f;
+        // 两次点击算作双击的最大间隔（秒）, 同时也是详情弹窗的延迟显示窗口, 两头必须同值
+        public const float DOUBLE_CLICK_INTERVAL = 0.2f;
 
         private int m_lastInstanceId = NO_ITEM;
         private float m_lastClickTime;

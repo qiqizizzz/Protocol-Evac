@@ -26,7 +26,9 @@ namespace Tests.Inventory
     public class QItemDropInteractionTests
     {
         private const int NO_ITEM = -1;
-        private const float INTERVAL = 0.3f;
+
+        // 双击配对窗口与详情延迟窗口同源, 测试直接引用同一个常量
+        private const float INTERVAL = DoubleClickDetector.DOUBLE_CLICK_INTERVAL;
 
         private QInventoryTestKit m_kit;
         private InventoryModel m_model;
@@ -95,6 +97,21 @@ namespace Tests.Inventory
             detector.TryClick(7, 10f, out _);
             Assert.IsTrue(detector.TryClick(7, 10f + INTERVAL + 0.1f, out bool isDouble));
             Assert.IsFalse(isDouble, "间隔超出阈值只算新的首次点击");
+        }
+
+        [Test]
+        public void DoubleClickDetector_WindowEdge_KeepsDetailRevealAndDoubleClickInStep()
+        {
+            // 窗口刚好压线: 详情协程到点之前第二击必须还能配成双击, 否则慢半拍的双击会先闪出详情
+            DoubleClickDetector inside = new DoubleClickDetector();
+            inside.TryClick(7, 10f, out _);
+            Assert.IsTrue(inside.TryClick(7, 10f + INTERVAL - 0.01f, out bool nearInside));
+            Assert.IsTrue(nearInside, "窗口内最后一刻的点击仍算双击");
+
+            DoubleClickDetector outside = new DoubleClickDetector();
+            outside.TryClick(7, 10f, out _);
+            Assert.IsTrue(outside.TryClick(7, 10f + INTERVAL + 0.01f, out bool nearOutside));
+            Assert.IsFalse(nearOutside, "超出窗口的点击按新的首次算, 此时详情已经显示过了");
         }
 
         [Test]

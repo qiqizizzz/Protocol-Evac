@@ -45,6 +45,9 @@ namespace UI.Inventory.View
         private bool m_detailOpening;
         private bool m_menuOpening;
 
+        // 弹窗代号: 每次收起都推进它, 首次加载还没回来的打开请求据此作废
+        private int m_popupGeneration;
+
         #region 生命周期
         protected override EquipmentPanelViewModel CreateViewModel() => new EquipmentPanelViewModel();
 
@@ -159,7 +162,7 @@ namespace UI.Inventory.View
             m_detailOpening = true;
 
             HidePopup<UIItemMenuPanel>();
-            ShowDetailAsync(container).Forget();
+            ShowDetailAsync(container, m_popupGeneration).Forget();
         }
 
         // 右键菜单：OpenMenuAt 已在视图模型中将该物品置为选中
@@ -174,7 +177,8 @@ namespace UI.Inventory.View
             ShowMenuAsync(container).Forget();
         }
 
-        private async UniTaskVoid ShowDetailAsync(InventoryViewModel container)
+        // 详情窗口首次打开要等实例化回来, 期间可能被双击打断, 靠代号判断这次还要不要显示
+        private async UniTaskVoid ShowDetailAsync(InventoryViewModel container, int generation)
         {
             if (!TryGetItemScreenRect(container, out Rect itemScreenRect, out bool preferLeft))
             {
@@ -186,6 +190,9 @@ namespace UI.Inventory.View
                 container.DetailInstanceId.Value, itemScreenRect, preferLeft);
 
             m_detailOpening = false;
+
+            // 等待期间浮层已被收起: 窗口刚注册就立刻收走, 不留一双击就赖在屏幕上的残影
+            if (generation != m_popupGeneration) HidePopup<UIItemDetailPanel>();
         }
 
         private async UniTaskVoid ShowMenuAsync(InventoryViewModel container)
@@ -241,6 +248,7 @@ namespace UI.Inventory.View
 
         private void ClosePopups()
         {
+            m_popupGeneration++;
             HidePopup<UIItemDetailPanel>();
             HidePopup<UIItemMenuPanel>();
             HidePopup<UIItemSplitPanel>();
