@@ -24,6 +24,25 @@ namespace Module.Inventory.Interaction
         /// <param name="origin">查询原点, 一般是玩家位置</param>
         public static ILootInteractable SelectNearest(ILootInteractable[] candidates, int count, Vector3 origin)
         {
+            return SelectNearest(candidates, count, origin, null);
+        }
+
+        /// <summary>
+        /// 只从指定类型的候选中选出离 origin 最近且可交互的一只, 无结果返回 null
+        /// </summary>
+        /// <param name="candidates">候选数组, 由调用方复用, 可能含空槽</param>
+        /// <param name="count">本轮有效候选数量</param>
+        /// <param name="origin">查询原点, 一般是玩家位置</param>
+        public static ILootInteractable SelectNearest<T>(ILootInteractable[] candidates, int count, Vector3 origin)
+            where T : ILootInteractable
+        {
+            return SelectNearest(candidates, count, origin, typeof(T));
+        }
+
+        // 统一校验与选择, 类型为空时不限制目标种类
+        private static ILootInteractable SelectNearest(ILootInteractable[] candidates, int count, Vector3 origin,
+            Type targetType)
+        {
             if (candidates == null) throw new ArgumentNullException(nameof(candidates));
             if (count > candidates.Length)
                 throw new ArgumentException($"有效数量 {count} 超出数组长度 {candidates.Length}", nameof(count));
@@ -35,6 +54,7 @@ namespace Module.Inventory.Interaction
             {
                 ILootInteractable candidate = candidates[i];
                 if (candidate == null || !candidate.CanInteract()) continue;
+                if (targetType != null && !targetType.IsInstanceOfType(candidate)) continue;
 
                 float sqrDistance = (candidate.InteractionCenter - origin).sqrMagnitude;
                 if (sqrDistance >= nearestSqrDistance) continue;

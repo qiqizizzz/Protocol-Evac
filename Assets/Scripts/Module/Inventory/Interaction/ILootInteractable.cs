@@ -11,7 +11,7 @@ using UnityEngine;
 namespace Module.Inventory.Interaction
 {
     /// <summary>
-    /// 可按 F 搜刮的世界目标：只暴露判距中心与准入, 不牵扯容器与模型
+    /// 可搜刮的世界目标：只暴露判距中心与准入, 不牵扯容器与模型
     /// </summary>
     public interface ILootInteractable
     {

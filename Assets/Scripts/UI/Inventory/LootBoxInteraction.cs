@@ -1,6 +1,6 @@
 ﻿/*
 * ┌──────────────────────────────────┐
-* │  描    述: 按 F 的交互桥接, 扫描最近搜刮目标后把容器挂到战备面板右侧
+* │  描    述: 搜刮交互桥接, F 打开物资箱, H 打开地面垃圾堆, 容器统一挂到战备面板右侧
 * │  类    名: LootBoxInteraction.cs
 * │  创    建: By qiqizizzz
 * └──────────────────────────────────┘
@@ -18,7 +18,7 @@ using Utils.log;
 namespace UI.Inventory
 {
     /// <summary>
-    /// 搜刮交互桥接：把世界侧扫到的最近目标接到背包模型与战备面板, 世界层不认识 UI
+    /// 搜刮交互桥接：按目标和按键语义接通背包模型与战备面板, 世界层不认识 UI
     /// 物资箱要现摇一次掉落, 地面堆本来就是容器, 直接用它身上的容器号
     /// </summary>
     public sealed class LootBoxInteraction
@@ -28,20 +28,38 @@ namespace UI.Inventory
         private bool m_hasValidatedBoxes;
 
         /// <summary>
-        /// 与 origin 附近最近的搜刮目标交互, 打开装备面板并把它的容器挂到右侧动态载体
+        /// 响应通用交互, 当前阶段从附近物资箱中打开最近的一只
         /// </summary>
         /// <param name="origin">交互原点, 一般是玩家位置</param>
         public void TryInteract(Vector3 origin)
         {
             ValidateSceneBoxes();
 
-            ILootInteractable target = m_scanner.ScanNearest(origin);
+            ILootInteractable target = m_scanner.ScanNearest<LootBoxController>(origin);
             if (target == null)
             {
-                QLog.Info($"附近没有可搜刮的目标, 原点 {origin}");
+                QLog.Info($"附近没有物资箱, 原点 {origin}");
                 return;
             }
 
+            OpenInteractable(target);
+        }
+
+        /// <summary>
+        /// 与 origin 附近最近的地面垃圾堆交互, 打开装备面板并展示它的容器
+        /// </summary>
+        /// <param name="origin">交互原点, 一般是玩家位置</param>
+        public void TryInteractGroundPile(Vector3 origin)
+        {
+            ILootInteractable target = m_scanner.ScanNearest<GroundPileView>(origin);
+            if (target == null) return;
+
+            OpenInteractable(target);
+        }
+
+        // 把已选中的世界目标接到模型和战备面板
+        private void OpenInteractable(ILootInteractable target)
+        {
             MvvmRoot root = MvvmRoot.Instance;
             if (root == null)
             {

@@ -125,6 +125,18 @@ namespace Tests.Inventory
         }
 
         [Test]
+        public void SelectNearestOfType_SkipsNearerTargetsOfAnotherType()
+        {
+            GroundTarget pile = new GroundTarget(Vector3.zero);
+            LootBoxController box = BuildBox("loot_typed_01", new Vector3(5f, 0f, 0f), m_loot);
+
+            ILootInteractable picked = InteractableTargetSelector.SelectNearest<LootBoxController>(
+                new ILootInteractable[] { pile, box }, 2, Vector3.zero);
+
+            Assert.AreSame(box, picked, "F 只应该打开物资箱, 更近的地面堆必须被类型过滤掉");
+        }
+
+        [Test]
         public void SelectNearest_ThrowsWhenTheCandidateArrayIsNull()
         {
             Assert.Throws<ArgumentNullException>(
@@ -244,6 +256,19 @@ namespace Tests.Inventory
             }
 
             field.SetValue(box, value);
+        }
+
+        // 用纯测试目标验证按类型过滤, 不依赖场景预制体或物理查询
+        private sealed class GroundTarget : ILootInteractable
+        {
+            public GroundTarget(Vector3 interactionCenter)
+            {
+                InteractionCenter = interactionCenter;
+            }
+
+            public Vector3 InteractionCenter { get; }
+
+            public bool CanInteract() => true;
         }
     }
 }

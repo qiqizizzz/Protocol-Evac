@@ -113,7 +113,7 @@ namespace Module.ShootingPlayer.Input
                     ""initialStateCheck"": false
                 },
                 {
-                    ""name"": ""InspectGround"",
+                    ""name"": ""InteractGroundPile"",
                     ""type"": ""Button"",
                     ""id"": ""4f0b1c27-9a63-4dd2-8f2b-0d7ce9d51b18"",
                     ""expectedControlType"": """",
@@ -152,7 +152,7 @@ namespace Module.ShootingPlayer.Input
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": "";KeyboardMouse"",
-                    ""action"": ""InspectGround"",
+                    ""action"": ""InteractGroundPile"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -177,7 +177,7 @@ namespace Module.ShootingPlayer.Input
             m_UI = asset.FindActionMap("UI", throwIfNotFound: true);
             m_UI_ToggleInventory = m_UI.FindAction("ToggleInventory", throwIfNotFound: true);
             m_UI_Interact = m_UI.FindAction("Interact", throwIfNotFound: true);
-            m_UI_InspectGround = m_UI.FindAction("InspectGround", throwIfNotFound: true);
+            m_UI_InteractGroundPile = m_UI.FindAction("InteractGroundPile", throwIfNotFound: true);
         }
 
         ~@ShootingPlayerInputActions()
@@ -260,7 +260,7 @@ namespace Module.ShootingPlayer.Input
         private List<IUIActions> m_UIActionsCallbackInterfaces = new List<IUIActions>();
         private readonly InputAction m_UI_ToggleInventory;
         private readonly InputAction m_UI_Interact;
-        private readonly InputAction m_UI_InspectGround;
+        private readonly InputAction m_UI_InteractGroundPile;
         /// <summary>
         /// Provides access to input actions defined in input action map "UI".
         /// </summary>
@@ -281,9 +281,9 @@ namespace Module.ShootingPlayer.Input
             /// </summary>
             public InputAction @Interact => m_Wrapper.m_UI_Interact;
             /// <summary>
-            /// Provides access to the underlying input action "UI/InspectGround".
+            /// Provides access to the underlying input action "UI/InteractGroundPile".
             /// </summary>
-            public InputAction @InspectGround => m_Wrapper.m_UI_InspectGround;
+            public InputAction @InteractGroundPile => m_Wrapper.m_UI_InteractGroundPile;
             /// <summary>
             /// Provides access to the underlying input action map instance.
             /// </summary>
@@ -316,9 +316,9 @@ namespace Module.ShootingPlayer.Input
                 @Interact.started += instance.OnInteract;
                 @Interact.performed += instance.OnInteract;
                 @Interact.canceled += instance.OnInteract;
-                @InspectGround.started += instance.OnInspectGround;
-                @InspectGround.performed += instance.OnInspectGround;
-                @InspectGround.canceled += instance.OnInspectGround;
+                @InteractGroundPile.started += instance.OnInteractGroundPile;
+                @InteractGroundPile.performed += instance.OnInteractGroundPile;
+                @InteractGroundPile.canceled += instance.OnInteractGroundPile;
             }
 
             /// <summary>
@@ -336,9 +336,9 @@ namespace Module.ShootingPlayer.Input
                 @Interact.started -= instance.OnInteract;
                 @Interact.performed -= instance.OnInteract;
                 @Interact.canceled -= instance.OnInteract;
-                @InspectGround.started -= instance.OnInspectGround;
-                @InspectGround.performed -= instance.OnInspectGround;
-                @InspectGround.canceled -= instance.OnInspectGround;
+                @InteractGroundPile.started -= instance.OnInteractGroundPile;
+                @InteractGroundPile.performed -= instance.OnInteractGroundPile;
+                @InteractGroundPile.canceled -= instance.OnInteractGroundPile;
             }
 
             /// <summary>
@@ -407,12 +407,12 @@ namespace Module.ShootingPlayer.Input
             /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
             void OnInteract(InputAction.CallbackContext context);
             /// <summary>
-            /// Method invoked when associated input action "InspectGround" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+            /// Method invoked when associated input action "InteractGroundPile" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
             /// </summary>
             /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
             /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
             /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
-            void OnInspectGround(InputAction.CallbackContext context);
+            void OnInteractGroundPile(InputAction.CallbackContext context);
         }
     }
 }

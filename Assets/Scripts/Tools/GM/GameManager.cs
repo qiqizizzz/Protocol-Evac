@@ -79,10 +79,10 @@ namespace Tools.GM
             Destroy(m_sectionTexture);
         }
 
-        // 监听 H 键并更新模块面板数据
+        // 监听 F1 键并更新模块面板数据
         private void Update()
         {
-            if (Input.GetKeyDown(KeyCode.H))
+            if (Input.GetKeyDown(KeyCode.F1))
                 m_isOpen = !m_isOpen;
 
             for (int i = 0; i < m_panels.Count; i++)

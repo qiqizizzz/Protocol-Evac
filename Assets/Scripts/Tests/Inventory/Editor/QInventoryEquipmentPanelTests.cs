@@ -361,6 +361,21 @@ namespace Tests.Inventory
             Assert.AreEqual(1, m_model.GetContainerVO(lootContainerId).Items.Count, "箱内物品必须留在模型里");
         }
 
+        // 已关闭的物资箱视图模型不能再接收转移结果写入已释放状态
+        [Test]
+        public void ApplyTransferResult_AfterLootChildDisposed_DoesNotWriteReleasedState()
+        {
+            int lootContainerId = RegisterLootContainer("释放守卫", 2, 1);
+            m_viewModel.OpenLootContainer(lootContainerId);
+            InventoryViewModel loot = m_viewModel.LootContainer;
+            loot.OnBind();
+
+            m_viewModel.CloseLootContainer();
+
+            Assert.IsTrue(loot.IsDisposed);
+            Assert.DoesNotThrow(() => loot.ApplyTransferResult(InventoryMoveResult.Success));
+        }
+
         [Test]
         public void CloseLootContainer_WhenNothingOpen_ChangesNothing()
         {

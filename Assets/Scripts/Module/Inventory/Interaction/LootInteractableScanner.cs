@@ -1,6 +1,6 @@
 ﻿/*
 * ┌──────────────────────────────────┐
-* │  描    述: 物资箱交互扫描器, 按键瞬间做一次物理粗筛并交给选择器取最近目标
+* │  描    述: 搜刮目标扫描器, 按键瞬间做一次物理粗筛并按目标类型取最近目标
 * │  类    名: LootInteractableScanner.cs
 * │  创    建: By qiqizizzz
 * └──────────────────────────────────┘
@@ -13,7 +13,7 @@ using Utils.log;
 namespace Module.Inventory.Interaction
 {
     /// <summary>
-    /// 搜刮扫描器：按 F 时一次性 OverlapSphere 粗筛, 物资箱与地面堆一并圈进候选, 不维护常驻表
+    /// 搜刮扫描器：交互时一次性 OverlapSphere 粗筛, 物资箱与地面堆都会进候选, 再按调用方要求的类型筛选
     /// </summary>
     public sealed class LootInteractableScanner
     {
@@ -31,10 +31,10 @@ namespace Module.Inventory.Interaction
         private bool m_hasWarnedCapacity;
 
         /// <summary>
-        /// 以 origin 为球心粗筛一轮, 返回最近的可交互目标, 没有则返回 null
+        /// 以 origin 为球心粗筛一轮, 返回指定类型中最近的可交互目标, 没有则返回 null
         /// </summary>
         /// <param name="origin">查询原点, 一般是玩家位置</param>
-        public ILootInteractable ScanNearest(Vector3 origin)
+        public ILootInteractable ScanNearest<T>(Vector3 origin) where T : ILootInteractable
         {
             if (!TryResolveLayerMask()) return null;
 
@@ -61,7 +61,7 @@ namespace Module.Inventory.Interaction
                 m_candidates[candidateCount++] = target;
             }
 
-            return InteractableTargetSelector.SelectNearest(m_candidates, candidateCount, origin);
+            return InteractableTargetSelector.SelectNearest<T>(m_candidates, candidateCount, origin);
         }
 
         // 交互层掩码只在首轮解析一次, 层没登记时明确报错而不是退回全层扫描

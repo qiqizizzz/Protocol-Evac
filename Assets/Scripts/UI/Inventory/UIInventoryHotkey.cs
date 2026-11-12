@@ -1,6 +1,6 @@
 ﻿/*
  * ┌──────────────────────────────────┐
- * │  描    述: 背包快捷键宿主, 运行期自建常驻, 按 B 开关面板, 兼管搜刮、丢弃与查看地面物
+ * │  描    述: 背包快捷键宿主, 运行期自建常驻, B 开关面板, F 通用交互, H 开垃圾堆并查看地面物
  * │  类    名: UIInventoryHotkey.cs
  * │  创    建: By qiqizizzz
  * └──────────────────────────────────┘
@@ -56,7 +56,7 @@ namespace UI.Inventory
         {
             m_inputActions.UI.ToggleInventory.performed += OnToggleInventory;
             m_inputActions.UI.Interact.performed += OnInteract;
-            m_inputActions.UI.InspectGround.performed += OnInspectGround;
+            m_inputActions.UI.InteractGroundPile.performed += OnInteractGroundPile;
             m_inputActions.UI.Enable();
         }
 
@@ -64,7 +64,7 @@ namespace UI.Inventory
         {
             m_inputActions.UI.ToggleInventory.performed -= OnToggleInventory;
             m_inputActions.UI.Interact.performed -= OnInteract;
-            m_inputActions.UI.InspectGround.performed -= OnInspectGround;
+            m_inputActions.UI.InteractGroundPile.performed -= OnInteractGroundPile;
             m_inputActions.UI.Disable();
         }
 
@@ -141,7 +141,7 @@ namespace UI.Inventory
             TogglePanel();
         }
 
-        // 响应交互快捷键, 原点用玩家位置
+        // 响应通用交互快捷键, 原点用玩家位置
         private void OnInteract(InputAction.CallbackContext context)
         {
             if (!TryResolvePlayerPosition(out Vector3 origin)) return;
@@ -149,12 +149,13 @@ namespace UI.Inventory
             m_lootInteraction.TryInteract(origin);
         }
 
-        // 响应查看地面丢弃物快捷键, 原点同样用玩家位置
-        private void OnInspectGround(InputAction.CallbackContext context)
+        // 响应地面垃圾堆快捷键, 先亮标签再打开最近的一座堆
+        private void OnInteractGroundPile(InputAction.CallbackContext context)
         {
             if (!TryResolvePlayerPosition(out Vector3 origin)) return;
 
             GroundPilePresenter.ReportNearby(origin);
+            m_lootInteraction.TryInteractGroundPile(origin);
         }
 
         // 缓存玩家变换, 换射击玩家后只改这一处来源
@@ -168,7 +169,7 @@ namespace UI.Inventory
                     if (!m_hasReportedMissingPlayer)
                     {
                         m_hasReportedMissingPlayer = true;
-                        QLog.Error("场景内找不到玩家, 物资箱交互无法定位原点");
+                        QLog.Error("场景内找不到玩家, 搜刮交互无法定位原点");
                     }
 
                     position = default;

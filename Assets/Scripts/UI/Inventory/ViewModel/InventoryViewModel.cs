@@ -226,6 +226,8 @@ namespace UI.Inventory
         //应用一次转移结果
         public void ApplyTransferResult(InventoryMoveResult result)
         {
+            if (IsDisposed) return;
+
             ResetDropPreview();
             m_dragInstanceId = NO_DRAG;
             m_dragRotation = InventoryRotation.None;
