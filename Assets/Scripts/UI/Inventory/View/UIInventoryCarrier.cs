@@ -104,6 +104,25 @@ namespace UI.Inventory.View
         }
 
         /// <summary>
+        /// 取消当前载体里正在拖拽的物品视图
+        /// </summary>
+        /// <returns>载体里是否有正在拖拽的物品</returns>
+        public bool TryCancelDraggedItem()
+        {
+            if (ViewModel == null || !ViewModel.IsDragging) return false;
+
+            int instanceId = ViewModel.DraggingInstanceId;
+            if (m_itemViews.TryGetValue(instanceId, out UIInventoryItem itemView))
+            {
+                itemView.CancelDrag();
+                return true;
+            }
+
+            ViewModel.CancelDrag();
+            return true;
+        }
+
+        /// <summary>
         /// 当前载体的网格格数, 视图模型未就绪时返回零
         /// </summary>
         public Vector2Int GridCount

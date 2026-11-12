@@ -120,6 +120,15 @@ namespace Module.ShootingPlayer.Input
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Cancel"",
+                    ""type"": ""Button"",
+                    ""id"": ""f17d79be-6699-474d-98ac-bacdd5a3291a"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -155,6 +164,17 @@ namespace Module.ShootingPlayer.Input
                     ""action"": ""InteractGroundPile"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""1b75d6c5-97e9-4c5a-894b-1dc0bd93fe94"",
+                    ""path"": ""<Keyboard>/escape"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": "";KeyboardMouse"",
+                    ""action"": ""Cancel"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -178,6 +198,7 @@ namespace Module.ShootingPlayer.Input
             m_UI_ToggleInventory = m_UI.FindAction("ToggleInventory", throwIfNotFound: true);
             m_UI_Interact = m_UI.FindAction("Interact", throwIfNotFound: true);
             m_UI_InteractGroundPile = m_UI.FindAction("InteractGroundPile", throwIfNotFound: true);
+            m_UI_Cancel = m_UI.FindAction("Cancel", throwIfNotFound: true);
         }
 
         ~@ShootingPlayerInputActions()
@@ -261,6 +282,7 @@ namespace Module.ShootingPlayer.Input
         private readonly InputAction m_UI_ToggleInventory;
         private readonly InputAction m_UI_Interact;
         private readonly InputAction m_UI_InteractGroundPile;
+        private readonly InputAction m_UI_Cancel;
         /// <summary>
         /// Provides access to input actions defined in input action map "UI".
         /// </summary>
@@ -284,6 +306,10 @@ namespace Module.ShootingPlayer.Input
             /// Provides access to the underlying input action "UI/InteractGroundPile".
             /// </summary>
             public InputAction @InteractGroundPile => m_Wrapper.m_UI_InteractGroundPile;
+            /// <summary>
+            /// Provides access to the underlying input action "UI/Cancel".
+            /// </summary>
+            public InputAction @Cancel => m_Wrapper.m_UI_Cancel;
             /// <summary>
             /// Provides access to the underlying input action map instance.
             /// </summary>
@@ -319,6 +345,9 @@ namespace Module.ShootingPlayer.Input
                 @InteractGroundPile.started += instance.OnInteractGroundPile;
                 @InteractGroundPile.performed += instance.OnInteractGroundPile;
                 @InteractGroundPile.canceled += instance.OnInteractGroundPile;
+                @Cancel.started += instance.OnCancel;
+                @Cancel.performed += instance.OnCancel;
+                @Cancel.canceled += instance.OnCancel;
             }
 
             /// <summary>
@@ -339,6 +368,9 @@ namespace Module.ShootingPlayer.Input
                 @InteractGroundPile.started -= instance.OnInteractGroundPile;
                 @InteractGroundPile.performed -= instance.OnInteractGroundPile;
                 @InteractGroundPile.canceled -= instance.OnInteractGroundPile;
+                @Cancel.started -= instance.OnCancel;
+                @Cancel.performed -= instance.OnCancel;
+                @Cancel.canceled -= instance.OnCancel;
             }
 
             /// <summary>
@@ -413,6 +445,13 @@ namespace Module.ShootingPlayer.Input
             /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
             /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
             void OnInteractGroundPile(InputAction.CallbackContext context);
+            /// <summary>
+            /// Method invoked when associated input action "Cancel" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+            /// </summary>
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+            void OnCancel(InputAction.CallbackContext context);
         }
     }
 }

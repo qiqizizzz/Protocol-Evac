@@ -31,7 +31,8 @@ namespace UI.Inventory
         /// 响应通用交互, 当前阶段从附近物资箱中打开最近的一只
         /// </summary>
         /// <param name="origin">交互原点, 一般是玩家位置</param>
-        public void TryInteract(Vector3 origin)
+        /// <returns>是否已接受本次打开请求</returns>
+        public bool TryInteract(Vector3 origin)
         {
             ValidateSceneBoxes();
 
@@ -39,39 +40,41 @@ namespace UI.Inventory
             if (target == null)
             {
                 QLog.Info($"附近没有物资箱, 原点 {origin}");
-                return;
+                return false;
             }
 
-            OpenInteractable(target);
+            return OpenInteractable(target);
         }
 
         /// <summary>
         /// 与 origin 附近最近的地面垃圾堆交互, 打开装备面板并展示它的容器
         /// </summary>
         /// <param name="origin">交互原点, 一般是玩家位置</param>
-        public void TryInteractGroundPile(Vector3 origin)
+        /// <returns>是否已接受本次打开请求</returns>
+        public bool TryInteractGroundPile(Vector3 origin)
         {
             ILootInteractable target = m_scanner.ScanNearest<GroundPileView>(origin);
-            if (target == null) return;
+            if (target == null) return false;
 
-            OpenInteractable(target);
+            return OpenInteractable(target);
         }
 
         // 把已选中的世界目标接到模型和战备面板
-        private void OpenInteractable(ILootInteractable target)
+        private bool OpenInteractable(ILootInteractable target)
         {
             MvvmRoot root = MvvmRoot.Instance;
             if (root == null)
             {
                 QLog.Error($"场景缺少 {nameof(MvvmRoot)}, 搜刮目标无法打开");
-                return;
+                return false;
             }
 
             IInventoryModel model = root.Models.Get<IInventoryModel>();
             int containerId = ResolveContainerId(model, target);
-            if (containerId < 0) return;
+            if (containerId < 0) return false;
 
             OpenPanelAndShow(root, containerId).Forget();
+            return true;
         }
 
         // 把世界目标换成一只可打开的容器号, 认不出的目标直接报错, 不静默退回

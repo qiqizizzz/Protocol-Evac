@@ -102,6 +102,26 @@ namespace UI.Inventory.View
         }
         #endregion
 
+        #region Public Function
+        /// <summary>
+        /// 逐层收起当前面板的最上层交互, 没有可收内容时由宿主关闭整个面板
+        /// </summary>
+        /// <returns>是否消费了本次返回操作</returns>
+        public bool TryCancelTopLayer()
+        {
+            if (TryCancelDraggedItem()) return true;
+            if (TryHideVisiblePopup<UIItemSplitPanel>()) return true;
+            if (TryHideVisiblePopup<UIItemMenuPanel>()) return true;
+            if (TryHideVisiblePopup<UIItemDetailPanel>()) return true;
+
+            // 弹窗预制体仍在异步加载时也算一层, 推进代号让迟到实例不再重开
+            if (!m_detailOpening && !m_menuOpening) return false;
+
+            ClosePopups();
+            return true;
+        }
+        #endregion
+
         #region Private Function
         // 载体的详情、菜单与关闭请求统一由面板编排, 订阅挂在谁的作用域上就随谁收敛
         private void BindPopupRequests(BindingScope scope, InventoryViewModel container)
@@ -174,7 +194,7 @@ namespace UI.Inventory.View
 
             HidePopup<UIItemDetailPanel>();
             HidePopup<UIItemSplitPanel>();
-            ShowMenuAsync(container).Forget();
+            ShowMenuAsync(container, m_popupGeneration).Forget();
         }
 
         // 详情窗口首次打开要等实例化回来, 期间可能被双击打断, 靠代号判断这次还要不要显示
@@ -195,12 +215,15 @@ namespace UI.Inventory.View
             if (generation != m_popupGeneration) HidePopup<UIItemDetailPanel>();
         }
 
-        private async UniTaskVoid ShowMenuAsync(InventoryViewModel container)
+        private async UniTaskVoid ShowMenuAsync(InventoryViewModel container, int generation)
         {
             await MvvmRoot.Instance.Windows.ShowAsync<UIItemMenuPanel>(container.ContainerId,
                 container.SelectedInstanceId.Value, Input.mousePosition);
 
             m_menuOpening = false;
+
+            // 等待期间已按返回键收掉浮层: 窗口刚注册就立刻隐藏
+            if (generation != m_popupGeneration) HidePopup<UIItemMenuPanel>();
         }
 
         // 详情定位以物品完整占格为准, 与鼠标落在物品内的具体位置无关
@@ -252,6 +275,31 @@ namespace UI.Inventory.View
             HidePopup<UIItemDetailPanel>();
             HidePopup<UIItemMenuPanel>();
             HidePopup<UIItemSplitPanel>();
+        }
+
+        // 拖拽优先于浮层, 返回键只处理最上层交互
+        private bool TryCancelDraggedItem()
+        {
+            InventoryViewModel dragSource = ViewModel.DragSource;
+            if (dragSource == null) return false;
+
+            UIInventoryCarrier carrier = FindCarrier(dragSource);
+            if (carrier != null && carrier.TryCancelDraggedItem()) return true;
+
+            dragSource.CancelDrag();
+            return true;
+        }
+
+        // 只有当前真正显示的浮层才消费返回, 未打开时不能调用 Windows.Hide
+        private bool TryHideVisiblePopup<TView>() where TView : class, IView
+        {
+            MvvmRoot root = MvvmRoot.Instance;
+            if (root == null || !root.Windows.TryGet(out TView popup) || !popup.IsVisible) return false;
+
+            m_popupOwner = null;
+            m_popupGeneration++;
+            popup.Hide();
+            return true;
         }
 
         // 未打开时不处理, Windows.Hide 在窗口未打开时会报错

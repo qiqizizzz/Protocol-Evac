@@ -198,6 +198,14 @@ namespace UI.Inventory.View
         }
 
         /// <summary>
+        /// 取消物品拖拽并复位拖影与本体位置
+        /// </summary>
+        public void CancelDrag()
+        {
+            FinishDrag();
+        }
+
+        /// <summary>
         /// 拖拽悬停时按指针重排拖影, 并算出落点锚格相对悬停目标的偏移
         /// </summary>
         /// <param name="eventData">当前指针事件</param>
@@ -391,12 +399,6 @@ namespace UI.Inventory.View
         private void Update()
         {
             if (!m_isDragging) return;
-
-            if (Input.GetKeyDown(KeyCode.Escape))
-            {
-                FinishDrag();
-                return;
-            }
 
             if (Input.GetKeyDown(KeyCode.R)) RotateGhostDuringDrag();
 

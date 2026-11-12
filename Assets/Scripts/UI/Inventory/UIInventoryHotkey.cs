@@ -1,6 +1,6 @@
 ﻿/*
  * ┌──────────────────────────────────┐
- * │  描    述: 背包快捷键宿主, 运行期自建常驻, B 开关面板, F 通用交互, H 开垃圾堆并查看地面物
+ * │  描    述: 背包快捷键宿主, 运行期自建常驻, B 开关面板, F 通用交互, H 开关垃圾堆, Esc 逐层返回
  * │  类    名: UIInventoryHotkey.cs
  * │  创    建: By qiqizizzz
  * └──────────────────────────────────┘
@@ -23,6 +23,15 @@ namespace UI.Inventory
     /// </summary>
     public sealed class UIInventoryHotkey : MonoBehaviour
     {
+        // 当前战备面板由哪个入口打开, 供 H 只关闭自己打开的垃圾堆
+        private enum PanelOpenSource
+        {
+            None,
+            Inventory,
+            Interact,
+            GroundPile
+        }
+
         // 丢弃落点沿玩家身前推进的距离(米), 相机就在头顶, 丢在脚下的堆不在视野里
         private const float DROP_FORWARD_DISTANCE = 0.9f;
 
@@ -32,6 +41,7 @@ namespace UI.Inventory
         private GroundDropInteraction m_dropInteraction;
         private Transform m_playerTransform;
         private bool m_hasReportedMissingPlayer;
+        private PanelOpenSource m_panelOpenSource;
 
         /// <summary>
         /// 场景加载后自建常驻宿主
@@ -57,6 +67,7 @@ namespace UI.Inventory
             m_inputActions.UI.ToggleInventory.performed += OnToggleInventory;
             m_inputActions.UI.Interact.performed += OnInteract;
             m_inputActions.UI.InteractGroundPile.performed += OnInteractGroundPile;
+            m_inputActions.UI.Cancel.performed += OnCancel;
             m_inputActions.UI.Enable();
         }
 
@@ -65,6 +76,7 @@ namespace UI.Inventory
             m_inputActions.UI.ToggleInventory.performed -= OnToggleInventory;
             m_inputActions.UI.Interact.performed -= OnInteract;
             m_inputActions.UI.InteractGroundPile.performed -= OnInteractGroundPile;
+            m_inputActions.UI.Cancel.performed -= OnCancel;
             m_inputActions.UI.Disable();
         }
 
@@ -117,10 +129,11 @@ namespace UI.Inventory
 
             if (root.Windows.TryGet<UIEquipmentPanel>(out UIEquipmentPanel panel) && panel.IsVisible)
             {
-                root.Windows.Hide<UIEquipmentPanel>();
+                HideEquipmentPanel(root);
                 return;
             }
 
+            m_panelOpenSource = PanelOpenSource.Inventory;
             root.Windows.ShowAsync<UIEquipmentPanel>().Forget();
         }
 
@@ -146,16 +159,44 @@ namespace UI.Inventory
         {
             if (!TryResolvePlayerPosition(out Vector3 origin)) return;
 
-            m_lootInteraction.TryInteract(origin);
+            if (m_lootInteraction.TryInteract(origin))
+                m_panelOpenSource = PanelOpenSource.Interact;
         }
 
         // 响应地面垃圾堆快捷键, 先亮标签再打开最近的一座堆
         private void OnInteractGroundPile(InputAction.CallbackContext context)
         {
+            MvvmRoot root = MvvmRoot.Instance;
+            if (root != null && root.Windows.TryGet(out UIEquipmentPanel openPanel) && openPanel.IsVisible &&
+                m_panelOpenSource == PanelOpenSource.GroundPile)
+            {
+                HideEquipmentPanel(root);
+                return;
+            }
+
             if (!TryResolvePlayerPosition(out Vector3 origin)) return;
 
             GroundPilePresenter.ReportNearby(origin);
-            m_lootInteraction.TryInteractGroundPile(origin);
+            if (m_lootInteraction.TryInteractGroundPile(origin))
+                m_panelOpenSource = PanelOpenSource.GroundPile;
+        }
+
+        // Esc 只退一层: 先收拖拽或弹窗, 没有上层时才关闭战备面板
+        private void OnCancel(InputAction.CallbackContext context)
+        {
+            MvvmRoot root = MvvmRoot.Instance;
+            if (root == null || !root.Windows.TryGet(out UIEquipmentPanel panel) || !panel.IsVisible) return;
+
+            if (panel.TryCancelTopLayer()) return;
+
+            HideEquipmentPanel(root);
+        }
+
+        // 所有完整关闭入口统一清掉来源, 避免下次 B 打开时沿用旧的垃圾堆身份
+        private void HideEquipmentPanel(MvvmRoot root)
+        {
+            m_panelOpenSource = PanelOpenSource.None;
+            root.Windows.Hide<UIEquipmentPanel>();
         }
 
         // 缓存玩家变换, 换射击玩家后只改这一处来源
