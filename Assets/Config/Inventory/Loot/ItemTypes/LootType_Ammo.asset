@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6dfe8de8fcedce8419378dc0b6304d66, type: 3}
+  m_Name: LootType_Ammo
+  m_EditorClassIdentifier: 
+  ItemTypeValue: 20
+  EntriesValue:
+  - ItemValue: {fileID: 11400000, guid: 95f6a07bc44f6c248b3eec47f51753d4, type: 2}
+    WeightValue: 25
+    CountMinValue: 10
+    CountMaxValue: 30
+  - ItemValue: {fileID: 11400000, guid: d8aa1a38f8e9ffa41aa135f0255fdbe6, type: 2}
+    WeightValue: 25
+    CountMinValue: 10
+    CountMaxValue: 30
+  - ItemValue: {fileID: 11400000, guid: 6bb9c1896fe77b14f88065227c134149, type: 2}
+    WeightValue: 12
+    CountMinValue: 1
+    CountMaxValue: 2

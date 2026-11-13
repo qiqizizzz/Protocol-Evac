@@ -1,6 +1,6 @@
 ﻿/*
 * ┌──────────────────────────────────┐
-* │  描    述: 野外物资箱配置, 一份网格加一张带权重的掉落表
+* │  描    述: 野外物资箱配置, 一份网格加一张按物品种类加权的掉落池表
 * │  类    名: LootContainerConfigSO.cs
 * │  创    建: By qiqizizzz
 * └──────────────────────────────────┘
@@ -32,36 +32,37 @@ namespace Module.Inventory.Core.Config.Loot
         [Tooltip("每次开箱按权重抽取的最多次数")]
         [SerializeField, Min(0)] private int RollCountMaxValue = 1;
 
-        [Header("掉落表")]
-        [Tooltip("可掉落的物品与各自权重")]
-        [SerializeField] private LootEntry[] EntriesValue = Array.Empty<LootEntry>();
+        [Header("物品种类掉落表")]
+        [Tooltip("本箱允许出现的物品种类及各类型权重, 具体物品在对应种类池中配置")]
+        [SerializeField] private LootTypeEntry[] TypeEntriesValue = Array.Empty<LootTypeEntry>();
 
         public string DisplayName => DisplayNameValue;
         public InventoryContainerConfigSO Container => ContainerValue;
         public int RollCountMin => RollCountMinValue;
         public int RollCountMax => RollCountMaxValue;
-        public LootEntry[] Entries => EntriesValue;
+        public LootTypeEntry[] TypeEntries => TypeEntriesValue;
 
         /// <summary>
-        /// 判断掉落表是否包含指定物品种类
+        /// 判断箱子是否配置了指定物品种类的可用掉落池
         /// </summary>
         /// <param name="itemType">待查询的物品种类</param>
-        /// <returns>至少有一条有效掉落条目命中时返回 true</returns>
+        /// <returns>种类权重有效且种类池内至少有一条可用物品时返回 true</returns>
         public bool ContainsItemType(InventoryItemType itemType)
         {
             if (itemType == InventoryItemType.None) return false;
 
-            for (int i = 0; i < EntriesValue.Length; i++)
+            for (int i = 0; i < TypeEntriesValue.Length; i++)
             {
-                LootEntry entry = EntriesValue[i];
-                if (entry != null && entry.ItemType == itemType) return true;
+                LootTypeEntry entry = TypeEntriesValue[i];
+                if (entry == null || entry.ItemType != itemType || !entry.HasUsableEntries()) continue;
+                return true;
             }
 
             return false;
         }
 
         /// <summary>
-        /// 收集掉落表中实际出现的物品种类
+        /// 收集箱子实际参与抽取的物品种类
         /// </summary>
         /// <param name="results">复用的结果列表, 调用时先清空</param>
         /// <returns>收集到的物品种类数量</returns>
@@ -76,10 +77,10 @@ namespace Module.Inventory.Core.Config.Loot
             results.Clear();
             HashSet<InventoryItemType> collectedTypes = new HashSet<InventoryItemType>();
 
-            for (int i = 0; i < EntriesValue.Length; i++)
+            for (int i = 0; i < TypeEntriesValue.Length; i++)
             {
-                LootEntry entry = EntriesValue[i];
-                if (entry == null || entry.ItemType == InventoryItemType.None) continue;
+                LootTypeEntry entry = TypeEntriesValue[i];
+                if (entry == null || entry.ItemType == InventoryItemType.None || !entry.HasUsableEntries()) continue;
                 if (!collectedTypes.Add(entry.ItemType)) continue;
 
                 results.Add(entry.ItemType);

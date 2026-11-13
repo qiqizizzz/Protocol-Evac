@@ -78,10 +78,11 @@ namespace Tests.Inventory
         [Test]
         public void Roll_HeavyWeightEntry_DominatesTheBox()
         {
-            InventoryItemConfigSO staple = m_kit.CreateItem(1, 1);
-            InventoryItemConfigSO luxury = m_kit.CreateItem(1, 1);
-            LootContainerConfigSO loot = m_kit.CreateLoot("权重箱", m_kit.CreateContainer(5, 5, "测试网格"),
-                40, 40, m_kit.CreateLootEntry(staple, 900), m_kit.CreateLootEntry(luxury, 1));
+            InventoryItemConfigSO staple = m_kit.CreateItem(1, 1, itemType: InventoryItemType.Medical);
+            InventoryItemConfigSO luxury = m_kit.CreateItem(1, 1, itemType: InventoryItemType.Medical);
+            LootContainerConfigSO loot = CreateSingleTypeLoot("权重箱", m_kit.CreateContainer(5, 5, "测试网格"),
+                40, 40, InventoryItemType.Medical, m_kit.CreateLootEntry(staple, 900),
+                m_kit.CreateLootEntry(luxury, 1));
 
             int stapleCount = 0;
             int luxuryCount = 0;
@@ -96,12 +97,37 @@ namespace Tests.Inventory
         }
 
         [Test]
+        public void Roll_HeavyTypeWeight_DominatesTheBox()
+        {
+            InventoryItemConfigSO medical = m_kit.CreateItem(1, 1, itemType: InventoryItemType.Medical);
+            InventoryItemConfigSO food = m_kit.CreateItem(1, 1, itemType: InventoryItemType.Food);
+            LootItemTypeConfigSO medicalType = m_kit.CreateLootType(InventoryItemType.Medical,
+                m_kit.CreateLootEntry(medical, 1));
+            LootItemTypeConfigSO foodType = m_kit.CreateLootType(InventoryItemType.Food,
+                m_kit.CreateLootEntry(food, 1));
+            LootContainerConfigSO loot = m_kit.CreateLoot("类型权重箱", m_kit.CreateContainer(5, 5, "测试网格"),
+                40, 40, m_kit.CreateLootTypeEntry(medicalType, 900), m_kit.CreateLootTypeEntry(foodType, 1));
+
+            int medicalCount = 0;
+            int foodCount = 0;
+            IReadOnlyList<LootDrop> drops = LootRoller.Roll(loot, SEED);
+            for (int i = 0; i < drops.Count; i++)
+            {
+                if (drops[i].Item == medical) medicalCount += drops[i].Count;
+                else foodCount += drops[i].Count;
+            }
+
+            Assert.Greater(medicalCount, foodCount * 100, "箱子层的种类权重必须优先决定本箱主要出什么类型");
+        }
+
+        [Test]
         public void Roll_ZeroWeightEntry_IsNeverDrawn()
         {
-            InventoryItemConfigSO active = m_kit.CreateItem(1, 1);
-            InventoryItemConfigSO disabled = m_kit.CreateItem(1, 1);
-            LootContainerConfigSO loot = m_kit.CreateLoot("停用箱", m_kit.CreateContainer(5, 5, "测试网格"),
-                6, 6, m_kit.CreateLootEntry(active, 1), m_kit.CreateLootEntry(disabled, 0));
+            InventoryItemConfigSO active = m_kit.CreateItem(1, 1, itemType: InventoryItemType.Medical);
+            InventoryItemConfigSO disabled = m_kit.CreateItem(1, 1, itemType: InventoryItemType.Medical);
+            LootContainerConfigSO loot = CreateSingleTypeLoot("停用箱", m_kit.CreateContainer(5, 5, "测试网格"),
+                6, 6, InventoryItemType.Medical, m_kit.CreateLootEntry(active, 1),
+                m_kit.CreateLootEntry(disabled, 0));
 
             IReadOnlyList<LootDrop> drops = LootRoller.Roll(loot, SEED);
 
@@ -113,9 +139,9 @@ namespace Tests.Inventory
         [Test]
         public void Roll_StackOverflow_SplitsIntoSeveralStacks()
         {
-            InventoryItemConfigSO ammo = m_kit.CreateItem(1, 1, true, 5);
-            LootContainerConfigSO loot = m_kit.CreateLoot("弹药箱", m_kit.CreateContainer(5, 5, "测试网格"),
-                1, 1, m_kit.CreateLootEntry(ammo, 1, 12, 12));
+            InventoryItemConfigSO ammo = m_kit.CreateItem(1, 1, true, 5, itemType: InventoryItemType.Ammo);
+            LootContainerConfigSO loot = CreateSingleTypeLoot("弹药箱", m_kit.CreateContainer(5, 5, "测试网格"),
+                1, 1, InventoryItemType.Ammo, m_kit.CreateLootEntry(ammo, 1, 12, 12));
 
             IReadOnlyList<LootDrop> drops = LootRoller.Roll(loot, SEED);
 
@@ -133,9 +159,9 @@ namespace Tests.Inventory
         [Test]
         public void Roll_NonStackableCountRange_DropsThatManySinglePieces()
         {
-            InventoryItemConfigSO rifle = m_kit.CreateItem(2, 1);
-            LootContainerConfigSO loot = m_kit.CreateLoot("军火箱", m_kit.CreateContainer(6, 4, "测试网格"),
-                2, 2, m_kit.CreateLootEntry(rifle, 1, 3, 3));
+            InventoryItemConfigSO rifle = m_kit.CreateItem(2, 1, itemType: InventoryItemType.Weapon);
+            LootContainerConfigSO loot = CreateSingleTypeLoot("军火箱", m_kit.CreateContainer(6, 4, "测试网格"),
+                2, 2, InventoryItemType.Weapon, m_kit.CreateLootEntry(rifle, 1, 3, 3));
 
             IReadOnlyList<LootDrop> drops = LootRoller.Roll(loot, SEED);
 
@@ -146,9 +172,9 @@ namespace Tests.Inventory
         [Test]
         public void Roll_CountBounds_StaysInsideTheConfiguredRange()
         {
-            InventoryItemConfigSO canned = m_kit.CreateItem(1, 1, true, 99);
-            LootContainerConfigSO loot = m_kit.CreateLoot("罐头箱", m_kit.CreateContainer(4, 3, "测试网格"),
-                1, 1, m_kit.CreateLootEntry(canned, 1, 2, 4));
+            InventoryItemConfigSO canned = m_kit.CreateItem(1, 1, true, 99, itemType: InventoryItemType.Food);
+            LootContainerConfigSO loot = CreateSingleTypeLoot("罐头箱", m_kit.CreateContainer(4, 3, "测试网格"),
+                1, 1, InventoryItemType.Food, m_kit.CreateLootEntry(canned, 1, 2, 4));
 
             for (int seed = SEED; seed < SEED + 20; seed++)
             {
@@ -173,7 +199,7 @@ namespace Tests.Inventory
         public void Roll_EmptyEntryTable_ReturnsNothing()
         {
             LootContainerConfigSO loot = m_kit.CreateLoot("空箱", m_kit.CreateContainer(4, 3, "测试网格"), 3, 5);
-            LogAssert.Expect(LogType.Error, new Regex("没有任何可用掉落条目"));
+            LogAssert.Expect(LogType.Error, new Regex("没有任何可用的物品种类池"));
 
             Assert.IsEmpty(LootRoller.Roll(loot, SEED));
         }
@@ -209,6 +235,17 @@ namespace Tests.Inventory
             Assert.IsTrue(loot.ContainsItemType(InventoryItemType.Food));
             Assert.IsFalse(loot.ContainsItemType(InventoryItemType.Attachment), "未配置的物品种类不应被误判为存在");
             Assert.IsFalse(loot.ContainsItemType(InventoryItemType.None), "None 不是可掉落物品种类");
+        }
+
+        [Test]
+        public void LootContainer_ZeroWeightType_IsNotReportedAsAvailable()
+        {
+            LootItemTypeConfigSO medicalType = m_kit.CreateLootType(InventoryItemType.Medical,
+                m_kit.CreateLootEntry(m_kit.CreateItem(1, 1, itemType: InventoryItemType.Medical), 1));
+            LootContainerConfigSO loot = m_kit.CreateLoot("停用种类箱",
+                m_kit.CreateContainer(4, 3, "测试网格"), 1, 1, m_kit.CreateLootTypeEntry(medicalType, 0));
+
+            Assert.IsFalse(loot.ContainsItemType(InventoryItemType.Medical), "种类权重为 0 时该类型不能算可掉落");
         }
         #endregion
 
@@ -328,8 +365,9 @@ namespace Tests.Inventory
         [Test]
         public void OpenLootContainer_KeepsGridNameWhenLootConfigHasNoName()
         {
-            LootContainerConfigSO loot = m_kit.CreateLoot(string.Empty, m_kit.CreateContainer(4, 3, "野战补给箱"),
-                1, 2, m_kit.CreateLootEntry(m_kit.CreateItem(1, 1), 1));
+            LootContainerConfigSO loot = CreateSingleTypeLoot(string.Empty,
+                m_kit.CreateContainer(4, 3, "野战补给箱"), 1, 2, InventoryItemType.Food,
+                m_kit.CreateLootEntry(m_kit.CreateItem(1, 1, itemType: InventoryItemType.Food), 1));
 
             int containerId = m_model.OpenLootContainer(ENTITY_A, loot, SEED);
 
@@ -381,10 +419,11 @@ namespace Tests.Inventory
         [Test]
         public void OpenLootContainer_SkipsItemsThatCannotFit()
         {
-            InventoryItemConfigSO oversized = m_kit.CreateItem(4, 4);
-            InventoryItemConfigSO fitting = m_kit.CreateItem(1, 1);
-            LootContainerConfigSO loot = m_kit.CreateLoot("小箱子", m_kit.CreateContainer(2, 2, "测试网格"),
-                4, 4, m_kit.CreateLootEntry(oversized, 1), m_kit.CreateLootEntry(fitting, 1));
+            InventoryItemConfigSO oversized = m_kit.CreateItem(4, 4, itemType: InventoryItemType.Material);
+            InventoryItemConfigSO fitting = m_kit.CreateItem(1, 1, itemType: InventoryItemType.Material);
+            LootContainerConfigSO loot = CreateSingleTypeLoot("小箱子", m_kit.CreateContainer(2, 2, "测试网格"),
+                4, 4, InventoryItemType.Material, m_kit.CreateLootEntry(oversized, 1),
+                m_kit.CreateLootEntry(fitting, 1));
 
             int containerId = m_model.OpenLootContainer(ENTITY_A, loot, SEED);
 
@@ -396,9 +435,10 @@ namespace Tests.Inventory
         [Test]
         public void OpenLootContainer_LeavesWeightAccountingToTheCharacter()
         {
-            InventoryItemConfigSO heavy = m_kit.CreateItem(1, 1, true, 1, 9999f);
-            LootContainerConfigSO loot = m_kit.CreateLoot("重货箱", m_kit.CreateContainer(3, 2, "测试网格"),
-                3, 3, m_kit.CreateLootEntry(heavy, 1));
+            InventoryItemConfigSO heavy = m_kit.CreateItem(1, 1, true, 1, 9999f,
+                itemType: InventoryItemType.Material);
+            LootContainerConfigSO loot = CreateSingleTypeLoot("重货箱", m_kit.CreateContainer(3, 2, "测试网格"),
+                3, 3, InventoryItemType.Material, m_kit.CreateLootEntry(heavy, 1));
 
             int containerId = m_model.OpenLootContainer(ENTITY_A, loot, SEED);
 
@@ -430,8 +470,9 @@ namespace Tests.Inventory
         [Test]
         public void OpenLootContainer_MissingGrid_ReturnsInvalidId()
         {
-            LootContainerConfigSO loot = m_kit.CreateLoot("缺网格的箱子", null, 1, 2,
-                m_kit.CreateLootEntry(m_kit.CreateItem(1, 1), 1));
+            LootContainerConfigSO loot = CreateSingleTypeLoot("缺网格的箱子", null, 1, 2,
+                InventoryItemType.Weapon, m_kit.CreateLootEntry(
+                    m_kit.CreateItem(1, 1, itemType: InventoryItemType.Weapon), 1));
             LogAssert.Expect(LogType.Error, new Regex("缺少网格定义"));
 
             Assert.Less(m_model.OpenLootContainer(ENTITY_A, loot, SEED), 0);
@@ -442,29 +483,56 @@ namespace Tests.Inventory
         // 造一只常规补给箱, 掉落物全部放得进 4x3 网格
         private LootContainerConfigSO BuildSupplyBox(int rollCountMin, int rollCountMax)
         {
+            LootItemTypeConfigSO foodType = m_kit.CreateLootType(InventoryItemType.Food,
+                m_kit.CreateLootEntry(m_kit.CreateItem(1, 1, true, 5, itemType: InventoryItemType.Food), 25, 1, 4),
+                m_kit.CreateLootEntry(m_kit.CreateItem(1, 1, itemType: InventoryItemType.Food), 25, 1, 3),
+                m_kit.CreateLootEntry(m_kit.CreateItem(2, 1, itemType: InventoryItemType.Food), 15));
+            LootItemTypeConfigSO medicalType = m_kit.CreateLootType(InventoryItemType.Medical,
+                m_kit.CreateLootEntry(m_kit.CreateItem(1, 1, itemType: InventoryItemType.Medical), 10));
+            LootItemTypeConfigSO materialType = m_kit.CreateLootType(InventoryItemType.Material,
+                m_kit.CreateLootEntry(m_kit.CreateItem(1, 1, itemType: InventoryItemType.Material), 5),
+                m_kit.CreateLootEntry(m_kit.CreateItem(2, 2, itemType: InventoryItemType.Material), 5));
+
             return m_kit.CreateLoot("补给箱", m_kit.CreateContainer(4, 3, "野战补给箱"), rollCountMin, rollCountMax,
-                m_kit.CreateLootEntry(m_kit.CreateItem(1, 1, true, 5), 35, 1, 4),
-                m_kit.CreateLootEntry(m_kit.CreateItem(1, 1), 25, 1, 3),
-                m_kit.CreateLootEntry(m_kit.CreateItem(2, 1), 20),
-                m_kit.CreateLootEntry(m_kit.CreateItem(2, 2), 10));
+                m_kit.CreateLootTypeEntry(foodType, 65), m_kit.CreateLootTypeEntry(medicalType, 10),
+                m_kit.CreateLootTypeEntry(materialType, 15));
         }
 
         // 造一只武器箱, 掉落尺寸比补给箱大, 用来区分两只箱子的内容
         private LootContainerConfigSO BuildWeaponBox(int rollCountMin, int rollCountMax)
         {
+            LootItemTypeConfigSO weaponType = m_kit.CreateLootType(InventoryItemType.Weapon,
+                m_kit.CreateLootEntry(m_kit.CreateItem(5, 2, itemType: InventoryItemType.Weapon), 47));
+            LootItemTypeConfigSO ammoType = m_kit.CreateLootType(InventoryItemType.Ammo,
+                m_kit.CreateLootEntry(m_kit.CreateItem(2, 1, true, 5, itemType: InventoryItemType.Ammo), 37, 1, 3));
+            LootItemTypeConfigSO armorType = m_kit.CreateLootType(InventoryItemType.Armor,
+                m_kit.CreateLootEntry(m_kit.CreateItem(1, 2, itemType: InventoryItemType.Armor), 8));
+
             return m_kit.CreateLoot("武器箱", m_kit.CreateContainer(6, 4, "军火网格"), rollCountMin, rollCountMax,
-                m_kit.CreateLootEntry(m_kit.CreateItem(5, 2), 15),
-                m_kit.CreateLootEntry(m_kit.CreateItem(2, 1), 30),
-                m_kit.CreateLootEntry(m_kit.CreateItem(1, 2, true, 5), 25, 1, 3));
+                m_kit.CreateLootTypeEntry(weaponType, 47), m_kit.CreateLootTypeEntry(ammoType, 37),
+                m_kit.CreateLootTypeEntry(armorType, 8));
         }
 
         // 造一只混合物品种类的医疗物资箱, 重复医疗物品用于验证分类去重
         private LootContainerConfigSO BuildMixedTypeBox()
         {
-            return m_kit.CreateLoot("混合物资箱", m_kit.CreateContainer(4, 3, "混合物资网格"), 2, 3,
+            LootItemTypeConfigSO medicalType = m_kit.CreateLootType(InventoryItemType.Medical,
                 m_kit.CreateLootEntry(m_kit.CreateItem(1, 1, itemType: InventoryItemType.Medical), 30),
-                m_kit.CreateLootEntry(m_kit.CreateItem(1, 1, itemType: InventoryItemType.Medical), 20),
+                m_kit.CreateLootEntry(m_kit.CreateItem(1, 1, itemType: InventoryItemType.Medical), 20));
+            LootItemTypeConfigSO foodType = m_kit.CreateLootType(InventoryItemType.Food,
                 m_kit.CreateLootEntry(m_kit.CreateItem(1, 1, itemType: InventoryItemType.Food), 10));
+
+            return m_kit.CreateLoot("混合物资箱", m_kit.CreateContainer(4, 3, "混合物资网格"), 2, 3,
+                m_kit.CreateLootTypeEntry(medicalType, 70), m_kit.CreateLootTypeEntry(foodType, 30));
+        }
+
+        // 用单一物品种类池造箱子, 方便验证抽取器内部规则
+        private LootContainerConfigSO CreateSingleTypeLoot(string displayName, InventoryContainerConfigSO container,
+            int rollCountMin, int rollCountMax, InventoryItemType itemType, params LootEntry[] entries)
+        {
+            LootItemTypeConfigSO typeConfig = m_kit.CreateLootType(itemType, entries);
+            return m_kit.CreateLoot(displayName, container, rollCountMin, rollCountMax,
+                m_kit.CreateLootTypeEntry(typeConfig, 1));
         }
 
         // 断言箱内物品全部出自指定物资箱的掉落表
@@ -493,12 +561,16 @@ namespace Tests.Inventory
         private static HashSet<int> CollectEntryItemIds(LootContainerConfigSO loot)
         {
             HashSet<int> itemIds = new HashSet<int>();
-            LootEntry[] entries = loot.Entries;
+            LootTypeEntry[] typeEntries = loot.TypeEntries;
 
-            for (int i = 0; i < entries.Length; i++)
+            for (int i = 0; i < typeEntries.Length; i++)
             {
-                if (entries[i] == null || entries[i].Item == null) continue;
-                itemIds.Add(entries[i].Item.ItemId);
+                LootEntry[] entries = typeEntries[i].Entries;
+                for (int j = 0; j < entries.Length; j++)
+                {
+                    if (entries[j] == null || entries[j].Item == null) continue;
+                    itemIds.Add(entries[j].Item.ItemId);
+                }
             }
 
             return itemIds;

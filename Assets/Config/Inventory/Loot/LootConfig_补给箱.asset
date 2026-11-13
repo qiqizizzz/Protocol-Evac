@@ -16,32 +16,10 @@ MonoBehaviour:
   ContainerValue: {fileID: 11400000, guid: c9ce3883a27b2be46a4fa6c85ba59dae, type: 2}
   RollCountMinValue: 5
   RollCountMaxValue: 9
-  EntriesValue:
-  - ItemValue: {fileID: 11400000, guid: 7a407cd7da0b9cd4fbaff7d4ebbaf0ea, type: 2}
-    WeightValue: 25
-    CountMinValue: 1
-    CountMaxValue: 4
-  - ItemValue: {fileID: 11400000, guid: d57a4861e14e4a24d9790535803c7d61, type: 2}
-    WeightValue: 25
-    CountMinValue: 1
-    CountMaxValue: 4
-  - ItemValue: {fileID: 11400000, guid: 3670029d40bb36b4b8e8801ccef1c3bb, type: 2}
-    WeightValue: 15
-    CountMinValue: 1
-    CountMaxValue: 1
-  - ItemValue: {fileID: 11400000, guid: 714dbc29c25ae6b43b8394100bf6a7e7, type: 2}
+  TypeEntriesValue:
+  - TypeConfigValue: {fileID: 11400000, guid: 3576a426a93029247b932266002c31b6, type: 2}
+    WeightValue: 65
+  - TypeConfigValue: {fileID: 11400000, guid: 949afd0de92b0f74c81bc224451a82c1, type: 2}
     WeightValue: 10
-    CountMinValue: 1
-    CountMaxValue: 1
-  - ItemValue: {fileID: 11400000, guid: 56df21d900b614348bf0fd94c9be7be3, type: 2}
-    WeightValue: 5
-    CountMinValue: 1
-    CountMaxValue: 1
-  - ItemValue: {fileID: 11400000, guid: c704ac8056dbaf64c937e4fbe1d7a2bf, type: 2}
-    WeightValue: 5
-    CountMinValue: 1
-    CountMaxValue: 1
-  - ItemValue: {fileID: 11400000, guid: e651c87217983524888dd69c93381f9f, type: 2}
-    WeightValue: 5
-    CountMinValue: 1
-    CountMaxValue: 1
+  - TypeConfigValue: {fileID: 11400000, guid: 89c9f22059c4bc74ab625236968f9a39, type: 2}
+    WeightValue: 15

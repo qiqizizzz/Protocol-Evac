@@ -1,6 +1,6 @@
 ﻿/*
 * ┌──────────────────────────────────┐
-* │  描    述: 物资箱掉落抽取器, 按权重把掉落表摇成一组待落子的物品
+* │  描    述: 物资箱掉落抽取器, 先按种类权重选池再按池内权重摇出物品
 * │  类    名: LootRoller.cs
 * │  创    建: By qiqizizzz
 * └──────────────────────────────────┘
@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using Module.Inventory.Core.Config;
 using Module.Inventory.Core.Config.Loot;
+using Module.Inventory.Core.Config.Type;
 using Utils.log;
 
 namespace Module.Inventory.Core.Loot
@@ -31,10 +32,10 @@ namespace Module.Inventory.Core.Loot
                 return EMPTY_DROPS;
             }
 
-            int totalWeight = SumWeight(loot.Entries);
-            if (totalWeight <= 0)
+            int totalTypeWeight = SumTypeWeight(loot.TypeEntries);
+            if (totalTypeWeight <= 0)
             {
-                QLog.Error($"物资箱 {loot.DisplayName} 没有任何可用掉落条目");
+                QLog.Error($"物资箱 {loot.DisplayName} 没有任何可用的物品种类池");
                 return EMPTY_DROPS;
             }
 
@@ -44,7 +45,10 @@ namespace Module.Inventory.Core.Loot
 
             for (int roll = 0, rollCount = DrawRollCount(loot, random); roll < rollCount; roll++)
             {
-                LootEntry entry = PickEntry(loot.Entries, totalWeight, random);
+                LootTypeEntry typeEntry = PickTypeEntry(loot.TypeEntries, totalTypeWeight, random);
+                if (typeEntry == null) continue;
+
+                LootEntry entry = PickEntry(typeEntry.Entries, typeEntry.ItemType, random);
                 if (entry == null) continue;
 
                 int count = DrawCount(entry, random);
@@ -60,16 +64,16 @@ namespace Module.Inventory.Core.Loot
             return SplitIntoStacks(order, units);
         }
 
-        //全表权重求和, 空槽与零权条目不计入
-        private static int SumWeight(LootEntry[] entries)
+        //箱子层只统计带有效种类池且权重大于零的条目
+        private static int SumTypeWeight(LootTypeEntry[] typeEntries)
         {
-            if (entries == null) return 0;
+            if (typeEntries == null) return 0;
 
             int total = 0;
-            for (int i = 0; i < entries.Length; i++)
+            for (int i = 0; i < typeEntries.Length; i++)
             {
-                LootEntry entry = entries[i];
-                if (entry == null || entry.Item == null || entry.Weight <= 0) continue;
+                LootTypeEntry entry = typeEntries[i];
+                if (entry == null || !entry.HasUsableEntries()) continue;
                 total += entry.Weight;
             }
 
@@ -84,15 +88,53 @@ namespace Module.Inventory.Core.Loot
             return random.Next(min, max + 1);
         }
 
-        //按权重摇中一条掉落, 上限恒等于总和所以循环内必中, 返回 null 只为让编译器闭眼
-        private static LootEntry PickEntry(LootEntry[] entries, int totalWeight, Random random)
+        //按箱子内种类权重摇中一个掉落池
+        private static LootTypeEntry PickTypeEntry(LootTypeEntry[] typeEntries, int totalWeight, Random random)
         {
+            int ticket = random.Next(totalWeight);
+
+            for (int i = 0; i < typeEntries.Length; i++)
+            {
+                LootTypeEntry entry = typeEntries[i];
+                if (entry == null || !entry.HasUsableEntries()) continue;
+
+                ticket -= entry.Weight;
+                if (ticket < 0) return entry;
+            }
+
+            return null;
+        }
+
+        //池内权重求和, 只接受与池分类一致的物品
+        private static int SumEntryWeight(LootEntry[] entries, InventoryItemType itemType)
+        {
+            if (entries == null) return 0;
+
+            int total = 0;
+            for (int i = 0; i < entries.Length; i++)
+            {
+                LootEntry entry = entries[i];
+                if (entry == null || entry.Item == null || entry.Weight <= 0) continue;
+                if (entry.ItemType != itemType) continue;
+                total += entry.Weight;
+            }
+
+            return total;
+        }
+
+        //按池内物品权重摇中一条掉落
+        private static LootEntry PickEntry(LootEntry[] entries, InventoryItemType itemType, Random random)
+        {
+            int totalWeight = SumEntryWeight(entries, itemType);
+            if (totalWeight <= 0) return null;
+
             int ticket = random.Next(totalWeight);
 
             for (int i = 0; i < entries.Length; i++)
             {
                 LootEntry entry = entries[i];
                 if (entry == null || entry.Item == null || entry.Weight <= 0) continue;
+                if (entry.ItemType != itemType) continue;
 
                 ticket -= entry.Weight;
                 if (ticket < 0) return entry;

@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6dfe8de8fcedce8419378dc0b6304d66, type: 3}
+  m_Name: LootType_Weapon
+  m_EditorClassIdentifier: 
+  ItemTypeValue: 10
+  EntriesValue:
+  - ItemValue: {fileID: 11400000, guid: d088332197010b34cbc22b429614275c, type: 2}
+    WeightValue: 10
+    CountMinValue: 1
+    CountMaxValue: 1
+  - ItemValue: {fileID: 11400000, guid: 3b4040030e3564a4782ccf6dbd10913b, type: 2}
+    WeightValue: 12
+    CountMinValue: 1
+    CountMaxValue: 1
+  - ItemValue: {fileID: 11400000, guid: 6f19417caf2561f43be84d230a3146c2, type: 2}
+    WeightValue: 15
+    CountMinValue: 1
+    CountMaxValue: 1
+  - ItemValue: {fileID: 11400000, guid: a1f6396de25d9224e86252e33dca5693, type: 2}
+    WeightValue: 10
+    CountMinValue: 1
+    CountMaxValue: 1

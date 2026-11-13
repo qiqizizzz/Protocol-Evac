@@ -166,15 +166,43 @@ namespace Tests.Inventory
         }
 
         /// <summary>
+        /// 造一份按物品种类划分的掉落池
+        /// </summary>
+        /// <param name="itemType">该池允许出现的物品种类</param>
+        /// <param name="entries">该种类下的具体物品条目</param>
+        public LootItemTypeConfigSO CreateLootType(InventoryItemType itemType, params LootEntry[] entries)
+        {
+            LootItemTypeConfigSO typeConfig = CreateConfig<LootItemTypeConfigSO>();
+
+            SetField(typeConfig, "ItemTypeValue", itemType);
+            SetField(typeConfig, "EntriesValue", entries ?? new LootEntry[0]);
+            return typeConfig;
+        }
+
+        /// <summary>
+        /// 造一条物资箱的物品种类权重
+        /// </summary>
+        /// <param name="typeConfig">物品种类掉落池</param>
+        /// <param name="weight">该种类在本箱内的抽取权重</param>
+        public LootTypeEntry CreateLootTypeEntry(LootItemTypeConfigSO typeConfig, int weight = 1)
+        {
+            LootTypeEntry entry = new LootTypeEntry();
+
+            SetField(entry, "TypeConfigValue", typeConfig);
+            SetField(entry, "WeightValue", weight);
+            return entry;
+        }
+
+        /// <summary>
         /// 造一份野外物资箱配置
         /// </summary>
         /// <param name="displayName">物资箱显示名</param>
         /// <param name="container">物资箱自身的网格定义</param>
         /// <param name="rollCountMin">每次开箱的最少抽取次数</param>
         /// <param name="rollCountMax">每次开箱的最多抽取次数</param>
-        /// <param name="entries">掉落表</param>
+        /// <param name="typeEntries">物品种类权重表</param>
         public LootContainerConfigSO CreateLoot(string displayName, InventoryContainerConfigSO container,
-            int rollCountMin, int rollCountMax, params LootEntry[] entries)
+            int rollCountMin, int rollCountMax, params LootTypeEntry[] typeEntries)
         {
             LootContainerConfigSO loot = CreateConfig<LootContainerConfigSO>();
 
@@ -182,7 +210,7 @@ namespace Tests.Inventory
             SetField(loot, "ContainerValue", container);
             SetField(loot, "RollCountMinValue", rollCountMin);
             SetField(loot, "RollCountMaxValue", rollCountMax);
-            SetField(loot, "EntriesValue", entries ?? new LootEntry[0]);
+            SetField(loot, "TypeEntriesValue", typeEntries ?? new LootTypeEntry[0]);
             return loot;
         }
 

@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6dfe8de8fcedce8419378dc0b6304d66, type: 3}
+  m_Name: LootType_Medical
+  m_EditorClassIdentifier: 
+  ItemTypeValue: 40
+  EntriesValue:
+  - ItemValue: {fileID: 11400000, guid: d70ef48f68e1a5d4ab19b1bdd4d9bda3, type: 2}
+    WeightValue: 15
+    CountMinValue: 1
+    CountMaxValue: 1
+  - ItemValue: {fileID: 11400000, guid: 714dbc29c25ae6b43b8394100bf6a7e7, type: 2}
+    WeightValue: 35
+    CountMinValue: 1
+    CountMaxValue: 5
+  - ItemValue: {fileID: 11400000, guid: 4dd7b30eee9b25f42ae2e6630f06eb47, type: 2}
+    WeightValue: 12
+    CountMinValue: 1
+    CountMaxValue: 1
