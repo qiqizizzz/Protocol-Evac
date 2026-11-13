@@ -21,13 +21,11 @@ namespace UI.Combat
     {
         private const string LOCK_ON_TOGGLE_PATH = "LockOn";
         private const string CROSSHAIR_PATH = "Crosshair";
-        private const string LOOT_SEARCH_ICON_PATH = "LootSearchIcon";
         private const string INTERACTION_HINT_PATH = "InteractionHint";
         private const float INTERACTION_HINT_DURATION = 1.25f;
 
         private Toggle m_lockOnToggle;
         private Image m_crosshair;
-        private Image m_lootSearchIcon;
         private TMP_Text m_interactionHint;
         private Coroutine m_interactionHintRoutine;
 
@@ -39,7 +37,6 @@ namespace UI.Combat
         {
             m_lockOnToggle = this.FindChildComponent<Toggle>(LOCK_ON_TOGGLE_PATH);
             m_crosshair = this.FindChildComponent<Image>(CROSSHAIR_PATH);
-            m_lootSearchIcon = this.FindChildComponent<Image>(LOOT_SEARCH_ICON_PATH);
             if (m_lockOnToggle == null)
             {
                 QLog.Error("LockOn 未找到");
@@ -49,12 +46,6 @@ namespace UI.Combat
             if (m_crosshair == null)
             {
                 QLog.Error("Crosshair 未找到");
-                return;
-            }
-
-            if (m_lootSearchIcon == null)
-            {
-                QLog.Error($"{LOOT_SEARCH_ICON_PATH} 未找到");
                 return;
             }
 
@@ -85,8 +76,6 @@ namespace UI.Combat
             if (m_crosshair == null) return;
 
             m_crosshair.color = hasFocus ? CrosshairFocusColor : CrosshairIdleColor;
-            m_lootSearchIcon.color = CrosshairFocusColor;
-            m_lootSearchIcon.gameObject.SetActive(hasFocus);
         }
 
         // 显示短暂的交互结果提示, 新提示会覆盖旧提示并重新计时
