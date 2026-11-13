@@ -29,8 +29,14 @@ namespace UI.Inventory
         private const string NO_LOOT_BOX_HINT = "前方没有可搜刮的物资箱";
 
         private readonly LootInteractableScanner m_scanner = new LootInteractableScanner();
+        private readonly System.Func<bool> m_isContainerPanelVisible;
 
         private bool m_hasValidatedBoxes;
+
+        public LootBoxInteraction(System.Func<bool> isContainerPanelVisible)
+        {
+            m_isContainerPanelVisible = isContainerPanelVisible;
+        }
 
         /// <summary>
         /// 响应通用交互, 从距离、视角与视线都满足条件的物资箱中打开一只
@@ -42,6 +48,8 @@ namespace UI.Inventory
         /// <returns>是否已接受本次打开请求</returns>
         public bool TryInteract(Vector3 origin, Vector3 forward, InteractionQueryConfig config, LayerMask obstacleMask)
         {
+            if (m_isContainerPanelVisible()) return false;
+
             ValidateSceneBoxes();
 
             ILootInteractable target = m_scanner.ScanBest<LootBoxController>(origin, forward, config, obstacleMask);

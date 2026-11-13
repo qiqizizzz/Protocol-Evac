@@ -190,7 +190,7 @@ namespace UI.Inventory.View
 
             // 模板常驻停用, 克隆体同样不会触发 Awake, 先激活补齐载体的节点缓存再显示, 否则绑定会打在空引用上
             carrierObject.SetActive(true);
-            m_lootCarrier.SetSearching(ViewModel.IsLootItemSearching);
+            m_lootCarrier.SetSearching(ViewModel.IsLootItemSearching, ViewModel.IsLootItemSearchActive);
             m_lootCarrier.Show(container);
 
             // 动态载体随开随毁, 订阅挂在它自己的作用域上, 销毁时一并收敛, 不给面板留悬空条目
@@ -203,7 +203,7 @@ namespace UI.Inventory.View
         {
             if (m_lootCarrier == null) return;
 
-            m_lootCarrier.SetSearching(ViewModel.IsLootItemSearching);
+            m_lootCarrier.SetSearching(ViewModel.IsLootItemSearching, ViewModel.IsLootItemSearchActive);
         }
 
         // 停用立即生效以先收敛绑定, 真正的销毁 Unity 排在帧末

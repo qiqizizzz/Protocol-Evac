@@ -76,6 +76,7 @@ namespace UI.Inventory.View
 
         private int m_gridWidth = -1;
         private Func<int, bool> m_isSearching;
+        private Func<int, bool> m_isSearchActive;
 
         /// <summary>
         /// 当前载体的网格单元格尺寸
@@ -109,12 +110,14 @@ namespace UI.Inventory.View
         /// 设置载体是否处于搜刮状态, 状态会同步到当前与后续生成的物品视图
         /// </summary>
         /// <param name="searching">是否显示未搜索阴影</param>
-        public void SetSearching(Func<int, bool> searching)
+        /// <param name="activeSearching">是否为当前正在计时的搜索目标</param>
+        public void SetSearching(Func<int, bool> searching, Func<int, bool> activeSearching)
         {
             m_isSearching = searching;
+            m_isSearchActive = activeSearching;
 
             foreach (UIInventoryItem itemView in m_itemViews.Values)
-                itemView.SetSearching(IsSearching(itemView.InstanceId));
+                itemView.SetSearching(IsSearching(itemView.InstanceId), IsSearchActive(itemView.InstanceId));
         }
 
         /// <summary>
@@ -454,11 +457,15 @@ namespace UI.Inventory.View
             itemView.Setup(item, m_gridLayout.cellSize, m_gridLayout.spacing);
             m_itemViews.Add(item.InstanceId, itemView);
             itemView.Bind(Scope.CreateChild(itemObject), ViewModel);
-            itemView.SetSearching(IsSearching(item.InstanceId));
+            itemView.SetSearching(IsSearching(item.InstanceId), IsSearchActive(item.InstanceId));
         }
 
         // 查询指定物品是否仍处于逐件搜索阴影态
         private bool IsSearching(int instanceId) => m_isSearching != null && m_isSearching(instanceId);
+
+        // 查询指定物品是否拥有当前搜索图标
+        private bool IsSearchActive(int instanceId) =>
+            m_isSearchActive != null && m_isSearchActive(instanceId);
 
         //提示语义转文案
         private static string HintOf(InventoryHintKind kind)

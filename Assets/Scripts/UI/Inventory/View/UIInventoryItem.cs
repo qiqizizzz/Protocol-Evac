@@ -18,6 +18,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using Utils.Find;
+using Utils.log;
 
 namespace UI.Inventory.View
 {
@@ -36,8 +37,13 @@ namespace UI.Inventory.View
 
         private const string ICON_PATH = "Img_Icon";
         private const string SILHOUETTE_PATH = "Img_Silhouette";
+        private const string SEARCH_PATH = "Img_Search";
         private const string COUNT_PATH = "Txt_Count";
         private const string SELECTED_PATH = "Img_Selected";
+
+        private const float SEARCH_INDICATOR_ORBIT_RADIUS = 8f; //搜索图标绕物品中心移动的半径
+        private const float SEARCH_INDICATOR_ORBIT_SPEED = 3.5f; //搜索图标绕物品中心移动的角速度
+        private const float SEARCH_INDICATOR_SIZE = 28f; //搜索图标的固定显示尺寸
 
         private static readonly Vector2 m_centerAnchor = new Vector2(0.5f, 0.5f);
 
@@ -45,6 +51,7 @@ namespace UI.Inventory.View
         private Image m_background;
         private Image m_icon;
         private Image m_silhouette;
+        private Image m_searchIndicator;
         private TMP_Text m_countText;
         private GameObject m_selectedFrame;
         private CanvasGroup m_canvasGroup;
@@ -80,6 +87,8 @@ namespace UI.Inventory.View
         private Vector2Int m_hoverTargetCell; // 最近一次悬停目标自身的格号
         private bool m_isDragging;
         private bool m_isSearching;
+        private bool m_isSearchIndicatorVisible;
+        private float m_searchIndicatorElapsed;
         private Color m_baseColor;
         private bool m_isPendingDrag; // 已按下但位移未达阈值
         private bool m_dragLiftedThisGesture; // 本次按下是否真抬成过拖拽, 抬起后的点击不再算单击
@@ -102,9 +111,11 @@ namespace UI.Inventory.View
             m_background = this.GetOwnerComponent<Image>();
             m_icon = this.FindChildComponent<Image>(ICON_PATH);
             m_silhouette = this.FindChildComponent<Image>(SILHOUETTE_PATH);
+            m_searchIndicator = this.FindChildComponent<Image>(SEARCH_PATH);
             m_countText = this.FindChildComponent<TMP_Text>(COUNT_PATH);
             m_selectedFrame = this.FindChildGo(SELECTED_PATH);
             m_canvasGroup = gameObject.AddComponent<CanvasGroup>();
+            ConfigureSearchIndicator();
         }
 
         // 兜底自愈: 残留的拖影排序会让物品永久脱离 RectMask2D 视口裁切, 每次激活都复位一次
@@ -121,6 +132,13 @@ namespace UI.Inventory.View
         {
             StopDetailReveal();
             FinishDrag();
+        }
+
+        private void Update()
+        {
+            if (m_searchIndicator == null || !m_searchIndicator.enabled) return;
+
+            AdvanceSearchIndicator(Time.unscaledDeltaTime);
         }
 
         /// <summary>
@@ -169,7 +187,21 @@ namespace UI.Inventory.View
         /// <param name="searching">是否隐藏图标与数量并显示阴影</param>
         public void SetSearching(bool searching)
         {
+            SetSearching(searching, false);
+        }
+
+        /// <summary>
+        /// 设置物品搜索阴影与当前搜索图标状态
+        /// </summary>
+        /// <param name="searching">是否隐藏物品并显示搜索阴影</param>
+        /// <param name="showSearchIndicator">是否显示当前搜索图标</param>
+        public void SetSearching(bool searching, bool showSearchIndicator)
+        {
             m_isSearching = searching;
+            m_isSearchIndicatorVisible = searching && showSearchIndicator;
+            if (!m_isSearchIndicatorVisible)
+                ResetSearchIndicator();
+
             ApplyPresentation();
         }
 
@@ -633,16 +665,65 @@ namespace UI.Inventory.View
             m_selectedFrame.SetActive(!m_isSearching && selectedInstanceId == InstanceId);
         }
 
+        // 搜索图标固定在物品完整占格中心, 尺寸不随 2x2 等多格物品拉伸
+        private void ConfigureSearchIndicator()
+        {
+            if (m_searchIndicator == null)
+            {
+                QLog.Error($"未找到搜索图标节点 {SEARCH_PATH}");
+                return;
+            }
+
+            RectTransform rect = m_searchIndicator.rectTransform;
+            rect.anchorMin = m_centerAnchor;
+            rect.anchorMax = m_centerAnchor;
+            rect.pivot = m_centerAnchor;
+            rect.anchoredPosition = Vector2.zero;
+            rect.sizeDelta = new Vector2(SEARCH_INDICATOR_SIZE, SEARCH_INDICATOR_SIZE);
+            m_searchIndicator.raycastTarget = false;
+            m_searchIndicator.preserveAspect = true;
+            rect.localRotation = Quaternion.identity;
+            m_searchIndicator.enabled = false;
+            ResetSearchIndicator();
+        }
+
+        // 只改变图标位置, 让图标中心沿物品中心的小圆轨道运动
+        private void AdvanceSearchIndicator(float deltaTime)
+        {
+            m_searchIndicatorElapsed += Mathf.Max(0f, deltaTime);
+            float orbitAngle = m_searchIndicatorElapsed * SEARCH_INDICATOR_ORBIT_SPEED;
+            m_searchIndicator.rectTransform.anchoredPosition =
+                new Vector2(Mathf.Cos(orbitAngle), Mathf.Sin(orbitAngle)) * SEARCH_INDICATOR_ORBIT_RADIUS;
+        }
+
+        // 图标离场时清空本地时钟与位置, 下一个搜索目标复用视图时从物品中心开始
+        private void ResetSearchIndicator()
+        {
+            m_searchIndicatorElapsed = 0f;
+            if (m_searchIndicator == null) return;
+
+            m_searchIndicator.rectTransform.anchoredPosition = Vector2.zero;
+            m_searchIndicator.rectTransform.localRotation = Quaternion.identity;
+        }
+
         // 物品底板、图标、数量、选中框与搜索阴影的唯一显隐入口
         private void ApplyPresentation()
         {
             bool showItem = !m_isSearching && !m_isDragging;
+            bool showSearchIndicator = m_isSearching && m_isSearchIndicatorVisible && !m_isDragging &&
+                m_searchIndicator != null;
 
             m_background.enabled = !m_isDragging;
             m_background.color = m_isSearching ? Color.clear : m_baseColor;
             m_icon.enabled = showItem && m_icon.sprite != null;
             m_countText.enabled = showItem && !string.IsNullOrEmpty(m_countText.text);
             m_silhouette.enabled = m_isSearching && !m_isDragging;
+
+            if (m_searchIndicator != null)
+                m_searchIndicator.enabled = showSearchIndicator;
+
+            if (!showSearchIndicator)
+                ResetSearchIndicator();
 
             int selectedInstanceId = m_viewModel != null ? m_viewModel.SelectedInstanceId.Value : NO_SELECTION;
             RenderSelected(selectedInstanceId);

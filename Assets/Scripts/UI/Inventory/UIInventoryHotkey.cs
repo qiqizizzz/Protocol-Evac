@@ -75,7 +75,7 @@ namespace UI.Inventory
         private void Awake()
         {
             m_inputActions = new ShootingPlayerInputActions();
-            m_lootInteraction = new LootBoxInteraction();
+            m_lootInteraction = new LootBoxInteraction(IsEquipmentPanelVisible);
             m_lootHighlight = new LootBoxHighlightController();
         }
 

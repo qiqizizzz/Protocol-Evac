@@ -10,10 +10,13 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using Framework.QTower.Common.Defines;
+using Framework.QTower.Event;
 using Module.Inventory.Core.Config.Loot;
 using Module.Inventory.Interaction;
 using Module.Inventory.Presentation;
 using NUnit.Framework;
+using UI.Inventory;
 using UnityEngine;
 using UnityEngine.TestTools;
 
@@ -243,6 +246,31 @@ namespace Tests.Inventory
                 CreateLootBoxQuery(), target => target != blocked);
 
             Assert.AreSame(visible, picked, "视线被挡住的目标必须跳过并继续选择次优目标");
+        }
+        #endregion
+
+        #region 面板交互门禁
+        [Test]
+        public void TryInteract_WhenContainerPanelIsVisible_SkipsScanningAndHint()
+        {
+            bool hintRequested = false;
+            Action<string> captureHint = _ => hintRequested = true;
+            EventManager.RegisterEvent(EventDefines.InteractionHintRequested, captureHint);
+
+            try
+            {
+                LootBoxInteraction interaction = new LootBoxInteraction(() => true);
+
+                bool opened = interaction.TryInteract(
+                    Vector3.zero, Vector3.forward, CreateLootBoxQuery(), 0);
+
+                Assert.IsFalse(opened);
+                Assert.IsFalse(hintRequested);
+            }
+            finally
+            {
+                EventManager.UnregisterEvent(EventDefines.InteractionHintRequested, captureHint);
+            }
         }
         #endregion
 

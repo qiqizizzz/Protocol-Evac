@@ -28,6 +28,7 @@ namespace Tests.Inventory
         private Image m_background;
         private Image m_icon;
         private Image m_silhouette;
+        private Image m_searchIndicator;
 
         [SetUp]
         public void SetUp()
@@ -38,6 +39,7 @@ namespace Tests.Inventory
             m_icon = CreateImage("Img_Icon");
             m_silhouette = CreateImage("Img_Silhouette");
             StretchToItem(m_silhouette.rectTransform);
+            m_searchIndicator = CreateImage("Img_Search");
             CreateText("Txt_Count");
             new GameObject("Img_Selected", typeof(RectTransform)).transform.SetParent(m_itemObject.transform, false);
 
@@ -106,6 +108,62 @@ namespace Tests.Inventory
                 "2x2 阴影必须跟随整块物品矩形内缩, 不能拆成四个 1x1");
         }
 
+        [Test]
+        public void SetSearching_ActiveSearch_ShowsOneCenteredIndicator()
+        {
+            m_itemView.Setup(new InventoryItemVO(1, 1, "测试物品", 1, null, Color.white,
+                InventoryItemRarity.Common, 0, Vector2Int.zero, new Vector2Int(2, 2), InventoryRotation.None),
+                new Vector2(80f, 80f), new Vector2(4f, 4f));
+
+            m_itemView.SetSearching(true, true);
+
+            RectTransform rect = m_searchIndicator.rectTransform;
+            Assert.IsTrue(m_searchIndicator.enabled, "当前正在计时的物品必须显示搜索图标");
+            Assert.IsFalse(m_searchIndicator.raycastTarget, "搜索图标不能阻挡物品点击");
+            Assert.AreEqual(new Vector2(0.5f, 0.5f), rect.anchorMin, "搜索图标必须锚定整块物品中心");
+            Assert.AreEqual(new Vector2(0.5f, 0.5f), rect.anchorMax, "搜索图标必须锚定整块物品中心");
+            Assert.AreEqual(new Vector2(0.5f, 0.5f), rect.pivot, "搜索图标必须围绕自身中心沿圆周轨迹移动");
+            Assert.AreEqual(Vector2.zero, rect.anchoredPosition, "2x2 物品的搜索图标不能落在左上角");
+        }
+
+        [Test]
+        public void SetSearching_NonActiveSearch_KeepsSilhouetteWithoutIndicator()
+        {
+            m_itemView.SetSearching(true, false);
+
+            Assert.IsTrue(m_silhouette.enabled, "尚未揭晓但未轮到的物品仍需显示整块阴影");
+            Assert.IsFalse(m_searchIndicator.enabled, "同一时刻只能给队列中的当前物品显示搜索图标");
+        }
+
+        [Test]
+        public void AdvanceSearchIndicator_ActiveSearch_OrbitsWithoutRotatingItself()
+        {
+            m_itemView.SetSearching(true, true);
+
+            InvokeAdvanceSearchIndicator(0.2f);
+
+            RectTransform rect = m_searchIndicator.rectTransform;
+            Assert.AreEqual(8f, rect.anchoredPosition.magnitude, 0.001f,
+                "搜索图标必须沿物品中心 8px 半径的圆周轨迹移动");
+            Assert.AreEqual(0f, Mathf.DeltaAngle(0f, rect.localEulerAngles.z), 0.001f,
+                "搜索图标自身不能旋转, 只允许改变位置");
+        }
+
+        [Test]
+        public void SetSearching_EndingSearch_HidesAndResetsIndicator()
+        {
+            m_itemView.SetSearching(true, true);
+            InvokeAdvanceSearchIndicator(0.2f);
+
+            m_itemView.SetSearching(false, false);
+
+            Assert.IsFalse(m_searchIndicator.enabled, "搜索结束后必须隐藏搜索图标");
+            Assert.AreEqual(Vector2.zero, m_searchIndicator.rectTransform.anchoredPosition,
+                "搜索结束后必须把搜索图标复位到整块阴影中心");
+            Assert.AreEqual(0f, m_searchIndicator.rectTransform.localEulerAngles.z, 0.001f,
+                "搜索图标自身始终保持不旋转");
+        }
+
         // 让阴影子节点铺满物品占格, 并留出 2px 内缩作为物品之间的分隔
         private static void StretchToItem(RectTransform rect)
         {
@@ -138,6 +196,14 @@ namespace Tests.Inventory
             MethodInfo awake = typeof(UIInventoryItem).GetMethod("Awake",
                 BindingFlags.Instance | BindingFlags.NonPublic);
             awake.Invoke(m_itemView, null);
+        }
+
+        // 推进搜索图标的本地动画时钟, 避免 EditMode 依赖真实帧时间
+        private void InvokeAdvanceSearchIndicator(float deltaTime)
+        {
+            MethodInfo advance = typeof(UIInventoryItem).GetMethod("AdvanceSearchIndicator",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            advance.Invoke(m_itemView, new object[] { deltaTime });
         }
     }
 }

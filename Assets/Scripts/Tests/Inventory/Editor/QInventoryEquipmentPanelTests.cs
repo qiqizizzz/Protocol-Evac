@@ -331,6 +331,24 @@ namespace Tests.Inventory
         }
 
         [Test]
+        public void OpenLootContainer_SearchQueue_OnlyTheCurrentItemOwnsTheIndicator()
+        {
+            int lootContainerId = RegisterLootContainer("当前搜索目标", 2, 1);
+            InventoryItemVO later = AddLootItem(lootContainerId, 1, 0, InventoryItemRarity.Common);
+            InventoryItemVO current = AddLootItem(lootContainerId, 0, 0, InventoryItemRarity.Common);
+
+            m_viewModel.OpenLootContainer(lootContainerId, true);
+
+            Assert.IsTrue(m_viewModel.IsLootItemSearchActive(current.InstanceId), "队首物品才拥有搜索图标");
+            Assert.IsFalse(m_viewModel.IsLootItemSearchActive(later.InstanceId), "排队中的其他物品不能同时显示图标");
+
+            m_viewModel.TickLootSearch(0.5f);
+
+            Assert.IsFalse(m_viewModel.IsLootItemSearchActive(current.InstanceId), "揭晓后搜索图标必须离开该物品");
+            Assert.IsTrue(m_viewModel.IsLootItemSearchActive(later.InstanceId), "下一件开始计时后才接管搜索图标");
+        }
+
+        [Test]
         public void OpenLootContainer_EmptySearchContainer_FinishesImmediately()
         {
             int lootContainerId = RegisterLootContainer("空物资箱", 2, 2);

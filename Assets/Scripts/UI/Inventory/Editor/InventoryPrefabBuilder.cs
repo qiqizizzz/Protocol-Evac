@@ -34,7 +34,9 @@ namespace UI.Inventory.Editor
         private const string LEGACY_PATH = PREFAB_DIR + "/UIInventoryPanel.prefab";
         private const string SILHOUETTE_MATERIAL_PATH =
             "Assets/Shaders/UI/Mat_LootSearchSilhouette.mat";
+        private const string SEARCH_ICON_PATH = "Assets/Resources/UI/Combat/LootSearchIcon.png";
         private const float SILHOUETTE_INSET = 2f;
+        private const float SEARCH_ICON_SIZE = 28f;
 
         private const string CARRIER_SCRIPT = "UI.Inventory.View.UIInventoryCarrier";
         private const string SLOT_SCRIPT = "UI.Inventory.View.UIInventorySlot";
@@ -585,7 +587,7 @@ namespace UI.Inventory.Editor
             return node;
         }
 
-        // 物品模板: 底板 + 搜索阴影 + 图标 + 堆叠数, 尺寸由 View 按占地换算
+        // 物品模板: 底板 + 搜索阴影 + 搜索图标 + 物品图标 + 堆叠数, 尺寸由 View 按占地换算
         private static GameObject BuildItem()
         {
             GameObject node = NewNode("UIInventoryItem", null);
@@ -609,6 +611,19 @@ namespace UI.Inventory.Editor
 
             if (silhouetteImage.material == null)
                 QLog.Error(LOG + "搜索阴影材质加载失败: " + SILHOUETTE_MATERIAL_PATH);
+
+            GameObject searchIndicator = NewNode("Img_Search", node.transform);
+            SetRect(searchIndicator.GetComponent<RectTransform>(), m_centerAnchor, m_centerAnchor, m_centerAnchor,
+                new Vector2(SEARCH_ICON_SIZE, SEARCH_ICON_SIZE), Vector2.zero);
+            Image searchIndicatorImage = searchIndicator.AddComponent<Image>();
+            searchIndicatorImage.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(SEARCH_ICON_PATH);
+            searchIndicatorImage.color = Color.white;
+            searchIndicatorImage.preserveAspect = true;
+            searchIndicatorImage.raycastTarget = false;
+            searchIndicatorImage.enabled = false;
+
+            if (searchIndicatorImage.sprite == null)
+                QLog.Error(LOG + "搜索图标加载失败: " + SEARCH_ICON_PATH);
 
             GameObject icon = NewNode("Img_Icon", node.transform);
             SetStretch(icon.GetComponent<RectTransform>(), 6f);

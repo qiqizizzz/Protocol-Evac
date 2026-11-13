@@ -180,6 +180,17 @@ namespace UI.Inventory
             return m_lootContainerSearching && !m_revealedLootItems.Contains(instanceId);
         }
 
+        /// <summary>
+        /// 查询指定物品是否是当前正在计时的搜索目标
+        /// </summary>
+        /// <param name="instanceId">物品实例号</param>
+        public bool IsLootItemSearchActive(int instanceId)
+        {
+            if (!m_lootContainerSearching || m_pendingLootSearch.Count == 0) return false;
+
+            return m_pendingLootSearch.Peek().InstanceId == instanceId;
+        }
+
         //子面板拖起物品
         public void NotifyDragBegan(InventoryViewModel source) => m_dragSource = source;
 
