@@ -315,6 +315,16 @@ namespace Tests.Inventory
         }
 
         [Test]
+        public void OpenLootContainer_WithSearchRequirement_MarksTheLootViewAsSearching()
+        {
+            int lootContainerId = RegisterLootContainer("需要搜索的物资箱", 2, 2);
+
+            m_viewModel.OpenLootContainer(lootContainerId, true);
+
+            Assert.IsTrue(m_viewModel.LootContainerSearching, "按 F 打开的物资箱必须进入未搜索阴影态");
+        }
+
+        [Test]
         public void OpenLootContainer_SameContainerTwice_KeepsTheSameChildViewModel()
         {
             int lootContainerId = RegisterLootContainer("重复开箱", 2, 2);
@@ -359,6 +369,17 @@ namespace Tests.Inventory
             Assert.AreEqual(2, m_lootChangedCount, "开与关各通知视图一次");
             Assert.IsTrue(m_model.IsContainerRegistered(lootContainerId), "关箱只是收界面, 不该注销容器");
             Assert.AreEqual(1, m_model.GetContainerVO(lootContainerId).Items.Count, "箱内物品必须留在模型里");
+        }
+
+        [Test]
+        public void CloseLootContainer_ClearsTheSearchingState()
+        {
+            int lootContainerId = RegisterLootContainer("搜索完关闭", 2, 2);
+            m_viewModel.OpenLootContainer(lootContainerId, true);
+
+            m_viewModel.CloseLootContainer();
+
+            Assert.IsFalse(m_viewModel.LootContainerSearching, "关箱后不能把搜索态留给下一只容器");
         }
 
         // 已关闭的物资箱视图模型不能再接收转移结果写入已释放状态

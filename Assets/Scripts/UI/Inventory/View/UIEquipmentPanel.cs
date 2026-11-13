@@ -175,6 +175,7 @@ namespace UI.Inventory.View
             // 模板常驻停用, 克隆体同样不会触发 Awake, 先激活补齐载体的节点缓存再显示, 否则绑定会打在空引用上
             carrierObject.SetActive(true);
             m_lootCarrier.Show(container);
+            m_lootCarrier.SetSearching(ViewModel.LootContainerSearching);
 
             // 动态载体随开随毁, 订阅挂在它自己的作用域上, 销毁时一并收敛, 不给面板留悬空条目
             BindPopupRequests(m_lootCarrier.Scope, container);

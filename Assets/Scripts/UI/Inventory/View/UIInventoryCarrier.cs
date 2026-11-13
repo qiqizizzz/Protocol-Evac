@@ -74,6 +74,7 @@ namespace UI.Inventory.View
         private readonly List<int> m_staleItemIds = new List<int>();
 
         private int m_gridWidth = -1;
+        private bool m_isSearching;
 
         /// <summary>
         /// 当前载体的网格单元格尺寸
@@ -101,6 +102,18 @@ namespace UI.Inventory.View
             if (!m_itemViews.TryGetValue(instanceId, out UIInventoryItem itemView)) return false;
 
             return itemView.TryGetScreenRect(out screenRect);
+        }
+
+        /// <summary>
+        /// 设置载体是否处于搜刮状态, 状态会同步到当前与后续生成的物品视图
+        /// </summary>
+        /// <param name="searching">是否显示未搜索阴影</param>
+        public void SetSearching(bool searching)
+        {
+            m_isSearching = searching;
+
+            foreach (UIInventoryItem itemView in m_itemViews.Values)
+                itemView.SetSearching(m_isSearching);
         }
 
         /// <summary>
@@ -440,6 +453,7 @@ namespace UI.Inventory.View
             itemView.Setup(item, m_gridLayout.cellSize, m_gridLayout.spacing);
             m_itemViews.Add(item.InstanceId, itemView);
             itemView.Bind(Scope.CreateChild(itemObject), ViewModel);
+            itemView.SetSearching(m_isSearching);
         }
 
         //提示语义转文案

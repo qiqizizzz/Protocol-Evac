@@ -82,7 +82,7 @@ namespace UI.Inventory
             int containerId = ResolveContainerId(model, target);
             if (containerId < 0) return false;
 
-            OpenPanelAndShow(root, containerId).Forget();
+            OpenPanelAndShow(root, containerId, target is LootBoxController).Forget();
             return true;
         }
 
@@ -99,18 +99,18 @@ namespace UI.Inventory
         }
 
         // 面板已显示就直接换箱, 否则先开面板再换箱, 避免两次 Show 抢同一份视图模型
-        private async UniTaskVoid OpenPanelAndShow(MvvmRoot root, int containerId)
+        private async UniTaskVoid OpenPanelAndShow(MvvmRoot root, int containerId, bool requiresSearch)
         {
             if (root.Windows.TryGet(out UIEquipmentPanel panel) && panel.IsVisible)
             {
-                panel.ViewModel.OpenLootContainer(containerId);
+                panel.ViewModel.OpenLootContainer(containerId, requiresSearch);
                 return;
             }
 
             UIEquipmentPanel shown = await root.Windows.ShowAsync<UIEquipmentPanel>();
             if (shown == null) return;
 
-            shown.ViewModel.OpenLootContainer(containerId);
+            shown.ViewModel.OpenLootContainer(containerId, requiresSearch);
         }
 
         // 复制实例忘改实体号会让两只箱子共用一份残货, 场景加载后只查一次

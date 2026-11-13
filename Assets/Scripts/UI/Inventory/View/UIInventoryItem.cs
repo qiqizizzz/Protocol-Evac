@@ -35,6 +35,7 @@ namespace UI.Inventory.View
             new WaitForSecondsRealtime(DoubleClickDetector.DOUBLE_CLICK_INTERVAL);
 
         private const string ICON_PATH = "Img_Icon";
+        private const string SILHOUETTE_PATH = "Img_Silhouette";
         private const string COUNT_PATH = "Txt_Count";
         private const string SELECTED_PATH = "Img_Selected";
 
@@ -43,6 +44,7 @@ namespace UI.Inventory.View
         private RectTransform m_rect;
         private Image m_background;
         private Image m_icon;
+        private Image m_silhouette;
         private TMP_Text m_countText;
         private GameObject m_selectedFrame;
         private CanvasGroup m_canvasGroup;
@@ -77,6 +79,8 @@ namespace UI.Inventory.View
         private Vector2Int m_anchorCell; // 拖影当前吸附的锚点格
         private Vector2Int m_hoverTargetCell; // 最近一次悬停目标自身的格号
         private bool m_isDragging;
+        private bool m_isSearching;
+        private Color m_baseColor;
         private bool m_isPendingDrag; // 已按下但位移未达阈值
         private bool m_dragLiftedThisGesture; // 本次按下是否真抬成过拖拽, 抬起后的点击不再算单击
         private Vector2 m_pendingDragStart; // 按下时的指针屏幕坐标
@@ -97,6 +101,7 @@ namespace UI.Inventory.View
             m_rect = this.GetOwnerComponent<RectTransform>();
             m_background = this.GetOwnerComponent<Image>();
             m_icon = this.FindChildComponent<Image>(ICON_PATH);
+            m_silhouette = this.FindChildComponent<Image>(SILHOUETTE_PATH);
             m_countText = this.FindChildComponent<TMP_Text>(COUNT_PATH);
             m_selectedFrame = this.FindChildGo(SELECTED_PATH);
             m_canvasGroup = gameObject.AddComponent<CanvasGroup>();
@@ -151,14 +156,21 @@ namespace UI.Inventory.View
                     m_cellSize, m_cellSpacing);
             }
 
-            m_background.enabled = true;
-            m_countText.enabled = true;
-
-            m_background.color = item.BaseColor;
+            m_baseColor = item.BaseColor;
+            m_background.color = m_baseColor;
             m_icon.sprite = item.Icon;
-            m_icon.enabled = item.Icon != null;
-
             m_countText.text = item.StackCount > 1 ? item.StackCount.ToString() : string.Empty;
+            ApplyPresentation();
+        }
+
+        /// <summary>
+        /// 设置物品是否处于未搜索状态, 搜索态只显示连续占格阴影
+        /// </summary>
+        /// <param name="searching">是否隐藏图标与数量并显示阴影</param>
+        public void SetSearching(bool searching)
+        {
+            m_isSearching = searching;
+            ApplyPresentation();
         }
 
         public void Bind(BindingScope scope, InventoryViewModel viewModel)
@@ -257,6 +269,15 @@ namespace UI.Inventory.View
         // 首次抬起只起延迟计时, 双击窗口内没有第二击才弹详情; 窗口内来了第二击就按双击直接走业务
         public void OnPointerClick(PointerEventData eventData)
         {
+            // 未搜索物品的首击只用于揭晓当前格, 不进入详情、菜单或快速收纳
+            if (m_isSearching)
+            {
+                if (eventData.button == PointerEventData.InputButton.Left)
+                    SetSearching(false);
+
+                return;
+            }
+
             // 拖拽落点不算点击, 否则每拖完一件物品都会顺手弹一次详情
             if (m_dragLiftedThisGesture) return;
 
@@ -294,15 +315,24 @@ namespace UI.Inventory.View
 
         public void OnPointerEnter(PointerEventData eventData)
         {
+            if (m_isSearching) return;
+
             m_previewCell = m_origin + ResolveDropAnchor(eventData, m_rect, m_origin);
             m_viewModel.PreviewDropAt(m_previewCell);
         }
 
         // 按上次上报的锚点格撤销预览, 居中后锚点可能不等于自身格号
-        public void OnPointerExit(PointerEventData eventData) => m_viewModel.ClearDropPreview(m_previewCell);
+        public void OnPointerExit(PointerEventData eventData)
+        {
+            if (m_isSearching) return;
+
+            m_viewModel.ClearDropPreview(m_previewCell);
+        }
 
         public void OnBeginDrag(PointerEventData eventData)
         {
+            if (m_isSearching) return;
+
             // 同一次拖拽的重复回调只认第一次, 否则会叠加出第二个嵌套 Canvas 把裁切彻底弄丢
             if (m_isDragging || m_isPendingDrag) return;
 
@@ -314,6 +344,8 @@ namespace UI.Inventory.View
 
         public void OnDrag(PointerEventData eventData)
         {
+            if (m_isSearching) return;
+
             m_dragPointerPosition = eventData.position;
 
             if (m_isDragging || !m_isPendingDrag) return;
@@ -324,6 +356,7 @@ namespace UI.Inventory.View
 
         public void OnDrop(PointerEventData eventData)
         {
+            if (m_isSearching) return;
             if (eventData.pointerDrag == gameObject) return;
 
             // 落点与拖影当前位置同源, 避免预览格子与实际放置格子不一致
@@ -439,9 +472,7 @@ namespace UI.Inventory.View
             m_dragCanvas.overrideSorting = true;
             m_dragCanvas.sortingOrder = DRAG_GHOST_SORTING_ORDER;
 
-            m_background.enabled = false;
-            m_countText.enabled = false;
-            m_selectedFrame.SetActive(false);
+            ApplyPresentation();
 
             m_canvasGroup.alpha = DRAG_GHOST_ALPHA;
             m_canvasGroup.blocksRaycasts = false;
@@ -553,9 +584,7 @@ namespace UI.Inventory.View
             m_rect.sizeDelta = m_dragOriginSize;
             ApplyIconGeometry(m_cellFootprint, IsOwnContainerEquipSlot ? InventoryRotation.None : m_modelRotation,
                 m_cellSize, m_cellSpacing);
-            m_background.enabled = true;
-            m_countText.enabled = true;
-            RenderSelected(m_viewModel != null ? m_viewModel.SelectedInstanceId.Value : NO_SELECTION);
+            ApplyPresentation();
 
             m_canvasGroup.alpha = 1f;
             m_canvasGroup.blocksRaycasts = true;
@@ -607,7 +636,22 @@ namespace UI.Inventory.View
 
         private void RenderSelected(int selectedInstanceId)
         {
-            m_selectedFrame.SetActive(selectedInstanceId == InstanceId);
+            m_selectedFrame.SetActive(!m_isSearching && selectedInstanceId == InstanceId);
+        }
+
+        // 物品底板、图标、数量、选中框与搜索阴影的唯一显隐入口
+        private void ApplyPresentation()
+        {
+            bool showItem = !m_isSearching && !m_isDragging;
+
+            m_background.enabled = !m_isDragging;
+            m_background.color = m_isSearching ? Color.clear : m_baseColor;
+            m_icon.enabled = showItem && m_icon.sprite != null;
+            m_countText.enabled = showItem && !string.IsNullOrEmpty(m_countText.text);
+            m_silhouette.enabled = m_isSearching && !m_isDragging;
+
+            int selectedInstanceId = m_viewModel != null ? m_viewModel.SelectedInstanceId.Value : NO_SELECTION;
+            RenderSelected(selectedInstanceId);
         }
 
         // 首次左键抬起只记下目标物品并起延迟, 到点仍没有第二击才真的请求详情

@@ -18,6 +18,7 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using Utils.log;
 
 namespace UI.Inventory.Editor
 {
@@ -31,6 +32,9 @@ namespace UI.Inventory.Editor
         private const string SLOT_PATH = PREFAB_DIR + "/UIInventorySlot.prefab";
         private const string ITEM_PATH = PREFAB_DIR + "/UIInventoryItem.prefab";
         private const string LEGACY_PATH = PREFAB_DIR + "/UIInventoryPanel.prefab";
+        private const string SILHOUETTE_MATERIAL_PATH =
+            "Assets/Shaders/UI/Mat_LootSearchSilhouette.mat";
+        private const float SILHOUETTE_INSET = 2f;
 
         private const string CARRIER_SCRIPT = "UI.Inventory.View.UIInventoryCarrier";
         private const string SLOT_SCRIPT = "UI.Inventory.View.UIInventorySlot";
@@ -553,7 +557,7 @@ namespace UI.Inventory.Editor
             return node;
         }
 
-        // 物品模板: 底板 + 图标 + 堆叠数, 尺寸由 View 按占地换算
+        // 物品模板: 底板 + 搜索阴影 + 图标 + 堆叠数, 尺寸由 View 按占地换算
         private static GameObject BuildItem()
         {
             GameObject node = NewNode("UIInventoryItem", null);
@@ -565,6 +569,18 @@ namespace UI.Inventory.Editor
             background.color = m_itemDefaultColor;
             // 物品自身接收点击与拖拽, 拖影期间再由 UIInventoryItem 关掉射线
             background.raycastTarget = true;
+
+            GameObject silhouette = NewNode("Img_Silhouette", node.transform);
+            SetStretch(silhouette.GetComponent<RectTransform>(), SILHOUETTE_INSET);
+            Image silhouetteImage = silhouette.AddComponent<Image>();
+            silhouetteImage.material =
+                AssetDatabase.LoadAssetAtPath<Material>(SILHOUETTE_MATERIAL_PATH);
+            silhouetteImage.color = Color.white;
+            silhouetteImage.raycastTarget = false;
+            silhouetteImage.enabled = false;
+
+            if (silhouetteImage.material == null)
+                QLog.Error(LOG + "搜索阴影材质加载失败: " + SILHOUETTE_MATERIAL_PATH);
 
             GameObject icon = NewNode("Img_Icon", node.transform);
             SetStretch(icon.GetComponent<RectTransform>(), 6f);

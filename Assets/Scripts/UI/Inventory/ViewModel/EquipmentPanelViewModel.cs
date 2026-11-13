@@ -25,6 +25,8 @@ namespace UI.Inventory
 
         // 右侧动态物资箱载体, 为空表示当前没有打开任何箱子
         public InventoryViewModel LootContainer => m_lootContainer;
+        // 当前物资箱是否等待玩家逐件搜索
+        public bool LootContainerSearching => m_lootContainerSearching;
         // 物资箱载体增删变化, 视图据此重建动态载体
         public ISignal LootContainerChanged => m_lootContainerChanged;
 
@@ -33,7 +35,8 @@ namespace UI.Inventory
         private readonly IInventoryModel m_model;
         private readonly Signal m_lootContainerChanged;
         private InventoryViewModel m_lootContainer;
-        private InventoryViewModel m_dragSource; 
+        private InventoryViewModel m_dragSource;
+        private bool m_lootContainerSearching;
 
         public EquipmentPanelViewModel()
             : this(MvvmRoot.Instance.Models.Get<IInventoryModel>(), InventoryContainerIds.EQUIPMENT_CONTAINER_IDS)
@@ -63,6 +66,16 @@ namespace UI.Inventory
         /// <param name="containerId">物资箱容器号</param>
         public void OpenLootContainer(int containerId)
         {
+            OpenLootContainer(containerId, false);
+        }
+
+        /// <summary>
+        /// 打开一只物资箱并按入口决定是否先显示未搜索阴影
+        /// </summary>
+        /// <param name="containerId">物资箱容器号</param>
+        /// <param name="requiresSearch">是否等待玩家搜索物品</param>
+        public void OpenLootContainer(int containerId, bool requiresSearch)
+        {
             if (m_lootContainer != null && m_lootContainer.ContainerId == containerId) return;
 
             if (!m_model.IsContainerRegistered(containerId))
@@ -74,6 +87,7 @@ namespace UI.Inventory
             DisposeLootContainer();
 
             m_lootContainer = new InventoryViewModel(m_model, containerId, this);
+            m_lootContainerSearching = requiresSearch;
             m_lootContainerChanged.Fire();
         }
 
@@ -173,6 +187,7 @@ namespace UI.Inventory
             m_lootContainer.OnDispose();
             m_lootContainer.Dispose();
             m_lootContainer = null;
+            m_lootContainerSearching = false;
         }
         #endregion
     }
