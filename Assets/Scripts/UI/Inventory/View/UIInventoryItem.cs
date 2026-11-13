@@ -269,14 +269,8 @@ namespace UI.Inventory.View
         // 首次抬起只起延迟计时, 双击窗口内没有第二击才弹详情; 窗口内来了第二击就按双击直接走业务
         public void OnPointerClick(PointerEventData eventData)
         {
-            // 未搜索物品的首击只用于揭晓当前格, 不进入详情、菜单或快速收纳
-            if (m_isSearching)
-            {
-                if (eventData.button == PointerEventData.InputButton.Left)
-                    SetSearching(false);
-
-                return;
-            }
+            // 搜索由后台计时器推进, 点击不能抢在搜索节奏前揭晓物品
+            if (m_isSearching) return;
 
             // 拖拽落点不算点击, 否则每拖完一件物品都会顺手弹一次详情
             if (m_dragLiftedThisGesture) return;

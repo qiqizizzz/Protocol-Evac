@@ -148,6 +148,29 @@ namespace Tests.Inventory
         }
 
         /// <summary>
+        /// 造一份按稀有度配置逐件搜索时长的运行时配置
+        /// </summary>
+        /// <param name="none">未配置品质的搜索秒数</param>
+        /// <param name="common">普通品质的搜索秒数</param>
+        /// <param name="uncommon">优秀品质的搜索秒数</param>
+        /// <param name="rare">稀有品质的搜索秒数</param>
+        /// <param name="epic">史诗品质的搜索秒数</param>
+        /// <param name="legendary">传说品质的搜索秒数</param>
+        public LootSearchConfigSO CreateLootSearchConfig(float none = 0.1f, float common = 0.5f,
+            float uncommon = 0.75f, float rare = 1f, float epic = 1.5f, float legendary = 2f)
+        {
+            LootSearchConfigSO config = CreateConfig<LootSearchConfigSO>();
+
+            SetField(config, "NoneSecondsValue", none);
+            SetField(config, "CommonSecondsValue", common);
+            SetField(config, "UncommonSecondsValue", uncommon);
+            SetField(config, "RareSecondsValue", rare);
+            SetField(config, "EpicSecondsValue", epic);
+            SetField(config, "LegendarySecondsValue", legendary);
+            return config;
+        }
+
+        /// <summary>
         /// 造一条战利品掉落条目
         /// </summary>
         /// <param name="item">掉落的物品配置</param>

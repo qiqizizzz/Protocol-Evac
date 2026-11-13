@@ -10,6 +10,7 @@ using Cysharp.Threading.Tasks;
 using Framework.QTower.MVVM.Binding;
 using Framework.QTower.MVVM.View;
 using Framework.QTower.MVVM.View.Interfaces;
+using Module.Inventory.Core.Config.Loot;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
@@ -36,6 +37,10 @@ namespace UI.Inventory.View
         [Tooltip("右侧动态物资箱载体的模板, 必须常驻停用, 开箱时按它实例化")]
         [SerializeField] private UIInventoryCarrier LootCarrierTemplate;
 
+        [Header("物资箱搜索")]
+        [Tooltip("按物品种类配置逐件揭晓时长, 不生成任何倒计时界面")]
+        [SerializeField] private LootSearchConfigSO LootSearchConfig;
+
         private ScrollRect m_capacityScroll;
         private RectTransform m_lootRoot;
         private RectTransform m_equipmentSlots;
@@ -50,7 +55,7 @@ namespace UI.Inventory.View
         private int m_popupGeneration;
 
         #region 生命周期
-        protected override EquipmentPanelViewModel CreateViewModel() => new EquipmentPanelViewModel();
+        protected override EquipmentPanelViewModel CreateViewModel() => new EquipmentPanelViewModel(LootSearchConfig);
 
         protected override void OnAwake()
         {
@@ -63,6 +68,9 @@ namespace UI.Inventory.View
 
             if (m_lootRoot == null)
                 QLog.Error($"右侧物资箱列未找到, 开箱载体无处可挂, 请检查节点 {LOOT_ROOT_PATH}");
+
+            if (LootSearchConfig == null)
+                QLog.Error($"{nameof(LootSearchConfig)} 未配置, 按 F 打开的物资箱无法逐件搜索");
         }
 
         protected override void BindViewModel(EquipmentPanelViewModel viewModel)
@@ -85,7 +93,15 @@ namespace UI.Inventory.View
             }
 
             Scope.Bind(viewModel.LootContainerChanged, RefreshLootCarrier);
+            Scope.Bind(viewModel.LootSearchChanged, RefreshLootSearching);
             RefreshLootCarrier();
+        }
+
+        private void Update()
+        {
+            if (!IsVisible || ViewModel == null || !ViewModel.LootContainerSearching) return;
+
+            ViewModel.TickLootSearch(Time.unscaledDeltaTime);
         }
 
         //打开面板时容量区会被布局重新撑高, 滚动位置必须归位到顶部, 否则第一个载体整块落在视口外
@@ -174,12 +190,20 @@ namespace UI.Inventory.View
 
             // 模板常驻停用, 克隆体同样不会触发 Awake, 先激活补齐载体的节点缓存再显示, 否则绑定会打在空引用上
             carrierObject.SetActive(true);
+            m_lootCarrier.SetSearching(ViewModel.IsLootItemSearching);
             m_lootCarrier.Show(container);
-            m_lootCarrier.SetSearching(ViewModel.LootContainerSearching);
 
             // 动态载体随开随毁, 订阅挂在它自己的作用域上, 销毁时一并收敛, 不给面板留悬空条目
             BindPopupRequests(m_lootCarrier.Scope, container);
             LayoutRebuilder.ForceRebuildLayoutImmediate(m_lootRoot);
+        }
+
+        // 逐件揭晓只刷新当前货物载体的实例级阴影, 不重建载体与物品视图
+        private void RefreshLootSearching()
+        {
+            if (m_lootCarrier == null) return;
+
+            m_lootCarrier.SetSearching(ViewModel.IsLootItemSearching);
         }
 
         // 停用立即生效以先收敛绑定, 真正的销毁 Unity 排在帧末

@@ -42,6 +42,7 @@ namespace UI.Inventory.Editor
 
         private const string EQUIPMENT_SCRIPT = "UI.Inventory.View.UIEquipmentPanel";
         private const string EQUIPMENT_PATH = PREFAB_DIR + "/UIEquipmentPanel.prefab";
+        private const string LOOT_SEARCH_CONFIG_PATH = "Assets/Config/Inventory/Loot/LootSearchConfig.asset";
         private const string ADDRESSABLE_GROUP_NAME = "UI";
 
         private const string DETAIL_SCRIPT = "UI.Inventory.View.UIItemDetailPanel";
@@ -482,7 +483,12 @@ namespace UI.Inventory.Editor
             }
 
             Component panelScript = AttachScript(root, EQUIPMENT_SCRIPT);
-            if (panelScript != null) AssignCarriers(panelScript, carriers);
+            if (panelScript != null)
+            {
+                AssignCarriers(panelScript, carriers);
+                AssignLootSearchConfig(panelScript);
+            }
+
             return root;
         }
 
@@ -501,6 +507,28 @@ namespace UI.Inventory.Editor
             for (int i = 0; i < carriers.Count; i++)
                 property.GetArrayElementAtIndex(i).objectReferenceValue = carriers[i];
 
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        // 把物资箱逐件搜索配置写进面板, 字段找不到时提示手动绑定
+        private static void AssignLootSearchConfig(Component panelScript)
+        {
+            SerializedObject serialized = new SerializedObject(panelScript);
+            SerializedProperty property = serialized.FindProperty("LootSearchConfig");
+            if (property == null)
+            {
+                QLog.Warning("UIEquipmentPanel 找不到 [SerializeField] LootSearchConfigSO LootSearchConfig");
+                return;
+            }
+
+            ScriptableObject config = AssetDatabase.LoadAssetAtPath<ScriptableObject>(LOOT_SEARCH_CONFIG_PATH);
+            if (config == null)
+            {
+                QLog.Error("物资箱逐件搜索配置不存在：" + LOOT_SEARCH_CONFIG_PATH);
+                return;
+            }
+
+            property.objectReferenceValue = config;
             serialized.ApplyModifiedPropertiesWithoutUndo();
         }
 

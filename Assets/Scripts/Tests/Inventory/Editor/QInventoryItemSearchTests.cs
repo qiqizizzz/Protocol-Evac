@@ -19,7 +19,7 @@ using UnityEngine.UI;
 namespace Tests.Inventory
 {
     /// <summary>
-    /// 物品搜索态测试：阴影显示期间仍要保留可点击底板, 点击后只揭晓当前物品
+    /// 物品搜索态测试：阴影显示期间仍要保留可点击底板, 点击不能抢在搜索节奏前揭晓
     /// </summary>
     public class QInventoryItemSearchTests
     {
@@ -61,7 +61,7 @@ namespace Tests.Inventory
         }
 
         [Test]
-        public void OnPointerClick_WhileSearching_RevealsOnlyTheClickedItem()
+        public void OnPointerClick_WhileSearching_LeavesTheItemHidden()
         {
             m_itemView.Setup(new InventoryItemVO(1, 1, "测试物品", 1, null, Color.white,
                 InventoryItemRarity.Common, 0, Vector2Int.zero, Vector2Int.one, InventoryRotation.None),
@@ -70,10 +70,11 @@ namespace Tests.Inventory
 
             m_itemView.OnPointerClick(new PointerEventData(null) { button = PointerEventData.InputButton.Left });
 
-            Assert.IsFalse(m_silhouette.enabled, "点击阴影后该物品应立即揭晓");
-            Assert.IsTrue(m_background.enabled, "揭晓后物品底板要恢复");
-            Assert.AreEqual(Color.white, m_background.color, "揭晓后底板要恢复物品原色");
-            Assert.IsFalse(m_icon.enabled, "测试物品没有图标, 揭晓后仍不该显示空图标");
+            Assert.IsTrue(m_silhouette.enabled, "搜索中点击不能提前揭晓物品");
+            Assert.IsTrue(m_background.enabled, "搜索中仍要保留底板接收点击");
+            Assert.IsTrue(m_background.raycastTarget, "搜索中点击不能穿透到背包空白");
+            Assert.AreEqual(Color.clear, m_background.color, "搜索中底板必须保持透明");
+            Assert.IsFalse(m_icon.enabled, "搜索中不能显示物品图标");
         }
 
         [Test]

@@ -9,6 +9,7 @@
 using System;
 using System.Text.RegularExpressions;
 using Module.Inventory.Core.Config;
+using Module.Inventory.Core.Config.Loot;
 using Module.Inventory.Core.Config.Type;
 using Module.Inventory.Core.Data;
 using Module.Inventory.Core.Defines;
@@ -31,6 +32,7 @@ namespace Tests.Inventory
         private QInventoryTestKit m_kit;
         private InventoryModel m_model;
         private EquipmentPanelViewModel m_viewModel;
+        private LootSearchConfigSO m_lootSearchConfig;
         private int[] m_containerIds;
         private int m_lootChangedCount;
         private IDisposable m_lootChangedSubscription;
@@ -53,7 +55,8 @@ namespace Tests.Inventory
                     new InventoryContainerSpec(2 + i, 3, float.MaxValue, null, m_slotNames[i]));
             }
 
-            m_viewModel = new EquipmentPanelViewModel(m_model, m_containerIds);
+            m_lootSearchConfig = m_kit.CreateLootSearchConfig();
+            m_viewModel = new EquipmentPanelViewModel(m_model, m_containerIds, m_lootSearchConfig);
             m_viewModel.OnBind();
             m_lootChangedSubscription = m_viewModel.LootContainerChanged.Subscribe(() => m_lootChangedCount++);
 
@@ -318,10 +321,216 @@ namespace Tests.Inventory
         public void OpenLootContainer_WithSearchRequirement_MarksTheLootViewAsSearching()
         {
             int lootContainerId = RegisterLootContainer("需要搜索的物资箱", 2, 2);
+            AddLootItem(lootContainerId, 0, 0, InventoryItemRarity.Common);
+            InventoryItemVO item = GetItemAt(lootContainerId, 0, 0);
 
             m_viewModel.OpenLootContainer(lootContainerId, true);
 
             Assert.IsTrue(m_viewModel.LootContainerSearching, "按 F 打开的物资箱必须进入未搜索阴影态");
+            Assert.IsTrue(m_viewModel.IsLootItemSearching(item.InstanceId), "搜索前每一件物品都必须保持阴影");
+        }
+
+        [Test]
+        public void OpenLootContainer_EmptySearchContainer_FinishesImmediately()
+        {
+            int lootContainerId = RegisterLootContainer("空物资箱", 2, 2);
+
+            m_viewModel.OpenLootContainer(lootContainerId, true);
+
+            Assert.IsFalse(m_viewModel.LootContainerSearching, "空箱没有可逐件揭晓的内容, 不能停在永久搜索态");
+        }
+
+        [Test]
+        public void TickLootSearch_BeforeCommonDuration_RevealsNothing()
+        {
+            int lootContainerId = RegisterLootContainer("普通物资箱", 2, 1);
+            InventoryItemVO first = AddLootItem(lootContainerId, 0, 0, InventoryItemRarity.Common);
+            InventoryItemVO second = AddLootItem(lootContainerId, 1, 0, InventoryItemRarity.Common);
+            m_viewModel.OpenLootContainer(lootContainerId, true);
+
+            m_viewModel.TickLootSearch(0.49f);
+
+            Assert.IsTrue(m_viewModel.IsLootItemSearching(first.InstanceId));
+            Assert.IsTrue(m_viewModel.IsLootItemSearching(second.InstanceId));
+        }
+
+        [Test]
+        public void TickLootSearch_AfterOneDuration_RevealsOnlyOneItem()
+        {
+            int lootContainerId = RegisterLootContainer("逐件揭晓", 2, 1);
+            InventoryItemVO first = AddLootItem(lootContainerId, 0, 0, InventoryItemRarity.Common);
+            InventoryItemVO second = AddLootItem(lootContainerId, 1, 0, InventoryItemRarity.Common);
+            m_viewModel.OpenLootContainer(lootContainerId, true);
+
+            m_viewModel.TickLootSearch(0.5f);
+
+            Assert.IsFalse(m_viewModel.IsLootItemSearching(first.InstanceId), "第一件计时结束后只揭晓第一件");
+            Assert.IsTrue(m_viewModel.IsLootItemSearching(second.InstanceId), "第二件必须继续隐藏并接着计时");
+            Assert.IsTrue(m_viewModel.LootContainerSearching, "还有未揭晓物品时整箱仍处于搜索态");
+        }
+
+        [Test]
+        public void TickLootSearch_UsesEachItemsOwnRarityDuration()
+        {
+            int lootContainerId = RegisterLootContainer("品质时长", 2, 1);
+            InventoryItemVO common = AddLootItem(lootContainerId, 0, 0, InventoryItemRarity.Common);
+            InventoryItemVO legendary = AddLootItem(lootContainerId, 1, 0, InventoryItemRarity.Legendary);
+            m_viewModel.OpenLootContainer(lootContainerId, true);
+
+            m_viewModel.TickLootSearch(0.5f);
+            Assert.IsFalse(m_viewModel.IsLootItemSearching(common.InstanceId));
+            Assert.IsTrue(m_viewModel.IsLootItemSearching(legendary.InstanceId));
+
+            m_viewModel.TickLootSearch(1.9f);
+            Assert.IsTrue(m_viewModel.IsLootItemSearching(legendary.InstanceId),
+                "传说品质的搜索时长不能被普通品质的时长替代");
+
+            m_viewModel.TickLootSearch(0.1f);
+            Assert.IsFalse(m_viewModel.IsLootItemSearching(legendary.InstanceId));
+            Assert.IsFalse(m_viewModel.LootContainerSearching);
+        }
+
+        [Test]
+        public void TickLootSearch_LargeDelta_RevealsEveryItemWhoseDurationElapsed()
+        {
+            int lootContainerId = RegisterLootContainer("大步长", 2, 1);
+            InventoryItemVO first = AddLootItem(lootContainerId, 0, 0, InventoryItemRarity.Common);
+            InventoryItemVO second = AddLootItem(lootContainerId, 1, 0, InventoryItemRarity.Common);
+            m_viewModel.OpenLootContainer(lootContainerId, true);
+
+            m_viewModel.TickLootSearch(1.1f);
+
+            Assert.IsFalse(m_viewModel.IsLootItemSearching(first.InstanceId));
+            Assert.IsFalse(m_viewModel.IsLootItemSearching(second.InstanceId));
+            Assert.IsFalse(m_viewModel.LootContainerSearching);
+        }
+
+        [Test]
+        public void TickLootSearch_RevealsItemsInRowThenColumnOrder()
+        {
+            int lootContainerId = RegisterLootContainer("固定揭晓顺序", 2, 2);
+            InventoryItemVO bottom = AddLootItem(lootContainerId, 1, 0, InventoryItemRarity.Common);
+            InventoryItemVO lower = AddLootItem(lootContainerId, 0, 1, InventoryItemRarity.Common);
+            InventoryItemVO topLeft = AddLootItem(lootContainerId, 0, 0, InventoryItemRarity.Common);
+            m_viewModel.OpenLootContainer(lootContainerId, true);
+
+            m_viewModel.TickLootSearch(0.5f);
+            Assert.IsFalse(m_viewModel.IsLootItemSearching(topLeft.InstanceId));
+            Assert.IsTrue(m_viewModel.IsLootItemSearching(lower.InstanceId));
+            Assert.IsTrue(m_viewModel.IsLootItemSearching(bottom.InstanceId));
+
+            m_viewModel.TickLootSearch(0.5f);
+            Assert.IsFalse(m_viewModel.IsLootItemSearching(bottom.InstanceId));
+            Assert.IsTrue(m_viewModel.IsLootItemSearching(lower.InstanceId));
+
+            m_viewModel.TickLootSearch(0.5f);
+            Assert.IsFalse(m_viewModel.IsLootItemSearching(lower.InstanceId));
+            Assert.IsFalse(m_viewModel.LootContainerSearching);
+
+            m_viewModel.TickLootSearch(0.5f);
+            Assert.IsFalse(m_viewModel.LootContainerSearching);
+        }
+
+        [Test]
+        public void TickLootSearch_RaisesOneChangeSignalPerRevealedItem()
+        {
+            int lootContainerId = RegisterLootContainer("搜索刷新信号", 2, 1);
+            AddLootItem(lootContainerId, 0, 0, InventoryItemRarity.Common);
+            AddLootItem(lootContainerId, 1, 0, InventoryItemRarity.Common);
+            m_viewModel.OpenLootContainer(lootContainerId, true);
+
+            int changedCount = 0;
+            using IDisposable subscription = m_viewModel.LootSearchChanged.Subscribe(() => changedCount++);
+
+            m_viewModel.TickLootSearch(0.5f);
+            Assert.AreEqual(1, changedCount, "揭晓一件只刷新一次逐件阴影");
+
+            m_viewModel.TickLootSearch(0.5f);
+            Assert.AreEqual(2, changedCount, "最后一件揭晓并结束搜索态时再刷新一次");
+        }
+
+        [Test]
+        public void CloseLootContainer_ClearsPendingItemSearch()
+        {
+            int lootContainerId = RegisterLootContainer("关闭清搜索", 2, 1);
+            InventoryItemVO first = AddLootItem(lootContainerId, 0, 0, InventoryItemRarity.Common);
+            InventoryItemVO second = AddLootItem(lootContainerId, 1, 0, InventoryItemRarity.Common);
+            m_viewModel.OpenLootContainer(lootContainerId, true);
+            m_viewModel.TickLootSearch(0.5f);
+
+            m_viewModel.CloseLootContainer();
+
+            Assert.IsFalse(m_viewModel.LootContainerSearching);
+            Assert.IsFalse(m_viewModel.IsLootItemSearching(first.InstanceId));
+            Assert.IsFalse(m_viewModel.IsLootItemSearching(second.InstanceId), "关箱后不能把下一件继续留在搜索队列");
+        }
+
+        [Test]
+        public void OpenLootContainer_SwitchContainer_ClearsPreviousItemSearch()
+        {
+            int firstContainerId = RegisterLootContainer("第一只搜索箱", 1, 1);
+            int secondContainerId = RegisterLootContainer("第二只普通箱", 1, 1);
+            InventoryItemVO first = AddLootItem(firstContainerId, 0, 0, InventoryItemRarity.Common);
+            InventoryItemVO second = AddLootItem(secondContainerId, 0, 0, InventoryItemRarity.Common);
+            m_viewModel.OpenLootContainer(firstContainerId, true);
+
+            m_viewModel.OpenLootContainer(secondContainerId, false);
+
+            Assert.IsFalse(m_viewModel.LootContainerSearching);
+            Assert.IsFalse(m_viewModel.IsLootItemSearching(first.InstanceId), "旧箱子的搜索队列必须清掉");
+            Assert.IsFalse(m_viewModel.IsLootItemSearching(second.InstanceId), "不要求搜索的箱子直接显示物品");
+        }
+
+        [Test]
+        public void OpenLootContainer_MissingSearchConfig_LogsErrorAndDoesNotStaySearching()
+        {
+            int lootContainerId = RegisterLootContainer("缺搜索配置", 1, 1);
+            InventoryItemVO item = AddLootItem(lootContainerId, 0, 0, InventoryItemRarity.Common);
+            EquipmentPanelViewModel panel = new EquipmentPanelViewModel(m_model, m_containerIds, null);
+
+            try
+            {
+                LogAssert.Expect(LogType.Error, new Regex("搜索时长配置为空"));
+                panel.OpenLootContainer(lootContainerId, true);
+
+                Assert.IsFalse(panel.LootContainerSearching, "配置缺失必须结束搜索态, 不能把玩家永久锁在阴影里");
+                Assert.IsFalse(panel.IsLootItemSearching(item.InstanceId));
+            }
+            finally
+            {
+                panel.OnUnbind();
+                panel.OnDispose();
+                panel.Dispose();
+            }
+        }
+
+        [Test]
+        public void TickLootSearch_ZeroOrNegativeDuration_RevealsImmediately()
+        {
+            LootSearchConfigSO config = m_kit.CreateLootSearchConfig(0f, 0f, 0f, 0f, 0f, -1f);
+            EquipmentPanelViewModel panel = new EquipmentPanelViewModel(m_model, m_containerIds, config);
+            try
+            {
+                for (int i = 0; i < panel.ContainerCount; i++) panel.GetContainer(i).OnBind();
+
+                int lootContainerId = RegisterLootContainer("零时长", 2, 1);
+                AddLootItem(lootContainerId, 0, 0, InventoryItemRarity.Common);
+                AddLootItem(lootContainerId, 1, 0, InventoryItemRarity.Legendary);
+
+                panel.OnBind();
+                panel.OpenLootContainer(lootContainerId, true);
+                panel.TickLootSearch(0f);
+
+                Assert.IsFalse(panel.LootContainerSearching);
+            }
+            finally
+            {
+                for (int i = 0; i < panel.ContainerCount; i++) panel.GetContainer(i).OnUnbind();
+
+                panel.OnUnbind();
+                panel.OnDispose();
+                panel.Dispose();
+            }
         }
 
         [Test]
@@ -668,6 +877,29 @@ namespace Tests.Inventory
         {
             m_model.RegisterContainer(InventoryContainerIds.POCKETS,
                 new InventoryContainerSpec(width, height, float.MaxValue, null, "口袋"));
+        }
+
+        // 往物资箱指定格子放一件单格物品, 返回模型生成的渲染切片
+        private InventoryItemVO AddLootItem(int containerId, int x, int y, InventoryItemRarity rarity)
+        {
+            int itemId = m_kit.CreateItem(1, 1, false, rarity: rarity).ItemId;
+            Assert.AreEqual(InventoryMoveResult.Success,
+                m_model.TryAddItem(containerId, itemId, 1, new Vector2Int(x, y)));
+
+            return GetItemAt(containerId, x, y);
+        }
+
+        // 按落点从容器快照里找出对应物品
+        private InventoryItemVO GetItemAt(int containerId, int x, int y)
+        {
+            Vector2Int origin = new Vector2Int(x, y);
+            InventoryContainerVO container = m_model.GetContainerVO(containerId);
+
+            for (int i = 0; i < container.Items.Count; i++)
+                if (container.Items[i].Origin == origin) return container.Items[i];
+
+            Assert.Fail($"容器 {containerId} 的格子 {origin} 没有物品");
+            return null;
         }
         #endregion
 

@@ -573,6 +573,7 @@ MonoBehaviour:
   - {fileID: 1722414058294981876}
   - {fileID: 6187283205873241767}
   LootCarrierTemplate: {fileID: 1561121275730661392}
+  LootSearchConfig: {fileID: 11400000, guid: 9b4890245e4daf945bc095b4019ad2ca, type: 2}
 --- !u!1 &8872241458680114393
 GameObject:
   m_ObjectHideFlags: 0
