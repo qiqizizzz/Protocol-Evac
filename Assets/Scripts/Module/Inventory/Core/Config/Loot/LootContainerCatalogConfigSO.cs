@@ -59,7 +59,31 @@ namespace Module.Inventory.Core.Config.Loot
             for (int i = 0; i < EntriesValue.Length; i++)
             {
                 LootContainerPrefabEntry entry = EntriesValue[i];
-                if (entry == null || !entry.CanOpen || entry.Prefab == null || entry.LootConfig == null) continue;
+                if (entry == null)
+                {
+                    QLog.Error($"物资箱目录第 {i} 项为空");
+                    continue;
+                }
+
+                if (!entry.CanOpen) continue;
+
+                if (entry.Prefab == null)
+                {
+                    QLog.Error($"物资箱目录第 {i} 项未配置预制体");
+                    continue;
+                }
+
+                if (entry.LootConfig == null)
+                {
+                    QLog.Error($"物资箱目录第 {i} 项未配置掉落");
+                    continue;
+                }
+
+                if (entry.SpawnWeight < 0)
+                {
+                    QLog.Error($"物资箱目录第 {i} 项生成权重不能为负数：{entry.SpawnWeight}");
+                    continue;
+                }
 
                 results.Add(entry);
             }

@@ -23,8 +23,12 @@ namespace Module.Inventory.Core.Config.Loot
         [Tooltip("该物资箱使用的掉落配置")]
         [SerializeField] private LootContainerConfigSO LootConfigValue;
 
+        [Tooltip("参与随机生成的权重, 0 表示不参与随机生成但仍可手工绑定")]
+        [SerializeField, Min(0)] private int SpawnWeightValue = 1;
+
         public GameObject Prefab => PrefabValue;
         public bool CanOpen => CanOpenValue;
         public LootContainerConfigSO LootConfig => LootConfigValue;
+        public int SpawnWeight => SpawnWeightValue;
     }
 }

@@ -66,5 +66,30 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 7051525573281636764, guid: 2e80df2a6cc7af8429efdf61581e318a,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2033938430574881889}
   m_SourcePrefab: {fileID: 100100000, guid: 2e80df2a6cc7af8429efdf61581e318a, type: 3}
+--- !u!1 &6522347426294531785 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 7051525573281636764, guid: 2e80df2a6cc7af8429efdf61581e318a,
+    type: 3}
+  m_PrefabInstance: {fileID: 4276173655633880917}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &2033938430574881889
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6522347426294531785}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1a2442b36024d5e4bbe7c44ac04f3f29, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  EntityIdValue: 
+  LootConfigValue: {fileID: 0}
+  InteractRadiusValue: 1.2

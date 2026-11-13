@@ -17,9 +17,9 @@ MonoBehaviour:
   RollCountMinValue: 5
   RollCountMaxValue: 9
   TypeEntriesValue:
-  - TypeConfigValue: {fileID: 11400000, guid: 3576a426a93029247b932266002c31b6, type: 2}
-    WeightValue: 65
   - TypeConfigValue: {fileID: 11400000, guid: 949afd0de92b0f74c81bc224451a82c1, type: 2}
     WeightValue: 10
+  - TypeConfigValue: {fileID: 11400000, guid: 3576a426a93029247b932266002c31b6, type: 2}
+    WeightValue: 65
   - TypeConfigValue: {fileID: 11400000, guid: 89c9f22059c4bc74ab625236968f9a39, type: 2}
     WeightValue: 15
