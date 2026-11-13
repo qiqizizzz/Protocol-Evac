@@ -123,6 +123,32 @@ namespace UI.Inventory.View
         }
 
         /// <summary>
+        /// 旋转当前载体里正在拖拽的物品视图
+        /// </summary>
+        /// <returns>物品视图是否存在并接受了旋转</returns>
+        public bool TryRotateDraggedItem()
+        {
+            if (ViewModel == null || !ViewModel.IsDragging) return false;
+
+            if (!m_itemViews.TryGetValue(ViewModel.DraggingInstanceId, out UIInventoryItem itemView)) return false;
+
+            return itemView.TryRotateDuringDrag();
+        }
+
+        /// <summary>
+        /// 用右键取消当前载体里由左键或中键发起的拖拽
+        /// </summary>
+        /// <returns>物品视图是否存在并取消了拖拽</returns>
+        public bool TryCancelDraggedItemBySecondaryButton()
+        {
+            if (ViewModel == null || !ViewModel.IsDragging) return false;
+
+            if (!m_itemViews.TryGetValue(ViewModel.DraggingInstanceId, out UIInventoryItem itemView)) return false;
+
+            return itemView.TryCancelDragBySecondaryButton();
+        }
+
+        /// <summary>
         /// 当前载体的网格格数, 视图模型未就绪时返回零
         /// </summary>
         public Vector2Int GridCount

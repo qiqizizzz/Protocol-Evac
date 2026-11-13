@@ -129,6 +129,24 @@ namespace Module.ShootingPlayer.Input
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Rotate"",
+                    ""type"": ""Button"",
+                    ""id"": ""f5fb1262-61f7-45c0-98c4-2de3f52f4218"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""CancelDrag"",
+                    ""type"": ""Button"",
+                    ""id"": ""24f6b39f-0de3-4dc2-8d52-2f41584d6f3a"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -175,6 +193,28 @@ namespace Module.ShootingPlayer.Input
                     ""action"": ""Cancel"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""85db60b1-d0a0-48c1-a0d9-3155562a2bb8"",
+                    ""path"": ""<Keyboard>/r"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": "";KeyboardMouse"",
+                    ""action"": ""Rotate"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""cd3291b9-cf0a-4614-9be6-c1075ca3f62f"",
+                    ""path"": ""<Mouse>/rightButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": "";KeyboardMouse"",
+                    ""action"": ""CancelDrag"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -188,6 +228,11 @@ namespace Module.ShootingPlayer.Input
                     ""devicePath"": ""<Keyboard>"",
                     ""isOptional"": false,
                     ""isOR"": false
+                },
+                {
+                    ""devicePath"": ""<Mouse>"",
+                    ""isOptional"": false,
+                    ""isOR"": false
                 }
             ]
         }
@@ -199,6 +244,8 @@ namespace Module.ShootingPlayer.Input
             m_UI_Interact = m_UI.FindAction("Interact", throwIfNotFound: true);
             m_UI_InteractGroundPile = m_UI.FindAction("InteractGroundPile", throwIfNotFound: true);
             m_UI_Cancel = m_UI.FindAction("Cancel", throwIfNotFound: true);
+            m_UI_Rotate = m_UI.FindAction("Rotate", throwIfNotFound: true);
+            m_UI_CancelDrag = m_UI.FindAction("CancelDrag", throwIfNotFound: true);
         }
 
         ~@ShootingPlayerInputActions()
@@ -283,6 +330,8 @@ namespace Module.ShootingPlayer.Input
         private readonly InputAction m_UI_Interact;
         private readonly InputAction m_UI_InteractGroundPile;
         private readonly InputAction m_UI_Cancel;
+        private readonly InputAction m_UI_Rotate;
+        private readonly InputAction m_UI_CancelDrag;
         /// <summary>
         /// Provides access to input actions defined in input action map "UI".
         /// </summary>
@@ -310,6 +359,14 @@ namespace Module.ShootingPlayer.Input
             /// Provides access to the underlying input action "UI/Cancel".
             /// </summary>
             public InputAction @Cancel => m_Wrapper.m_UI_Cancel;
+            /// <summary>
+            /// Provides access to the underlying input action "UI/Rotate".
+            /// </summary>
+            public InputAction @Rotate => m_Wrapper.m_UI_Rotate;
+            /// <summary>
+            /// Provides access to the underlying input action "UI/CancelDrag".
+            /// </summary>
+            public InputAction @CancelDrag => m_Wrapper.m_UI_CancelDrag;
             /// <summary>
             /// Provides access to the underlying input action map instance.
             /// </summary>
@@ -348,6 +405,12 @@ namespace Module.ShootingPlayer.Input
                 @Cancel.started += instance.OnCancel;
                 @Cancel.performed += instance.OnCancel;
                 @Cancel.canceled += instance.OnCancel;
+                @Rotate.started += instance.OnRotate;
+                @Rotate.performed += instance.OnRotate;
+                @Rotate.canceled += instance.OnRotate;
+                @CancelDrag.started += instance.OnCancelDrag;
+                @CancelDrag.performed += instance.OnCancelDrag;
+                @CancelDrag.canceled += instance.OnCancelDrag;
             }
 
             /// <summary>
@@ -371,6 +434,12 @@ namespace Module.ShootingPlayer.Input
                 @Cancel.started -= instance.OnCancel;
                 @Cancel.performed -= instance.OnCancel;
                 @Cancel.canceled -= instance.OnCancel;
+                @Rotate.started -= instance.OnRotate;
+                @Rotate.performed -= instance.OnRotate;
+                @Rotate.canceled -= instance.OnRotate;
+                @CancelDrag.started -= instance.OnCancelDrag;
+                @CancelDrag.performed -= instance.OnCancelDrag;
+                @CancelDrag.canceled -= instance.OnCancelDrag;
             }
 
             /// <summary>
@@ -452,6 +521,20 @@ namespace Module.ShootingPlayer.Input
             /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
             /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
             void OnCancel(InputAction.CallbackContext context);
+            /// <summary>
+            /// Method invoked when associated input action "Rotate" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+            /// </summary>
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+            void OnRotate(InputAction.CallbackContext context);
+            /// <summary>
+            /// Method invoked when associated input action "CancelDrag" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+            /// </summary>
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+            void OnCancelDrag(InputAction.CallbackContext context);
         }
     }
 }

@@ -12,6 +12,7 @@ namespace Framework.QTower.Common.Defines
     {
         public const string PlayerLockOnStateChanged = "PlayerLockOnStateChanged";
         public const string LootFocusStateChanged = "LootFocusStateChanged";
+        public const string InteractionHintRequested = "InteractionHintRequested";
         public const string PlayerDied = "PlayerDied";
         public const string PlayerRetryRequested = "PlayerRetryRequested";
     }

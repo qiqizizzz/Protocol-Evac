@@ -41,3 +41,11 @@ MonoBehaviour:
       type: 3}
     CanOpenValue: 1
     LootConfigValue: {fileID: 11400000, guid: a0b57d75b61a06849ad039ff98e8581c, type: 2}
+  - PrefabValue: {fileID: 6522347426294531785, guid: 5212dce386b5cce4380655ef8952d7c7,
+      type: 3}
+    CanOpenValue: 1
+    LootConfigValue: {fileID: 11400000, guid: a0b57d75b61a06849ad039ff98e8581c, type: 2}
+  - PrefabValue: {fileID: 2503340807777538128, guid: a2d822c60cc59ee41b461378d48aa132,
+      type: 3}
+    CanOpenValue: 1
+    LootConfigValue: {fileID: 11400000, guid: a0b57d75b61a06849ad039ff98e8581c, type: 2}

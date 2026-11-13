@@ -7,7 +7,10 @@
 */
 
 using System;
+using System.Collections.Generic;
+using Module.Inventory.Core.Config.Type;
 using UnityEngine;
+using Utils.log;
 
 namespace Module.Inventory.Core.Config.Loot
 {
@@ -38,5 +41,51 @@ namespace Module.Inventory.Core.Config.Loot
         public int RollCountMin => RollCountMinValue;
         public int RollCountMax => RollCountMaxValue;
         public LootEntry[] Entries => EntriesValue;
+
+        /// <summary>
+        /// 判断掉落表是否包含指定物品种类
+        /// </summary>
+        /// <param name="itemType">待查询的物品种类</param>
+        /// <returns>至少有一条有效掉落条目命中时返回 true</returns>
+        public bool ContainsItemType(InventoryItemType itemType)
+        {
+            if (itemType == InventoryItemType.None) return false;
+
+            for (int i = 0; i < EntriesValue.Length; i++)
+            {
+                LootEntry entry = EntriesValue[i];
+                if (entry != null && entry.ItemType == itemType) return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// 收集掉落表中实际出现的物品种类
+        /// </summary>
+        /// <param name="results">复用的结果列表, 调用时先清空</param>
+        /// <returns>收集到的物品种类数量</returns>
+        public int CollectItemTypes(List<InventoryItemType> results)
+        {
+            if (results == null)
+            {
+                QLog.Error("收集物资箱物品种类失败：结果列表为空");
+                return 0;
+            }
+
+            results.Clear();
+            HashSet<InventoryItemType> collectedTypes = new HashSet<InventoryItemType>();
+
+            for (int i = 0; i < EntriesValue.Length; i++)
+            {
+                LootEntry entry = EntriesValue[i];
+                if (entry == null || entry.ItemType == InventoryItemType.None) continue;
+                if (!collectedTypes.Add(entry.ItemType)) continue;
+
+                results.Add(entry.ItemType);
+            }
+
+            return results.Count;
+        }
     }
 }

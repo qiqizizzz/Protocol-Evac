@@ -1,6 +1,6 @@
 ﻿/*
  * ┌──────────────────────────────────┐
- * │  描    述: 背包快捷键宿主, 运行期自建常驻, B 开关面板, F 通用交互, H 开关垃圾堆, Esc 逐层返回
+ * │  描    述: 背包快捷键宿主, 运行期自建常驻, 统一转发开关面板, 搜刮交互与拖拽控制输入
  * │  类    名: UIInventoryHotkey.cs
  * │  创    建: By qiqizizzz
  * └──────────────────────────────────┘
@@ -85,6 +85,8 @@ namespace UI.Inventory
             m_inputActions.UI.Interact.performed += OnInteract;
             m_inputActions.UI.InteractGroundPile.performed += OnInteractGroundPile;
             m_inputActions.UI.Cancel.performed += OnCancel;
+            m_inputActions.UI.Rotate.performed += OnRotateDraggedItem;
+            m_inputActions.UI.CancelDrag.performed += OnCancelDraggedItemBySecondaryButton;
             m_inputActions.UI.Enable();
         }
 
@@ -121,6 +123,8 @@ namespace UI.Inventory
             m_inputActions.UI.Interact.performed -= OnInteract;
             m_inputActions.UI.InteractGroundPile.performed -= OnInteractGroundPile;
             m_inputActions.UI.Cancel.performed -= OnCancel;
+            m_inputActions.UI.Rotate.performed -= OnRotateDraggedItem;
+            m_inputActions.UI.CancelDrag.performed -= OnCancelDraggedItemBySecondaryButton;
             m_inputActions.UI.Disable();
         }
 
@@ -247,6 +251,24 @@ namespace UI.Inventory
             if (panel.TryCancelTopLayer()) return;
 
             HideEquipmentPanel(root);
+        }
+
+        // 背包面板可见时, 把旋转意图交给当前拖拽载体
+        private void OnRotateDraggedItem(InputAction.CallbackContext context)
+        {
+            MvvmRoot root = MvvmRoot.Instance;
+            if (root == null || !root.Windows.TryGet(out UIEquipmentPanel panel) || !panel.IsVisible) return;
+
+            panel.TryRotateDraggedItem();
+        }
+
+        // 右键只取消非右键发起的拖拽, 未被拖拽消费时继续交给物品菜单
+        private void OnCancelDraggedItemBySecondaryButton(InputAction.CallbackContext context)
+        {
+            MvvmRoot root = MvvmRoot.Instance;
+            if (root == null || !root.Windows.TryGet(out UIEquipmentPanel panel) || !panel.IsVisible) return;
+
+            panel.TryCancelDraggedItemBySecondaryButton();
         }
 
         // 所有完整关闭入口统一清掉来源, 避免下次 B 打开时沿用旧的垃圾堆身份

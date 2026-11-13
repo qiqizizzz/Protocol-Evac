@@ -10,6 +10,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using Common.Res;
+using Framework.QTower.Common.Defines;
+using Framework.QTower.Event;
 using Framework.QTower.MVVM.View;
 using Module.Inventory.Presentation;
 using TMPro;
@@ -35,6 +37,7 @@ namespace UI.Inventory
 
         // 标签里最多列几件物品, 超出用省略号收尾
         private const int LABEL_ITEM_LIMIT = 4;
+        private const string NO_GROUND_PILE_HINT = "附近没有丢弃物";
 
         // 模型表装配前不逐帧硬撞, 隔这么久再试一次(秒)
         private const float BIND_RETRY_INTERVAL = 0.25f;
@@ -300,6 +303,7 @@ namespace UI.Inventory
             if (nearbyCount == 0)
             {
                 QLog.Info("附近没有丢弃物");
+                EventManager.PublishEvent(EventDefines.InteractionHintRequested, NO_GROUND_PILE_HINT);
                 return;
             }
 

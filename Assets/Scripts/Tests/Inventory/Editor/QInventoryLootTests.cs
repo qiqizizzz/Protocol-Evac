@@ -11,6 +11,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using Module.Inventory.Core.Config;
 using Module.Inventory.Core.Config.Loot;
+using Module.Inventory.Core.Config.Type;
 using Module.Inventory.Core.Defines;
 using Module.Inventory.Core.Data;
 using Module.Inventory.Core.Loot;
@@ -175,6 +176,39 @@ namespace Tests.Inventory
             LogAssert.Expect(LogType.Error, new Regex("没有任何可用掉落条目"));
 
             Assert.IsEmpty(LootRoller.Roll(loot, SEED));
+        }
+
+        [Test]
+        public void LootEntry_ItemType_FollowsTheItemConfig()
+        {
+            InventoryItemConfigSO medical = m_kit.CreateItem(1, 1, itemType: InventoryItemType.Medical);
+            LootEntry entry = m_kit.CreateLootEntry(medical);
+
+            Assert.AreEqual(InventoryItemType.Medical, entry.ItemType, "掉落条目的分类必须跟随物品 SO, 不能由箱子类型决定");
+        }
+
+        [Test]
+        public void LootContainer_CollectItemTypes_ReturnsDistinctTypesFromMixedEntries()
+        {
+            LootContainerConfigSO loot = BuildMixedTypeBox();
+            List<InventoryItemType> itemTypes = new List<InventoryItemType>();
+
+            int count = loot.CollectItemTypes(itemTypes);
+
+            Assert.AreEqual(2, count, "同一物品种类出现多次时只应收集一次");
+            CollectionAssert.AreEquivalent(new[] { InventoryItemType.Medical, InventoryItemType.Food }, itemTypes,
+                "医疗物资箱可以混合其他物品种类, 分类结果必须来自每条掉落条目");
+        }
+
+        [Test]
+        public void LootContainer_ContainsItemType_QueriesTheConfiguredEntries()
+        {
+            LootContainerConfigSO loot = BuildMixedTypeBox();
+
+            Assert.IsTrue(loot.ContainsItemType(InventoryItemType.Medical));
+            Assert.IsTrue(loot.ContainsItemType(InventoryItemType.Food));
+            Assert.IsFalse(loot.ContainsItemType(InventoryItemType.Attachment), "未配置的物品种类不应被误判为存在");
+            Assert.IsFalse(loot.ContainsItemType(InventoryItemType.None), "None 不是可掉落物品种类");
         }
         #endregion
 
@@ -422,6 +456,15 @@ namespace Tests.Inventory
                 m_kit.CreateLootEntry(m_kit.CreateItem(5, 2), 15),
                 m_kit.CreateLootEntry(m_kit.CreateItem(2, 1), 30),
                 m_kit.CreateLootEntry(m_kit.CreateItem(1, 2, true, 5), 25, 1, 3));
+        }
+
+        // 造一只混合物品种类的医疗物资箱, 重复医疗物品用于验证分类去重
+        private LootContainerConfigSO BuildMixedTypeBox()
+        {
+            return m_kit.CreateLoot("混合物资箱", m_kit.CreateContainer(4, 3, "混合物资网格"), 2, 3,
+                m_kit.CreateLootEntry(m_kit.CreateItem(1, 1, itemType: InventoryItemType.Medical), 30),
+                m_kit.CreateLootEntry(m_kit.CreateItem(1, 1, itemType: InventoryItemType.Medical), 20),
+                m_kit.CreateLootEntry(m_kit.CreateItem(1, 1, itemType: InventoryItemType.Food), 10));
         }
 
         // 断言箱内物品全部出自指定物资箱的掉落表

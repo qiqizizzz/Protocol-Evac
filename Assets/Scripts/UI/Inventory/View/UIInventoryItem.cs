@@ -206,6 +206,30 @@ namespace UI.Inventory.View
         }
 
         /// <summary>
+        /// 旋转当前拖拽中的物品拖影
+        /// </summary>
+        /// <returns>是否处于可旋转的拖拽状态</returns>
+        public bool TryRotateDuringDrag()
+        {
+            if (!m_isDragging) return false;
+
+            RotateGhostDuringDrag();
+            return true;
+        }
+
+        /// <summary>
+        /// 右键取消由其他按键发起的拖拽, 右键自身发起的拖拽保持原行为
+        /// </summary>
+        /// <returns>是否取消了本次拖拽</returns>
+        public bool TryCancelDragBySecondaryButton()
+        {
+            if (!m_isDragging || m_dragButton == PointerEventData.InputButton.Right) return false;
+
+            FinishDrag();
+            return true;
+        }
+
+        /// <summary>
         /// 拖拽悬停时按指针重排拖影, 并算出落点锚格相对悬停目标的偏移
         /// </summary>
         /// <param name="eventData">当前指针事件</param>
@@ -394,15 +418,6 @@ namespace UI.Inventory.View
             Vector3 pivotToCorner = m_rect.TransformPoint(new Vector3(rect.xMin, rect.yMax, 0f)) - m_rect.position;
 
             m_rect.position = cornerWorld - pivotToCorner;
-        }
-
-        private void Update()
-        {
-            if (!m_isDragging) return;
-
-            if (Input.GetKeyDown(KeyCode.R)) RotateGhostDuringDrag();
-
-            if (m_dragButton != PointerEventData.InputButton.Right && Input.GetMouseButtonDown(1)) FinishDrag();
         }
 
         // 悬停换容器会改写拖影尺寸, 落点也要跟着重算, 因此每帧渲染前再同步一次

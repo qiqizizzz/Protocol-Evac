@@ -11,6 +11,7 @@ using Framework.QTower.MVVM.Binding;
 using Framework.QTower.MVVM.View;
 using Framework.QTower.MVVM.View.Interfaces;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 using Utils.log;
 
@@ -120,6 +121,26 @@ namespace UI.Inventory.View
             ClosePopups();
             return true;
         }
+
+        /// <summary>
+        /// 旋转当前正在拖拽的物品, 没有拖拽载体时不消费输入
+        /// </summary>
+        /// <returns>是否找到拖拽载体并处理旋转</returns>
+        public bool TryRotateDraggedItem()
+        {
+            UIInventoryCarrier carrier = FindDragCarrier();
+            return carrier != null && carrier.TryRotateDraggedItem();
+        }
+
+        /// <summary>
+        /// 用鼠标右键取消当前拖拽, 右键自己发起的拖拽不处理
+        /// </summary>
+        /// <returns>是否取消了本次拖拽</returns>
+        public bool TryCancelDraggedItemBySecondaryButton()
+        {
+            UIInventoryCarrier carrier = FindDragCarrier();
+            return carrier != null && carrier.TryCancelDraggedItemBySecondaryButton();
+        }
         #endregion
 
         #region Private Function
@@ -218,7 +239,7 @@ namespace UI.Inventory.View
         private async UniTaskVoid ShowMenuAsync(InventoryViewModel container, int generation)
         {
             await MvvmRoot.Instance.Windows.ShowAsync<UIItemMenuPanel>(container.ContainerId,
-                container.SelectedInstanceId.Value, Input.mousePosition);
+                container.SelectedInstanceId.Value, ReadPointerScreenPosition());
 
             m_menuOpening = false;
 
@@ -258,6 +279,21 @@ namespace UI.Inventory.View
             if (m_lootCarrier != null && ReferenceEquals(m_lootCarrier.ViewModel, container)) return m_lootCarrier;
 
             return null;
+        }
+
+        // 拖拽来源是唯一可信入口, 旋转与右键取消都从当前拖拽容器反查载体
+        private UIInventoryCarrier FindDragCarrier()
+        {
+            InventoryViewModel dragSource = ViewModel.DragSource;
+            return dragSource != null ? FindCarrier(dragSource) : null;
+        }
+
+        // 读取新输入系统的指针位置, 读不到时退回屏幕原点
+        private static Vector3 ReadPointerScreenPosition()
+        {
+            return Pointer.current != null
+                ? (Vector3)Pointer.current.position.ReadValue()
+                : Vector3.zero;
         }
 
         // 反选、点击空白、开始拖拽时仅隐藏本容器的弹窗

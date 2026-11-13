@@ -8,6 +8,8 @@
 
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
+using Framework.QTower.Common.Defines;
+using Framework.QTower.Event;
 using Framework.QTower.MVVM.View;
 using Module.Inventory.Interaction;
 using Module.Inventory.Presentation;
@@ -24,6 +26,7 @@ namespace UI.Inventory
     public sealed class LootBoxInteraction
     {
         private const float GROUND_PILE_SCAN_RADIUS = 8f;
+        private const string NO_LOOT_BOX_HINT = "前方没有可搜刮的物资箱";
 
         private readonly LootInteractableScanner m_scanner = new LootInteractableScanner();
 
@@ -45,6 +48,7 @@ namespace UI.Inventory
             if (target == null)
             {
                 QLog.Info($"附近没有物资箱, 原点 {origin}");
+                EventManager.PublishEvent(EventDefines.InteractionHintRequested, NO_LOOT_BOX_HINT);
                 return false;
             }
 

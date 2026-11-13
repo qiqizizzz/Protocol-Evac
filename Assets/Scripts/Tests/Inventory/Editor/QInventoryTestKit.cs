@@ -47,10 +47,11 @@ namespace Tests.Inventory
         /// <param name="container">装备后撑起的容器定义, 留空代表这件物品不是容器</param>
         /// <param name="equipSlot">可穿戴到的部位, 装备槽只收对应部位的装备</param>
         /// <param name="register">是否顺手登记进 ItemRegistry, 验总配置整批登记时传 false</param>
+        /// <param name="itemType">物品种类</param>
         public InventoryItemConfigSO CreateItem(int width, int height, bool canRotate = true, int maxStackCount = 1,
             float unitWeight = 0f, int unitValue = 0, InventoryItemRarity rarity = InventoryItemRarity.None,
             InventoryContainerConfigSO container = null, InventoryEquipSlot equipSlot = InventoryEquipSlot.None,
-            bool register = true)
+            bool register = true, InventoryItemType itemType = InventoryItemType.None)
         {
             int itemId = m_nextItemId++;
             InventoryItemConfigSO config = CreateConfig<InventoryItemConfigSO>();
@@ -58,7 +59,7 @@ namespace Tests.Inventory
             // 配置字段是 [SerializeField] 私有的, 没有公开 setter, 只能反射写入
             SetField(config, "ItemIdValue", itemId);
             SetField(config, "DisplayNameValue", "TEST_" + itemId);
-            SetField(config, "ItemTypeValue", InventoryItemType.None);
+            SetField(config, "ItemTypeValue", itemType);
             SetField(config, "CanRotateValue", canRotate);
             SetField(config, "MaxStackCountValue", maxStackCount);
             SetField(config, "UnitWeightValue", unitWeight);

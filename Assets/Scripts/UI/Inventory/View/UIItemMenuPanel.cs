@@ -10,6 +10,7 @@ using Cysharp.Threading.Tasks;
 using Framework.QTower.MVVM.View;
 using UI.Inventory.View.Tools;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 namespace UI.Inventory.View
@@ -94,9 +95,17 @@ namespace UI.Inventory.View
             m_splitOpening = true;
 
             await MvvmRoot.Instance.Windows.ShowAsync<UIItemSplitPanel>(viewModel.TargetContainerId,
-                viewModel.TargetInstanceId, Input.mousePosition);
+                viewModel.TargetInstanceId, ReadPointerScreenPosition());
 
             m_splitOpening = false;
+        }
+
+        // 读取新输入系统的指针位置, 读不到时退回屏幕原点
+        private static Vector3 ReadPointerScreenPosition()
+        {
+            return Pointer.current != null
+                ? (Vector3)Pointer.current.position.ReadValue()
+                : Vector3.zero;
         }
         #endregion
     }

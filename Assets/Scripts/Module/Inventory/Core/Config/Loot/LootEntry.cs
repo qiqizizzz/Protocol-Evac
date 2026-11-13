@@ -7,6 +7,7 @@
 */
 
 using System;
+using Module.Inventory.Core.Config.Type;
 using UnityEngine;
 
 namespace Module.Inventory.Core.Config.Loot
@@ -27,6 +28,7 @@ namespace Module.Inventory.Core.Config.Loot
         [SerializeField, Min(1)] private int CountMaxValue = 1;
 
         public InventoryItemConfigSO Item => ItemValue;
+        public InventoryItemType ItemType => ItemValue != null ? ItemValue.ItemType : InventoryItemType.None;
         public int Weight => WeightValue;
         public int CountMin => CountMinValue;
         public int CountMax => CountMaxValue;
