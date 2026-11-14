@@ -9,6 +9,7 @@
 using System;
 using System.Collections.Generic;
 using Module.Inventory.Core.Config.Loot;
+using UnityEngine;
 using Utils.log;
 
 namespace Module.Inventory.Generation
@@ -21,6 +22,7 @@ namespace Module.Inventory.Generation
         private const uint FNV_OFFSET_BASIS = 2166136261;
         private const uint FNV_PRIME = 16777619;
         private const int SPAWN_COUNT_SALT = 0x4C4F4F54;
+        private const int SCATTER_ANGLE_SALT = 0x53434154;
 
         /// <summary>
         /// 按稳定键与世界种子生成可复现的随机种子
@@ -77,8 +79,32 @@ namespace Module.Inventory.Generation
             if (minCount == maxCount) return minCount;
 
             int countSeed = CreateInstanceSeed(seed, SPAWN_COUNT_SALT);
-            Random random = new Random(countSeed);
+            System.Random random = new System.Random(countSeed);
             return random.Next(minCount, maxCount + 1);
+        }
+
+        /// <summary>
+        /// 为同一生成点的多个实例计算稳定且互不重合的环状局部偏移
+        /// </summary>
+        /// <param name="spawnCount">当前生成点实际生成的实例数量</param>
+        /// <param name="instanceIndex">从零开始的实例序号</param>
+        /// <param name="radius">生成点局部散布半径</param>
+        /// <param name="seed">生成点稳定种子</param>
+        public static Vector3 SelectScatterOffset(int spawnCount, int instanceIndex, float radius, int seed)
+        {
+            if (spawnCount <= 1 || radius <= 0f) return Vector3.zero;
+
+            if (instanceIndex < 0 || instanceIndex >= spawnCount)
+            {
+                QLog.Error($"计算物资箱散布偏移失败：实例序号 {instanceIndex} 不在 0 - {spawnCount - 1}");
+                return Vector3.zero;
+            }
+
+            int angleSeed = CreateInstanceSeed(seed, SCATTER_ANGLE_SALT);
+            System.Random random = new System.Random(angleSeed);
+            float angleOffset = (float) (random.NextDouble() * Mathf.PI * 2d);
+            float angle = angleOffset + Mathf.PI * 2f * instanceIndex / spawnCount;
+            return new Vector3(Mathf.Cos(angle) * radius, 0f, Mathf.Sin(angle) * radius);
         }
 
         /// <summary>
@@ -106,7 +132,7 @@ namespace Module.Inventory.Generation
 
             if (totalWeight == 0) return null;
 
-            Random random = new Random(seed);
+            System.Random random = new System.Random(seed);
             long roll = (long) (random.NextDouble() * totalWeight);
             long accumulatedWeight = 0;
             for (int i = 0; i < entries.Count; i++)

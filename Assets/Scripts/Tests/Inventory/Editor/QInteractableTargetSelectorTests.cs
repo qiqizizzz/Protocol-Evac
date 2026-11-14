@@ -272,6 +272,20 @@ namespace Tests.Inventory
                 EventManager.UnregisterEvent(EventDefines.InteractionHintRequested, captureHint);
             }
         }
+
+        [Test]
+        public void TryInteractGroundPile_WhenContainerPanelIsVisible_SkipsScanning()
+        {
+            BuildGroundPile(1, Vector3.zero);
+            Physics.SyncTransforms();
+
+            LootBoxInteraction interaction = new LootBoxInteraction(() => true);
+
+            bool opened = interaction.TryInteractGroundPile(Vector3.zero);
+
+            Assert.IsFalse(opened, "面板已显示时 H 不能继续扫描并替换当前容器");
+            LogAssert.NoUnexpectedReceived();
+        }
         #endregion
 
         #region 可交互判定与种子
@@ -524,6 +538,20 @@ namespace Tests.Inventory
             target.Configure(new Bounds(center, boundsSize));
             m_scanObjects.Add(targetObject);
             return target;
+        }
+
+        // 摆一座可被物理粗筛命中的地面堆, 面板门禁必须在选择容器前截断
+        private GroundPileView BuildGroundPile(int containerId, Vector3 position)
+        {
+            GameObject pileObject = new GameObject("ground_pile_gate_01");
+            pileObject.transform.position = position;
+            pileObject.layer = LayerMask.NameToLayer("LootInteractable");
+            pileObject.AddComponent<BoxCollider>();
+
+            GroundPileView pile = pileObject.AddComponent<GroundPileView>();
+            pile.Configure(containerId, 2, 2);
+            m_scanObjects.Add(pileObject);
+            return pile;
         }
 
         // 建一块指定层的遮挡体, 层号与正式环境层保持一致

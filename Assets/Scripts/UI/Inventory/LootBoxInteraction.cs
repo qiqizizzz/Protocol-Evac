@@ -70,6 +70,8 @@ namespace UI.Inventory
         /// <returns>是否已接受本次打开请求</returns>
         public bool TryInteractGroundPile(Vector3 origin)
         {
+            if (m_isContainerPanelVisible()) return false;
+
             ILootInteractable target = m_scanner.ScanNearest<GroundPileView>(origin, GROUND_PILE_SCAN_RADIUS);
             if (target == null) return false;
 

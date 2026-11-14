@@ -117,6 +117,12 @@ namespace Module.Inventory.Generation
             int pointSeed = LootContainerSelector.CreateSeed(spawnPoint.SpawnId, WorldSeedValue);
             int spawnCount = LootContainerSelector.SelectCount(
                 spawnPoint.MinCount, spawnPoint.MaxCount, pointSeed);
+            if (spawnCount > 1 && spawnPoint.ScatterRadius <= 0f)
+            {
+                QLog.Error($"物资箱生成点未配置散布半径, 已限制为单箱：{spawnPoint.SpawnId}");
+                spawnCount = 1;
+            }
+
             int generatedCount = 0;
             for (int i = 0; i < spawnCount; i++)
             {
@@ -128,7 +134,9 @@ namespace Module.Inventory.Generation
                     break;
                 }
 
-                if (!TryCreateBox(spawnPoint, entry, i)) continue;
+                Vector3 localOffset = LootContainerSelector.SelectScatterOffset(
+                    spawnCount, i, spawnPoint.ScatterRadius, pointSeed);
+                if (!TryCreateBox(spawnPoint, entry, i, localOffset)) continue;
                 generatedCount++;
             }
 
@@ -136,7 +144,8 @@ namespace Module.Inventory.Generation
         }
 
         // 每个实例先注入实体号与掉落, 再确保进入激活状态触发 Awake
-        private bool TryCreateBox(LootContainerSpawnPoint spawnPoint, LootContainerPrefabEntry entry, int instanceIndex)
+        private bool TryCreateBox(LootContainerSpawnPoint spawnPoint, LootContainerPrefabEntry entry,
+            int instanceIndex, Vector3 localOffset)
         {
             if (!entry.Prefab.TryGetComponent(out LootBoxController _))
             {
@@ -145,7 +154,8 @@ namespace Module.Inventory.Generation
             }
 
             Transform spawnTransform = spawnPoint.transform;
-            GameObject boxObject = Instantiate(entry.Prefab, spawnTransform.position, spawnTransform.rotation, transform);
+            Vector3 worldPosition = spawnTransform.TransformPoint(localOffset);
+            GameObject boxObject = Instantiate(entry.Prefab, worldPosition, spawnTransform.rotation, transform);
             LootBoxController boxController = boxObject.GetComponent<LootBoxController>();
             string instanceName = BuildInstanceName(spawnPoint.SpawnId, instanceIndex);
             boxObject.name = instanceName;

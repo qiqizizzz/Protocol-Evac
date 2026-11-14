@@ -1,6 +1,6 @@
 /*
 * ┌──────────────────────────────────┐
-* │  描    述: 物资箱生成点标记, 声明稳定编号、数量范围与出生朝向
+* │  描    述: 物资箱生成点标记, 声明稳定编号、数量范围、散布半径与出生朝向
 * │  类    名: LootContainerSpawnPoint.cs
 * │  创    建: By qiqizizzz
 * └──────────────────────────────────┘
@@ -28,9 +28,14 @@ namespace Module.Inventory.Generation
         [Tooltip("本生成点最多生成的物资箱数量")]
         [SerializeField, Min(0)] private int MaxCountValue = 1;
 
+        [Header("散布")]
+        [Tooltip("同一生成点生成多个物资箱时的环状散布半径, 单箱生成时忽略")]
+        [SerializeField, Min(0f)] private float ScatterRadiusValue;
+
         public string SpawnId => SpawnIdValue;
         public int MinCount => MinCountValue;
         public int MaxCount => MaxCountValue;
+        public float ScatterRadius => ScatterRadiusValue;
 
         private void OnValidate()
         {
@@ -39,6 +44,9 @@ namespace Module.Inventory.Generation
 
             if (MaxCountValue < MinCountValue)
                 QLog.Error($"物资箱生成点数量范围错误：{name}, {MinCountValue} - {MaxCountValue}");
+
+            if (MaxCountValue > 1 && ScatterRadiusValue <= 0f)
+                QLog.Error($"物资箱生成点散布半径无效：{name}, 多箱生成需要大于 0");
         }
 
         private void OnDrawGizmosSelected()
@@ -46,6 +54,11 @@ namespace Module.Inventory.Generation
             Gizmos.color = Color.yellow;
             Gizmos.DrawWireSphere(transform.position, 0.4f);
             Gizmos.DrawRay(transform.position, transform.forward);
+
+            if (ScatterRadiusValue <= 0f) return;
+
+            Gizmos.color = Color.cyan;
+            Gizmos.DrawWireSphere(transform.position, ScatterRadiusValue);
         }
 
         /// <summary>

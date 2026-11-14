@@ -115,6 +115,23 @@ namespace Tests.Inventory
         }
 
         [Test]
+        public void SelectScatterOffset_IsStableDistinctAndOnTheConfiguredRing()
+        {
+            const float radius = 1.5f;
+            int pointSeed = LootContainerSelector.CreateSeed("scatter_point", 20261114);
+
+            Vector3 first = LootContainerSelector.SelectScatterOffset(4, 0, radius, pointSeed);
+            Vector3 repeated = LootContainerSelector.SelectScatterOffset(4, 0, radius, pointSeed);
+            Vector3 second = LootContainerSelector.SelectScatterOffset(4, 1, radius, pointSeed);
+
+            Assert.AreEqual(first, repeated, "同一种子与实例序号必须得到稳定散布位置");
+            Assert.AreNotEqual(first, second, "同一生成点的不同实例不能重合");
+            Assert.AreEqual(radius, new Vector2(first.x, first.z).magnitude, 0.001f,
+                "多箱实例必须落在配置的环状散布半径上");
+            Assert.AreEqual(0f, first.y, 0.001f, "散布偏移不能改变生成点高度");
+        }
+
+        [Test]
         public void Catalog_CollectOpenable_ReportsInvalidEntriesAndSkipsDisabledOnes()
         {
             GameObject prefab = TrackObject(new GameObject("LootSpawnCatalogPrefab"));
@@ -187,6 +204,75 @@ namespace Tests.Inventory
             Assert.AreEqual(1, repeatedBoxes.Length, "同一生成控制器不能重复创建物资箱");
         }
 
+        [Test]
+        public void Generate_MultipleBoxes_UsesNonOverlappingScatterSlots()
+        {
+            GameObject prefab = CreateInactiveLootPrefab("LootSpawnMultiPrefab");
+            LootContainerConfigSO loot = m_kit.CreateLoot(
+                "多箱生成测试", m_kit.CreateContainer(3, 2), 1, 1);
+            LootContainerCatalogConfigSO catalog = CreateCatalog(prefab, loot);
+
+            GameObject spawnRootObject = TrackObject(new GameObject("LootSpawnMultiRoot"));
+            Vector3 pointPosition = new Vector3(-2f, 0.5f, 4f);
+            LootContainerSpawnPoint spawnPoint = CreateSpawnPoint(spawnRootObject.transform,
+                "multi_point", pointPosition, 4, 4, 1.25f);
+
+            GameObject controllerObject = TrackObject(new GameObject("LootSpawnMultiController"));
+            LootContainerSpawnController controller =
+                controllerObject.AddComponent<LootContainerSpawnController>();
+            SetField(controller, "CatalogValue", catalog);
+            SetField(controller, "SpawnRootValue", spawnRootObject.transform);
+            SetField(controller, "WorldSeedValue", 20261114);
+
+            int generatedCount = controller.Generate();
+            LootBoxController[] boxes =
+                controllerObject.GetComponentsInChildren<LootBoxController>(true);
+
+            Assert.AreEqual(4, generatedCount, "固定四箱生成点必须创建四个实例");
+            Assert.AreEqual(4, boxes.Length, "多箱生成结果数量必须与选择数量一致");
+            for (int i = 0; i < boxes.Length; i++)
+            {
+                Vector3 planarOffset = boxes[i].transform.position - pointPosition;
+                planarOffset.y = 0f;
+                Assert.AreEqual(spawnPoint.ScatterRadius, planarOffset.magnitude, 0.001f,
+                    "多箱实例必须落在生成点散布圈上");
+
+                for (int j = i + 1; j < boxes.Length; j++)
+                {
+                    Assert.Greater(Vector3.Distance(boxes[i].transform.position, boxes[j].transform.position),
+                        0.01f, "同一生成点的物资箱不能占用相同位置");
+                }
+            }
+        }
+
+        [Test]
+        public void Generate_MultipleBoxesWithoutScatterRadius_ClampsToSingleInstance()
+        {
+            GameObject prefab = CreateInactiveLootPrefab("LootSpawnUnscatteredPrefab");
+            LootContainerConfigSO loot = m_kit.CreateLoot(
+                "无散布测试", m_kit.CreateContainer(3, 2), 1, 1);
+            LootContainerCatalogConfigSO catalog = CreateCatalog(prefab, loot);
+
+            GameObject spawnRootObject = TrackObject(new GameObject("LootSpawnUnscatteredRoot"));
+            CreateSpawnPoint(spawnRootObject.transform,
+                "unscattered_point", Vector3.zero, 2, 2);
+
+            GameObject controllerObject = TrackObject(new GameObject("LootSpawnUnscatteredController"));
+            LootContainerSpawnController controller =
+                controllerObject.AddComponent<LootContainerSpawnController>();
+            SetField(controller, "CatalogValue", catalog);
+            SetField(controller, "SpawnRootValue", spawnRootObject.transform);
+
+            LogAssert.Expect(LogType.Error, new Regex("未配置散布半径"));
+
+            int generatedCount = controller.Generate();
+            LootBoxController[] boxes =
+                controllerObject.GetComponentsInChildren<LootBoxController>(true);
+
+            Assert.AreEqual(1, generatedCount, "未配置散布半径时必须退化为单箱生成");
+            Assert.AreEqual(1, boxes.Length, "不能把多箱实例生成在同一个位置");
+        }
+
         private LootContainerCatalogConfigSO CreateCatalog(GameObject prefab, LootContainerConfigSO loot)
         {
             LootContainerCatalogConfigSO catalog = TrackConfig(
@@ -206,7 +292,7 @@ namespace Tests.Inventory
         }
 
         private LootContainerSpawnPoint CreateSpawnPoint(Transform parent, string spawnId, Vector3 position,
-            int minCount, int maxCount)
+            int minCount, int maxCount, float scatterRadius = 0f)
         {
             LogAssert.Expect(LogType.Error, new Regex(EMPTY_SPAWN_ID_PATTERN));
             GameObject pointObject = TrackObject(new GameObject("LootSpawnPoint"));
@@ -218,6 +304,7 @@ namespace Tests.Inventory
             SetField(point, "SpawnIdValue", spawnId);
             SetField(point, "MinCountValue", minCount);
             SetField(point, "MaxCountValue", maxCount);
+            SetField(point, "ScatterRadiusValue", scatterRadius);
             return point;
         }
 
