@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9d20232aa68c304a83309257b1f1c9f, type: 3}
+  m_Name: LootContainerPool_Medical
+  m_EditorClassIdentifier: 
+  EntriesValue:
+  - PrefabValue: {fileID: 4441364404826488231, guid: fdf035fc503635f42aa6aa6888448585,
+      type: 3}
+    CanOpenValue: 1
+    LootConfigValue: {fileID: 11400000, guid: ff46ec55043d29b41a2c02667eb89b74, type: 2}
+    SpawnWeightValue: 1
+  - PrefabValue: {fileID: 2818352147440374057, guid: 9c00e5e9b20a4be4fa747494bfb8e146,
+      type: 3}
+    CanOpenValue: 1
+    LootConfigValue: {fileID: 11400000, guid: ff46ec55043d29b41a2c02667eb89b74, type: 2}
+    SpawnWeightValue: 1

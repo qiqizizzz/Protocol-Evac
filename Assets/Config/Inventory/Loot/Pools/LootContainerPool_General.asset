@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9d20232aa68c304a83309257b1f1c9f, type: 3}
+  m_Name: LootContainerPool_General
+  m_EditorClassIdentifier: 
+  EntriesValue:
+  - PrefabValue: {fileID: 1314281305934252844, guid: 673caf7ea7d833849a7af0536c06a348,
+      type: 3}
+    CanOpenValue: 1
+    LootConfigValue: {fileID: 11400000, guid: a0b57d75b61a06849ad039ff98e8581c, type: 2}
+    SpawnWeightValue: 1
+  - PrefabValue: {fileID: 3263177435450555782, guid: 28506ab87c458374980efbdf92317991,
+      type: 3}
+    CanOpenValue: 1
+    LootConfigValue: {fileID: 11400000, guid: a0b57d75b61a06849ad039ff98e8581c, type: 2}
+    SpawnWeightValue: 1
+  - PrefabValue: {fileID: 3270603504255372620, guid: 7a4cf2423a35cd9449f9c22f4ac77aaf,
+      type: 3}
+    CanOpenValue: 1
+    LootConfigValue: {fileID: 11400000, guid: a0b57d75b61a06849ad039ff98e8581c, type: 2}
+    SpawnWeightValue: 1

@@ -259,6 +259,8 @@ MonoBehaviour:
   SpawnIdValue: env_bucket_01
   MinCountValue: 1
   MaxCountValue: 1
+  ScatterRadiusValue: 0
+  SpawnPoolValue: {fileID: 11400000, guid: 0c60cb7abf4ab6c4e8bb60701d02cf42, type: 2}
 --- !u!1 &350109773
 GameObject:
   m_ObjectHideFlags: 0
@@ -475,6 +477,8 @@ MonoBehaviour:
   SpawnIdValue: env_firebox_02
   MinCountValue: 1
   MaxCountValue: 1
+  ScatterRadiusValue: 0
+  SpawnPoolValue: {fileID: 11400000, guid: a5a08dd39414ba4409a8953f47326191, type: 2}
 --- !u!1 &724372500
 GameObject:
   m_ObjectHideFlags: 0
@@ -629,6 +633,8 @@ MonoBehaviour:
   SpawnIdValue: env_plastic_box_02
   MinCountValue: 1
   MaxCountValue: 1
+  ScatterRadiusValue: 0
+  SpawnPoolValue: {fileID: 11400000, guid: 0c60cb7abf4ab6c4e8bb60701d02cf42, type: 2}
 --- !u!1 &832575517
 GameObject:
   m_ObjectHideFlags: 0
@@ -725,6 +731,8 @@ MonoBehaviour:
   SpawnIdValue: env_plastic_box_03
   MinCountValue: 1
   MaxCountValue: 1
+  ScatterRadiusValue: 0
+  SpawnPoolValue: {fileID: 11400000, guid: 0c60cb7abf4ab6c4e8bb60701d02cf42, type: 2}
 --- !u!1 &1087922025
 GameObject:
   m_ObjectHideFlags: 0
@@ -953,6 +961,8 @@ MonoBehaviour:
   SpawnIdValue: env_firebox_01
   MinCountValue: 1
   MaxCountValue: 1
+  ScatterRadiusValue: 0
+  SpawnPoolValue: {fileID: 11400000, guid: a5a08dd39414ba4409a8953f47326191, type: 2}
 --- !u!1 &1458256820
 GameObject:
   m_ObjectHideFlags: 0
@@ -1000,6 +1010,8 @@ MonoBehaviour:
   SpawnIdValue: props_plastic_box_02
   MinCountValue: 1
   MaxCountValue: 1
+  ScatterRadiusValue: 0
+  SpawnPoolValue: {fileID: 11400000, guid: 0c60cb7abf4ab6c4e8bb60701d02cf42, type: 2}
 --- !u!1 &1555431238
 GameObject:
   m_ObjectHideFlags: 0
@@ -1047,6 +1059,8 @@ MonoBehaviour:
   SpawnIdValue: env_plastic_box_04
   MinCountValue: 1
   MaxCountValue: 1
+  ScatterRadiusValue: 0
+  SpawnPoolValue: {fileID: 11400000, guid: 0c60cb7abf4ab6c4e8bb60701d02cf42, type: 2}
 --- !u!1 &1686028511
 GameObject:
   m_ObjectHideFlags: 0
@@ -1141,6 +1155,8 @@ MonoBehaviour:
   SpawnIdValue: env_dumpster_01
   MinCountValue: 1
   MaxCountValue: 1
+  ScatterRadiusValue: 0
+  SpawnPoolValue: {fileID: 11400000, guid: 9ea4dbed02437b641a495bf3befb2bd7, type: 2}
 --- !u!1001 &1793533492
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -204,6 +204,73 @@ namespace Tests.Inventory
             Assert.AreEqual(1, repeatedBoxes.Length, "同一生成控制器不能重复创建物资箱");
         }
 
+        // 生成点专属池优先于控制器全局目录
+        [Test]
+        public void Generate_UsesSpawnPointPoolInsteadOfDefaultCatalog()
+        {
+            GameObject defaultPrefab = CreateInactiveLootPrefab("LootSpawnDefaultPrefab");
+            LootContainerConfigSO defaultLoot = m_kit.CreateLoot(
+                "默认目录掉落", m_kit.CreateContainer(3, 2), 1, 1);
+            LootContainerCatalogConfigSO defaultCatalog = CreateCatalog(defaultPrefab, defaultLoot);
+
+            GameObject poolPrefab = CreateInactiveLootPrefab("LootSpawnPoolPrefab");
+            LootContainerConfigSO poolLoot = m_kit.CreateLoot(
+                "生成点池掉落", m_kit.CreateContainer(3, 2), 1, 1);
+            LootContainerCatalogConfigSO pointPool = CreateCatalog(poolPrefab, poolLoot);
+
+            GameObject spawnRootObject = TrackObject(new GameObject("LootSpawnPoolRoot"));
+            LootContainerSpawnPoint spawnPoint = CreateSpawnPoint(spawnRootObject.transform,
+                "pool_point", Vector3.zero, 1, 1);
+            SetField(spawnPoint, "SpawnPoolValue", pointPool);
+
+            GameObject controllerObject = TrackObject(new GameObject("LootSpawnPoolController"));
+            LootContainerSpawnController controller =
+                controllerObject.AddComponent<LootContainerSpawnController>();
+            SetField(controller, "CatalogValue", defaultCatalog);
+            SetField(controller, "SpawnRootValue", spawnRootObject.transform);
+
+            int generatedCount = controller.Generate();
+            LootBoxController spawnedBox =
+                controllerObject.GetComponentInChildren<LootBoxController>(true);
+
+            Assert.AreEqual(1, generatedCount, "配置专属池的生成点仍应正常生成");
+            Assert.IsNotNull(spawnedBox, "生成点必须创建物资箱");
+            Assert.AreSame(poolLoot, spawnedBox.LootConfig,
+                "生成点配置专属池后不能继续使用控制器全局目录");
+        }
+
+        // 显式空池属于配置错误, 不能静默回退到全局目录
+        [Test]
+        public void Generate_WithEmptySpawnPool_ReportsErrorAndSkipsPoint()
+        {
+            GameObject defaultPrefab = CreateInactiveLootPrefab("LootSpawnEmptyPoolDefaultPrefab");
+            LootContainerConfigSO defaultLoot = m_kit.CreateLoot(
+                "空池回退默认掉落", m_kit.CreateContainer(3, 2), 1, 1);
+            LootContainerCatalogConfigSO defaultCatalog = CreateCatalog(defaultPrefab, defaultLoot);
+            LootContainerCatalogConfigSO emptyPool = TrackConfig(
+                ScriptableObject.CreateInstance<LootContainerCatalogConfigSO>());
+
+            GameObject spawnRootObject = TrackObject(new GameObject("LootSpawnEmptyPoolRoot"));
+            LootContainerSpawnPoint spawnPoint = CreateSpawnPoint(spawnRootObject.transform,
+                "empty_pool_point", Vector3.zero, 1, 1);
+            SetField(spawnPoint, "SpawnPoolValue", emptyPool);
+
+            GameObject controllerObject = TrackObject(new GameObject("LootSpawnEmptyPoolController"));
+            LootContainerSpawnController controller =
+                controllerObject.AddComponent<LootContainerSpawnController>();
+            SetField(controller, "CatalogValue", defaultCatalog);
+            SetField(controller, "SpawnRootValue", spawnRootObject.transform);
+
+            LogAssert.Expect(LogType.Error, new Regex("生成点专属池为空.*empty_pool_point"));
+
+            int generatedCount = controller.Generate();
+            LootBoxController[] boxes =
+                controllerObject.GetComponentsInChildren<LootBoxController>(true);
+
+            Assert.AreEqual(0, generatedCount, "空池生成点必须跳过, 不能回退全局目录");
+            Assert.AreEqual(0, boxes.Length, "空池生成点不能创建物资箱");
+        }
+
         [Test]
         public void Generate_MultipleBoxes_UsesNonOverlappingScatterSlots()
         {

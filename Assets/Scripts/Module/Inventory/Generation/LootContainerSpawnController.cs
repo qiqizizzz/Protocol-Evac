@@ -35,6 +35,9 @@ namespace Module.Inventory.Generation
         private readonly List<LootContainerPrefabEntry> m_openableEntries =
             new List<LootContainerPrefabEntry>();
 
+        private readonly List<LootContainerPrefabEntry> m_spawnPoolEntries =
+            new List<LootContainerPrefabEntry>();
+
         private readonly HashSet<string> m_spawnIds = new HashSet<string>();
 
         private bool m_hasGenerated;
@@ -114,6 +117,19 @@ namespace Module.Inventory.Generation
         {
             if (!spawnPoint.HasValidCountRange()) return 0;
 
+            IReadOnlyList<LootContainerPrefabEntry> entries = m_openableEntries;
+            if (spawnPoint.SpawnPool != null)
+            {
+                int poolCount = spawnPoint.SpawnPool.CollectOpenable(m_spawnPoolEntries);
+                if (poolCount == 0)
+                {
+                    QLog.Error($"跳过物资箱生成点：生成点专属池为空, {spawnPoint.SpawnId}");
+                    return 0;
+                }
+
+                entries = m_spawnPoolEntries;
+            }
+
             int pointSeed = LootContainerSelector.CreateSeed(spawnPoint.SpawnId, WorldSeedValue);
             int spawnCount = LootContainerSelector.SelectCount(
                 spawnPoint.MinCount, spawnPoint.MaxCount, pointSeed);
@@ -127,7 +143,7 @@ namespace Module.Inventory.Generation
             for (int i = 0; i < spawnCount; i++)
             {
                 int instanceSeed = LootContainerSelector.CreateInstanceSeed(pointSeed, i);
-                LootContainerPrefabEntry entry = LootContainerSelector.SelectWeighted(m_openableEntries, instanceSeed);
+                LootContainerPrefabEntry entry = LootContainerSelector.SelectWeighted(entries, instanceSeed);
                 if (entry == null)
                 {
                     QLog.Error($"物资箱生成失败：目录中没有正权重条目, {spawnPoint.SpawnId}");

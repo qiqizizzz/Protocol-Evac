@@ -6,6 +6,7 @@
 * └──────────────────────────────────┘
 */
 
+using Module.Inventory.Core.Config.Loot;
 using UnityEngine;
 using Utils.log;
 
@@ -32,10 +33,15 @@ namespace Module.Inventory.Generation
         [Tooltip("同一生成点生成多个物资箱时的环状散布半径, 单箱生成时忽略")]
         [SerializeField, Min(0f)] private float ScatterRadiusValue;
 
+        [Header("生成池")]
+        [Tooltip("本生成点可选的物资箱池, 留空时沿用控制器的全局目录")]
+        [SerializeField] private LootContainerCatalogConfigSO SpawnPoolValue;
+
         public string SpawnId => SpawnIdValue;
         public int MinCount => MinCountValue;
         public int MaxCount => MaxCountValue;
         public float ScatterRadius => ScatterRadiusValue;
+        public LootContainerCatalogConfigSO SpawnPool => SpawnPoolValue;
 
         private void OnValidate()
         {
