@@ -265,6 +265,10 @@ namespace UI.Inventory.View
             float top = EdgeInset(m_topEdge);
             float bottom = EdgeInset(m_bottomEdge);
             RectTransform rect = border.rectTransform;
+            float topLineInset =
+                m_topEdge == InventorySlotEdgeKind.Boundary ? top + BorderThickness : top;
+            float bottomLineInset =
+                m_bottomEdge == InventorySlotEdgeKind.Boundary ? bottom + BorderThickness : bottom;
 
             rect.anchorMin = anchorMin;
             rect.anchorMax = anchorMax;
@@ -282,13 +286,13 @@ namespace UI.Inventory.View
             }
             else if (Mathf.Approximately(anchorMin.x, 1f))
             {
-                rect.offsetMin = new Vector2(-right - BorderThickness, bottom);
-                rect.offsetMax = new Vector2(-right, -top);
+                rect.offsetMin = new Vector2(-right - BorderThickness, bottomLineInset);
+                rect.offsetMax = new Vector2(-right, -topLineInset);
             }
             else
             {
-                rect.offsetMin = new Vector2(left, bottom);
-                rect.offsetMax = new Vector2(left + BorderThickness, -top);
+                rect.offsetMin = new Vector2(left, bottomLineInset);
+                rect.offsetMax = new Vector2(left + BorderThickness, -topLineInset);
             }
 
             border.color = kind == InventorySlotEdgeKind.Boundary ? BoundaryLineColor : InnerLineColor;

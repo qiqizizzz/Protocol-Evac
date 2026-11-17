@@ -52,8 +52,8 @@ namespace UI.Inventory.View
         [Tooltip("物品外沿与图标的完整内缩距离, 同时包含格子边界留白与线宽")]
         [SerializeField, Min(0f)] private float ContentInset = 3f;
 
-        [Tooltip("同区域相邻但相邻格不属于当前物品时, 底板避让分界线的距离")]
-        [SerializeField, Min(0f)] private float ConnectedContentInset = 1f;
+        [Tooltip("同区域相邻但相邻格不属于当前物品时, 底板单侧避让分界线的距离")]
+        [SerializeField, Min(0f)] private float ConnectedContentInset = 0.5f;
 
         private RectTransform m_rect;
         private Image m_clickArea;

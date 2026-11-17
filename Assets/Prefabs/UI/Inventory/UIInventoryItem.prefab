@@ -719,7 +719,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ContentInset: 3
-  ConnectedContentInset: 1
+  ConnectedContentInset: 0.5
 --- !u!1 &7394676899840525270
 GameObject:
   m_ObjectHideFlags: 0

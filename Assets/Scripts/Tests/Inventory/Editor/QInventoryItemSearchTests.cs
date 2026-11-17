@@ -184,6 +184,20 @@ namespace Tests.Inventory
         }
 
         [Test]
+        public void Setup_CenterCellInConnectedRegion_LeavesOnlyHalfTheDividerOutsideTheItem()
+        {
+            InventoryItemVO item = new InventoryItemVO(1, 1, "测试物品", 1, null, Color.white,
+                InventoryItemRarity.Common, 0, new Vector2Int(1, 1), Vector2Int.one, InventoryRotation.None);
+
+            m_itemView.Setup(item, CreateUniformContainer(3, 3), new Vector2(80f, 80f), Vector2.zero);
+
+            Assert.AreEqual(new Vector2(79f, 79f), m_background.rectTransform.rect.size,
+                "连续区域的中心物品每侧只应为分隔线让出半像素");
+            Assert.AreEqual(new Vector2(0.5f, -0.5f), m_background.rectTransform.anchoredPosition,
+                "相邻物品各让半像素后应只保留一条分隔线宽度的空隙");
+        }
+
+        [Test]
         public void Setup_CellHole_LeavesItsBackgroundSliceDisabled()
         {
             InventoryItemVO item = new InventoryItemVO(1, 1, "测试物品", 1, null, Color.white,
