@@ -67,7 +67,37 @@ namespace UI.Inventory
                 UsedCellCount += items[i].CellCount;
             }
         }
-        
+
+        /// <summary>
+        /// 解析指定格子某一侧与相邻格子的区域连接状态
+        /// </summary>
+        /// <param name="x">当前格列号</param>
+        /// <param name="y">当前格行号</param>
+        /// <param name="offsetX">相邻格列偏移</param>
+        /// <param name="offsetY">相邻格行偏移</param>
+        /// <param name="regionId">当前格所属区域号</param>
+        public InventorySlotEdgeKind ResolveEdgeKind(int x, int y, int offsetX, int offsetY, int regionId)
+        {
+            if (x < 0 || x >= Width || y < 0 || y >= Height) return InventorySlotEdgeKind.None;
+
+            int index = y * Width + x;
+            if (index >= Mask.Count || index >= RegionIds.Count) return InventorySlotEdgeKind.None;
+            if (!Mask[index] || regionId < 0) return InventorySlotEdgeKind.None;
+
+            int neighborX = x + offsetX;
+            int neighborY = y + offsetY;
+            if (neighborX < 0 || neighborX >= Width || neighborY < 0 || neighborY >= Height)
+                return InventorySlotEdgeKind.Boundary;
+
+            int neighborIndex = neighborY * Width + neighborX;
+            if (neighborIndex >= Mask.Count || neighborIndex >= RegionIds.Count)
+                return InventorySlotEdgeKind.None;
+            if (!Mask[neighborIndex]) return InventorySlotEdgeKind.Boundary;
+            if (RegionIds[neighborIndex] != regionId) return InventorySlotEdgeKind.Boundary;
+
+            return InventorySlotEdgeKind.Connected;
+        }
+
         public bool TryGetItem(int instanceId, out InventoryItemVO item) => m_itemIndex.TryGetValue(instanceId, out item);
         public bool Contains(int instanceId) => m_itemIndex.ContainsKey(instanceId);
     }

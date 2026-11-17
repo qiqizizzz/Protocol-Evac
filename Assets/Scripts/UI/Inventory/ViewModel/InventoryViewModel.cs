@@ -340,13 +340,13 @@ namespace UI.Inventory
                 int x = cell.x;
                 int y = cell.y;
                 ReactiveProperty<InventorySlotEdgeKind> top = CreateProperty(
-                    ResolveEdgeKind(vo, x, y, 0, -1, vo.RegionIds[index]));
+                    vo.ResolveEdgeKind(x, y, 0, -1, vo.RegionIds[index]));
                 ReactiveProperty<InventorySlotEdgeKind> right = CreateProperty(
-                    ResolveEdgeKind(vo, x, y, 1, 0, vo.RegionIds[index]));
+                    vo.ResolveEdgeKind(x, y, 1, 0, vo.RegionIds[index]));
                 ReactiveProperty<InventorySlotEdgeKind> bottom = CreateProperty(
-                    ResolveEdgeKind(vo, x, y, 0, 1, vo.RegionIds[index]));
+                    vo.ResolveEdgeKind(x, y, 0, 1, vo.RegionIds[index]));
                 ReactiveProperty<InventorySlotEdgeKind> left = CreateProperty(
-                    ResolveEdgeKind(vo, x, y, -1, 0, vo.RegionIds[index]));
+                    vo.ResolveEdgeKind(x, y, -1, 0, vo.RegionIds[index]));
                 m_slotTopEdges.Add(top);
                 m_slotRightEdges.Add(right);
                 m_slotBottomEdges.Add(bottom);
@@ -394,33 +394,11 @@ namespace UI.Inventory
                 int regionId = vo.RegionIds[i];
 
                 m_slotRegions[i].TrySet(regionId);
-                m_slotTopEdges[i].TrySet(ResolveEdgeKind(vo, x, y, 0, -1, regionId));
-                m_slotRightEdges[i].TrySet(ResolveEdgeKind(vo, x, y, 1, 0, regionId));
-                m_slotBottomEdges[i].TrySet(ResolveEdgeKind(vo, x, y, 0, 1, regionId));
-                m_slotLeftEdges[i].TrySet(ResolveEdgeKind(vo, x, y, -1, 0, regionId));
+                m_slotTopEdges[i].TrySet(vo.ResolveEdgeKind(x, y, 0, -1, regionId));
+                m_slotRightEdges[i].TrySet(vo.ResolveEdgeKind(x, y, 1, 0, regionId));
+                m_slotBottomEdges[i].TrySet(vo.ResolveEdgeKind(x, y, 0, 1, regionId));
+                m_slotLeftEdges[i].TrySet(vo.ResolveEdgeKind(x, y, -1, 0, regionId));
             }
-        }
-
-        //区分区域内部相邻与区域边界, 跨区交界两侧都绘制边界
-        private static InventorySlotEdgeKind ResolveEdgeKind(InventoryContainerVO vo, int x, int y,
-            int offsetX, int offsetY, int regionId)
-        {
-            int index = y * vo.Width + x;
-            if (!vo.Mask[index] || regionId < 0) return InventorySlotEdgeKind.None;
-
-            int neighborX = x + offsetX;
-            int neighborY = y + offsetY;
-            if (neighborX < 0 || neighborX >= vo.Width || neighborY < 0 || neighborY >= vo.Height)
-                return InventorySlotEdgeKind.Boundary;
-
-            int neighborIndex = neighborY * vo.Width + neighborX;
-            if (!vo.Mask[neighborIndex])
-                return InventorySlotEdgeKind.Boundary;
-
-            if (vo.RegionIds[neighborIndex] != regionId)
-                return InventorySlotEdgeKind.Boundary;
-
-            return InventorySlotEdgeKind.Connected;
         }
         
         //从模型拉取最新快照

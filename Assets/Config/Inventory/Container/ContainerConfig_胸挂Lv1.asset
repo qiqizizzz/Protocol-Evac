@@ -19,3 +19,7 @@ MonoBehaviour:
   - .##.
   - '####'
   - '####'
+  RegionRowsValue:
+  - .AA.
+  - BCDE
+  - FGHI

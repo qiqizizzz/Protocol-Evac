@@ -7,6 +7,7 @@
 */
 
 using System;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using Module.Inventory.Core.Config;
 using Module.Inventory.Core.Config.Type;
@@ -17,6 +18,7 @@ using NUnit.Framework;
 using UI.Inventory;
 using UnityEngine;
 using UnityEngine.TestTools;
+using UnityEditor;
 
 namespace Tests.Inventory
 {
@@ -27,6 +29,10 @@ namespace Tests.Inventory
     {
         private const int WIDTH = 4;
         private const int HEIGHT = 2;
+        private const string CHEST_LV1_CONFIG_PATH =
+            "Assets/Config/Inventory/Container/ContainerConfig_胸挂Lv1.asset";
+        private const string CHEST_LV2_CONFIG_PATH =
+            "Assets/Config/Inventory/Container/ContainerConfig_胸挂Lv2.asset";
         private static readonly string[] SPLIT_REGION_ROWS = { "AABB", "BBAA" };
         private static readonly string[] SINGLE_REGION_ROWS = { "AAAA", "AAAA" };
 
@@ -166,6 +172,39 @@ namespace Tests.Inventory
         }
 
         [Test]
+        public void ChestConfigs_TopPairIsConnectedAndEveryOtherCellStaysIndependent()
+        {
+            InventoryContainerConfigSO levelOne = LoadContainerConfig(CHEST_LV1_CONFIG_PATH);
+            InventoryContainerConfigSO levelTwo = LoadContainerConfig(CHEST_LV2_CONFIG_PATH);
+
+            AssertChestRegions(levelOne, 3);
+            AssertChestRegions(levelTwo, 4);
+        }
+
+        [Test]
+        public void ChestMixedRegions_AllowPairPlacementButRejectCrossingIntoSingleCells()
+        {
+            InventoryContainerConfigSO chest = LoadContainerConfig(CHEST_LV1_CONFIG_PATH);
+            InventoryContainerSpec spec = CreateRegionSpec(chest);
+            Assert.IsTrue(m_model.TryResizeContainer(m_containerId, spec));
+
+            int pairItemId = m_kit.CreateItem(2, 1).ItemId;
+            Assert.AreEqual(InventoryMoveResult.Success,
+                m_model.TryAddItem(m_containerId, pairItemId, 1, new Vector2Int(1, 0)));
+
+            int lowerPairItemId = m_kit.CreateItem(2, 1).ItemId;
+            Assert.AreEqual(InventoryMoveResult.OutOfBounds,
+                m_model.TryAddItem(m_containerId, lowerPairItemId, 1, new Vector2Int(1, 1)));
+
+            int firstSingleId = m_kit.CreateItem(1, 1).ItemId;
+            int secondSingleId = m_kit.CreateItem(1, 1).ItemId;
+            Assert.AreEqual(InventoryMoveResult.Success,
+                m_model.TryAddItem(m_containerId, firstSingleId, 1, new Vector2Int(1, 1)));
+            Assert.AreEqual(InventoryMoveResult.Success,
+                m_model.TryAddItem(m_containerId, secondSingleId, 1, new Vector2Int(2, 1)));
+        }
+
+        [Test]
         public void TryRotateItem_WhenRotatedFootprintCrossesRegion_IsRejectedAndKeepsFacing()
         {
             int itemId = m_kit.CreateItem(2, 1).ItemId;
@@ -270,7 +309,55 @@ namespace Tests.Inventory
         private InventoryContainerSpec CreateRegionSpec(string[] regionRows)
         {
             InventoryContainerConfigSO config = m_kit.CreateContainer(WIDTH, HEIGHT, "TEST_REGION", regionRows: regionRows);
+            return CreateRegionSpec(config);
+        }
+
+        //把容器资产转成模型注册所需的规格
+        private static InventoryContainerSpec CreateRegionSpec(InventoryContainerConfigSO config)
+        {
             return new InventoryContainerSpec(config.Width, config.Height, float.MaxValue, config.Mask, regionIds: config.RegionIds);
+        }
+
+        //从工程资产加载胸挂配置, 缺失时让用例直接失败
+        private static InventoryContainerConfigSO LoadContainerConfig(string assetPath)
+        {
+            InventoryContainerConfigSO config = AssetDatabase.LoadAssetAtPath<InventoryContainerConfigSO>(assetPath);
+            Assert.IsNotNull(config, "容器配置不存在: " + assetPath);
+            return config;
+        }
+
+        //确认顶部 AA 为一组, 其余每格各自分组且形状仍保留左右空洞
+        private static void AssertChestRegions(InventoryContainerConfigSO config, int height)
+        {
+            Assert.AreEqual(4, config.Width);
+            Assert.AreEqual(height, config.Height);
+            Assert.AreEqual(-1, config.RegionIds[0]);
+            Assert.AreEqual(-1, config.RegionIds[3]);
+
+            int pairRegion = config.RegionIds[1];
+            Assert.Greater(pairRegion, 0);
+            Assert.AreEqual(pairRegion, config.RegionIds[2]);
+
+            HashSet<int> independentRegions = new HashSet<int>();
+            for (int i = 0; i < config.Mask.Count; i++)
+            {
+                if (!config.Mask[i] || i == 1 || i == 2) continue;
+
+                int regionId = config.RegionIds[i];
+                Assert.Greater(regionId, 0);
+                Assert.AreNotEqual(pairRegion, regionId, "顶部连格不能与单格共用区域号: " + i);
+                Assert.IsTrue(independentRegions.Add(regionId), "下方单格必须各自独立: " + i);
+            }
+
+            Assert.AreEqual((height - 1) * config.Width, independentRegions.Count);
+
+            InventoryGrid grid = new InventoryGrid(config.Width, config.Height, config.Mask, config.RegionIds);
+            Assert.IsTrue(grid.IsAreaInside(new Vector2Int(1, 0), new Vector2Int(2, 1)),
+                "顶部两格必须允许一件 2x1 物品完整占住");
+            Assert.IsFalse(grid.IsAreaInside(new Vector2Int(1, 0), new Vector2Int(1, 2)),
+                "顶部连格不能与下方单格跨区合并");
+            Assert.IsFalse(grid.IsAreaInside(new Vector2Int(1, 1), new Vector2Int(2, 1)),
+                "下方两个单格必须分别计算");
         }
 
         //逐格确认实心区域全部回退为 0, 空洞保持 -1

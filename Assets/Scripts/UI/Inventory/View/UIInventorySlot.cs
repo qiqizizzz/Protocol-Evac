@@ -47,7 +47,7 @@ namespace UI.Inventory.View
         [SerializeField] private Color InnerLineColor = new Color(0.36f, 0.38f, 0.41f, 1f);
 
         [Tooltip("区域外沿与跨区交界线颜色")]
-        [SerializeField] private Color BoundaryLineColor = Color.white;
+        [SerializeField] private Color BoundaryLineColor = new Color(0.72f, 0.74f, 0.76f, 1f);
 
         private Image m_clickArea;
         private Image m_background;

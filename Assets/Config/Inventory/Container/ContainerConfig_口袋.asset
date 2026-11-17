@@ -16,3 +16,5 @@ MonoBehaviour:
   WidthValue: 5
   HeightValue: 1
   RowsValue: []
+  RegionRowsValue:
+  - ABCDE

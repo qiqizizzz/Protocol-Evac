@@ -41,6 +41,8 @@ namespace UI.Inventory.Editor
         private const string CARRIER_SCRIPT = "UI.Inventory.View.UIInventoryCarrier";
         private const string SLOT_SCRIPT = "UI.Inventory.View.UIInventorySlot";
         private const string ITEM_SCRIPT = "UI.Inventory.View.UIInventoryItem";
+        private const float ITEM_CONTENT_INSET = 3f;
+        private const float ITEM_CONNECTED_CONTENT_INSET = 1f;
 
         private const string EQUIPMENT_SCRIPT = "UI.Inventory.View.UIEquipmentPanel";
         private const string EQUIPMENT_PATH = PREFAB_DIR + "/UIEquipmentPanel.prefab";
@@ -622,11 +624,17 @@ namespace UI.Inventory.Editor
             SetRect(node.GetComponent<RectTransform>(), new Vector2(0f, 1f), new Vector2(0f, 1f),
                 new Vector2(0f, 1f), new Vector2(CELL_SIZE, CELL_SIZE), Vector2.zero);
 
-            Image background = node.AddComponent<Image>();
+            Image clickArea = node.AddComponent<Image>();
+            clickArea.color = Color.clear;
+            // 物品自身接收点击与拖拽, 拖影期间再由 UIInventoryItem 关掉射线
+            clickArea.raycastTarget = true;
+
+            GameObject backgroundNode = NewNode("Img_Background", node.transform);
+            SetStretch(backgroundNode.GetComponent<RectTransform>(), ITEM_CONTENT_INSET);
+            Image background = backgroundNode.AddComponent<Image>();
             // 模板默认底色, 运行时按稀有度覆盖
             background.color = m_itemDefaultColor;
-            // 物品自身接收点击与拖拽, 拖影期间再由 UIInventoryItem 关掉射线
-            background.raycastTarget = true;
+            background.raycastTarget = false;
 
             GameObject silhouette = NewNode("Img_Silhouette", node.transform);
             SetStretch(silhouette.GetComponent<RectTransform>(), SILHOUETTE_INSET);
@@ -654,7 +662,7 @@ namespace UI.Inventory.Editor
                 QLog.Error(LOG + "搜索图标加载失败: " + SEARCH_ICON_PATH);
 
             GameObject icon = NewNode("Img_Icon", node.transform);
-            SetStretch(icon.GetComponent<RectTransform>(), 6f);
+            SetStretch(icon.GetComponent<RectTransform>(), ITEM_CONTENT_INSET);
             Image iconImage = icon.AddComponent<Image>();
             iconImage.color = Color.white;
             iconImage.preserveAspect = true;
@@ -670,8 +678,20 @@ namespace UI.Inventory.Editor
             // 选中态描边框: 只画四条边, 不碰物品底色
             AddSelectedFrame(node.transform);
 
-            AttachScript(node, ITEM_SCRIPT);
+            Component itemScript = AttachScript(node, ITEM_SCRIPT);
+            BindItemContentInsets(itemScript);
             return node;
+        }
+
+        // 把底板外沿与同区域接缝的内缩距离同步到物品脚本
+        private static void BindItemContentInsets(Component itemScript)
+        {
+            if (itemScript == null) return;
+
+            SerializedObject serialized = new SerializedObject(itemScript);
+            AssignFloat(serialized, "ContentInset", ITEM_CONTENT_INSET);
+            AssignFloat(serialized, "ConnectedContentInset", ITEM_CONNECTED_CONTENT_INSET);
+            serialized.ApplyModifiedPropertiesWithoutUndo();
         }
 
         // 载体面板: 表头 + 网格层 + 物品层, 尺寸按默认 8x5 落盘, 运行时由 VO 重算
@@ -775,6 +795,19 @@ namespace UI.Inventory.Editor
             }
 
             property.objectReferenceValue = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+        }
+
+        // 写入物品脚本的浮点序列化字段
+        private static void AssignFloat(SerializedObject serialized, string fieldName, float value)
+        {
+            SerializedProperty property = serialized.FindProperty(fieldName);
+            if (property == null)
+            {
+                QLog.Warning(LOG + "字段未找到 " + fieldName + "，请在 UIInventoryItem 声明浮点序列化字段");
+                return;
+            }
+
+            property.floatValue = value;
         }
 
         // 按完整类型名反射挂载脚本, 取不到时记录缺失, 不阻塞节点生成

@@ -35,6 +35,7 @@ namespace UI.Inventory.View
         private static readonly WaitForSecondsRealtime m_detailRevealDelay =
             new WaitForSecondsRealtime(DoubleClickDetector.DOUBLE_CLICK_INTERVAL);
 
+        private const string BACKGROUND_PATH = "Img_Background";
         private const string ICON_PATH = "Img_Icon";
         private const string SILHOUETTE_PATH = "Img_Silhouette";
         private const string SEARCH_PATH = "Img_Search";
@@ -47,7 +48,15 @@ namespace UI.Inventory.View
 
         private static readonly Vector2 m_centerAnchor = new Vector2(0.5f, 0.5f);
 
+        [Header("物品内容")]
+        [Tooltip("物品外沿与图标的完整内缩距离, 同时包含格子边界留白与线宽")]
+        [SerializeField, Min(0f)] private float ContentInset = 3f;
+
+        [Tooltip("同区域相邻但相邻格不属于当前物品时, 底板避让分界线的距离")]
+        [SerializeField, Min(0f)] private float ConnectedContentInset = 1f;
+
         private RectTransform m_rect;
+        private Image m_clickArea;
         private Image m_background;
         private Image m_icon;
         private Image m_silhouette;
@@ -60,9 +69,13 @@ namespace UI.Inventory.View
         //单元格边长与间距, 由所在载体的 GridLayoutGroup 注入, 物品尺寸始终跟随格子配置
         private Vector2 m_cellSize;
         private Vector2 m_cellSpacing;
+        private InventoryContainerVO m_container;
 
         //恢复裁切时复用的图形缓存, 避免每次拖拽结束产生分配
         private readonly List<MaskableGraphic> m_clippableGraphics = new List<MaskableGraphic>();
+        //物品底板按占格拆分, 同一件物品的内部接缝不留边, 外沿按区域拓扑避让
+        private readonly List<Image> m_backgroundSlices = new List<Image>();
+        private int m_backgroundSliceCount;
 
         private InventoryViewModel m_viewModel;
         private Vector2Int m_origin;
@@ -108,7 +121,8 @@ namespace UI.Inventory.View
         private void Awake()
         {
             m_rect = this.GetOwnerComponent<RectTransform>();
-            m_background = this.GetOwnerComponent<Image>();
+            m_clickArea = this.GetOwnerComponent<Image>();
+            m_background = this.FindChildComponent<Image>(BACKGROUND_PATH);
             m_icon = this.FindChildComponent<Image>(ICON_PATH);
             m_silhouette = this.FindChildComponent<Image>(SILHOUETTE_PATH);
             m_searchIndicator = this.FindChildComponent<Image>(SEARCH_PATH);
@@ -116,6 +130,17 @@ namespace UI.Inventory.View
             m_selectedFrame = this.FindChildGo(SELECTED_PATH);
             m_canvasGroup = gameObject.AddComponent<CanvasGroup>();
             ConfigureSearchIndicator();
+
+            if (m_clickArea == null)
+                QLog.Error($"物品预制体根节点缺少点击 Image 组件：{gameObject.name}");
+            if (m_background == null)
+                QLog.Error($"缺少物品底色节点：{gameObject.name}/{BACKGROUND_PATH}");
+            else
+            {
+                m_background.raycastTarget = false;
+                m_backgroundSlices.Add(m_background);
+                m_backgroundSliceCount = 1;
+            }
         }
 
         // 兜底自愈: 残留的拖影排序会让物品永久脱离 RectMask2D 视口裁切, 每次激活都复位一次
@@ -145,12 +170,14 @@ namespace UI.Inventory.View
         /// 按快照刷新物品的占格尺寸、位置与外观
         /// </summary>
         /// <param name="item">物品数据载体</param>
+        /// <param name="container">物品所在的容器快照, 底板按它解析逐格区域边界</param>
         /// <param name="cellSize">所在容器 GridLayoutGroup 的单元格边长</param>
         /// <param name="cellSpacing">所在容器 GridLayoutGroup 的单元格间距</param>
-        public void Setup(InventoryItemVO item, Vector2 cellSize, Vector2 cellSpacing)
+        public void Setup(InventoryItemVO item, InventoryContainerVO container, Vector2 cellSize, Vector2 cellSpacing)
         {
             m_cellSize = cellSize;
             m_cellSpacing = cellSpacing;
+            m_container = container;
 
             // 视图复用给别的物品时旧的点击配对作废, 否则跨物品可能被误判成双击
             if (InstanceId != item.InstanceId)
@@ -170,12 +197,12 @@ namespace UI.Inventory.View
             {
                 m_rect.sizeDelta = FootprintSize(item.Size);
                 m_rect.anchoredPosition = m_homeAnchoredPosition;
+                ApplyBackgroundGeometry(item.Size, m_container);
                 ApplyIconGeometry(item.Size, IsOwnContainerEquipSlot ? InventoryRotation.None : item.Rotation,
                     m_cellSize, m_cellSpacing);
             }
 
             m_baseColor = item.BaseColor;
-            m_background.color = m_baseColor;
             m_icon.sprite = item.Icon;
             m_countText.text = item.StackCount > 1 ? item.StackCount.ToString() : string.Empty;
             ApplyPresentation();
@@ -565,16 +592,118 @@ namespace UI.Inventory.View
                 size.y * cell.y + (size.y - 1) * spacing.y);
         }
 
+        // 按物品每格四边与容器区域拓扑重建底板, 同物品内部接缝保持连续
+        private void ApplyBackgroundGeometry(Vector2Int footprint, InventoryContainerVO container)
+        {
+            if (m_background == null || container == null) return;
+
+            int capacity = Mathf.Max(0, footprint.x * footprint.y);
+            EnsureBackgroundSliceCount(capacity);
+
+            int sliceIndex = 0;
+            for (int y = 0; y < footprint.y; y++)
+            {
+                for (int x = 0; x < footprint.x; x++)
+                {
+                    int globalX = m_origin.x + x;
+                    int globalY = m_origin.y + y;
+                    int index = globalY * container.Width + globalX;
+                    bool valid = globalX >= 0 && globalX < container.Width && globalY >= 0 &&
+                        globalY < container.Height && index < container.Mask.Count &&
+                        index < container.RegionIds.Count && container.Mask[index];
+                    if (!valid) continue;
+
+                    int regionId = container.RegionIds[index];
+                    bool topInternal = IsInsideFootprint(x, y - 1, footprint);
+                    bool rightInternal = IsInsideFootprint(x + 1, y, footprint);
+                    bool bottomInternal = IsInsideFootprint(x, y + 1, footprint);
+                    bool leftInternal = IsInsideFootprint(x - 1, y, footprint);
+
+                    InventorySlotEdgeKind topEdge =
+                        container.ResolveEdgeKind(globalX, globalY, 0, -1, regionId);
+                    InventorySlotEdgeKind rightEdge =
+                        container.ResolveEdgeKind(globalX, globalY, 1, 0, regionId);
+                    InventorySlotEdgeKind bottomEdge =
+                        container.ResolveEdgeKind(globalX, globalY, 0, 1, regionId);
+                    InventorySlotEdgeKind leftEdge =
+                        container.ResolveEdgeKind(globalX, globalY, -1, 0, regionId);
+
+                    float top = BackgroundEdgeInset(topEdge, topInternal);
+                    float right = BackgroundEdgeInset(rightEdge, rightInternal);
+                    float bottom = BackgroundEdgeInset(bottomEdge, bottomInternal);
+                    float left = BackgroundEdgeInset(leftEdge, leftInternal);
+
+                    ApplyBackgroundSliceGeometry(m_backgroundSlices[sliceIndex], x, y, left, right, top, bottom,
+                        rightInternal && rightEdge == InventorySlotEdgeKind.Connected,
+                        bottomInternal && bottomEdge == InventorySlotEdgeKind.Connected);
+                    sliceIndex++;
+                }
+            }
+
+            m_backgroundSliceCount = sliceIndex;
+        }
+
+        // 复用底板切片节点, 物品占格变化时只在末尾补齐
+        private void EnsureBackgroundSliceCount(int count)
+        {
+            while (m_backgroundSlices.Count < count)
+            {
+                Image slice = Instantiate(m_background, m_rect);
+                slice.name = $"{BACKGROUND_PATH}_{m_backgroundSlices.Count}";
+                slice.raycastTarget = false;
+                slice.enabled = false;
+                slice.transform.SetSiblingIndex(m_background.transform.GetSiblingIndex() + m_backgroundSlices.Count);
+                m_backgroundSlices.Add(slice);
+            }
+        }
+
+        // 把单个占格底板放到物品根节点本地坐标, 内部接缝同时覆盖格间距
+        private void ApplyBackgroundSliceGeometry(Image slice, int x, int y, float left, float right,
+            float top, float bottom, bool fillRightGap, bool fillBottomGap)
+        {
+            RectTransform rect = slice.rectTransform;
+            Vector2 step = m_cellSize + m_cellSpacing;
+            float width = m_cellSize.x - left - right + (fillRightGap ? m_cellSpacing.x : 0f);
+            float height = m_cellSize.y - top - bottom + (fillBottomGap ? m_cellSpacing.y : 0f);
+
+            rect.anchorMin = new Vector2(0f, 1f);
+            rect.anchorMax = new Vector2(0f, 1f);
+            rect.pivot = new Vector2(0f, 1f);
+            rect.localRotation = Quaternion.identity;
+            rect.anchoredPosition = new Vector2(x * step.x + left, -y * step.y - top);
+            rect.sizeDelta = new Vector2(Mathf.Max(0f, width), Mathf.Max(0f, height));
+        }
+
+        // 同一物品内部不收边, 区域边界避开边界线, 同区域外沿只避开内部分隔线
+        private float BackgroundEdgeInset(InventorySlotEdgeKind edgeKind, bool internalEdge)
+        {
+            if (internalEdge && edgeKind == InventorySlotEdgeKind.Connected) return 0f;
+
+            switch (edgeKind)
+            {
+                case InventorySlotEdgeKind.Boundary: return ContentInset;
+                case InventorySlotEdgeKind.Connected: return ConnectedContentInset;
+                default: return ContentInset;
+            }
+        }
+
+        // 判断某个相对格是否仍在当前物品占格内
+        private static bool IsInsideFootprint(int x, int y, Vector2Int footprint)
+            => x >= 0 && x < footprint.x && y >= 0 && y < footprint.y;
+
         // 图标按未旋转时的外形铺满占格, 换向交给 Z 轴整体旋转, 避免非等比拉伸
         private void ApplyIconGeometry(Vector2Int footprint, InventoryRotation rotation, Vector2 cell, Vector2 spacing)
         {
             RectTransform rect = m_icon.rectTransform;
+            Vector2 footprintSize = FootprintSize(UnrotateFootprint(footprint, rotation), cell, spacing);
+            Vector2 inset = Vector2.one * (ContentInset * 2f);
 
             rect.anchorMin = m_centerAnchor;
             rect.anchorMax = m_centerAnchor;
             rect.pivot = m_centerAnchor;
             rect.anchoredPosition = Vector2.zero;
-            rect.sizeDelta = FootprintSize(UnrotateFootprint(footprint, rotation), cell, spacing);
+            rect.sizeDelta = new Vector2(Mathf.Max(0f, footprintSize.x - inset.x),
+                Mathf.Max(0f, footprintSize.y - inset.y));
             rect.localEulerAngles = new Vector3(0f, 0f, -(int)rotation * 90f);
         }
 
@@ -608,6 +737,7 @@ namespace UI.Inventory.View
         private void EndDragGhost()
         {
             m_rect.sizeDelta = m_dragOriginSize;
+            ApplyBackgroundGeometry(m_cellFootprint, m_container);
             ApplyIconGeometry(m_cellFootprint, IsOwnContainerEquipSlot ? InventoryRotation.None : m_modelRotation,
                 m_cellSize, m_cellSpacing);
             ApplyPresentation();
@@ -713,8 +843,17 @@ namespace UI.Inventory.View
             bool showSearchIndicator = m_isSearching && m_isSearchIndicatorVisible && !m_isDragging &&
                 m_searchIndicator != null;
 
-            m_background.enabled = !m_isDragging;
-            m_background.color = m_isSearching ? Color.clear : m_baseColor;
+            if (m_clickArea != null)
+                m_clickArea.raycastTarget = true;
+            for (int i = 0; i < m_backgroundSlices.Count; i++)
+            {
+                Image slice = m_backgroundSlices[i];
+                if (slice == null) continue;
+
+                bool hasCell = i < m_backgroundSliceCount;
+                slice.enabled = hasCell && !m_isDragging;
+                slice.color = m_isSearching ? Color.clear : m_baseColor;
+            }
             m_icon.enabled = showItem && m_icon.sprite != null;
             m_countText.enabled = showItem && !string.IsNullOrEmpty(m_countText.text);
             m_silhouette.enabled = m_isSearching && !m_isDragging;

@@ -25,6 +25,7 @@ namespace Tests.Inventory
     {
         private GameObject m_itemObject;
         private UIInventoryItem m_itemView;
+        private Image m_clickArea;
         private Image m_background;
         private Image m_icon;
         private Image m_silhouette;
@@ -34,11 +35,13 @@ namespace Tests.Inventory
         public void SetUp()
         {
             m_itemObject = new GameObject("UIInventoryItem", typeof(RectTransform));
-            m_background = m_itemObject.AddComponent<Image>();
+            m_clickArea = m_itemObject.AddComponent<Image>();
+            m_background = CreateImage("Img_Background");
+            StretchToItem(m_background.rectTransform, 0f);
 
             m_icon = CreateImage("Img_Icon");
             m_silhouette = CreateImage("Img_Silhouette");
-            StretchToItem(m_silhouette.rectTransform);
+            StretchToItem(m_silhouette.rectTransform, 2f);
             m_searchIndicator = CreateImage("Img_Search");
             CreateText("Txt_Count");
             new GameObject("Img_Selected", typeof(RectTransform)).transform.SetParent(m_itemObject.transform, false);
@@ -59,7 +62,7 @@ namespace Tests.Inventory
             m_itemView.SetSearching(true);
 
             Assert.IsTrue(m_background.enabled, "搜索态仍需底板接收点击");
-            Assert.IsTrue(m_background.raycastTarget, "搜索态点击不能穿透到背包空白");
+            Assert.IsTrue(m_clickArea.raycastTarget, "搜索态点击不能穿透到背包空白");
         }
 
         [Test]
@@ -67,6 +70,7 @@ namespace Tests.Inventory
         {
             m_itemView.Setup(new InventoryItemVO(1, 1, "测试物品", 1, null, Color.white,
                 InventoryItemRarity.Common, 0, Vector2Int.zero, Vector2Int.one, InventoryRotation.None),
+                CreateUniformContainer(1, 1),
                 new Vector2(80f, 80f), new Vector2(4f, 4f));
             m_itemView.SetSearching(true);
 
@@ -74,7 +78,7 @@ namespace Tests.Inventory
 
             Assert.IsTrue(m_silhouette.enabled, "搜索中点击不能提前揭晓物品");
             Assert.IsTrue(m_background.enabled, "搜索中仍要保留底板接收点击");
-            Assert.IsTrue(m_background.raycastTarget, "搜索中点击不能穿透到背包空白");
+            Assert.IsTrue(m_clickArea.raycastTarget, "搜索中点击不能穿透到背包空白");
             Assert.AreEqual(Color.clear, m_background.color, "搜索中底板必须保持透明");
             Assert.IsFalse(m_icon.enabled, "搜索中不能显示物品图标");
         }
@@ -100,6 +104,7 @@ namespace Tests.Inventory
         {
             m_itemView.Setup(new InventoryItemVO(1, 1, "测试物品", 1, null, Color.white,
                 InventoryItemRarity.Common, 0, Vector2Int.zero, new Vector2Int(2, 2), InventoryRotation.None),
+                CreateUniformContainer(2, 2),
                 new Vector2(80f, 80f), new Vector2(4f, 4f));
 
             Assert.AreEqual(new Vector2(164f, 164f), m_itemObject.GetComponent<RectTransform>().rect.size,
@@ -109,10 +114,94 @@ namespace Tests.Inventory
         }
 
         [Test]
+        public void Setup_OneByOneItem_InsetsBackgroundAndIconFromTheFullFootprint()
+        {
+            m_itemView.Setup(new InventoryItemVO(1, 1, "测试物品", 1, null, Color.white,
+                InventoryItemRarity.Common, 0, Vector2Int.zero, Vector2Int.one, InventoryRotation.None),
+                CreateUniformContainer(1, 1),
+                new Vector2(80f, 80f), new Vector2(4f, 4f));
+
+            Assert.AreEqual(new Vector2(74f, 74f), m_background.rectTransform.rect.size,
+                "底板必须在完整占格基础上四周内缩, 给格子边界留出显示空间");
+            Assert.AreEqual(new Vector2(3f, -3f), m_background.rectTransform.anchoredPosition,
+                "底板内缩只能收掉描边宽度, 不能把物品整体缩小");
+            Assert.AreEqual(new Vector2(74f, 74f), m_icon.rectTransform.rect.size,
+                "图标必须在完整占格基础上四周内缩, 给格子边界留出显示空间");
+        }
+
+        [Test]
+        public void ResolveEdgeKind_MixedRegionRow_SeparatesOnlyAdjacentRegions()
+        {
+            InventoryContainerVO container = CreateContainer(4, 1,
+                new[] { true, true, true, true }, new[] { 1, 1, 2, 3 });
+
+            Assert.AreEqual(InventorySlotEdgeKind.Connected,
+                container.ResolveEdgeKind(0, 0, 1, 0, 1), "AA 内部必须保持连通");
+            Assert.AreEqual(InventorySlotEdgeKind.Boundary,
+                container.ResolveEdgeKind(1, 0, 1, 0, 1), "A 与 B 的交界必须分别断开");
+            Assert.AreEqual(InventorySlotEdgeKind.Boundary,
+                container.ResolveEdgeKind(2, 0, 1, 0, 2), "B 与 C 的交界必须分别断开");
+            Assert.AreEqual(InventorySlotEdgeKind.Boundary,
+                container.ResolveEdgeKind(2, 0, -1, 0, 2), "跨区交界两侧都要绘制边界");
+        }
+
+        [Test]
+        public void Setup_ConnectedHorizontalCells_FillTheCellGapWithoutChangingOuterInset()
+        {
+            InventoryItemVO item = new InventoryItemVO(1, 1, "测试物品", 1, null, Color.white,
+                InventoryItemRarity.Common, 0, Vector2Int.zero, new Vector2Int(2, 1), InventoryRotation.None);
+
+            m_itemView.Setup(item, CreateUniformContainer(2, 1), new Vector2(80f, 80f), new Vector2(4f, 4f));
+
+            Image secondSlice = GetBackgroundSlice(1);
+            Assert.AreEqual(new Vector2(81f, 74f), m_background.rectTransform.rect.size,
+                "第一格只向同区域接缝方向延伸, 外侧仍保留完整内缩");
+            Assert.AreEqual(new Vector2(3f, -3f), m_background.rectTransform.anchoredPosition,
+                "第一格的位置不能被接缝延伸推到外侧");
+            Assert.AreEqual(new Vector2(77f, 74f), secondSlice.rectTransform.rect.size,
+                "第二格只需收掉右侧外沿");
+            Assert.AreEqual(new Vector2(84f, -3f), secondSlice.rectTransform.anchoredPosition,
+                "第二格必须接在第一格留下的格距之后");
+        }
+
+        [Test]
+        public void Setup_ConnectedVerticalCells_FillTheCellGapWithoutChangingOuterInset()
+        {
+            InventoryItemVO item = new InventoryItemVO(1, 1, "测试物品", 1, null, Color.white,
+                InventoryItemRarity.Common, 0, Vector2Int.zero, new Vector2Int(1, 2), InventoryRotation.None);
+
+            m_itemView.Setup(item, CreateUniformContainer(1, 2), new Vector2(80f, 80f), new Vector2(4f, 4f));
+
+            Image secondSlice = GetBackgroundSlice(1);
+            Assert.AreEqual(new Vector2(74f, 81f), m_background.rectTransform.rect.size,
+                "第一格只向同区域接缝方向延伸, 外侧仍保留完整内缩");
+            Assert.AreEqual(new Vector2(3f, -3f), m_background.rectTransform.anchoredPosition,
+                "第一格的位置不能被接缝延伸推到外侧");
+            Assert.AreEqual(new Vector2(74f, 77f), secondSlice.rectTransform.rect.size,
+                "第二格只需收掉底部外沿");
+            Assert.AreEqual(new Vector2(3f, -84f), secondSlice.rectTransform.anchoredPosition,
+                "第二格必须接在第一格留下的格距之后");
+        }
+
+        [Test]
+        public void Setup_CellHole_LeavesItsBackgroundSliceDisabled()
+        {
+            InventoryItemVO item = new InventoryItemVO(1, 1, "测试物品", 1, null, Color.white,
+                InventoryItemRarity.Common, 0, Vector2Int.zero, new Vector2Int(2, 1), InventoryRotation.None);
+            InventoryContainerVO container = CreateContainer(2, 1,
+                new[] { true, false }, new[] { 1, -1 });
+
+            m_itemView.Setup(item, container, new Vector2(80f, 80f), new Vector2(4f, 4f));
+
+            Assert.IsFalse(GetBackgroundSlice(1).enabled, "空洞格不能生成可见底板");
+        }
+
+        [Test]
         public void SetSearching_ActiveSearch_ShowsOneCenteredIndicator()
         {
             m_itemView.Setup(new InventoryItemVO(1, 1, "测试物品", 1, null, Color.white,
                 InventoryItemRarity.Common, 0, Vector2Int.zero, new Vector2Int(2, 2), InventoryRotation.None),
+                CreateUniformContainer(2, 2),
                 new Vector2(80f, 80f), new Vector2(4f, 4f));
 
             m_itemView.SetSearching(true, true);
@@ -164,14 +253,44 @@ namespace Tests.Inventory
                 "搜索图标自身始终保持不旋转");
         }
 
-        // 让阴影子节点铺满物品占格, 并留出 2px 内缩作为物品之间的分隔
-        private static void StretchToItem(RectTransform rect)
+        // 让物品内容铺满占格, 并按指定距离从四周内缩
+        private static void StretchToItem(RectTransform rect, float inset)
         {
             rect.anchorMin = Vector2.zero;
             rect.anchorMax = Vector2.one;
             rect.pivot = new Vector2(0.5f, 0.5f);
             rect.anchoredPosition = Vector2.zero;
-            rect.sizeDelta = new Vector2(-4f, -4f);
+            rect.sizeDelta = new Vector2(-inset * 2f, -inset * 2f);
+        }
+
+        // 造一份所有格子都在同一区域的容器快照
+        private static InventoryContainerVO CreateUniformContainer(int width, int height)
+        {
+            int count = width * height;
+            bool[] mask = new bool[count];
+            int[] regions = new int[count];
+            for (int i = 0; i < count; i++)
+            {
+                mask[i] = true;
+                regions[i] = 0;
+            }
+
+            return CreateContainer(width, height, mask, regions);
+        }
+
+        // 按显式掩码与区域表造一份容器快照
+        private static InventoryContainerVO CreateContainer(int width, int height, bool[] mask, int[] regions)
+        {
+            return new InventoryContainerVO(1, width, height, mask, regions, 0, 0f, 0f,
+                new InventoryItemVO[0], "TEST_CONTAINER");
+        }
+
+        // 读取物品视图按需创建的第 n 个底板切片
+        private Image GetBackgroundSlice(int index)
+        {
+            Transform slice = m_itemObject.transform.Find("Img_Background_" + index);
+            Assert.IsNotNull(slice, "底板切片缺失: " + index);
+            return slice.GetComponent<Image>();
         }
 
         // 建一个图像子节点

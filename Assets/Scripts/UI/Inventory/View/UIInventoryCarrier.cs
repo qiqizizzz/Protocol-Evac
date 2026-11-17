@@ -433,7 +433,7 @@ namespace UI.Inventory.View
 
                 if (m_itemViews.TryGetValue(item.InstanceId, out UIInventoryItem itemView))
                 {
-                    itemView.Setup(item, m_gridLayout.cellSize, m_gridLayout.spacing);
+                    itemView.Setup(item, vo, m_gridLayout.cellSize, m_gridLayout.spacing);
                     m_staleItemIds.Remove(item.InstanceId);
                     continue;
                 }
@@ -456,7 +456,7 @@ namespace UI.Inventory.View
             GameObject itemObject = Instantiate(ItemPrefab, m_itemRoot);
             UIInventoryItem itemView = itemObject.GetComponent<UIInventoryItem>();
 
-            itemView.Setup(item, m_gridLayout.cellSize, m_gridLayout.spacing);
+            itemView.Setup(item, ViewModel.Snapshot.Value, m_gridLayout.cellSize, m_gridLayout.spacing);
             m_itemViews.Add(item.InstanceId, itemView);
             itemView.Bind(Scope.CreateChild(itemObject), ViewModel);
             itemView.SetSearching(IsSearching(item.InstanceId), IsSearchActive(item.InstanceId));
