@@ -19,18 +19,31 @@ namespace UI.Inventory
 
         public IReadOnlyReactiveProperty<InventoryCellMark> Mark { get; }
         public IReadOnlyReactiveProperty<bool> IsSolid { get; }
+        public IReadOnlyReactiveProperty<int> RegionId { get; }
+        public IReadOnlyReactiveProperty<bool> ShowTopBorder { get; }
+        public IReadOnlyReactiveProperty<bool> ShowRightBorder { get; }
+        public IReadOnlyReactiveProperty<bool> ShowBottomBorder { get; }
+        public IReadOnlyReactiveProperty<bool> ShowLeftBorder { get; }
 
         private readonly Action<Vector2Int> m_clickHandler;
         private readonly Action<Vector2Int> m_dropHandler;
         private readonly Action<Vector2Int, bool> m_hoverHandler;
 
         public InventorySlotViewModel(Vector2Int cell, IReadOnlyReactiveProperty<InventoryCellMark> mark,
-            IReadOnlyReactiveProperty<bool> isSolid, Action<Vector2Int> clickHandler,
+            IReadOnlyReactiveProperty<bool> isSolid, IReadOnlyReactiveProperty<int> regionId,
+            IReadOnlyReactiveProperty<bool> showTopBorder, IReadOnlyReactiveProperty<bool> showRightBorder,
+            IReadOnlyReactiveProperty<bool> showBottomBorder, IReadOnlyReactiveProperty<bool> showLeftBorder,
+            Action<Vector2Int> clickHandler,
             Action<Vector2Int> dropHandler = null, Action<Vector2Int, bool> hoverHandler = null)
         {
             Cell = cell;
             Mark = mark;
             IsSolid = isSolid;
+            RegionId = regionId;
+            ShowTopBorder = showTopBorder;
+            ShowRightBorder = showRightBorder;
+            ShowBottomBorder = showBottomBorder;
+            ShowLeftBorder = showLeftBorder;
             m_clickHandler = clickHandler;
             m_dropHandler = dropHandler;
             m_hoverHandler = hoverHandler;

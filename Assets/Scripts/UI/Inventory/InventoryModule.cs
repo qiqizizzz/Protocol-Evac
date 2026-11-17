@@ -92,7 +92,7 @@ namespace UI.Inventory
             //负重上限归角色整体负重系统统一结算, 单容器这一层不设限
             model.RegisterContainer(slotId,
                 new InventoryContainerSpec(container.Width, container.Height, float.MaxValue, container.Mask,
-                    container.DisplayName));
+                    container.DisplayName, regionIds: container.RegionIds));
         }
 
         //先天容量直接按穿戴表里的容器定义注册, 不经过装备槽

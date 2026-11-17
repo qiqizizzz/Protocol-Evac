@@ -14,8 +14,8 @@ namespace UI.Inventory
     public sealed class InventoryContainerVO
     {
         public static readonly InventoryContainerVO Empty =
-            new InventoryContainerVO(0, 0, 0, Array.Empty<bool>(), 0, 0f, 0f, Array.Empty<InventoryItemVO>(),
-                string.Empty);
+            new InventoryContainerVO(0, 0, 0, Array.Empty<bool>(), Array.Empty<int>(), 0, 0f, 0f,
+                Array.Empty<InventoryItemVO>(), string.Empty);
 
         public int ContainerId { get; }
 
@@ -24,6 +24,9 @@ namespace UI.Inventory
         public int Height { get; }
 
         public IReadOnlyList<bool> Mask { get; }
+
+        //逻辑区域表, 与掩码同下标, 空洞为 -1
+        public IReadOnlyList<int> RegionIds { get; }
 
         public int Version { get; }
         public float TotalWeight { get; }
@@ -39,14 +42,16 @@ namespace UI.Inventory
 
         private readonly Dictionary<int, InventoryItemVO> m_itemIndex; //按实例号查物品载体
 
-        public InventoryContainerVO(int containerId, int width, int height, IReadOnlyList<bool> mask, int version,
-            float totalWeight, float weightLimit, InventoryItemVO[] items, string displayName)
+        public InventoryContainerVO(int containerId, int width, int height, IReadOnlyList<bool> mask,
+            IReadOnlyList<int> regionIds, int version, float totalWeight, float weightLimit,
+            InventoryItemVO[] items, string displayName)
         {
             ContainerId = containerId;
             DisplayName = displayName;
             Width = width;
             Height = height;
             Mask = mask;
+            RegionIds = regionIds;
             Version = version;
             TotalWeight = totalWeight;
             WeightLimit = weightLimit;

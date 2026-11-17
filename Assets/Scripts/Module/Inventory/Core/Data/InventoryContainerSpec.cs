@@ -19,6 +19,9 @@ namespace Module.Inventory.Core.Data
         //实心掩码, 按行主序排列; 传 null 代表满格矩形
         public IReadOnlyList<bool> Mask { get; }
 
+        //逻辑区域表, 按行主序排列; 传 null 代表所有实心格同属区域 0
+        public IReadOnlyList<int> RegionIds { get; }
+
         public float WeightLimit { get; }
 
         //容器显示名, 载体表头的容器标题由它供给
@@ -31,11 +34,13 @@ namespace Module.Inventory.Core.Data
         public int CellCount =>  Width * Height;
 
         public InventoryContainerSpec(int width, int height, float weightLimit, IReadOnlyList<bool> mask = null,
-            string displayName = "", InventoryEquipSlot equipSlot = InventoryEquipSlot.None)
+            string displayName = "", InventoryEquipSlot equipSlot = InventoryEquipSlot.None,
+            IReadOnlyList<int> regionIds = null)
         {
             Width = width;
             Height = height;
             Mask = mask;
+            RegionIds = regionIds;
             WeightLimit = weightLimit;
             DisplayName = displayName;
             EquipSlot = equipSlot;

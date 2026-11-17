@@ -207,8 +207,8 @@ namespace UI.Inventory
             }
 
             return new InventoryContainerVO(container.ContainerId, container.Grid.Width, container.Grid.Height,
-                container.Grid.Mask, container.Version, container.TotalWeight, container.WeightLimit, items,
-                container.DisplayName);
+                container.Grid.Mask, container.Grid.RegionIds, container.Version, container.TotalWeight,
+                container.WeightLimit, items, container.DisplayName);
         }
 
         public int OpenLootContainer(string entityId, LootContainerConfigSO loot, int seed)
@@ -237,7 +237,7 @@ namespace UI.Inventory
             }
 
             int containerId = CreateRuntimeContainer(new InventoryContainerSpec(grid.Width, grid.Height,
-                LOOT_WEIGHT_LIMIT, grid.Mask, ResolveLootName(loot, grid)));
+                LOOT_WEIGHT_LIMIT, grid.Mask, ResolveLootName(loot, grid), regionIds: grid.RegionIds));
             if (containerId == INVALID_CONTAINER_ID) return INVALID_CONTAINER_ID;
 
             LootContainerRecord record = new LootContainerRecord(entityId, containerId, loot);
@@ -548,7 +548,7 @@ namespace UI.Inventory
                 }
 
                 ApplyWornCapacity(capacityId, new InventoryContainerSpec(definition.Width, definition.Height,
-                    float.MaxValue, definition.Mask, definition.DisplayName));
+                    float.MaxValue, definition.Mask, definition.DisplayName, regionIds: definition.RegionIds));
             }
         }
 
@@ -583,7 +583,7 @@ namespace UI.Inventory
             if (!loadout.TryGetPersistentContainer(capacityId, out InventoryContainerConfigSO baseContainer)) return false;
 
             fallback = new InventoryContainerSpec(baseContainer.Width, baseContainer.Height, float.MaxValue,
-                baseContainer.Mask, baseContainer.DisplayName);
+                baseContainer.Mask, baseContainer.DisplayName, regionIds: baseContainer.RegionIds);
             return true;
         }
 
@@ -591,7 +591,7 @@ namespace UI.Inventory
         private static InventoryContainerSpec ToSpec(InventoryContainer container)
         {
             return new InventoryContainerSpec(container.Grid.Width, container.Grid.Height, container.WeightLimit,
-                container.Grid.Mask, container.DisplayName, container.EquipSlot);
+                container.Grid.Mask, container.DisplayName, container.EquipSlot, container.Grid.RegionIds);
         }
 
         //现有拓扑与目标规格是否完全一致, 一致就没必要重建
@@ -602,7 +602,9 @@ namespace UI.Inventory
             if (container.EquipSlot != spec.EquipSlot) return false;
             if (container.DisplayName != spec.DisplayName) return false;
 
-            return IsSameMask(container.Grid.Mask, spec.Mask);
+            if (!IsSameMask(container.Grid.Mask, spec.Mask)) return false;
+
+            return IsSameRegions(container.Grid.Mask, container.Grid.RegionIds, spec.Mask, spec.RegionIds);
         }
 
         //逐格比对实心掩码, 规格侧为空或长度不符时按满格处理, 与 InventoryGrid 的容错口径一致
@@ -614,6 +616,32 @@ namespace UI.Inventory
             {
                 bool solid = !specUsable || specMask[i];
                 if (gridMask[i] != solid) return false;
+            }
+
+            return true;
+        }
+
+        //逐格比对逻辑区域, 规格侧没配区域时按所有实心格属于区域 0 处理
+        private static bool IsSameRegions(IReadOnlyList<bool> gridMask, IReadOnlyList<int> gridRegions,
+            IReadOnlyList<bool> specMask, IReadOnlyList<int> specRegions)
+        {
+            bool maskUsable = specMask != null && specMask.Count == gridMask.Count;
+            bool regionsUsable = specRegions != null && specRegions.Count == gridRegions.Count;
+
+            if (specRegions != null && !regionsUsable) return false;
+
+            for (int i = 0; i < gridRegions.Count; i++)
+            {
+                bool solid = !maskUsable || specMask[i];
+                int expected = solid ? 0 : -1;
+
+                if (regionsUsable && solid)
+                {
+                    if (specRegions[i] < 0) return false;
+                    expected = specRegions[i];
+                }
+
+                if (gridRegions[i] != expected) return false;
             }
 
             return true;

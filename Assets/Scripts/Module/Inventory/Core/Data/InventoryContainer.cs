@@ -60,7 +60,7 @@ namespace Module.Inventory.Core.Data
         public InventoryContainer(int containerId, InventoryContainerSpec spec, IInventoryRules rules)
         {
             ContainerId = containerId;
-            Grid = new InventoryGrid(spec.Width, spec.Height, spec.Mask);
+            Grid = new InventoryGrid(spec.Width, spec.Height, spec.Mask, spec.RegionIds);
             WeightLimit = spec.WeightLimit;
             DisplayName = spec.DisplayName;
             EquipSlot = spec.EquipSlot;

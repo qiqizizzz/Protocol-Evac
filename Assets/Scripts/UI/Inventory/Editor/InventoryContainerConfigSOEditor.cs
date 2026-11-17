@@ -23,14 +23,17 @@ namespace UI.Inventory.Editor
         private const string PROP_WIDTH = "WidthValue";
         private const string PROP_HEIGHT = "HeightValue";
         private const string PROP_ROWS = "RowsValue";
+        private const string PROP_REGION_ROWS = "RegionRowsValue";
 
         // ==================== 字段[私有] ====================
         private readonly InventoryShapeBoard m_board = new InventoryShapeBoard();
+        private readonly InventoryRegionBoard m_regionBoard = new InventoryRegionBoard();
 
         private SerializedProperty m_displayName;
         private SerializedProperty m_width;
         private SerializedProperty m_height;
         private SerializedProperty m_rows;
+        private SerializedProperty m_regionRows;
 
         // 画板记住的是编辑中的形状, 只有换了资产才回去读一次配置
         private InventoryContainerConfigSO m_loadedAsset;
@@ -42,6 +45,7 @@ namespace UI.Inventory.Editor
             m_width = RequireProperty(PROP_WIDTH);
             m_height = RequireProperty(PROP_HEIGHT);
             m_rows = RequireProperty(PROP_ROWS);
+            m_regionRows = RequireProperty(PROP_REGION_ROWS);
 
             // 域重载后画板里是空表, 强制从资产重新恢复
             m_loadedAsset = null;
@@ -71,25 +75,58 @@ namespace UI.Inventory.Editor
             EditorGUILayout.Space(4f);
             bool shapeChanged = DrawShape(asset, width, height);
 
+            if (shapeChanged)
+                m_regionBoard.SyncMask(m_board.Shape, width, height);
+
+            if (!ReferenceEquals(m_loadedAsset, asset))
+            {
+                m_regionBoard.Load(asset.RegionIds, m_board.Shape, width, height);
+                m_loadedAsset = asset;
+            }
+
+            EditorGUILayout.Space(4f);
+            bool regionChanged = m_regionBoard.Draw("逻辑区域",
+                "选择 # 或 A-Z 后左键拖刷, 右键擦回 #; 画板会自动写回下方的区域行");
+            if (regionChanged) WriteRegionRows(width, height);
+
+            EditorGUILayout.Space(4f);
+            EditorGUI.BeginChangeCheck();
+            EditorGUILayout.PropertyField(m_regionRows,
+                new GUIContent("逻辑区域（手动填写）", "与形状等宽等高. # 为默认区域, A-Z 为独立区域, . 为空洞; 留空代表所有实心格连通"), true);
+            bool regionRowsEdited = EditorGUI.EndChangeCheck();
+
             serializedObject.ApplyModifiedProperties();
-            if (shapeChanged) EditorUtility.SetDirty(asset);
+
+            if (regionRowsEdited && !shapeChanged && !regionChanged)
+                m_regionBoard.Load(asset.RegionIds, m_board.Shape, width, height);
+
+            if (shapeChanged || regionChanged)
+            {
+                EditorUtility.SetDirty(asset);
+                Repaint();
+            }
+            else if (regionRowsEdited)
+            {
+                Repaint();
+            }
         }
 
         // ==================== Private Function ====================
         // 画形状板并把改动写回形状行, 整片实心时形状行留空
         private bool DrawShape(InventoryContainerConfigSO asset, int width, int height)
         {
+            bool resized = false;
             if (!ReferenceEquals(m_loadedAsset, asset))
             {
                 m_board.Load(asset.Mask, width, height);
-                m_loadedAsset = asset;
             }
             else
             {
+                resized = m_board.Width != width || m_board.Height != height;
                 m_board.Resize(width, height);
             }
 
-            bool changed = m_board.Draw("形状", "点格子切换实心与空洞, 按住可以拖着刷; 整片实心就不用配形状行");
+            bool changed = m_board.Draw("形状", "点格子切换实心与空洞, 按住可以拖着刷; 整片实心就不用配形状行") || resized;
             if (changed) WriteShapeRows(width, height);
 
             int solid = m_board.SolidCount;
@@ -106,6 +143,17 @@ namespace UI.Inventory.Editor
             m_rows.ClearArray();
             m_rows.arraySize = rows.Length;
             for (int i = 0; i < rows.Length; i++) m_rows.GetArrayElementAtIndex(i).stringValue = rows[i];
+        }
+
+        // 把区域画板写回区域行, 保证下方手动字段同步显示字母结果
+        private void WriteRegionRows(int width, int height)
+        {
+            string[] rows = InventoryRegionBoard.ToRegionRows(m_regionBoard.Regions, width, height);
+
+            m_regionRows.ClearArray();
+            m_regionRows.arraySize = rows.Length;
+            for (int i = 0; i < rows.Length; i++)
+                m_regionRows.GetArrayElementAtIndex(i).stringValue = rows[i];
         }
 
         // 字段名对不上说明配置类改过名, 必须报错暴露而不是静默跳过

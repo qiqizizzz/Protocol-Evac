@@ -10,6 +10,7 @@ using Framework.QTower.MVVM.View;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using Utils.log;
 
 namespace UI.Inventory.View
 {
@@ -36,8 +37,16 @@ namespace UI.Inventory.View
         [SerializeField] private Color DropInvalidColor = new Color(0.92f, 0.27f, 0.26f, 0.55f);
 
         private Image m_background;
+        private Image m_borderTop;
+        private Image m_borderRight;
+        private Image m_borderBottom;
+        private Image m_borderLeft;
         private RectTransform m_rect;
         private bool m_isSolid = true;
+        private bool m_showTopBorder;
+        private bool m_showRightBorder;
+        private bool m_showBottomBorder;
+        private bool m_showLeftBorder;
         private InventoryCellMark m_mark;
 
         protected override InventorySlotViewModel CreateViewModel() => null;
@@ -46,16 +55,31 @@ namespace UI.Inventory.View
         {
             m_background = GetComponent<Image>();
             m_rect = GetComponent<RectTransform>();
-#if UNITY_EDITOR
+            m_borderTop = transform.Find("Img_BorderTop")?.GetComponent<Image>();
+            m_borderRight = transform.Find("Img_BorderRight")?.GetComponent<Image>();
+            m_borderBottom = transform.Find("Img_BorderBottom")?.GetComponent<Image>();
+            m_borderLeft = transform.Find("Img_BorderLeft")?.GetComponent<Image>();
+
             if (m_background == null)
-                Utils.log.QLog.Error($"[{nameof(UIInventorySlot)}] 格子预制体缺少 Image 组件：{gameObject.name}");
-#endif
+                QLog.Error($"格子预制体缺少 Image 组件：{gameObject.name}");
+            if (m_borderTop == null)
+                QLog.Error($"缺少上边框节点：{gameObject.name}/Img_BorderTop");
+            if (m_borderRight == null)
+                QLog.Error($"缺少右边框节点：{gameObject.name}/Img_BorderRight");
+            if (m_borderBottom == null)
+                QLog.Error($"缺少下边框节点：{gameObject.name}/Img_BorderBottom");
+            if (m_borderLeft == null)
+                QLog.Error($"缺少左边框节点：{gameObject.name}/Img_BorderLeft");
         }
 
         protected override void BindViewModel(InventorySlotViewModel viewModel)
         {
             Scope.Bind(viewModel.Mark, RenderMark);
             Scope.Bind(viewModel.IsSolid, RenderSolid);
+            Scope.Bind(viewModel.ShowTopBorder, RenderTopBorder);
+            Scope.Bind(viewModel.ShowRightBorder, RenderRightBorder);
+            Scope.Bind(viewModel.ShowBottomBorder, RenderBottomBorder);
+            Scope.Bind(viewModel.ShowLeftBorder, RenderLeftBorder);
         }
 
         public void OnPointerClick(PointerEventData eventData)
@@ -91,6 +115,7 @@ namespace UI.Inventory.View
             m_background.enabled = isSolid;
             m_background.raycastTarget = isSolid;
             ApplyMark();
+            ApplyBorders();
         }
 
         private void RenderMark(InventoryCellMark mark)
@@ -99,11 +124,52 @@ namespace UI.Inventory.View
             ApplyMark();
         }
 
+        private void RenderTopBorder(bool show)
+        {
+            m_showTopBorder = show;
+            ApplyBorders();
+        }
+
+        private void RenderRightBorder(bool show)
+        {
+            m_showRightBorder = show;
+            ApplyBorders();
+        }
+
+        private void RenderBottomBorder(bool show)
+        {
+            m_showBottomBorder = show;
+            ApplyBorders();
+        }
+
+        private void RenderLeftBorder(bool show)
+        {
+            m_showLeftBorder = show;
+            ApplyBorders();
+        }
+
         private void ApplyMark()
         {
             if (!m_isSolid || m_background == null) return;
 
             m_background.color = ColorOf(m_mark);
+        }
+
+        //边框只用于勾出区域边界, 不参与射线检测
+        private void ApplyBorders()
+        {
+            ApplyBorder(m_borderTop, m_showTopBorder);
+            ApplyBorder(m_borderRight, m_showRightBorder);
+            ApplyBorder(m_borderBottom, m_showBottomBorder);
+            ApplyBorder(m_borderLeft, m_showLeftBorder);
+        }
+
+        private void ApplyBorder(Image border, bool show)
+        {
+            if (border == null) return;
+
+            border.enabled = m_isSolid && show;
+            border.raycastTarget = false;
         }
 
         private Color ColorOf(InventoryCellMark mark)

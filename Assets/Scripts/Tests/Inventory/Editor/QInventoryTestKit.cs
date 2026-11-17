@@ -98,8 +98,9 @@ namespace Tests.Inventory
         /// <param name="height">网格行数</param>
         /// <param name="displayName">容器显示名</param>
         /// <param name="rows">异形形状行, # 实心 . 空洞, 传 null 代表满格矩形</param>
+        /// <param name="regionRows">逻辑区域行, # 默认区域, A-Z 独立区域, . 空洞, 传 null 代表单一区域</param>
         public InventoryContainerConfigSO CreateContainer(int width, int height, string displayName = "TEST_CONTAINER",
-            string[] rows = null)
+            string[] rows = null, string[] regionRows = null)
         {
             InventoryContainerConfigSO container = CreateConfig<InventoryContainerConfigSO>();
 
@@ -108,6 +109,7 @@ namespace Tests.Inventory
             SetField(container, "HeightValue", height);
 
             if (rows != null) SetField(container, "RowsValue", rows);
+            if (regionRows != null) SetField(container, "RegionRowsValue", regionRows);
             return container;
         }
 

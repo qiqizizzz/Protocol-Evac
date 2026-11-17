@@ -22,6 +22,9 @@ namespace Module.Inventory.Core.Grid
         //实心掩码, 下标与占用表一致, 长度恒为 Width*Height
         public IReadOnlyList<bool> Mask => m_mask;
 
+        //逻辑区域表, 与实心掩码同下标, 空洞为 -1
+        public IReadOnlyList<int> RegionIds => m_regionIds;
+
         //真实存在的格子数, 异形容器比外接矩形小
         public int SolidCount { get; }
 
@@ -31,28 +34,36 @@ namespace Module.Inventory.Core.Grid
 
         private readonly InventoryItemPlacement[] m_cells;
         private readonly bool[] m_mask;
+        private readonly int[] m_regionIds;
         private readonly HashSet<InventoryItemPlacement> m_placements;
 
-        public InventoryGrid(int width, int height) : this(width, height, null)
+        public InventoryGrid(int width, int height) : this(width, height, null, null)
+        {
+        }
+
+        public InventoryGrid(int width, int height, IReadOnlyList<bool> cells) : this(width, height, cells, null)
         {
         }
 
         /// <summary>
-        /// 建一张网格, 掩码留空就是满格矩形
+        /// 建一张网格, 掩码与区域表留空就分别是满格矩形与单一默认区域
         /// </summary>
         /// <param name="width">网格列数</param>
         /// <param name="height">网格行数</param>
         /// <param name="cells">实心掩码, 按行主序排列; 传 null 或长度不符时按满格处理并报错</param>
-        public InventoryGrid(int width, int height, IReadOnlyList<bool> cells)
+        /// <param name="regionIds">区域表, 按行主序排列; 传 null 时所有实心格归入区域 0</param>
+        public InventoryGrid(int width, int height, IReadOnlyList<bool> cells, IReadOnlyList<int> regionIds)
         {
             Width = width;
             Height = height;
 
             m_cells = new InventoryItemPlacement[width * height];
             m_mask = new bool[width * height];
+            m_regionIds = new int[width * height];
             m_placements = new HashSet<InventoryItemPlacement>();
 
             SolidCount = FillMask(cells);
+            FillRegions(regionIds);
         }
 
         public bool Contains(InventoryItemPlacement placement) => m_placements.Contains(placement);
@@ -70,16 +81,27 @@ namespace Module.Inventory.Core.Grid
             return IsInside(cell) && m_mask[GetCellIndex(cell)];
         }
 
-        //区域检测(判断给定区域完整落在可用空间内, 压到空洞同样算越界)
+        //取指定格的逻辑区域号, 空格与围栏外返回 -1
+        public int GetRegionId(Vector2Int cell)
+        {
+            return IsSolid(cell) ? m_regionIds[GetCellIndex(cell)] : -1;
+        }
+
+        //区域检测(判断给定区域完整落在同一逻辑区域内, 压到空洞或跨区同样算越界)
         public bool IsAreaInside(Vector2Int position, Vector2Int size)
         {
+            if (size.x <= 0 || size.y <= 0) return false;
             if (position.x < 0 || position.y < 0) return false;
             if (position.x + size.x > Width || position.y + size.y > Height) return false;
+
+            int regionId = m_regionIds[position.y * Width + position.x];
+            if (!m_mask[position.y * Width + position.x] || regionId < 0) return false;
 
             for (int y = 0; y < size.y; y++)
             for (int x = 0; x < size.x; x++)
             {
-                if (!m_mask[(position.y + y) * Width + position.x + x]) return false;
+                int index = (position.y + y) * Width + position.x + x;
+                if (!m_mask[index] || m_regionIds[index] != regionId) return false;
             }
 
             return true;
@@ -190,6 +212,42 @@ namespace Module.Inventory.Core.Grid
                 m_mask[i] = true;
 
             return m_mask.Length;
+        }
+
+        //填区域表, 区域为空时所有实心格归入区域 0, 长度不符或空洞区域非法时报错回退
+        private void FillRegions(IReadOnlyList<int> regions)
+        {
+            if (regions == null)
+            {
+                FillDefaultRegions();
+                return;
+            }
+
+            if (regions.Count != m_regionIds.Length)
+            {
+                QLog.Error($"区域表长度 {regions.Count} 与网格 {m_regionIds.Length} 不符, 已按全部实心格区域 0 处理");
+                FillDefaultRegions();
+                return;
+            }
+
+            for (int i = 0; i < m_regionIds.Length; i++)
+            {
+                if (m_mask[i] && regions[i] < 0)
+                {
+                    QLog.Error($"第 {i} 个实心格的区域号 {regions[i]} 非法, 已按全部实心格区域 0 处理");
+                    FillDefaultRegions();
+                    return;
+                }
+
+                m_regionIds[i] = m_mask[i] ? regions[i] : -1;
+            }
+        }
+
+        //所有实心格归入默认区域, 空洞保持 -1
+        private void FillDefaultRegions()
+        {
+            for (int i = 0; i < m_regionIds.Length; i++)
+                m_regionIds[i] = m_mask[i] ? 0 : -1;
         }
         
         public override string ToString()
