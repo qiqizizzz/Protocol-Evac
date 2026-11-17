@@ -47,6 +47,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a799c73942e65a14e91538ecf252b776
+    m_Address: UIToolTip
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: e8b163e86f2ebe9408842b272080534a
     m_Address: UIItemMenuPanel
     m_ReadOnly: 0
