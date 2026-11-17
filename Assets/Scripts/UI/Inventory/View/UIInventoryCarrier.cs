@@ -206,6 +206,8 @@ namespace UI.Inventory.View
             m_gridLayout.startAxis = GridLayoutGroup.Axis.Horizontal;
             //物品层按首格左上角原点摆放, 网格层必须左上对齐才能与物品层重合
             m_gridLayout.childAlignment = TextAnchor.UpperLeft;
+            //区域间距由格子组件在分界侧内缩表现, 布局本身保持满格步长
+            m_gridLayout.spacing = Vector2.zero;
 
             m_headerRect = transform.Find(HEADER_PATH) as RectTransform;
             m_equipSlotRect = transform.Find(EQUIP_SLOT_PATH) as RectTransform;

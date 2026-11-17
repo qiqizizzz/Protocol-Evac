@@ -67,10 +67,14 @@ namespace UI.Inventory
         private readonly List<ReactiveProperty<InventoryCellMark>> m_slotMarks = new List<ReactiveProperty<InventoryCellMark>>();
         private readonly List<ReactiveProperty<bool>> m_slotSolids = new List<ReactiveProperty<bool>>();
         private readonly List<ReactiveProperty<int>> m_slotRegions = new List<ReactiveProperty<int>>();
-        private readonly List<ReactiveProperty<bool>> m_slotTopBorders = new List<ReactiveProperty<bool>>();
-        private readonly List<ReactiveProperty<bool>> m_slotRightBorders = new List<ReactiveProperty<bool>>();
-        private readonly List<ReactiveProperty<bool>> m_slotBottomBorders = new List<ReactiveProperty<bool>>();
-        private readonly List<ReactiveProperty<bool>> m_slotLeftBorders = new List<ReactiveProperty<bool>>();
+        private readonly List<ReactiveProperty<InventorySlotEdgeKind>> m_slotTopEdges =
+            new List<ReactiveProperty<InventorySlotEdgeKind>>();
+        private readonly List<ReactiveProperty<InventorySlotEdgeKind>> m_slotRightEdges =
+            new List<ReactiveProperty<InventorySlotEdgeKind>>();
+        private readonly List<ReactiveProperty<InventorySlotEdgeKind>> m_slotBottomEdges =
+            new List<ReactiveProperty<InventorySlotEdgeKind>>();
+        private readonly List<ReactiveProperty<InventorySlotEdgeKind>> m_slotLeftEdges =
+            new List<ReactiveProperty<InventorySlotEdgeKind>>();
         
         private int m_slotWidth = -1;
         private InventoryMoveResult m_lastMoveResult;
@@ -128,10 +132,10 @@ namespace UI.Inventory
             m_slotMarks.Clear();
             m_slotSolids.Clear();
             m_slotRegions.Clear();
-            m_slotTopBorders.Clear();
-            m_slotRightBorders.Clear();
-            m_slotBottomBorders.Clear();
-            m_slotLeftBorders.Clear();
+            m_slotTopEdges.Clear();
+            m_slotRightEdges.Clear();
+            m_slotBottomEdges.Clear();
+            m_slotLeftEdges.Clear();
             ResetPreviewCaches();
         }
         #endregion
@@ -310,10 +314,10 @@ namespace UI.Inventory
                 m_slotMarks.Clear();
                 m_slotSolids.Clear();
                 m_slotRegions.Clear();
-                m_slotTopBorders.Clear();
-                m_slotRightBorders.Clear();
-                m_slotBottomBorders.Clear();
-                m_slotLeftBorders.Clear();
+                m_slotTopEdges.Clear();
+                m_slotRightEdges.Clear();
+                m_slotBottomEdges.Clear();
+                m_slotLeftEdges.Clear();
                 ResetPreviewCaches();
                 m_slotWidth = vo.Width;
             }
@@ -335,14 +339,18 @@ namespace UI.Inventory
 
                 int x = cell.x;
                 int y = cell.y;
-                ReactiveProperty<bool> top = CreateProperty(HasRegionBorder(vo, x, y, 0, -1, vo.RegionIds[index]));
-                ReactiveProperty<bool> right = CreateProperty(HasRegionBorder(vo, x, y, 1, 0, vo.RegionIds[index]));
-                ReactiveProperty<bool> bottom = CreateProperty(HasRegionBorder(vo, x, y, 0, 1, vo.RegionIds[index]));
-                ReactiveProperty<bool> left = CreateProperty(HasRegionBorder(vo, x, y, -1, 0, vo.RegionIds[index]));
-                m_slotTopBorders.Add(top);
-                m_slotRightBorders.Add(right);
-                m_slotBottomBorders.Add(bottom);
-                m_slotLeftBorders.Add(left);
+                ReactiveProperty<InventorySlotEdgeKind> top = CreateProperty(
+                    ResolveEdgeKind(vo, x, y, 0, -1, vo.RegionIds[index]));
+                ReactiveProperty<InventorySlotEdgeKind> right = CreateProperty(
+                    ResolveEdgeKind(vo, x, y, 1, 0, vo.RegionIds[index]));
+                ReactiveProperty<InventorySlotEdgeKind> bottom = CreateProperty(
+                    ResolveEdgeKind(vo, x, y, 0, 1, vo.RegionIds[index]));
+                ReactiveProperty<InventorySlotEdgeKind> left = CreateProperty(
+                    ResolveEdgeKind(vo, x, y, -1, 0, vo.RegionIds[index]));
+                m_slotTopEdges.Add(top);
+                m_slotRightEdges.Add(right);
+                m_slotBottomEdges.Add(bottom);
+                m_slotLeftEdges.Add(left);
 
                 m_slots.Add(new InventorySlotViewModel(cell, mark.AsReadOnly(), solid.AsReadOnly(), region.AsReadOnly(),
                     top.AsReadOnly(), right.AsReadOnly(), bottom.AsReadOnly(), left.AsReadOnly(), InteractAt,
@@ -358,10 +366,10 @@ namespace UI.Inventory
                 m_slotMarks.RemoveAt(last);
                 m_slotSolids.RemoveAt(last);
                 m_slotRegions.RemoveAt(last);
-                m_slotTopBorders.RemoveAt(last);
-                m_slotRightBorders.RemoveAt(last);
-                m_slotBottomBorders.RemoveAt(last);
-                m_slotLeftBorders.RemoveAt(last);
+                m_slotTopEdges.RemoveAt(last);
+                m_slotRightEdges.RemoveAt(last);
+                m_slotBottomEdges.RemoveAt(last);
+                m_slotLeftEdges.RemoveAt(last);
             }
 
             //行列没变只换了形状时上面两条分支都不会命中, 这里统一刷一遍
@@ -376,7 +384,7 @@ namespace UI.Inventory
                 m_slotSolids[i].TrySet(vo.Mask[i]);
         }
 
-        //按区域表刷新每格区域号与四边显隐, 同尺寸换分区时也能即时重画边框
+        //按区域表刷新每格区域号与四边状态, 同尺寸换分区时也能即时重画边框
         private void SyncSlotRegionsAndBorders(InventoryContainerVO vo)
         {
             for (int i = 0; i < m_slots.Count; i++)
@@ -386,26 +394,35 @@ namespace UI.Inventory
                 int regionId = vo.RegionIds[i];
 
                 m_slotRegions[i].TrySet(regionId);
-                m_slotTopBorders[i].TrySet(HasRegionBorder(vo, x, y, 0, -1, regionId));
-                m_slotRightBorders[i].TrySet(HasRegionBorder(vo, x, y, 1, 0, regionId));
-                m_slotBottomBorders[i].TrySet(HasRegionBorder(vo, x, y, 0, 1, regionId));
-                m_slotLeftBorders[i].TrySet(HasRegionBorder(vo, x, y, -1, 0, regionId));
+                m_slotTopEdges[i].TrySet(ResolveEdgeKind(vo, x, y, 0, -1, regionId));
+                m_slotRightEdges[i].TrySet(ResolveEdgeKind(vo, x, y, 1, 0, regionId));
+                m_slotBottomEdges[i].TrySet(ResolveEdgeKind(vo, x, y, 0, 1, regionId));
+                m_slotLeftEdges[i].TrySet(ResolveEdgeKind(vo, x, y, -1, 0, regionId));
             }
         }
 
-        //只有实心格会在区域外边界或相邻区域交界处显示边框
-        private static bool HasRegionBorder(InventoryContainerVO vo, int x, int y, int offsetX, int offsetY,
-            int regionId)
+        //区分区域内部相邻与区域边界, 跨区交界只由右/下侧负责绘制
+        private static InventorySlotEdgeKind ResolveEdgeKind(InventoryContainerVO vo, int x, int y,
+            int offsetX, int offsetY, int regionId)
         {
             int index = y * vo.Width + x;
-            if (!vo.Mask[index] || regionId < 0) return false;
+            if (!vo.Mask[index] || regionId < 0) return InventorySlotEdgeKind.None;
 
             int neighborX = x + offsetX;
             int neighborY = y + offsetY;
-            if (neighborX < 0 || neighborX >= vo.Width || neighborY < 0 || neighborY >= vo.Height) return true;
+            if (neighborX < 0 || neighborX >= vo.Width || neighborY < 0 || neighborY >= vo.Height)
+                return InventorySlotEdgeKind.Boundary;
 
             int neighborIndex = neighborY * vo.Width + neighborX;
-            return !vo.Mask[neighborIndex] || vo.RegionIds[neighborIndex] != regionId;
+            if (!vo.Mask[neighborIndex])
+                return InventorySlotEdgeKind.Boundary;
+
+            if (vo.RegionIds[neighborIndex] != regionId)
+                return offsetX > 0 || offsetY > 0
+                    ? InventorySlotEdgeKind.Boundary
+                    : InventorySlotEdgeKind.BoundaryPassive;
+
+            return InventorySlotEdgeKind.Connected;
         }
         
         //从模型拉取最新快照

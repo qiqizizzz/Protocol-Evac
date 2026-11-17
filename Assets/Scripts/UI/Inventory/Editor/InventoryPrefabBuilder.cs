@@ -55,7 +55,7 @@ namespace UI.Inventory.Editor
         private const string SPLIT_PATH = PREFAB_DIR + "/UIItemSplitPanel.prefab";
 
         private const int CELL_SIZE = 80;
-        private const int CELL_SPACING = 4;
+        private const int CELL_SPACING = 0;
         private const int DEFAULT_COLUMNS = 8;
         private const int DEFAULT_ROWS = 5;
         private const int PADDING = 12;
@@ -572,19 +572,47 @@ namespace UI.Inventory.Editor
                 Debug.Log(LOG + "已删除空壳预制体 " + LEGACY_PATH);
         }
 
-        // 格子模板: 整格一张底板, 点击与高亮都由 UIInventorySlot 自己管
+        // 格子模板: 根节点只接点击, 底色与四边由 UIInventorySlot 统一控制
         private static GameObject BuildSlot()
         {
             GameObject node = NewNode("UIInventorySlot", null);
             SetRect(node.GetComponent<RectTransform>(), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
                 new Vector2(0.5f, 0.5f), new Vector2(CELL_SIZE, CELL_SIZE), Vector2.zero);
 
-            Image image = node.AddComponent<Image>();
-            image.color = new Color(1f, 1f, 1f, 0.16f);
-            image.raycastTarget = true;
+            Image clickArea = node.AddComponent<Image>();
+            clickArea.color = Color.clear;
+            clickArea.raycastTarget = true;
+
+            GameObject background = NewNode("Img_Background", node.transform);
+            SetStretch(background.GetComponent<RectTransform>(), 0f);
+            Image backgroundImage = background.AddComponent<Image>();
+            backgroundImage.color = new Color(0.24f, 0.25f, 0.27f, 0.82f);
+            backgroundImage.raycastTarget = false;
+
+            AddSlotBorder(node.transform, "Img_BorderTop", new Vector2(0f, 1f), new Vector2(1f, 1f),
+                new Vector2(0.5f, 1f), new Vector2(0f, 1f), Vector2.zero);
+            AddSlotBorder(node.transform, "Img_BorderRight", new Vector2(1f, 0f), new Vector2(1f, 1f),
+                new Vector2(1f, 0.5f), new Vector2(1f, 0f), Vector2.zero);
+            AddSlotBorder(node.transform, "Img_BorderBottom", new Vector2(0f, 0f), new Vector2(1f, 0f),
+                new Vector2(0.5f, 0f), new Vector2(0f, 1f), Vector2.zero);
+            AddSlotBorder(node.transform, "Img_BorderLeft", new Vector2(0f, 0f), new Vector2(0f, 1f),
+                new Vector2(0f, 0.5f), new Vector2(1f, 0f), Vector2.zero);
 
             AttachScript(node, SLOT_SCRIPT);
             return node;
+        }
+
+        // 生成一条槽位边线, 运行时由 UIInventorySlot 重算位置与颜色
+        private static void AddSlotBorder(Transform parent, string name, Vector2 anchorMin, Vector2 anchorMax,
+            Vector2 pivot, Vector2 sizeDelta, Vector2 anchoredPosition)
+        {
+            GameObject border = NewNode(name, parent);
+            SetRect(border.GetComponent<RectTransform>(), anchorMin, anchorMax, pivot, sizeDelta, anchoredPosition);
+
+            Image image = border.AddComponent<Image>();
+            image.color = new Color(0.36f, 0.38f, 0.41f, 1f);
+            image.raycastTarget = false;
+            image.enabled = false;
         }
 
         // 物品模板: 底板 + 搜索阴影 + 搜索图标 + 物品图标 + 堆叠数, 尺寸由 View 按占地换算

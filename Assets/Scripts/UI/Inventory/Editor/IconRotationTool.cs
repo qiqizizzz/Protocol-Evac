@@ -35,7 +35,7 @@ namespace UI.Inventory.Editor
         private const float MIN_ROTATE_DEG = 3f;
         private const float FLIP_RATIO = 1.08f;
         private const float CELL_SIZE = 80f;
-        private const float CELL_SPACING = 4f;
+        private const float CELL_SPACING = 0f;
 
         // 明显不是枪械的图标, 扫描时默认排除, 界面上可勾选回来
         private static readonly HashSet<string> m_defaultExcluded = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -1044,7 +1044,7 @@ namespace UI.Inventory.Editor
             return alpha;
         }
 
-        // 按内容长宽比找最贴合的格子区域, 与运行时格子 80 + 间距 4 对齐
+        // 按内容长宽比找最贴合的格子区域, 与运行时 80px 满格步长对齐
         private static string FootprintHint(float aspect)
         {
             if (aspect <= 0f) return "-";

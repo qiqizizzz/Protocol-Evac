@@ -181,47 +181,48 @@ namespace Tests.Inventory
         }
 
         [Test]
-        public void Slots_RegionBorders_ShowOnlyAtOuterEdgesAndNeighbouringRegionBoundaries()
+        public void Slots_RegionEdges_DistinguishConnectedBoundaryAndNone()
         {
             InventorySlotViewModel topLeft = m_viewModel.GetSlot(0);
             InventorySlotViewModel topSecond = m_viewModel.GetSlot(1);
             InventorySlotViewModel bottomLeft = m_viewModel.GetSlot(4);
 
-            Assert.IsTrue(topLeft.ShowTopBorder.Value);
-            Assert.IsTrue(topLeft.ShowLeftBorder.Value);
-            Assert.IsFalse(topLeft.ShowRightBorder.Value);
-            Assert.IsTrue(topLeft.ShowBottomBorder.Value);
+            Assert.AreEqual(InventorySlotEdgeKind.Boundary, topLeft.TopEdgeKind.Value);
+            Assert.AreEqual(InventorySlotEdgeKind.Boundary, topLeft.LeftEdgeKind.Value);
+            Assert.AreEqual(InventorySlotEdgeKind.Connected, topLeft.RightEdgeKind.Value);
+            Assert.AreEqual(InventorySlotEdgeKind.Boundary, topLeft.BottomEdgeKind.Value);
 
-            Assert.IsTrue(topSecond.ShowTopBorder.Value);
-            Assert.IsTrue(topSecond.ShowRightBorder.Value);
-            Assert.IsTrue(topSecond.ShowBottomBorder.Value);
-            Assert.IsFalse(topSecond.ShowLeftBorder.Value);
+            Assert.AreEqual(InventorySlotEdgeKind.Boundary, topSecond.TopEdgeKind.Value);
+            Assert.AreEqual(InventorySlotEdgeKind.Boundary, topSecond.RightEdgeKind.Value);
+            Assert.AreEqual(InventorySlotEdgeKind.Boundary, topSecond.BottomEdgeKind.Value);
+            Assert.AreEqual(InventorySlotEdgeKind.Connected, topSecond.LeftEdgeKind.Value);
 
-            Assert.IsTrue(bottomLeft.ShowTopBorder.Value);
-            Assert.IsTrue(bottomLeft.ShowLeftBorder.Value);
-            Assert.IsFalse(bottomLeft.ShowRightBorder.Value);
-            Assert.IsTrue(bottomLeft.ShowBottomBorder.Value);
+            Assert.AreEqual(InventorySlotEdgeKind.BoundaryPassive, bottomLeft.TopEdgeKind.Value);
+            Assert.AreEqual(InventorySlotEdgeKind.Boundary, bottomLeft.LeftEdgeKind.Value);
+            Assert.AreEqual(InventorySlotEdgeKind.Connected, bottomLeft.RightEdgeKind.Value);
+            Assert.AreEqual(InventorySlotEdgeKind.Boundary, bottomLeft.BottomEdgeKind.Value);
         }
 
         [Test]
-        public void Slots_RegionChangeWithSameSize_RefreshesRegionAndBorderState()
+        public void Slots_RegionChangeWithSameSize_RefreshesRegionAndEdgeState()
         {
             Assert.AreEqual(1, m_viewModel.GetSlot(0).RegionId.Value);
-            Assert.IsTrue(m_viewModel.GetSlot(1).ShowRightBorder.Value);
+            Assert.AreEqual(InventorySlotEdgeKind.Boundary, m_viewModel.GetSlot(1).RightEdgeKind.Value);
+            Assert.AreEqual(InventorySlotEdgeKind.Boundary, m_viewModel.GetSlot(0).BottomEdgeKind.Value);
 
             Assert.IsTrue(m_model.TryResizeContainer(m_containerId, CreateRegionSpec(SINGLE_REGION_ROWS)));
 
             for (int i = 0; i < m_viewModel.SlotCount; i++)
                 Assert.AreEqual(1, m_viewModel.GetSlot(i).RegionId.Value);
 
-            Assert.IsFalse(m_viewModel.GetSlot(0).ShowRightBorder.Value);
-            Assert.IsFalse(m_viewModel.GetSlot(0).ShowBottomBorder.Value);
-            Assert.IsTrue(m_viewModel.GetSlot(3).ShowRightBorder.Value);
-            Assert.IsTrue(m_viewModel.GetSlot(4).ShowBottomBorder.Value);
+            Assert.AreEqual(InventorySlotEdgeKind.Connected, m_viewModel.GetSlot(0).RightEdgeKind.Value);
+            Assert.AreEqual(InventorySlotEdgeKind.Connected, m_viewModel.GetSlot(0).BottomEdgeKind.Value);
+            Assert.AreEqual(InventorySlotEdgeKind.Boundary, m_viewModel.GetSlot(3).RightEdgeKind.Value);
+            Assert.AreEqual(InventorySlotEdgeKind.Boundary, m_viewModel.GetSlot(4).BottomEdgeKind.Value);
         }
 
         [Test]
-        public void Slots_Hole_HasNoRegionAndNoBorder()
+        public void Slots_Hole_HasNoneEdgesAndSolidNeighboursMarkItAsBoundary()
         {
             bool[] mask = InventoryContainerConfigSO.ParseShape(new[] { "#.#" }, 3, 1);
             int[] regions = InventoryContainerConfigSO.ParseRegions(new[] { "A.A" }, 3, 1, mask);
@@ -233,12 +234,36 @@ namespace Tests.Inventory
             InventorySlotViewModel right = m_viewModel.GetSlot(2);
 
             Assert.AreEqual(-1, hole.RegionId.Value);
-            Assert.IsFalse(hole.ShowTopBorder.Value);
-            Assert.IsFalse(hole.ShowRightBorder.Value);
-            Assert.IsFalse(hole.ShowBottomBorder.Value);
-            Assert.IsFalse(hole.ShowLeftBorder.Value);
-            Assert.IsTrue(left.ShowRightBorder.Value);
-            Assert.IsTrue(right.ShowLeftBorder.Value);
+            Assert.AreEqual(InventorySlotEdgeKind.None, hole.TopEdgeKind.Value);
+            Assert.AreEqual(InventorySlotEdgeKind.None, hole.RightEdgeKind.Value);
+            Assert.AreEqual(InventorySlotEdgeKind.None, hole.BottomEdgeKind.Value);
+            Assert.AreEqual(InventorySlotEdgeKind.None, hole.LeftEdgeKind.Value);
+            Assert.AreEqual(InventorySlotEdgeKind.Boundary, left.RightEdgeKind.Value);
+            Assert.AreEqual(InventorySlotEdgeKind.Boundary, right.LeftEdgeKind.Value);
+        }
+
+        [Test]
+        public void Slots_SameRegionAdjacency_IsConnectedOnBothSides()
+        {
+            InventorySlotViewModel topLeft = m_viewModel.GetSlot(0);
+            InventorySlotViewModel topSecond = m_viewModel.GetSlot(1);
+
+            Assert.AreEqual(InventorySlotEdgeKind.Connected, topLeft.RightEdgeKind.Value);
+            Assert.AreEqual(InventorySlotEdgeKind.Connected, topSecond.LeftEdgeKind.Value);
+        }
+
+        [Test]
+        public void Slots_DifferentRegionAdjacency_DrawsBoundaryOnlyOnLeadingCell()
+        {
+            InventorySlotViewModel topSecond = m_viewModel.GetSlot(1);
+            InventorySlotViewModel topThird = m_viewModel.GetSlot(2);
+            InventorySlotViewModel topLeft = m_viewModel.GetSlot(0);
+            InventorySlotViewModel bottomLeft = m_viewModel.GetSlot(4);
+
+            Assert.AreEqual(InventorySlotEdgeKind.Boundary, topSecond.RightEdgeKind.Value);
+            Assert.AreEqual(InventorySlotEdgeKind.BoundaryPassive, topThird.LeftEdgeKind.Value);
+            Assert.AreEqual(InventorySlotEdgeKind.Boundary, topLeft.BottomEdgeKind.Value);
+            Assert.AreEqual(InventorySlotEdgeKind.BoundaryPassive, bottomLeft.TopEdgeKind.Value);
         }
 
         //构造区域容器规格, 用形状配置实际产出的区域表验证完整链路

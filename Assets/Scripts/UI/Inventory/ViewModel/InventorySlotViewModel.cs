@@ -20,10 +20,10 @@ namespace UI.Inventory
         public IReadOnlyReactiveProperty<InventoryCellMark> Mark { get; }
         public IReadOnlyReactiveProperty<bool> IsSolid { get; }
         public IReadOnlyReactiveProperty<int> RegionId { get; }
-        public IReadOnlyReactiveProperty<bool> ShowTopBorder { get; }
-        public IReadOnlyReactiveProperty<bool> ShowRightBorder { get; }
-        public IReadOnlyReactiveProperty<bool> ShowBottomBorder { get; }
-        public IReadOnlyReactiveProperty<bool> ShowLeftBorder { get; }
+        public IReadOnlyReactiveProperty<InventorySlotEdgeKind> TopEdgeKind { get; }
+        public IReadOnlyReactiveProperty<InventorySlotEdgeKind> RightEdgeKind { get; }
+        public IReadOnlyReactiveProperty<InventorySlotEdgeKind> BottomEdgeKind { get; }
+        public IReadOnlyReactiveProperty<InventorySlotEdgeKind> LeftEdgeKind { get; }
 
         private readonly Action<Vector2Int> m_clickHandler;
         private readonly Action<Vector2Int> m_dropHandler;
@@ -31,8 +31,10 @@ namespace UI.Inventory
 
         public InventorySlotViewModel(Vector2Int cell, IReadOnlyReactiveProperty<InventoryCellMark> mark,
             IReadOnlyReactiveProperty<bool> isSolid, IReadOnlyReactiveProperty<int> regionId,
-            IReadOnlyReactiveProperty<bool> showTopBorder, IReadOnlyReactiveProperty<bool> showRightBorder,
-            IReadOnlyReactiveProperty<bool> showBottomBorder, IReadOnlyReactiveProperty<bool> showLeftBorder,
+            IReadOnlyReactiveProperty<InventorySlotEdgeKind> topEdgeKind,
+            IReadOnlyReactiveProperty<InventorySlotEdgeKind> rightEdgeKind,
+            IReadOnlyReactiveProperty<InventorySlotEdgeKind> bottomEdgeKind,
+            IReadOnlyReactiveProperty<InventorySlotEdgeKind> leftEdgeKind,
             Action<Vector2Int> clickHandler,
             Action<Vector2Int> dropHandler = null, Action<Vector2Int, bool> hoverHandler = null)
         {
@@ -40,10 +42,10 @@ namespace UI.Inventory
             Mark = mark;
             IsSolid = isSolid;
             RegionId = regionId;
-            ShowTopBorder = showTopBorder;
-            ShowRightBorder = showRightBorder;
-            ShowBottomBorder = showBottomBorder;
-            ShowLeftBorder = showLeftBorder;
+            TopEdgeKind = topEdgeKind;
+            RightEdgeKind = rightEdgeKind;
+            BottomEdgeKind = bottomEdgeKind;
+            LeftEdgeKind = leftEdgeKind;
             m_clickHandler = clickHandler;
             m_dropHandler = dropHandler;
             m_hoverHandler = hoverHandler;
