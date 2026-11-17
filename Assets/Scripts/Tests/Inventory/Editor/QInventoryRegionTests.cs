@@ -197,7 +197,7 @@ namespace Tests.Inventory
             Assert.AreEqual(InventorySlotEdgeKind.Boundary, topSecond.BottomEdgeKind.Value);
             Assert.AreEqual(InventorySlotEdgeKind.Connected, topSecond.LeftEdgeKind.Value);
 
-            Assert.AreEqual(InventorySlotEdgeKind.BoundaryPassive, bottomLeft.TopEdgeKind.Value);
+            Assert.AreEqual(InventorySlotEdgeKind.Boundary, bottomLeft.TopEdgeKind.Value);
             Assert.AreEqual(InventorySlotEdgeKind.Boundary, bottomLeft.LeftEdgeKind.Value);
             Assert.AreEqual(InventorySlotEdgeKind.Connected, bottomLeft.RightEdgeKind.Value);
             Assert.AreEqual(InventorySlotEdgeKind.Boundary, bottomLeft.BottomEdgeKind.Value);
@@ -253,7 +253,7 @@ namespace Tests.Inventory
         }
 
         [Test]
-        public void Slots_DifferentRegionAdjacency_DrawsBoundaryOnlyOnLeadingCell()
+        public void Slots_DifferentRegionAdjacency_DrawsBoundaryOnBothCells()
         {
             InventorySlotViewModel topSecond = m_viewModel.GetSlot(1);
             InventorySlotViewModel topThird = m_viewModel.GetSlot(2);
@@ -261,9 +261,9 @@ namespace Tests.Inventory
             InventorySlotViewModel bottomLeft = m_viewModel.GetSlot(4);
 
             Assert.AreEqual(InventorySlotEdgeKind.Boundary, topSecond.RightEdgeKind.Value);
-            Assert.AreEqual(InventorySlotEdgeKind.BoundaryPassive, topThird.LeftEdgeKind.Value);
+            Assert.AreEqual(InventorySlotEdgeKind.Boundary, topThird.LeftEdgeKind.Value);
             Assert.AreEqual(InventorySlotEdgeKind.Boundary, topLeft.BottomEdgeKind.Value);
-            Assert.AreEqual(InventorySlotEdgeKind.BoundaryPassive, bottomLeft.TopEdgeKind.Value);
+            Assert.AreEqual(InventorySlotEdgeKind.Boundary, bottomLeft.TopEdgeKind.Value);
         }
 
         //构造区域容器规格, 用形状配置实际产出的区域表验证完整链路

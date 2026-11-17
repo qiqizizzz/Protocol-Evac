@@ -401,7 +401,7 @@ namespace UI.Inventory
             }
         }
 
-        //区分区域内部相邻与区域边界, 跨区交界只由右/下侧负责绘制
+        //区分区域内部相邻与区域边界, 跨区交界两侧都绘制边界
         private static InventorySlotEdgeKind ResolveEdgeKind(InventoryContainerVO vo, int x, int y,
             int offsetX, int offsetY, int regionId)
         {
@@ -418,9 +418,7 @@ namespace UI.Inventory
                 return InventorySlotEdgeKind.Boundary;
 
             if (vo.RegionIds[neighborIndex] != regionId)
-                return offsetX > 0 || offsetY > 0
-                    ? InventorySlotEdgeKind.Boundary
-                    : InventorySlotEdgeKind.BoundaryPassive;
+                return InventorySlotEdgeKind.Boundary;
 
             return InventorySlotEdgeKind.Connected;
         }

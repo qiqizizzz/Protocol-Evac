@@ -224,7 +224,7 @@ namespace UI.Inventory.View
                 new Vector2(0.5f, 1f));
         }
 
-        //右边绘制区域边界或同区域内部分隔线, 被动侧只保留间距
+        //右边绘制区域边界或同区域内部分隔线
         private void ApplyRightBorder()
         {
             bool show = m_isSolid && (m_rightEdge == InventorySlotEdgeKind.Connected ||
@@ -233,7 +233,7 @@ namespace UI.Inventory.View
                 new Vector2(1f, 0.5f));
         }
 
-        //下边绘制区域边界或同区域内部分隔线, 被动侧只保留间距
+        //下边绘制区域边界或同区域内部分隔线
         private void ApplyBottomBorder()
         {
             bool show = m_isSolid && (m_bottomEdge == InventorySlotEdgeKind.Connected ||
@@ -294,11 +294,9 @@ namespace UI.Inventory.View
             border.color = kind == InventorySlotEdgeKind.Boundary ? BoundaryLineColor : InnerLineColor;
         }
 
-        //主动与被动区域边界都需要为视觉间距让出空间
+        //区域边界为视觉间距让出空间
         private float EdgeInset(InventorySlotEdgeKind kind) =>
-            kind == InventorySlotEdgeKind.Boundary || kind == InventorySlotEdgeKind.BoundaryPassive
-                ? BoundaryInset
-                : 0f;
+            kind == InventorySlotEdgeKind.Boundary ? BoundaryInset : 0f;
 
         private Color ColorOf(InventoryCellMark mark)
         {
