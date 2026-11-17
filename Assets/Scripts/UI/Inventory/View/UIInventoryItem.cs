@@ -709,7 +709,7 @@ namespace UI.Inventory.View
         // 物品底板、图标、数量、选中框与搜索阴影的唯一显隐入口
         private void ApplyPresentation()
         {
-            bool showItem = !m_isSearching && !m_isDragging;
+            bool showItem = !m_isSearching;
             bool showSearchIndicator = m_isSearching && m_isSearchIndicatorVisible && !m_isDragging &&
                 m_searchIndicator != null;
 
