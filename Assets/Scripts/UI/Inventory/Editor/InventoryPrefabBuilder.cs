@@ -42,7 +42,7 @@ namespace UI.Inventory.Editor
         private const string SLOT_SCRIPT = "UI.Inventory.View.UIInventorySlot";
         private const string ITEM_SCRIPT = "UI.Inventory.View.UIInventoryItem";
         private const float ITEM_CONTENT_INSET = 3f;
-        private const float ITEM_CONNECTED_CONTENT_INSET = 0.5f;
+        private const float ITEM_CONNECTED_CONTENT_INSET = 1f;
 
         private const string EQUIPMENT_SCRIPT = "UI.Inventory.View.UIEquipmentPanel";
         private const string EQUIPMENT_PATH = PREFAB_DIR + "/UIEquipmentPanel.prefab";

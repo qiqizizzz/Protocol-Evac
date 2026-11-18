@@ -114,6 +114,23 @@ namespace Tests.Inventory
         }
 
         [Test]
+        public void Setup_TwoByTwoConnectedFootprint_UsesOneContinuousBackground()
+        {
+            m_itemView.Setup(new InventoryItemVO(1, 1, "测试物品", 1, null, Color.white,
+                InventoryItemRarity.Common, 0, Vector2Int.zero, new Vector2Int(2, 2), InventoryRotation.None),
+                CreateUniformContainer(2, 2),
+                new Vector2(80f, 80f), Vector2.zero);
+
+            Assert.AreEqual(new Vector2(154f, 154f), m_background.rectTransform.rect.size,
+                "2x2 同区域物品必须共用一张底板, 不能在内部格缝拆成四个矩形");
+            Assert.AreEqual(new Vector2(3f, -3f), m_background.rectTransform.anchoredPosition,
+                "合并底板只能收掉物品外沿, 不能改变整件物品的位置");
+            Assert.IsFalse(GetBackgroundSlice(1).enabled, "合并后不能保留第二块底板参与渲染");
+            Assert.IsFalse(GetBackgroundSlice(2).enabled, "合并后不能保留第三块底板参与渲染");
+            Assert.IsFalse(GetBackgroundSlice(3).enabled, "合并后不能保留第四块底板参与渲染");
+        }
+
+        [Test]
         public void Setup_OneByOneItem_InsetsBackgroundAndIconFromTheFullFootprint()
         {
             m_itemView.Setup(new InventoryItemVO(1, 1, "测试物品", 1, null, Color.white,
@@ -146,7 +163,7 @@ namespace Tests.Inventory
         }
 
         [Test]
-        public void Setup_ConnectedHorizontalCells_FillTheCellGapWithoutChangingOuterInset()
+        public void Setup_ConnectedHorizontalCells_UseOneMergedBackgroundAcrossTheCellGap()
         {
             InventoryItemVO item = new InventoryItemVO(1, 1, "测试物品", 1, null, Color.white,
                 InventoryItemRarity.Common, 0, Vector2Int.zero, new Vector2Int(2, 1), InventoryRotation.None);
@@ -154,18 +171,15 @@ namespace Tests.Inventory
             m_itemView.Setup(item, CreateUniformContainer(2, 1), new Vector2(80f, 80f), new Vector2(4f, 4f));
 
             Image secondSlice = GetBackgroundSlice(1);
-            Assert.AreEqual(new Vector2(81f, 74f), m_background.rectTransform.rect.size,
-                "第一格只向同区域接缝方向延伸, 外侧仍保留完整内缩");
+            Assert.AreEqual(new Vector2(158f, 74f), m_background.rectTransform.rect.size,
+                "同区域横向物品必须用一张底板覆盖格间距, 外侧仍保留完整内缩");
             Assert.AreEqual(new Vector2(3f, -3f), m_background.rectTransform.anchoredPosition,
-                "第一格的位置不能被接缝延伸推到外侧");
-            Assert.AreEqual(new Vector2(77f, 74f), secondSlice.rectTransform.rect.size,
-                "第二格只需收掉右侧外沿");
-            Assert.AreEqual(new Vector2(84f, -3f), secondSlice.rectTransform.anchoredPosition,
-                "第二格必须接在第一格留下的格距之后");
+                "合并底板只能收掉物品外沿, 不能改变整件物品的位置");
+            Assert.IsFalse(secondSlice.enabled, "合并后不能保留第二块底板参与渲染");
         }
 
         [Test]
-        public void Setup_ConnectedVerticalCells_FillTheCellGapWithoutChangingOuterInset()
+        public void Setup_ConnectedVerticalCells_UseOneMergedBackgroundAcrossTheCellGap()
         {
             InventoryItemVO item = new InventoryItemVO(1, 1, "测试物品", 1, null, Color.white,
                 InventoryItemRarity.Common, 0, Vector2Int.zero, new Vector2Int(1, 2), InventoryRotation.None);
@@ -173,18 +187,15 @@ namespace Tests.Inventory
             m_itemView.Setup(item, CreateUniformContainer(1, 2), new Vector2(80f, 80f), new Vector2(4f, 4f));
 
             Image secondSlice = GetBackgroundSlice(1);
-            Assert.AreEqual(new Vector2(74f, 81f), m_background.rectTransform.rect.size,
-                "第一格只向同区域接缝方向延伸, 外侧仍保留完整内缩");
+            Assert.AreEqual(new Vector2(74f, 158f), m_background.rectTransform.rect.size,
+                "同区域纵向物品必须用一张底板覆盖格间距, 外侧仍保留完整内缩");
             Assert.AreEqual(new Vector2(3f, -3f), m_background.rectTransform.anchoredPosition,
-                "第一格的位置不能被接缝延伸推到外侧");
-            Assert.AreEqual(new Vector2(74f, 77f), secondSlice.rectTransform.rect.size,
-                "第二格只需收掉底部外沿");
-            Assert.AreEqual(new Vector2(3f, -84f), secondSlice.rectTransform.anchoredPosition,
-                "第二格必须接在第一格留下的格距之后");
+                "合并底板只能收掉物品外沿, 不能改变整件物品的位置");
+            Assert.IsFalse(secondSlice.enabled, "合并后不能保留第二块底板参与渲染");
         }
 
         [Test]
-        public void Setup_CenterCellInConnectedRegion_LeavesOnlyHalfTheDividerOutsideTheItem()
+        public void Setup_CenterCellInConnectedRegion_LeavesDividerOnlyOnOwnedEdges()
         {
             InventoryItemVO item = new InventoryItemVO(1, 1, "测试物品", 1, null, Color.white,
                 InventoryItemRarity.Common, 0, new Vector2Int(1, 1), Vector2Int.one, InventoryRotation.None);
@@ -192,9 +203,9 @@ namespace Tests.Inventory
             m_itemView.Setup(item, CreateUniformContainer(3, 3), new Vector2(80f, 80f), Vector2.zero);
 
             Assert.AreEqual(new Vector2(79f, 79f), m_background.rectTransform.rect.size,
-                "连续区域的中心物品每侧只应为分隔线让出半像素");
-            Assert.AreEqual(new Vector2(0.5f, -0.5f), m_background.rectTransform.anchoredPosition,
-                "相邻物品各让半像素后应只保留一条分隔线宽度的空隙");
+                "连续区域的中心物品只应让出右侧与下侧各一像素的分隔线");
+            Assert.AreEqual(Vector2.zero, m_background.rectTransform.anchoredPosition,
+                "左侧与上侧分隔线由相邻格绘制, 物品底板不能再次内缩");
         }
 
         [Test]

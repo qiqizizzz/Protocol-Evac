@@ -52,8 +52,8 @@ namespace UI.Inventory.View
         [Tooltip("物品外沿与图标的完整内缩距离, 同时包含格子边界留白与线宽")]
         [SerializeField, Min(0f)] private float ContentInset = 3f;
 
-        [Tooltip("同区域相邻但相邻格不属于当前物品时, 底板单侧避让分界线的距离")]
-        [SerializeField, Min(0f)] private float ConnectedContentInset = 0.5f;
+        [Tooltip("同区域相邻但相邻格不属于当前物品时, 底板右侧与下侧避让分界线的距离")]
+        [SerializeField, Min(0f)] private float ConnectedContentInset = 1f;
 
         private RectTransform m_rect;
         private Image m_clickArea;
@@ -600,6 +600,12 @@ namespace UI.Inventory.View
             int capacity = Mathf.Max(0, footprint.x * footprint.y);
             EnsureBackgroundSliceCount(capacity);
 
+            if (TryApplyMergedBackgroundGeometry(footprint, container))
+            {
+                m_backgroundSliceCount = 1;
+                return;
+            }
+
             int sliceIndex = 0;
             for (int y = 0; y < footprint.y; y++)
             {
@@ -628,10 +634,10 @@ namespace UI.Inventory.View
                     InventorySlotEdgeKind leftEdge =
                         container.ResolveEdgeKind(globalX, globalY, -1, 0, regionId);
 
-                    float top = BackgroundEdgeInset(topEdge, topInternal);
-                    float right = BackgroundEdgeInset(rightEdge, rightInternal);
-                    float bottom = BackgroundEdgeInset(bottomEdge, bottomInternal);
-                    float left = BackgroundEdgeInset(leftEdge, leftInternal);
+                    float top = BackgroundEdgeInset(topEdge, topInternal, false);
+                    float right = BackgroundEdgeInset(rightEdge, rightInternal, true);
+                    float bottom = BackgroundEdgeInset(bottomEdge, bottomInternal, true);
+                    float left = BackgroundEdgeInset(leftEdge, leftInternal, false);
 
                     ApplyBackgroundSliceGeometry(m_backgroundSlices[sliceIndex], x, y, left, right, top, bottom,
                         rightInternal && rightEdge == InventorySlotEdgeKind.Connected,
@@ -641,6 +647,90 @@ namespace UI.Inventory.View
             }
 
             m_backgroundSliceCount = sliceIndex;
+        }
+
+        // 同区域且四边拓扑一致的占格合并成一张底板, 从根源消除独立切片之间的接缝
+        private bool TryApplyMergedBackgroundGeometry(Vector2Int footprint, InventoryContainerVO container)
+        {
+            if (m_backgroundSlices.Count == 0 || footprint.x <= 0 || footprint.y <= 0) return false;
+
+            int regionId = -1;
+            for (int y = 0; y < footprint.y; y++)
+            {
+                for (int x = 0; x < footprint.x; x++)
+                {
+                    int globalX = m_origin.x + x;
+                    int globalY = m_origin.y + y;
+                    if (globalX < 0 || globalX >= container.Width || globalY < 0 || globalY >= container.Height)
+                        return false;
+
+                    int index = globalY * container.Width + globalX;
+                    if (index >= container.Mask.Count || index >= container.RegionIds.Count ||
+                        !container.Mask[index] || container.RegionIds[index] < 0)
+                        return false;
+
+                    if (regionId < 0)
+                        regionId = container.RegionIds[index];
+                    else if (container.RegionIds[index] != regionId)
+                        return false;
+                }
+            }
+
+            if (!TryResolveMergedEdgeInset(footprint, container, regionId, 0, 0, 1, 0, footprint.x, 0, -1, false,
+                    out float top) ||
+                !TryResolveMergedEdgeInset(footprint, container, regionId, footprint.x - 1, 0, 0, 1, footprint.y,
+                    1, 0, true, out float right) ||
+                !TryResolveMergedEdgeInset(footprint, container, regionId, 0, footprint.y - 1, 1, 0, footprint.x,
+                    0, 1, true, out float bottom) ||
+                !TryResolveMergedEdgeInset(footprint, container, regionId, 0, 0, 0, 1, footprint.y, -1, 0, false,
+                    out float left))
+                return false;
+
+            ApplyMergedBackgroundGeometry(footprint, left, right, top, bottom);
+            return true;
+        }
+
+        // 检查占格整条外沿的边界类型是否一致, 局部拓扑不同时继续使用逐格底板
+        private bool TryResolveMergedEdgeInset(Vector2Int footprint, InventoryContainerVO container, int regionId,
+            int startX, int startY, int stepX, int stepY, int length, int offsetX, int offsetY,
+            bool ownsDividerEdge, out float inset)
+        {
+            inset = 0f;
+            InventorySlotEdgeKind edgeKind = InventorySlotEdgeKind.None;
+
+            for (int i = 0; i < length; i++)
+            {
+                int x = startX + stepX * i;
+                int y = startY + stepY * i;
+                InventorySlotEdgeKind current = container.ResolveEdgeKind(
+                    m_origin.x + x, m_origin.y + y, offsetX, offsetY, regionId);
+                if (current == InventorySlotEdgeKind.None) return false;
+
+                if (i == 0)
+                    edgeKind = current;
+                else if (current != edgeKind)
+                    return false;
+            }
+
+            inset = BackgroundEdgeInset(edgeKind, false, ownsDividerEdge);
+            return true;
+        }
+
+        // 用同一张底板覆盖完整占格, 内部格间距随合并矩形一起被填满
+        private void ApplyMergedBackgroundGeometry(Vector2Int footprint, float left, float right, float top,
+            float bottom)
+        {
+            RectTransform rect = m_backgroundSlices[0].rectTransform;
+            Vector2 footprintSize = FootprintSize(footprint);
+
+            rect.anchorMin = new Vector2(0f, 1f);
+            rect.anchorMax = new Vector2(0f, 1f);
+            rect.pivot = new Vector2(0f, 1f);
+            rect.localRotation = Quaternion.identity;
+            rect.anchoredPosition = new Vector2(left, -top);
+            rect.sizeDelta = new Vector2(
+                Mathf.Max(0f, footprintSize.x - left - right),
+                Mathf.Max(0f, footprintSize.y - top - bottom));
         }
 
         // 复用底板切片节点, 物品占格变化时只在末尾补齐
@@ -674,15 +764,15 @@ namespace UI.Inventory.View
             rect.sizeDelta = new Vector2(Mathf.Max(0f, width), Mathf.Max(0f, height));
         }
 
-        // 同一物品内部不收边, 区域边界避开边界线, 同区域外沿只避开内部分隔线
-        private float BackgroundEdgeInset(InventorySlotEdgeKind edgeKind, bool internalEdge)
+        // 同一物品内部不收边, 区域边界避开边界线, 同区域外沿只在当前格拥有右侧或下侧分界线时收边
+        private float BackgroundEdgeInset(InventorySlotEdgeKind edgeKind, bool internalEdge, bool ownsDividerEdge)
         {
             if (internalEdge && edgeKind == InventorySlotEdgeKind.Connected) return 0f;
 
             switch (edgeKind)
             {
                 case InventorySlotEdgeKind.Boundary: return ContentInset;
-                case InventorySlotEdgeKind.Connected: return ConnectedContentInset;
+                case InventorySlotEdgeKind.Connected: return ownsDividerEdge ? ConnectedContentInset : 0f;
                 default: return ContentInset;
             }
         }
