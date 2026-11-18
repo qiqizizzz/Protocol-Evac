@@ -33,6 +33,8 @@ namespace Tests.Inventory
         private const int NO_SELECTION = -1;
         private const string CONTAINER_NAME = "测试容器";
         private const string DETAIL_PREFAB_PATH = "Assets/Prefabs/UI/Inventory/UIItemDetailPanel.prefab";
+        private const string CONTAINER_LAYOUT_PREFAB_PATH =
+            "Assets/Prefabs/UI/Inventory/UIItemContainerLayoutPanel.prefab";
         private const int FOOTPRINT_CELL_COUNT = 24;
 
         private QInventoryTestKit m_kit;
@@ -262,7 +264,8 @@ namespace Tests.Inventory
             Assert.AreEqual("医疗物资", detail.Tags.Value);
             Assert.AreEqual("2,025,921", detail.Value.Value);
             Assert.AreEqual("1.5KG", ReadDetailString(detail, "WeightLabel"));
-            Assert.AreEqual("110000000000000000000000", ReadDetailString(detail, "FootprintMask"));
+            AssertFootprint(detail.FootprintPreview.Value, 2, 1, 2);
+            Assert.IsFalse(detail.CanShowContainerLayout.Value);
             Assert.AreEqual("用于快速处理失血伤势", detail.Description.Value);
             Assert.IsTrue(detail.HasContent.Value);
             Assert.AreNotEqual(Color.white, detail.AccentColor.Value);
@@ -302,7 +305,7 @@ namespace Tests.Inventory
         }
 
         [Test]
-        public void Detail_ForContainerItem_ShowsContainerAsItsType()
+        public void Detail_ForContainerItem_ShowsItsPhysicalFootprintAndLayoutEntry()
         {
             InventoryContainerConfigSO container = m_kit.CreateContainer(5, 3, "背包测试");
             InventoryItemConfigSO config = m_kit.CreateContainerItem(container);
@@ -312,12 +315,13 @@ namespace Tests.Inventory
             detail.Open(m_containerId, instanceId);
 
             Assert.AreEqual("战术挂载容器", detail.Tags.Value);
-            Assert.AreEqual("111110111110111110000000", ReadDetailString(detail, "FootprintMask"),
-                "容器占格图展示的是穿戴后的内部容量");
+            AssertFootprint(detail.FootprintPreview.Value, 3, 3, 9);
+            Assert.IsTrue(detail.CanShowContainerLayout.Value,
+                "容器物品需要在详情占格旁显示完整布局入口");
         }
 
         [Test]
-        public void Detail_ForIrregularContainer_CropsItsMaskIntoTheSixByFourPreview()
+        public void Detail_ForIrregularContainer_StillShowsOnlyItsPhysicalFootprint()
         {
             InventoryContainerConfigSO container = m_kit.CreateContainer(5, 3, "异形胸挂",
                 new[] { "#.#..", "##...", "#####" });
@@ -329,7 +333,8 @@ namespace Tests.Inventory
             detail.Open(m_containerId, instanceId);
 
             Assert.AreEqual("2.5KG", ReadDetailString(detail, "WeightLabel"));
-            Assert.AreEqual("101000110000111110000000", ReadDetailString(detail, "FootprintMask"));
+            AssertFootprint(detail.FootprintPreview.Value, 3, 2, 6);
+            Assert.IsTrue(detail.CanShowContainerLayout.Value);
         }
 
         [Test]
@@ -347,16 +352,16 @@ namespace Tests.Inventory
         }
 
         [Test]
-        public void Detail_WhenTheItemRotates_RefreshesFootprintMask()
+        public void Detail_WhenTheItemRotates_RefreshesPhysicalFootprint()
         {
             int instanceId = AddItem(2, 1, new Vector2Int(0, 0));
             ItemDetailViewModel detail = CreateDetail();
             detail.Open(m_containerId, instanceId);
-            Assert.AreEqual("110000000000000000000000", ReadDetailString(detail, "FootprintMask"));
+            AssertFootprint(detail.FootprintPreview.Value, 2, 1, 2);
 
             Assert.AreEqual(InventoryMoveResult.Success, m_model.TryRotateItem(m_containerId, instanceId));
 
-            Assert.AreEqual("100000100000000000000000", ReadDetailString(detail, "FootprintMask"));
+            AssertFootprint(detail.FootprintPreview.Value, 1, 2, 2);
         }
 
         [Test]
@@ -499,8 +504,99 @@ namespace Tests.Inventory
             Assert.AreEqual(FOOTPRINT_CELL_COUNT, footprintGrid.childCount, "占格图固定 6x4 共 24 格");
             Assert.IsNotNull(weight, "占格图旁需要重量文字");
 
+            Transform layoutButton = footprint.Find("Btn_ContainerLayout");
+            Assert.IsNotNull(layoutButton, "详情占格旁需要容器布局问号按钮");
+            Assert.IsNotNull(layoutButton.GetComponent<Button>(), "容器布局问号按钮需要可点击");
+            Assert.IsNotNull(layoutButton.GetComponent<Image>(), "容器布局问号按钮需要射线底板");
+            Assert.IsTrue(layoutButton.GetComponent<Image>().raycastTarget, "问号按钮底板必须接收点击");
+            TMP_Text layoutLabel = layoutButton.Find("Txt_ContainerLayout").GetComponent<TMP_Text>();
+            Assert.IsNotNull(layoutLabel, "容器布局按钮文字缺失");
+            Assert.AreEqual("?", layoutLabel.text, "容器布局按钮固定显示问号");
+            Assert.IsFalse(layoutButton.gameObject.activeSelf, "普通物品默认隐藏容器布局入口");
+
             Assert.IsNull(card.Find("Txt_Spec"), "旧规格文字应移除");
             Assert.IsNull(card.Find("Txt_DetailEntries"), "类型属性条目应从详情面板移除");
+        }
+
+        [Test]
+        public void ContainerLayout_ForIrregularContainer_BuildsFullMaskAndRegionConnections()
+        {
+            InventoryContainerConfigSO container = m_kit.CreateContainer(5, 3, "异形胸挂",
+                new[] { "#.#..", "##...", "#####" },
+                new[] { "A.A..", "AA...", "BBBBB" });
+            InventoryItemConfigSO config = m_kit.CreateContainerItem(container, 3, 2);
+            int instanceId = AddItem(config.ItemId, new Vector2Int(0, 0));
+            ItemContainerLayoutViewModel layout = new ItemContainerLayoutViewModel(m_model);
+            m_popups.Add(layout);
+            layout.OnBind();
+
+            layout.Open(m_containerId, instanceId);
+
+            ItemFootprintPreviewVO preview = layout.Preview.Value;
+            Assert.IsTrue(preview.IsContainerLayout);
+            Assert.AreEqual(5, preview.ColumnCount);
+            Assert.AreEqual(3, preview.RowCount);
+            Assert.AreEqual(9, CountSolidCells(preview));
+            Assert.AreEqual(InventorySlotEdgeKind.Boundary, preview.RightEdges[0],
+                "区域内空洞需要绘制外沿");
+            Assert.AreEqual(InventorySlotEdgeKind.None, preview.LeftEdges[1], "空洞格不能产生连接线");
+            Assert.AreEqual(InventorySlotEdgeKind.None, preview.RightEdges[1], "空洞格不能产生连接线");
+            Assert.AreEqual(InventorySlotEdgeKind.Connected, preview.BottomEdges[0]);
+            Assert.AreEqual(InventorySlotEdgeKind.Connected, preview.RightEdges[5],
+                "同区域相邻格必须连接");
+            Assert.AreEqual(InventorySlotEdgeKind.Boundary, preview.TopEdges[10],
+                "跨逻辑区域需要重新绘制外沿");
+            Assert.AreEqual(InventorySlotEdgeKind.Connected, preview.RightEdges[10]);
+            Assert.AreEqual("5 x 3", layout.SizeLabel.Value);
+        }
+
+        [Test]
+        public void ContainerLayoutPrefab_HasIndependentPopupHierarchy()
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(CONTAINER_LAYOUT_PREFAB_PATH);
+            Assert.IsNotNull(prefab, "容器布局预制体加载失败：" + CONTAINER_LAYOUT_PREFAB_PATH);
+            Assert.IsNotNull(prefab.GetComponent<UIItemContainerLayoutPanel>(), "容器布局根节点缺少视图组件");
+
+            Transform card = prefab.transform.Find("Panel_ContainerLayout");
+            Assert.IsNotNull(card, "容器布局卡片节点缺失");
+            Assert.IsNotNull(card.Find("Layout_Header/Txt_Title"), "容器布局标题节点缺失");
+            Assert.IsNotNull(card.Find("Layout_Header/Txt_Size"), "容器尺寸节点缺失");
+            Assert.IsNotNull(card.Find("Layout_Header/Btn_Close"), "容器布局关闭按钮缺失");
+            Assert.IsNotNull(card.Find("Layout_Viewport/Layout_Grid"), "容器布局网格节点缺失");
+        }
+
+        [Test]
+        public void ContainerLayoutPrefab_DrawsHolesAndConnectedEdges()
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(CONTAINER_LAYOUT_PREFAB_PATH);
+            Assert.IsNotNull(prefab, "容器布局预制体加载失败：" + CONTAINER_LAYOUT_PREFAB_PATH);
+            GameObject instance = UnityEngine.Object.Instantiate(prefab);
+            try
+            {
+                UIItemContainerLayoutPanel view = instance.GetComponent<UIItemContainerLayoutPanel>();
+                Transform gridRoot = instance.transform.Find(
+                    "Panel_ContainerLayout/Layout_Viewport/Layout_Grid");
+                Assert.IsNotNull(gridRoot, "容器布局网格节点缺失");
+                ItemFootprintPreviewVO preview = BuildContainerLayoutPreview();
+                InvokePrivate(view, "OnAwake");
+                InvokePrivate(view, "RefreshGrid", preview);
+
+                Assert.AreEqual(15, gridRoot.childCount, "完整容器布局必须保留所有网格占位");
+                Transform hole = gridRoot.GetChild(2);
+                Assert.IsFalse(hole.GetComponent<Image>().enabled, "空洞格不能绘制底色");
+                Assert.IsFalse(hole.Find("Img_BorderTop").GetComponent<Image>().enabled);
+                Assert.IsFalse(hole.Find("Img_BorderRight").GetComponent<Image>().enabled);
+                Assert.IsFalse(hole.Find("Img_BorderBottom").GetComponent<Image>().enabled);
+                Assert.IsFalse(hole.Find("Img_BorderLeft").GetComponent<Image>().enabled);
+
+                Image connectedRight = gridRoot.GetChild(0).Find("Img_BorderRight").GetComponent<Image>();
+                Assert.IsTrue(connectedRight.enabled, "同区域相邻格必须绘制连接线");
+                Assert.AreEqual(new Color(0.5f, 0.56f, 0.64f, 0.65f), connectedRight.color);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(instance);
+            }
         }
 
         [TestCase(1000, "武器类型")]
@@ -667,6 +763,64 @@ namespace Tests.Inventory
         // 把反射读到的值按字符串返回
         private static string ReadPropertyAsString(object target, string propertyName)
             => ReadProperty(target, propertyName) as string;
+
+        // 校验物品自身物理占格的尺寸与实心格数量
+        private static void AssertFootprint(ItemFootprintPreviewVO preview, int columns, int rows, int solidCount)
+        {
+            Assert.IsNotNull(preview);
+            Assert.AreEqual(columns, preview.ColumnCount);
+            Assert.AreEqual(rows, preview.RowCount);
+            Assert.AreEqual(solidCount, CountSolidCells(preview));
+        }
+
+        // 统计预览中的实心格数量
+        private static int CountSolidCells(ItemFootprintPreviewVO preview)
+        {
+            int count = 0;
+            for (int i = 0; i < preview.SolidCells.Count; i++)
+            {
+                if (preview.SolidCells[i])
+                    count++;
+            }
+
+            return count;
+        }
+
+        // 构造带空洞与一条区域连接线的完整容器预览
+        private static ItemFootprintPreviewVO BuildContainerLayoutPreview()
+        {
+            const int width = 5;
+            const int height = 3;
+            const int cellCount = width * height;
+            bool[] solidCells = new bool[cellCount];
+            InventorySlotEdgeKind[] topEdges = new InventorySlotEdgeKind[cellCount];
+            InventorySlotEdgeKind[] rightEdges = new InventorySlotEdgeKind[cellCount];
+            InventorySlotEdgeKind[] bottomEdges = new InventorySlotEdgeKind[cellCount];
+            InventorySlotEdgeKind[] leftEdges = new InventorySlotEdgeKind[cellCount];
+
+            for (int i = 0; i < cellCount; i++)
+            {
+                solidCells[i] = i != 2;
+                topEdges[i] = InventorySlotEdgeKind.Boundary;
+                rightEdges[i] = InventorySlotEdgeKind.Boundary;
+                bottomEdges[i] = InventorySlotEdgeKind.Boundary;
+                leftEdges[i] = InventorySlotEdgeKind.Boundary;
+            }
+
+            rightEdges[0] = InventorySlotEdgeKind.Connected;
+            leftEdges[1] = InventorySlotEdgeKind.Connected;
+            return new ItemFootprintPreviewVO(true, width, height, solidCells, topEdges, rightEdges,
+                bottomEdges, leftEdges);
+        }
+
+        // 调用详情视图的私有初始化与刷新入口
+        private static object InvokePrivate(object target, string methodName, params object[] args)
+        {
+            MethodInfo method = target.GetType().GetMethod(methodName,
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.IsNotNull(method, "私有方法缺失：" + target.GetType().Name + "." + methodName);
+            return method.Invoke(target, args);
+        }
 
         // 按 ViewBase 拆除顺序回收浮层视图模型
         private static void DisposeViewModel(ViewModelBase viewModel)

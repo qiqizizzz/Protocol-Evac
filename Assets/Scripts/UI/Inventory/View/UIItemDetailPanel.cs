@@ -6,6 +6,7 @@
  * └──────────────────────────────────┘
  */
 
+using Cysharp.Threading.Tasks;
 using Framework.QTower.MVVM.View;
 using UI.Inventory.View.Tools;
 using TMPro;
@@ -26,13 +27,18 @@ namespace UI.Inventory.View
         private const string NAME_PATH = HEADER_PATH + "/Txt_Name";
         private const string VALUE_PATH = META_PATH + "/Txt_Value";
         private const string TAGS_PATH = META_PATH + "/Txt_Tags";
-        private const string WEIGHT_PATH = SHOWCASE_PATH + "/Layout_Footprint/Txt_Weight";
-        private const string FOOTPRINT_GRID_PATH = SHOWCASE_PATH + "/Layout_Footprint/Layout_FootprintGrid";
+        private const string FOOTPRINT_PATH = SHOWCASE_PATH + "/Layout_Footprint";
+        private const string WEIGHT_PATH = FOOTPRINT_PATH + "/Txt_Weight";
+        private const string FOOTPRINT_GRID_PATH = FOOTPRINT_PATH + "/Layout_FootprintGrid";
+        private const string CONTAINER_LAYOUT_BUTTON_PATH =
+            FOOTPRINT_PATH + "/Btn_ContainerLayout";
         private const string DIVIDER_PATH = CARD_PATH + "/Img_Divider";
         private const string DESCRIPTION_PATH = CARD_PATH + "/Txt_Description";
         private const string CLOSE_PATH = HEADER_PATH + "/Btn_Close";
 
         private const float ITEM_GAP = 12f;
+        private const float CONTAINER_LAYOUT_BUTTON_SIZE = 20f;
+        private const float CONTAINER_LAYOUT_BUTTON_SPACING = 6f;
         private const int FOOTPRINT_CELL_COUNT = 24;
         private static readonly Color m_footprintFilledColor = new Color(0.62f, 0.67f, 0.73f, 0.95f);
         private static readonly Color m_footprintEmptyColor = new Color(0.2f, 0.23f, 0.27f, 0.7f);
@@ -49,10 +55,13 @@ namespace UI.Inventory.View
         private TMP_Text m_descriptionText;
         private Image[] m_footprintCells;
         private Button m_closeButton;
+        private Button m_containerLayoutButton;
         private Rect m_anchorItemScreenRect;
         private bool m_preferLeft;
         private bool m_hasAnchor;
         private bool m_hasFootprintGrid;
+        private bool m_containerLayoutOpening;
+        private int m_containerLayoutGeneration;
 
         #region 生命周期
         protected override ItemDetailViewModel CreateViewModel() => new ItemDetailViewModel();
@@ -70,18 +79,29 @@ namespace UI.Inventory.View
             m_weightText = FindComponent<TMP_Text>(WEIGHT_PATH);
             m_descriptionText = FindComponent<TMP_Text>(DESCRIPTION_PATH);
             m_closeButton = FindComponent<Button>(CLOSE_PATH);
+            m_containerLayoutButton = FindComponent<Button>(CONTAINER_LAYOUT_BUTTON_PATH);
+            EnsureContainerLayoutButton();
             CacheFootprintCells();
         }
 
         protected override void BindViewModel(ItemDetailViewModel viewModel)
         {
             m_closeButton.onClick.AddListener(viewModel.Close);
+            if (m_containerLayoutButton != null)
+                m_containerLayoutButton.onClick.AddListener(viewModel.RequestContainerLayout);
 
             Scope.Bind(viewModel.Title, text => m_nameText.text = text);
             Scope.Bind(viewModel.Tags, text => m_tagsText.text = text);
             Scope.Bind(viewModel.Value, text => m_valueText.text = text);
             Scope.Bind(viewModel.WeightLabel, text => m_weightText.text = text);
-            Scope.Bind(viewModel.FootprintMask, UpdateFootprintMask);
+            Scope.Bind(viewModel.FootprintPreview, UpdateFootprintPreview);
+            Scope.Bind(viewModel.CanShowContainerLayout,
+                canShow =>
+                {
+                    if (m_containerLayoutButton != null)
+                        m_containerLayoutButton.gameObject.SetActive(canShow);
+                });
+            Scope.Bind(viewModel.ContainerLayoutRequested, () => OpenContainerLayoutAsync().Forget());
             Scope.Bind(viewModel.Description,
                 text =>
                 {
@@ -106,6 +126,9 @@ namespace UI.Inventory.View
                     out Rect itemScreenRect, out bool preferLeft))
                 return;
 
+            m_containerLayoutGeneration++;
+            HideContainerLayoutPopup();
+
             // 排序需高于面板才能接收关闭按钮点击, 同级排序仅决定显示先后
             ItemPopupPlacement.RaiseAbovePanels(gameObject);
             transform.SetAsLastSibling();
@@ -116,6 +139,13 @@ namespace UI.Inventory.View
             Canvas.ForceUpdateCanvases();
             LayoutRebuilder.ForceRebuildLayoutImmediate(m_cardRect);
             ItemPopupPlacement.AnchorToScreenRect(m_rect, m_cardRect, itemScreenRect, ITEM_GAP, preferLeft);
+        }
+
+        // 详情收起时同步撤掉独立容器布局, 并让仍在加载的打开请求失效
+        protected override void OnHide()
+        {
+            m_containerLayoutGeneration++;
+            HideContainerLayoutPopup();
         }
         #endregion
 
@@ -151,16 +181,97 @@ namespace UI.Inventory.View
             m_hasFootprintGrid = true;
         }
 
-        // 按掩码区分实心格与预览空白格
-        private void UpdateFootprintMask(string mask)
+        // 详情占格只绘制物品自身物理体积
+        private void UpdateFootprintPreview(ItemFootprintPreviewVO preview)
         {
             if (!m_hasFootprintGrid) return;
 
             for (int i = 0; i < m_footprintCells.Length; i++)
             {
-                bool filled = mask != null && i < mask.Length && mask[i] == '1';
+                bool filled = preview != null && preview.SolidCells != null &&
+                    i < preview.SolidCells.Count && preview.SolidCells[i];
                 m_footprintCells[i].color = filled ? m_footprintFilledColor : m_footprintEmptyColor;
             }
+        }
+
+        // 兼容尚未重生成的详情预制体, 在占格旁补建问号按钮
+        private void EnsureContainerLayoutButton()
+        {
+            if (m_containerLayoutButton != null) return;
+
+            Transform footprint = transform.Find(FOOTPRINT_PATH);
+            if (footprint == null)
+            {
+                QLog.Error($"容器布局入口缺少父节点：{FOOTPRINT_PATH}");
+                return;
+            }
+
+            if (footprint is RectTransform footprintRect)
+                footprintRect.sizeDelta +=
+                    new Vector2(CONTAINER_LAYOUT_BUTTON_SIZE + CONTAINER_LAYOUT_BUTTON_SPACING, 0f);
+
+            GameObject buttonNode = new GameObject("Btn_ContainerLayout", typeof(RectTransform));
+            buttonNode.transform.SetParent(footprint, false);
+            RectTransform buttonRect = buttonNode.GetComponent<RectTransform>();
+            buttonRect.sizeDelta = new Vector2(CONTAINER_LAYOUT_BUTTON_SIZE, CONTAINER_LAYOUT_BUTTON_SIZE);
+
+            Image image = buttonNode.AddComponent<Image>();
+            image.color = new Color(1f, 1f, 1f, 0.12f);
+            image.raycastTarget = true;
+
+            Button button = buttonNode.AddComponent<Button>();
+            button.targetGraphic = image;
+
+            LayoutElement layout = buttonNode.AddComponent<LayoutElement>();
+            layout.preferredWidth = CONTAINER_LAYOUT_BUTTON_SIZE;
+            layout.preferredHeight = CONTAINER_LAYOUT_BUTTON_SIZE;
+
+            GameObject labelNode = new GameObject("Txt_ContainerLayout", typeof(RectTransform));
+            labelNode.transform.SetParent(buttonNode.transform, false);
+            RectTransform labelRect = labelNode.GetComponent<RectTransform>();
+            labelRect.anchorMin = Vector2.zero;
+            labelRect.anchorMax = Vector2.one;
+            labelRect.offsetMin = Vector2.zero;
+            labelRect.offsetMax = Vector2.zero;
+
+            TextMeshProUGUI label = labelNode.AddComponent<TextMeshProUGUI>();
+            label.text = "?";
+            label.fontSize = 16f;
+            label.alignment = TextAlignmentOptions.Midline;
+            label.color = new Color(0.9f, 0.93f, 0.98f, 1f);
+            label.raycastTarget = false;
+
+            buttonNode.SetActive(false);
+            m_containerLayoutButton = button;
+            QLog.Warning($"详情预制体缺少 {CONTAINER_LAYOUT_BUTTON_PATH}, 已运行时补建");
+        }
+
+        // 打开独立窗口展示容器完整内部布局
+        private async UniTaskVoid OpenContainerLayoutAsync()
+        {
+            if (m_containerLayoutOpening || !ViewModel.CanShowContainerLayout.Value) return;
+
+            m_containerLayoutOpening = true;
+            int generation = m_containerLayoutGeneration;
+            int containerId = ViewModel.ContainerId;
+            int instanceId = ViewModel.InstanceId;
+
+            await MvvmRoot.Instance.Windows.ShowAsync<UIItemContainerLayoutPanel>(containerId, instanceId);
+
+            m_containerLayoutOpening = false;
+
+            // 等待期间详情已收起或换了物品, 迟到的窗口必须立刻藏掉
+            if (generation != m_containerLayoutGeneration || containerId != ViewModel.ContainerId ||
+                instanceId != ViewModel.InstanceId || !ViewModel.CanShowContainerLayout.Value)
+                HideContainerLayoutPopup();
+        }
+
+        // 只有实例已创建时才隐藏, 未打开状态不触发窗口服务报错
+        private static void HideContainerLayoutPopup()
+        {
+            MvvmRoot root = MvvmRoot.Instance;
+            if (root != null && root.Windows.TryGet(out UIItemContainerLayoutPanel popup))
+                popup.Hide();
         }
 
         // 空属性或空描述直接收起整段, 让详情卡片按剩余内容自动缩短

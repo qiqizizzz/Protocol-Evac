@@ -46,6 +46,8 @@ namespace UI.Inventory
                 parent => ResManager.InstantiateAsync(UIDefines.UIEquipmentPanel, parent));
             root.Windows.RegisterAsync<UIItemDetailPanel>(
                 parent => ResManager.InstantiateAsync(UIDefines.UIItemDetailPanel, parent));
+            root.Windows.RegisterAsync<UIItemContainerLayoutPanel>(
+                parent => ResManager.InstantiateAsync(UIDefines.UIItemContainerLayoutPanel, parent));
             root.Windows.RegisterAsync<UIItemMenuPanel>(
                 parent => ResManager.InstantiateAsync(UIDefines.UIItemMenuPanel, parent));
             root.Windows.RegisterAsync<UIItemSplitPanel>(

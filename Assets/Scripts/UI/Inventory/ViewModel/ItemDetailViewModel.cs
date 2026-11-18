@@ -7,7 +7,6 @@
 */
 
 using System;
-using System.Collections.Generic;
 using System.Globalization;
 using Framework.QTower.MVVM.View;
 using Framework.QTower.MVVM.ViewModel;
@@ -30,24 +29,31 @@ namespace UI.Inventory
         public IReadOnlyReactiveProperty<string> Tags => m_tags;
         public IReadOnlyReactiveProperty<string> Value => m_value;
         public IReadOnlyReactiveProperty<string> WeightLabel => m_weightLabel;
-        public IReadOnlyReactiveProperty<string> FootprintMask => m_footprintMask;
+        public IReadOnlyReactiveProperty<ItemFootprintPreviewVO> FootprintPreview => m_footprintPreview;
+        public IReadOnlyReactiveProperty<bool> CanShowContainerLayout => m_canShowContainerLayout;
         public IReadOnlyReactiveProperty<string> Description => m_description;
         public IReadOnlyReactiveProperty<bool> HasContent => m_hasContent;
         public IReadOnlyReactiveProperty<Sprite> Icon => m_icon;
         public IReadOnlyReactiveProperty<Color> AccentColor => m_accentColor;
         public ISignal HideRequested => m_hideRequested;
+        public ISignal ContainerLayoutRequested => m_containerLayoutRequested;
+
+        public int ContainerId => m_containerId;
+        public int InstanceId => m_instanceId;
 
         private readonly IInventoryModel m_model;
         private readonly ReactiveProperty<string> m_title;
         private readonly ReactiveProperty<string> m_tags;
         private readonly ReactiveProperty<string> m_value;
         private readonly ReactiveProperty<string> m_weightLabel;
-        private readonly ReactiveProperty<string> m_footprintMask;
+        private readonly ReactiveProperty<ItemFootprintPreviewVO> m_footprintPreview;
+        private readonly ReactiveProperty<bool> m_canShowContainerLayout;
         private readonly ReactiveProperty<string> m_description;
         private readonly ReactiveProperty<bool> m_hasContent;
         private readonly ReactiveProperty<Sprite> m_icon;
         private readonly ReactiveProperty<Color> m_accentColor;
         private readonly Signal m_hideRequested;
+        private readonly Signal m_containerLayoutRequested;
 
         private int m_containerId;
         private int m_instanceId = NO_ITEM;
@@ -64,12 +70,14 @@ namespace UI.Inventory
             m_tags = CreateProperty(string.Empty);
             m_value = CreateProperty(string.Empty);
             m_weightLabel = CreateProperty(string.Empty);
-            m_footprintMask = CreateProperty(string.Empty);
+            m_footprintPreview = CreateProperty(ItemFootprintPreviewVO.Empty);
+            m_canShowContainerLayout = CreateProperty(false);
             m_description = CreateProperty(string.Empty);
             m_hasContent = CreateProperty(false);
             m_icon = CreateProperty<Sprite>(null);
             m_accentColor = CreateProperty(Color.white);
             m_hideRequested = CreateSignal();
+            m_containerLayoutRequested = CreateSignal();
         }
 
         #region 生命周期
@@ -99,6 +107,14 @@ namespace UI.Inventory
 
         // 关闭按钮：详情为临时浮层, 关闭时仅隐藏不销毁
         public void Close() => m_hideRequested.Fire();
+
+        // 请求打开当前容器物品的完整内部布局
+        public void RequestContainerLayout()
+        {
+            if (!m_canShowContainerLayout.Value) return;
+
+            m_containerLayoutRequested.Fire();
+        }
         #endregion
 
         #region Private Function
@@ -118,6 +134,7 @@ namespace UI.Inventory
 
             if (!vo.TryGetItem(m_instanceId, out InventoryItemVO item))
             {
+                m_canShowContainerLayout.Set(false);
                 m_hideRequested.Fire();
                 return;
             }
@@ -132,7 +149,8 @@ namespace UI.Inventory
             m_tags.Set(BuildTags(config));
             m_value.Set(FormatNumber(item.UnitValue));
             m_weightLabel.Set(config != null ? FormatWeight(config.UnitWeight) + "KG" : string.Empty);
-            m_footprintMask.Set(BuildFootprintMask(item, config));
+            m_footprintPreview.Set(BuildFootprintPreview(item));
+            m_canShowContainerLayout.Set(config != null && config.IsContainer && config.Container != null);
             string description = config != null ? config.Description : string.Empty;
             m_description.Set(description);
             m_hasContent.Set(!string.IsNullOrWhiteSpace(description));
@@ -144,22 +162,13 @@ namespace UI.Inventory
         private static string BuildTags(InventoryItemConfigSO config)
             => config != null ? config.CategoryName : string.Empty;
 
-        // 把物品或容器的实心格裁切到固定 6x4 预览掩码
-        private static string BuildFootprintMask(InventoryItemVO item, InventoryItemConfigSO config)
+        // 把物品自身物理占格裁切到固定 6x4 预览
+        private static ItemFootprintPreviewVO BuildFootprintPreview(InventoryItemVO item)
         {
-            int width = item.Size.x;
-            int height = item.Size.y;
-            IReadOnlyList<bool> sourceMask = null;
+            int width = Math.Max(1, item.Size.x);
+            int height = Math.Max(1, item.Size.y);
 
-            if (config != null && config.IsContainer && config.Container != null)
-            {
-                width = config.Container.Width;
-                height = config.Container.Height;
-                sourceMask = config.Container.Mask;
-            }
-
-            char[] preview = new char[FOOTPRINT_CELL_COUNT];
-            for (int i = 0; i < preview.Length; i++) preview[i] = '0';
+            bool[] solidCells = new bool[FOOTPRINT_CELL_COUNT];
 
             int visibleWidth = Math.Min(width, FOOTPRINT_COLUMNS);
             int visibleHeight = Math.Min(height, FOOTPRINT_ROWS);
@@ -167,14 +176,14 @@ namespace UI.Inventory
             {
                 for (int x = 0; x < visibleWidth; x++)
                 {
-                    int sourceIndex = y * width + x;
-                    bool filled = sourceMask == null ||
-                        (sourceIndex < sourceMask.Count && sourceMask[sourceIndex]);
-                    if (filled) preview[y * FOOTPRINT_COLUMNS + x] = '1';
+                    int previewIndex = y * FOOTPRINT_COLUMNS + x;
+                    solidCells[previewIndex] = true;
                 }
             }
 
-            return new string(preview);
+            return new ItemFootprintPreviewVO(false, visibleWidth, visibleHeight, solidCells,
+                Array.Empty<InventorySlotEdgeKind>(), Array.Empty<InventorySlotEdgeKind>(),
+                Array.Empty<InventorySlotEdgeKind>(), Array.Empty<InventorySlotEdgeKind>());
         }
 
         private static string FormatWeight(float weight) => weight.ToString("0.##", CultureInfo.InvariantCulture);

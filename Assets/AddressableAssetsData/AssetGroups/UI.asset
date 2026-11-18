@@ -42,6 +42,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 86910d519edfdd248869b2c466f9d035
+    m_Address: UIItemContainerLayoutPanel
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 8a49fc37f7fcd9542aa05ca3ee21c848
     m_Address: UICombatHUD
     m_ReadOnly: 0

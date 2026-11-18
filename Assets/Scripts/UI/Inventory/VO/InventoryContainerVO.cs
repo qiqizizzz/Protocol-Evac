@@ -77,23 +77,40 @@ namespace UI.Inventory
         /// <param name="offsetY">相邻格行偏移</param>
         /// <param name="regionId">当前格所属区域号</param>
         public InventorySlotEdgeKind ResolveEdgeKind(int x, int y, int offsetX, int offsetY, int regionId)
-        {
-            if (x < 0 || x >= Width || y < 0 || y >= Height) return InventorySlotEdgeKind.None;
+            => ResolveEdgeKind(Width, Height, Mask, RegionIds, x, y, offsetX, offsetY, regionId);
 
-            int index = y * Width + x;
-            if (index >= Mask.Count || index >= RegionIds.Count) return InventorySlotEdgeKind.None;
-            if (!Mask[index] || regionId < 0) return InventorySlotEdgeKind.None;
+        /// <summary>
+        /// 按网格定义解析指定格某侧与相邻格子的区域连接状态
+        /// </summary>
+        /// <param name="width">网格列数</param>
+        /// <param name="height">网格行数</param>
+        /// <param name="mask">行主序实心掩码</param>
+        /// <param name="regionIds">行主序区域表</param>
+        /// <param name="x">当前格列号</param>
+        /// <param name="y">当前格行号</param>
+        /// <param name="offsetX">相邻格列偏移</param>
+        /// <param name="offsetY">相邻格行偏移</param>
+        /// <param name="regionId">当前格所属区域号</param>
+        public static InventorySlotEdgeKind ResolveEdgeKind(int width, int height, IReadOnlyList<bool> mask,
+            IReadOnlyList<int> regionIds, int x, int y, int offsetX, int offsetY, int regionId)
+        {
+            if (mask == null || regionIds == null) return InventorySlotEdgeKind.None;
+            if (x < 0 || x >= width || y < 0 || y >= height) return InventorySlotEdgeKind.None;
+
+            int index = y * width + x;
+            if (index >= mask.Count || index >= regionIds.Count) return InventorySlotEdgeKind.None;
+            if (!mask[index] || regionId < 0) return InventorySlotEdgeKind.None;
 
             int neighborX = x + offsetX;
             int neighborY = y + offsetY;
-            if (neighborX < 0 || neighborX >= Width || neighborY < 0 || neighborY >= Height)
+            if (neighborX < 0 || neighborX >= width || neighborY < 0 || neighborY >= height)
                 return InventorySlotEdgeKind.Boundary;
 
-            int neighborIndex = neighborY * Width + neighborX;
-            if (neighborIndex >= Mask.Count || neighborIndex >= RegionIds.Count)
+            int neighborIndex = neighborY * width + neighborX;
+            if (neighborIndex >= mask.Count || neighborIndex >= regionIds.Count)
                 return InventorySlotEdgeKind.None;
-            if (!Mask[neighborIndex]) return InventorySlotEdgeKind.Boundary;
-            if (RegionIds[neighborIndex] != regionId) return InventorySlotEdgeKind.Boundary;
+            if (!mask[neighborIndex]) return InventorySlotEdgeKind.Boundary;
+            if (regionIds[neighborIndex] != regionId) return InventorySlotEdgeKind.Boundary;
 
             return InventorySlotEdgeKind.Connected;
         }

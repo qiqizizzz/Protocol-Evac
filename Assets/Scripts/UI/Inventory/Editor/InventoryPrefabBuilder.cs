@@ -55,6 +55,8 @@ namespace UI.Inventory.Editor
         private const string MENU_PATH = PREFAB_DIR + "/UIItemMenuPanel.prefab";
         private const string SPLIT_SCRIPT = "UI.Inventory.View.UIItemSplitPanel";
         private const string SPLIT_PATH = PREFAB_DIR + "/UIItemSplitPanel.prefab";
+        private const string CONTAINER_LAYOUT_SCRIPT = "UI.Inventory.View.UIItemContainerLayoutPanel";
+        private const string CONTAINER_LAYOUT_PATH = PREFAB_DIR + "/UIItemContainerLayoutPanel.prefab";
 
         private const int CELL_SIZE = 80;
         private const int CELL_SPACING = 0;
@@ -96,13 +98,14 @@ namespace UI.Inventory.Editor
         private const int DETAIL_HEADER_HEIGHT = 36;
         private const int DETAIL_META_HEIGHT = 30;
         private const int DETAIL_SHOWCASE_HEIGHT = 158;
-        private const int DETAIL_FOOTPRINT_WIDTH = 116;
+        private const int DETAIL_FOOTPRINT_WIDTH = 142;
         private const int DETAIL_FOOTPRINT_HEIGHT = 43;
         private const int DETAIL_FOOTPRINT_WEIGHT_WIDTH = 45;
         private const int DETAIL_FOOTPRINT_GRID_CELL_SIZE = 10;
         private const int DETAIL_FOOTPRINT_GRID_SPACING = 1;
         private const int DETAIL_FOOTPRINT_COLUMNS = 6;
         private const int DETAIL_FOOTPRINT_ROWS = 4;
+        private const int DETAIL_CONTAINER_LAYOUT_BUTTON_SIZE = 20;
         private const int DETAIL_ACTION_HEIGHT = 40;
         private const string DETAIL_PANEL_SPRITE_PATH = "Assets/Art/UI/Prototype/SciFiHud/Panels/Panel_9Slice.png";
         private const string DETAIL_VALUE_SPRITE_PATH = "Assets/Art/UI/Prototype/SciFiHud/Icons/Icon_Credits.png";
@@ -122,6 +125,12 @@ namespace UI.Inventory.Editor
         private const int SPLIT_ACTION_BUTTON_WIDTH = 132;
         private const int SLIDER_HANDLE_WIDTH = 20;
         private const int SLIDER_FILL_INSET = 13;
+        private const int CONTAINER_LAYOUT_CARD_WIDTH = 620;
+        private const int CONTAINER_LAYOUT_CARD_HEIGHT = 520;
+        private const int CONTAINER_LAYOUT_PADDING = 16;
+        private const int CONTAINER_LAYOUT_HEADER_HEIGHT = 44;
+        private const int CONTAINER_LAYOUT_VIEWPORT_HEIGHT = 432;
+        private const int CONTAINER_LAYOUT_GRID_PADDING = 12;
 
         private static readonly Color m_sliderBgColor = new Color(1f, 1f, 1f, 0.18f);
         private static readonly Color m_sliderFillColor = new Color(0.62f, 0.68f, 0.75f, 0.9f);
@@ -245,6 +254,12 @@ namespace UI.Inventory.Editor
         // 仅生成物品拆分弹窗
         [MenuItem("Tools/背包7a/11.生成物品拆分弹窗预制体")]
         public static void BuildSplitPopup() => BuildPopup(BuildSplitCard, SPLIT_PATH, UIDefines.UIItemSplitPanel);
+
+        // 仅生成容量容器内部的放大布局弹窗
+        [MenuItem("Tools/背包7a/12.生成容器布局弹窗预制体")]
+        public static void BuildContainerLayoutPopup()
+            => BuildPopup(BuildContainerLayoutCard, CONTAINER_LAYOUT_PATH,
+                UIDefines.UIItemContainerLayoutPanel);
 
         // ==================== Private Function ====================
         // 在临时空场景构建弹窗节点, 保存为预制体并登记 Addressables, 不影响当前场景
@@ -487,6 +502,90 @@ namespace UI.Inventory.Editor
                 cellImage.color = m_detailFootprintColor;
                 cellImage.raycastTarget = false;
             }
+
+            GameObject containerLayout = NewNode("Btn_ContainerLayout", footprint.transform);
+            RectTransform containerLayoutRect = containerLayout.GetComponent<RectTransform>();
+            containerLayoutRect.sizeDelta = new Vector2(DETAIL_CONTAINER_LAYOUT_BUTTON_SIZE,
+                DETAIL_CONTAINER_LAYOUT_BUTTON_SIZE);
+            AddButton(containerLayout, m_popupButtonColor);
+            AddLayoutElement(containerLayout, preferredWidth: DETAIL_CONTAINER_LAYOUT_BUTTON_SIZE,
+                preferredHeight: DETAIL_CONTAINER_LAYOUT_BUTTON_SIZE);
+
+            GameObject containerLayoutText = NewNode("Txt_ContainerLayout", containerLayout.transform);
+            SetStretch(containerLayoutText.GetComponent<RectTransform>(), 0f);
+            AddTmp(containerLayoutText, "?", 16, TextAlignmentOptions.Midline, m_textPrimaryColor);
+            // 只有容量容器才显示入口, 普通物品由详情视图模型隐藏
+            containerLayout.SetActive(false);
+        }
+
+        // 容器布局弹窗：全屏遮罩上居中放大容器网格, 由运行时视图按容器定义生成格子
+        private static GameObject BuildContainerLayoutCard()
+        {
+            GameObject root = NewNode("UIItemContainerLayoutPanel", null);
+            SetStretch(root.GetComponent<RectTransform>(), 0f);
+
+            GameObject dismiss = NewNode("Btn_Dismiss", root.transform);
+            SetStretch(dismiss.GetComponent<RectTransform>(), 0f);
+            AddButton(dismiss, m_popupDimColor);
+
+            GameObject card = NewNode("Panel_ContainerLayout", root.transform);
+            SetRect(card.GetComponent<RectTransform>(), m_centerAnchor, m_centerAnchor, m_centerAnchor,
+                new Vector2(CONTAINER_LAYOUT_CARD_WIDTH, CONTAINER_LAYOUT_CARD_HEIGHT), Vector2.zero);
+            Image cardImage = card.AddComponent<Image>();
+            cardImage.color = m_popupBgColor;
+            cardImage.raycastTarget = true;
+
+            VerticalLayoutGroup cardLayout = card.AddComponent<VerticalLayoutGroup>();
+            cardLayout.padding = new RectOffset(CONTAINER_LAYOUT_PADDING, CONTAINER_LAYOUT_PADDING,
+                CONTAINER_LAYOUT_PADDING, CONTAINER_LAYOUT_PADDING);
+            cardLayout.spacing = 12f;
+            cardLayout.childAlignment = TextAnchor.UpperCenter;
+            cardLayout.childControlWidth = true;
+            cardLayout.childControlHeight = true;
+            cardLayout.childForceExpandWidth = true;
+            cardLayout.childForceExpandHeight = false;
+
+            GameObject header = NewNode("Layout_Header", card.transform);
+            AddLayoutElement(header, preferredHeight: CONTAINER_LAYOUT_HEADER_HEIGHT);
+            HorizontalLayoutGroup headerLayout = header.AddComponent<HorizontalLayoutGroup>();
+            headerLayout.spacing = 10f;
+            headerLayout.childAlignment = TextAnchor.MiddleLeft;
+            headerLayout.childControlWidth = true;
+            headerLayout.childControlHeight = true;
+            headerLayout.childForceExpandWidth = false;
+            headerLayout.childForceExpandHeight = true;
+
+            GameObject title = NewNode("Txt_Title", header.transform);
+            AddTmp(title, "容器布局", 26, TextAlignmentOptions.MidlineLeft, m_textPrimaryColor);
+            AddLayoutElement(title, preferredHeight: CONTAINER_LAYOUT_HEADER_HEIGHT, flexibleWidth: 1f);
+
+            GameObject size = NewNode("Txt_Size", header.transform);
+            AddTmp(size, "0 x 0", 18, TextAlignmentOptions.MidlineRight, m_textSecondColor);
+            AddLayoutElement(size, preferredWidth: 110f, preferredHeight: CONTAINER_LAYOUT_HEADER_HEIGHT);
+
+            GameObject close = NewNode("Btn_Close", header.transform);
+            AddButton(close, m_popupButtonColor);
+            AddLayoutElement(close, preferredWidth: 34f, preferredHeight: 34f);
+            GameObject closeText = NewNode("Txt_Close", close.transform);
+            SetStretch(closeText.GetComponent<RectTransform>(), 0f);
+            AddTmp(closeText, "×", 24, TextAlignmentOptions.Midline, m_textPrimaryColor);
+
+            GameObject viewport = NewNode("Layout_Viewport", card.transform);
+            AddLayoutElement(viewport, preferredHeight: CONTAINER_LAYOUT_VIEWPORT_HEIGHT);
+
+            GameObject grid = NewNode("Layout_Grid", viewport.transform);
+            SetStretch(grid.GetComponent<RectTransform>(), CONTAINER_LAYOUT_GRID_PADDING);
+            GridLayoutGroup gridLayout = grid.AddComponent<GridLayoutGroup>();
+            gridLayout.cellSize = new Vector2(64f, 64f);
+            gridLayout.spacing = Vector2.zero;
+            gridLayout.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            gridLayout.constraintCount = 1;
+            gridLayout.startCorner = GridLayoutGroup.Corner.UpperLeft;
+            gridLayout.startAxis = GridLayoutGroup.Axis.Horizontal;
+            gridLayout.childAlignment = TextAnchor.MiddleCenter;
+
+            AttachScript(root, CONTAINER_LAYOUT_SCRIPT);
+            return root;
         }
 
         // 操作行：丢弃与检视只提供视觉占位, 后续接业务时直接取对应 Button
