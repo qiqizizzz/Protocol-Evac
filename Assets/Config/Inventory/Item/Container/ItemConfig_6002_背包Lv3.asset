@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: "ItemConfig_6002_\u80CC\u5305Lv3"
   m_EditorClassIdentifier: 
   ItemIdValue: 6002
-  DisplayNameValue: "\u80CC\u5305Lv3"
+  DisplayNameValue: "\u80CC\u5305"
+  CategoryNameValue: "\u6218\u672F\u6302\u8F7D\u5BB9\u5668"
   ItemTypeValue: 0
   CanRotateValue: 0
   MaxStackCountValue: 1

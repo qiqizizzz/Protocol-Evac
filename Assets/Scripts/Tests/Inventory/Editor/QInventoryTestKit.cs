@@ -62,6 +62,7 @@ namespace Tests.Inventory
             // 配置字段是 [SerializeField] 私有的, 没有公开 setter, 只能反射写入
             SetField(config, "ItemIdValue", itemId);
             SetField(config, "DisplayNameValue", "TEST_" + itemId);
+            SetField(config, "CategoryNameValue", ResolveCategoryName(itemType, container));
             SetField(config, "ItemTypeValue", itemType);
             SetField(config, "CanRotateValue", canRotate);
             SetField(config, "MaxStackCountValue", maxStackCount);
@@ -78,6 +79,25 @@ namespace Tests.Inventory
             // register 传 false 造出「表里有但没登记」的物品, 用来验总配置能否整批登记
             if (register) ItemRegistry.Register(config);
             return config;
+        }
+
+        // 测试配置同样走正式分类语义, 让详情标签断言覆盖真实数据流
+        private static string ResolveCategoryName(InventoryItemType itemType, InventoryContainerConfigSO container)
+        {
+            if (container != null) return "战术挂载容器";
+
+            return itemType switch
+            {
+                InventoryItemType.Medical => "医疗物资",
+                InventoryItemType.Valuable => "工艺藏品",
+                InventoryItemType.Weapon => "战术武器",
+                InventoryItemType.Ammo => "弹药补给",
+                InventoryItemType.Armor => "防护装备",
+                InventoryItemType.Food => "食品饮料",
+                InventoryItemType.Material => "物资工具",
+                InventoryItemType.Attachment => "武器配件",
+                _ => "战术装备",
+            };
         }
 
         /// <summary>

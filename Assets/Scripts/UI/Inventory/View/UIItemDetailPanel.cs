@@ -1,6 +1,6 @@
 /*
  * ┌──────────────────────────────────┐
- * │  描    述: 物品详情弹窗视图, 按物品配置展示价值、规格、专属属性与描述
+ * │  描    述: 物品详情弹窗视图, 展示分类、价值、重量、占格图与描述
  * │  类    名: UIItemDetailPanel.cs
  * │  创    建: By qiqizizzz
  * └──────────────────────────────────┘
@@ -11,6 +11,7 @@ using UI.Inventory.View.Tools;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using Utils.log;
 
 namespace UI.Inventory.View
 {
@@ -25,13 +26,16 @@ namespace UI.Inventory.View
         private const string NAME_PATH = HEADER_PATH + "/Txt_Name";
         private const string VALUE_PATH = META_PATH + "/Txt_Value";
         private const string TAGS_PATH = META_PATH + "/Txt_Tags";
-        private const string SPEC_PATH = SHOWCASE_PATH + "/Txt_Spec";
+        private const string WEIGHT_PATH = SHOWCASE_PATH + "/Layout_Footprint/Txt_Weight";
+        private const string FOOTPRINT_GRID_PATH = SHOWCASE_PATH + "/Layout_Footprint/Layout_FootprintGrid";
         private const string DIVIDER_PATH = CARD_PATH + "/Img_Divider";
-        private const string DETAIL_ENTRIES_PATH = CARD_PATH + "/Txt_DetailEntries";
         private const string DESCRIPTION_PATH = CARD_PATH + "/Txt_Description";
         private const string CLOSE_PATH = HEADER_PATH + "/Btn_Close";
 
         private const float ITEM_GAP = 12f;
+        private const int FOOTPRINT_CELL_COUNT = 24;
+        private static readonly Color m_footprintFilledColor = new Color(0.62f, 0.67f, 0.73f, 0.95f);
+        private static readonly Color m_footprintEmptyColor = new Color(0.2f, 0.23f, 0.27f, 0.7f);
 
         private RectTransform m_rect;
         private RectTransform m_cardRect;
@@ -41,13 +45,14 @@ namespace UI.Inventory.View
         private TMP_Text m_nameText;
         private TMP_Text m_valueText;
         private TMP_Text m_tagsText;
-        private TMP_Text m_specText;
-        private TMP_Text m_detailEntriesText;
+        private TMP_Text m_weightText;
         private TMP_Text m_descriptionText;
+        private Image[] m_footprintCells;
         private Button m_closeButton;
         private Rect m_anchorItemScreenRect;
         private bool m_preferLeft;
         private bool m_hasAnchor;
+        private bool m_hasFootprintGrid;
 
         #region 生命周期
         protected override ItemDetailViewModel CreateViewModel() => new ItemDetailViewModel();
@@ -62,10 +67,10 @@ namespace UI.Inventory.View
             m_nameText = FindComponent<TMP_Text>(NAME_PATH);
             m_valueText = FindComponent<TMP_Text>(VALUE_PATH);
             m_tagsText = FindComponent<TMP_Text>(TAGS_PATH);
-            m_specText = FindComponent<TMP_Text>(SPEC_PATH);
-            m_detailEntriesText = FindComponent<TMP_Text>(DETAIL_ENTRIES_PATH);
+            m_weightText = FindComponent<TMP_Text>(WEIGHT_PATH);
             m_descriptionText = FindComponent<TMP_Text>(DESCRIPTION_PATH);
             m_closeButton = FindComponent<Button>(CLOSE_PATH);
+            CacheFootprintCells();
         }
 
         protected override void BindViewModel(ItemDetailViewModel viewModel)
@@ -75,13 +80,8 @@ namespace UI.Inventory.View
             Scope.Bind(viewModel.Title, text => m_nameText.text = text);
             Scope.Bind(viewModel.Tags, text => m_tagsText.text = text);
             Scope.Bind(viewModel.Value, text => m_valueText.text = text);
-            Scope.Bind(viewModel.Specs, text => m_specText.text = text);
-            Scope.Bind(viewModel.DetailEntries,
-                text =>
-                {
-                    SetOptionalSectionText(m_detailEntriesText, text);
-                    RefreshLayout();
-                });
+            Scope.Bind(viewModel.WeightLabel, text => m_weightText.text = text);
+            Scope.Bind(viewModel.FootprintMask, UpdateFootprintMask);
             Scope.Bind(viewModel.Description,
                 text =>
                 {
@@ -118,6 +118,50 @@ namespace UI.Inventory.View
             ItemPopupPlacement.AnchorToScreenRect(m_rect, m_cardRect, itemScreenRect, ITEM_GAP, preferLeft);
         }
         #endregion
+
+        // 缓存固定 6x4 占格单元, 层级不符合预期时明确暴露配置错误
+        private void CacheFootprintCells()
+        {
+            m_footprintCells = new Image[FOOTPRINT_CELL_COUNT];
+            Transform grid = transform.Find(FOOTPRINT_GRID_PATH);
+            if (grid == null)
+            {
+                QLog.Error("Layout_FootprintGrid 未找到");
+                return;
+            }
+
+            if (grid.childCount != FOOTPRINT_CELL_COUNT)
+            {
+                QLog.Error($"Layout_FootprintGrid 单元数错误, 期望 {FOOTPRINT_CELL_COUNT}, 实际 {grid.childCount}");
+                return;
+            }
+
+            for (int i = 0; i < FOOTPRINT_CELL_COUNT; i++)
+            {
+                Image cell = grid.GetChild(i).GetComponent<Image>();
+                if (cell == null)
+                {
+                    QLog.Error($"Layout_FootprintGrid 第 {i} 个单元缺少 Image");
+                    return;
+                }
+
+                m_footprintCells[i] = cell;
+            }
+
+            m_hasFootprintGrid = true;
+        }
+
+        // 按掩码区分实心格与预览空白格
+        private void UpdateFootprintMask(string mask)
+        {
+            if (!m_hasFootprintGrid) return;
+
+            for (int i = 0; i < m_footprintCells.Length; i++)
+            {
+                bool filled = mask != null && i < mask.Length && mask[i] == '1';
+                m_footprintCells[i].color = filled ? m_footprintFilledColor : m_footprintEmptyColor;
+            }
+        }
 
         // 空属性或空描述直接收起整段, 让详情卡片按剩余内容自动缩短
         private static void SetOptionalSectionText(TMP_Text text, string content)

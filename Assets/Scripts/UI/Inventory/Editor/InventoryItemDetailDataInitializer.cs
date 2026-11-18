@@ -1,11 +1,12 @@
 /*
 * ┌──────────────────────────────────┐
-* │  描    述: 物品详情示例数据初始化器, 按物品种类补齐描述与专属属性
+* │  描    述: 物品详情示例数据初始化器, 补齐分类、容器名、描述与专属属性
 * │  类    名: InventoryItemDetailDataInitializer.cs
 * │  创    建: By qiqizizzz
 * └──────────────────────────────────┘
 */
 
+using System;
 using System.Collections.Generic;
 using Module.Inventory.Core.Config;
 using Module.Inventory.Core.Config.Type;
@@ -19,6 +20,8 @@ namespace UI.Inventory.Editor
     public static class InventoryItemDetailDataInitializer
     {
         private const string ITEM_ROOT = "Assets/Config/Inventory/Item";
+        private const string PROP_DISPLAY_NAME = "DisplayNameValue";
+        private const string PROP_CATEGORY_NAME = "CategoryNameValue";
         private const string PROP_DESCRIPTION = "DescriptionValue";
         private const string PROP_DETAIL_ENTRIES = "DetailEntriesValue";
         private const string PROP_ENTRY_LABEL = "LabelValue";
@@ -46,20 +49,62 @@ namespace UI.Inventory.Editor
                     continue;
                 }
 
+                bool changed = ApplyCategoryAndDisplayName(config);
                 if (!m_seedData.TryGetValue(config.ItemId, out DetailSeed seed))
                 {
                     missingSeedCount++;
                     QLog.Warning($"物品详情初始化跳过, 未配置示例数据: {config.ItemId} {config.DisplayName}");
-                    continue;
+                }
+                else
+                {
+                    changed |= ApplyMissingContent(config, seed);
                 }
 
-                if (ApplyMissingContent(config, seed))
+                if (changed)
                     updatedCount++;
             }
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             QLog.Info($"物品详情示例数据补齐完成: 扫描 {guids.Length} 件, 更新 {updatedCount} 件, 未配置 {missingSeedCount} 件");
+        }
+
+        // 写入详情分类并去掉容器展示名里的等级后缀
+        private static bool ApplyCategoryAndDisplayName(InventoryItemConfigSO config)
+        {
+            SerializedObject serialized = new SerializedObject(config);
+            SerializedProperty category = serialized.FindProperty(PROP_CATEGORY_NAME);
+            SerializedProperty displayName = serialized.FindProperty(PROP_DISPLAY_NAME);
+
+            if (category == null || displayName == null)
+            {
+                QLog.Error($"物品详情初始化失败, 分类或名称字段缺失: {config.ItemId} {config.DisplayName}");
+                return false;
+            }
+
+            bool changed = false;
+            string categoryName = ResolveCategoryName(config);
+            if (category.stringValue != categoryName)
+            {
+                category.stringValue = categoryName;
+                changed = true;
+            }
+
+            if (config.IsContainer)
+            {
+                string displayWithoutLevel = RemoveLevelSuffix(displayName.stringValue);
+                if (displayName.stringValue != displayWithoutLevel)
+                {
+                    displayName.stringValue = displayWithoutLevel;
+                    changed = true;
+                }
+            }
+
+            if (!changed) return false;
+
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(config);
+            return true;
         }
 
         // 逐项补齐空描述与空属性, 已存在的用户内容保持原样
@@ -111,6 +156,32 @@ namespace UI.Inventory.Editor
             serialized.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(config);
             return true;
+        }
+
+        // 把正式物品种类映射为详情面板分类
+        private static string ResolveCategoryName(InventoryItemConfigSO config)
+        {
+            if (config.IsContainer) return "战术挂载容器";
+
+            return config.ItemType switch
+            {
+                InventoryItemType.Weapon => "战术武器",
+                InventoryItemType.Ammo => "弹药补给",
+                InventoryItemType.Armor => "防护装备",
+                InventoryItemType.Medical => "医疗物资",
+                InventoryItemType.Valuable => "工艺藏品",
+                InventoryItemType.Food => "食品饮料",
+                InventoryItemType.Material => "物资工具",
+                InventoryItemType.Attachment => "武器配件",
+                _ => "战术装备",
+            };
+        }
+
+        // 容器展示名去掉 Lv 等级后缀, 不改变其它名称
+        private static string RemoveLevelSuffix(string displayName)
+        {
+            int levelIndex = displayName.IndexOf("Lv", StringComparison.OrdinalIgnoreCase);
+            return levelIndex > 0 ? displayName.Substring(0, levelIndex).TrimEnd() : displayName;
         }
 
         // 按物品编号整理示例详情, 贵重品只保留描述

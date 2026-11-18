@@ -96,7 +96,11 @@ namespace UI.Inventory.Editor
         private const int DETAIL_HEADER_HEIGHT = 36;
         private const int DETAIL_META_HEIGHT = 30;
         private const int DETAIL_SHOWCASE_HEIGHT = 158;
-        private const int DETAIL_SPEC_WIDTH = 168;
+        private const int DETAIL_FOOTPRINT_WIDTH = 138;
+        private const int DETAIL_FOOTPRINT_GRID_CELL_SIZE = 20;
+        private const int DETAIL_FOOTPRINT_GRID_SPACING = 2;
+        private const int DETAIL_FOOTPRINT_COLUMNS = 6;
+        private const int DETAIL_FOOTPRINT_ROWS = 4;
         private const int DETAIL_ACTION_HEIGHT = 40;
         private const string DETAIL_PANEL_SPRITE_PATH = "Assets/Art/UI/Prototype/SciFiHud/Panels/Panel_9Slice.png";
         private const string DETAIL_VALUE_SPRITE_PATH = "Assets/Art/UI/Prototype/SciFiHud/Icons/Icon_Credits.png";
@@ -123,6 +127,8 @@ namespace UI.Inventory.Editor
         private static readonly Color m_detailPanelColor = new Color(0.055f, 0.064f, 0.076f, 0.98f);
         private static readonly Color m_detailLineColor = new Color(0.65f, 0.7f, 0.76f, 0.24f);
         private static readonly Color m_detailButtonColor = new Color(0.78f, 0.83f, 0.88f, 0.08f);
+        private static readonly Color m_detailHeaderColor = new Color(0.13f, 0.145f, 0.17f, 0.98f);
+        private static readonly Color m_detailFootprintColor = new Color(0.2f, 0.23f, 0.27f, 0.7f);
 
         // 载体节点后缀， 顺序与 InventoryContainerIds.ROLE_SLOT_IDS 一致
         private static readonly string[] m_carrierNames = { "Backpack", "Rig", "Pockets", "SafeBox" };
@@ -312,13 +318,6 @@ namespace UI.Inventory.Editor
             dividerImage.raycastTarget = false;
             AddLayoutElement(divider, preferredHeight: 1f);
 
-            GameObject entries = NewNode("Txt_DetailEntries", card.transform);
-            TextMeshProUGUI entriesText = AddTmp(entries, "属性条目", 17,
-                TextAlignmentOptions.TopLeft, m_textSecondColor);
-            entriesText.enableWordWrapping = true;
-            entriesText.overflowMode = TextOverflowModes.Overflow;
-            entriesText.lineSpacing = 4f;
-
             GameObject description = NewNode("Txt_Description", card.transform);
             TextMeshProUGUI descriptionText = AddTmp(description, "物品描述", 18,
                 TextAlignmentOptions.TopLeft, m_textPrimaryColor);
@@ -336,12 +335,16 @@ namespace UI.Inventory.Editor
             GameObject header = NewNode("Layout_Header", parent);
             AddLayoutElement(header, preferredHeight: DETAIL_HEADER_HEIGHT);
 
+            Image background = header.AddComponent<Image>();
+            background.color = m_detailHeaderColor;
+            background.raycastTarget = false;
+
             HorizontalLayoutGroup layout = header.AddComponent<HorizontalLayoutGroup>();
             layout.spacing = 10f;
             layout.childAlignment = TextAnchor.MiddleLeft;
             layout.childControlWidth = true;
             layout.childControlHeight = true;
-            layout.childForceExpandWidth = true;
+            layout.childForceExpandWidth = false;
             layout.childForceExpandHeight = true;
 
             GameObject accent = NewNode("Img_Accent", header.transform);
@@ -404,7 +407,7 @@ namespace UI.Inventory.Editor
             AddLayoutElement(divider, preferredWidth: 1f, preferredHeight: 18f);
 
             GameObject tags = NewNode("Txt_Tags", meta.transform);
-            TextMeshProUGUI tagsText = AddTmp(tags, "类型 · 品质 · 容器", 16,
+            TextMeshProUGUI tagsText = AddTmp(tags, "物品种类", 16,
                 TextAlignmentOptions.MidlineLeft, m_textSecondColor);
             tagsText.overflowMode = TextOverflowModes.Ellipsis;
             AddLayoutElement(tags, preferredHeight: DETAIL_META_HEIGHT, flexibleWidth: 1f);
@@ -441,14 +444,54 @@ namespace UI.Inventory.Editor
             // 无 Sprite 的 Image 渲染为纯白, 图标组件在 View 绑定 Sprite 后启用
             iconImage.enabled = false;
 
-            GameObject spec = NewNode("Txt_Spec", showcase.transform);
-            TextMeshProUGUI specText = AddTmp(spec, "占格  0x0", 17,
-                TextAlignmentOptions.TopRight, m_textSecondColor);
-            specText.enableWordWrapping = true;
-            specText.overflowMode = TextOverflowModes.Overflow;
-            specText.lineSpacing = 4f;
-            AddLayoutElement(spec, preferredWidth: DETAIL_SPEC_WIDTH,
+            BuildDetailFootprint(showcase.transform);
+        }
+
+        // 右下角固定 6x4 占格预览与重量, 容器展示内部容量, 普通物品展示当前占格
+        private static void BuildDetailFootprint(Transform parent)
+        {
+            GameObject footprint = NewNode("Layout_Footprint", parent);
+            AddLayoutElement(footprint, preferredWidth: DETAIL_FOOTPRINT_WIDTH,
                 preferredHeight: DETAIL_SHOWCASE_HEIGHT);
+
+            VerticalLayoutGroup layout = footprint.AddComponent<VerticalLayoutGroup>();
+            layout.spacing = 4f;
+            layout.childAlignment = TextAnchor.LowerRight;
+            layout.childControlWidth = false;
+            layout.childControlHeight = false;
+            layout.childForceExpandWidth = false;
+            layout.childForceExpandHeight = false;
+
+            int gridWidth = DETAIL_FOOTPRINT_COLUMNS * DETAIL_FOOTPRINT_GRID_CELL_SIZE +
+                (DETAIL_FOOTPRINT_COLUMNS - 1) * DETAIL_FOOTPRINT_GRID_SPACING;
+            int gridHeight = DETAIL_FOOTPRINT_ROWS * DETAIL_FOOTPRINT_GRID_CELL_SIZE +
+                (DETAIL_FOOTPRINT_ROWS - 1) * DETAIL_FOOTPRINT_GRID_SPACING;
+
+            GameObject weight = NewNode("Txt_Weight", footprint.transform);
+            RectTransform weightRect = weight.GetComponent<RectTransform>();
+            weightRect.sizeDelta = new Vector2(gridWidth, 20f);
+            AddTmp(weight, "0KG", 16, TextAlignmentOptions.MidlineRight, m_textSecondColor);
+
+            GameObject gridNode = NewNode("Layout_FootprintGrid", footprint.transform);
+            RectTransform gridRect = gridNode.GetComponent<RectTransform>();
+            gridRect.sizeDelta = new Vector2(gridWidth, gridHeight);
+
+            GridLayoutGroup grid = gridNode.AddComponent<GridLayoutGroup>();
+            grid.cellSize = new Vector2(DETAIL_FOOTPRINT_GRID_CELL_SIZE, DETAIL_FOOTPRINT_GRID_CELL_SIZE);
+            grid.spacing = new Vector2(DETAIL_FOOTPRINT_GRID_SPACING, DETAIL_FOOTPRINT_GRID_SPACING);
+            grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            grid.constraintCount = DETAIL_FOOTPRINT_COLUMNS;
+            grid.startCorner = GridLayoutGroup.Corner.UpperLeft;
+            grid.startAxis = GridLayoutGroup.Axis.Horizontal;
+            grid.childAlignment = TextAnchor.UpperLeft;
+
+            for (int i = 0; i < DETAIL_FOOTPRINT_COLUMNS * DETAIL_FOOTPRINT_ROWS; i++)
+            {
+                GameObject cell = NewNode($"Img_Cell_{i:00}", gridNode.transform);
+                Image cellImage = cell.AddComponent<Image>();
+                cellImage.color = m_detailFootprintColor;
+                cellImage.raycastTarget = false;
+            }
         }
 
         // 操作行：丢弃与检视只提供视觉占位, 后续接业务时直接取对应 Button

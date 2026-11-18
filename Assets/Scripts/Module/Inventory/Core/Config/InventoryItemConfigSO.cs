@@ -23,6 +23,9 @@ namespace Module.Inventory.Core.Config
         [Tooltip("物品显示名")]
         [SerializeField] private string DisplayNameValue = string.Empty;
 
+        [Tooltip("详情面板显示的物品种类")]
+        [SerializeField] private string CategoryNameValue = string.Empty;
+
         [Tooltip("物品类型")]
         [SerializeField] private InventoryItemType ItemTypeValue = InventoryItemType.None;
 
@@ -65,6 +68,7 @@ namespace Module.Inventory.Core.Config
 
         public int ItemId => ItemIdValue;
         public string DisplayName => DisplayNameValue;
+        public string CategoryName => CategoryNameValue;
         public InventoryItemType ItemType => ItemTypeValue;
         public bool CanRotate => CanRotateValue;
         public int MaxStackCount => MaxStackCountValue;

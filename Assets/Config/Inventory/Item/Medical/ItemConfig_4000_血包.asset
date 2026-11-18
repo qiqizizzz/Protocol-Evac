@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ItemIdValue: 4000
   DisplayNameValue: "\u8840\u5305"
+  CategoryNameValue: "\u533B\u7597\u7269\u8D44"
   ItemTypeValue: 40
   CanRotateValue: 1
   MaxStackCountValue: 5

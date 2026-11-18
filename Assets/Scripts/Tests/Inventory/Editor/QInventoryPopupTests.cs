@@ -8,15 +8,19 @@
 
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using Framework.QTower.MVVM.ViewModel;
 using Module.Inventory.Core.Config;
 using Module.Inventory.Core.Config.Type;
 using Module.Inventory.Core.Data;
 using Module.Inventory.Core.Rule.Type;
 using NUnit.Framework;
+using TMPro;
 using UI.Inventory;
+using UI.Inventory.View;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace Tests.Inventory
 {
@@ -28,6 +32,8 @@ namespace Tests.Inventory
     {
         private const int NO_SELECTION = -1;
         private const string CONTAINER_NAME = "测试容器";
+        private const string DETAIL_PREFAB_PATH = "Assets/Prefabs/UI/Inventory/UIItemDetailPanel.prefab";
+        private const int FOOTPRINT_CELL_COUNT = 24;
 
         private QInventoryTestKit m_kit;
         private InventoryModel m_model;
@@ -244,6 +250,7 @@ namespace Tests.Inventory
                 new InventoryItemDetailEntry("恢复量", "45"),
             };
             int itemId = m_kit.CreateItem(2, 1, true, unitValue: 2025921,
+                unitWeight: 1.5f,
                 rarity: InventoryItemRarity.Rare, itemType: InventoryItemType.Medical,
                 description: "用于快速处理失血伤势", detailEntries: entries).ItemId;
             int instanceId = AddItem(itemId, new Vector2Int(0, 0));
@@ -252,11 +259,10 @@ namespace Tests.Inventory
             detail.Open(m_containerId, instanceId);
 
             Assert.IsNotEmpty(detail.Title.Value);
-            Assert.AreEqual("医疗物品 · 稀有 · " + CONTAINER_NAME, detail.Tags.Value);
+            Assert.AreEqual("医疗物资", detail.Tags.Value);
             Assert.AreEqual("2,025,921", detail.Value.Value);
-            Assert.That(detail.Specs.Value, Does.Contain("2x1"));
-            Assert.That(detail.DetailEntries.Value, Does.Contain("恢复量"));
-            Assert.That(detail.DetailEntries.Value, Does.Contain("45"));
+            Assert.AreEqual("1.5KG", ReadDetailString(detail, "WeightLabel"));
+            Assert.AreEqual("110000000000000000000000", ReadDetailString(detail, "FootprintMask"));
             Assert.AreEqual("用于快速处理失血伤势", detail.Description.Value);
             Assert.IsTrue(detail.HasContent.Value);
             Assert.AreNotEqual(Color.white, detail.AccentColor.Value);
@@ -264,7 +270,7 @@ namespace Tests.Inventory
         }
 
         [Test]
-        public void Detail_ForValuableItem_HidesDetailEntriesAndKeepsDescription()
+        public void Detail_ForValuableItem_KeepsDescriptionAsTheOnlyBodyContent()
         {
             InventoryItemDetailEntry[] misplacedEntries =
             {
@@ -277,7 +283,7 @@ namespace Tests.Inventory
 
             detail.Open(m_containerId, instanceId);
 
-            Assert.IsEmpty(detail.DetailEntries.Value, "贵重收藏品只展示长描述");
+            Assert.AreEqual("工艺藏品", detail.Tags.Value);
             Assert.AreEqual("Q9 战队夺冠纪念", detail.Description.Value);
             Assert.IsTrue(detail.HasContent.Value);
         }
@@ -291,7 +297,6 @@ namespace Tests.Inventory
 
             detail.Open(m_containerId, instanceId);
 
-            Assert.IsEmpty(detail.DetailEntries.Value);
             Assert.IsEmpty(detail.Description.Value);
             Assert.IsFalse(detail.HasContent.Value);
         }
@@ -306,7 +311,25 @@ namespace Tests.Inventory
 
             detail.Open(m_containerId, instanceId);
 
-            Assert.That(detail.Tags.Value, Does.StartWith("容器 · "));
+            Assert.AreEqual("战术挂载容器", detail.Tags.Value);
+            Assert.AreEqual("111110111110111110000000", ReadDetailString(detail, "FootprintMask"),
+                "容器占格图展示的是穿戴后的内部容量");
+        }
+
+        [Test]
+        public void Detail_ForIrregularContainer_CropsItsMaskIntoTheSixByFourPreview()
+        {
+            InventoryContainerConfigSO container = m_kit.CreateContainer(5, 3, "异形胸挂",
+                new[] { "#.#..", "##...", "#####" });
+            InventoryItemConfigSO config = m_kit.CreateItem(3, 2, false, container: container,
+                unitWeight: 2.5f);
+            int instanceId = AddItem(config.ItemId, new Vector2Int(0, 0));
+            ItemDetailViewModel detail = CreateDetail();
+
+            detail.Open(m_containerId, instanceId);
+
+            Assert.AreEqual("2.5KG", ReadDetailString(detail, "WeightLabel"));
+            Assert.AreEqual("101000110000111110000000", ReadDetailString(detail, "FootprintMask"));
         }
 
         [Test]
@@ -324,16 +347,16 @@ namespace Tests.Inventory
         }
 
         [Test]
-        public void Detail_WhenTheItemRotates_RefreshesSpecs()
+        public void Detail_WhenTheItemRotates_RefreshesFootprintMask()
         {
             int instanceId = AddItem(2, 1, new Vector2Int(0, 0));
             ItemDetailViewModel detail = CreateDetail();
             detail.Open(m_containerId, instanceId);
-            Assert.That(detail.Specs.Value, Does.Contain("2x1"));
+            Assert.AreEqual("110000000000000000000000", ReadDetailString(detail, "FootprintMask"));
 
             Assert.AreEqual(InventoryMoveResult.Success, m_model.TryRotateItem(m_containerId, instanceId));
 
-            Assert.That(detail.Specs.Value, Does.Contain("1x2"));
+            Assert.AreEqual("100000100000000000000000", ReadDetailString(detail, "FootprintMask"));
         }
 
         [Test]
@@ -379,6 +402,70 @@ namespace Tests.Inventory
                     Assert.IsFalse(string.IsNullOrWhiteSpace(entry.Value), "详情条目内容为空：" + path);
                 }
             }
+        }
+
+        [Test]
+        public void FormalItemConfigs_UseDisplayCategoriesAndContainerNamesWithoutLevelSuffix()
+        {
+            string[] guids = AssetDatabase.FindAssets(
+                "t:InventoryItemConfigSO", new[] { "Assets/Config/Inventory/Item" });
+
+            foreach (string guid in guids)
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                InventoryItemConfigSO config = AssetDatabase.LoadAssetAtPath<InventoryItemConfigSO>(path);
+                Assert.IsNotNull(config, "物品配置加载失败：" + path);
+
+                string category = ReadPropertyAsString(config, "CategoryName");
+                Assert.IsFalse(string.IsNullOrWhiteSpace(category), "物品缺少展示种类：" + path);
+
+                if (!config.IsContainer) continue;
+                Assert.AreEqual("战术挂载容器", category, "容器应统一显示战术挂载容器：" + path);
+                Assert.That(config.DisplayName, Does.Not.Contain("Lv"),
+                    "容器物品名不应带等级后缀：" + path);
+            }
+        }
+
+        [Test]
+        public void DetailPrefab_HasHeaderBackgroundCenteredIconAndSixByFourFootprint()
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(DETAIL_PREFAB_PATH);
+            Assert.IsNotNull(prefab, "详情预制体加载失败：" + DETAIL_PREFAB_PATH);
+
+            Transform card = prefab.transform.Find("Panel_Detail");
+            Assert.IsNotNull(card, "详情卡片节点缺失");
+            Transform header = card.Find("Layout_Header");
+            Assert.IsNotNull(header, "详情 Header 节点缺失");
+            Image headerBackground = header.GetComponent<Image>();
+            HorizontalLayoutGroup headerLayout = header.GetComponent<HorizontalLayoutGroup>();
+
+            Assert.IsNotNull(headerBackground, "Header 需要独立灰色背景");
+            Assert.Less(headerBackground.color.maxColorComponent, 0.35f, "Header 背景应为灰色而不是透明或亮色");
+            Assert.IsNotNull(headerLayout, "Header 需要横向布局");
+            Assert.IsFalse(headerLayout.childForceExpandWidth,
+                "品质图标不能被强制拉伸到左侧整块区域");
+
+            Transform icon = card.Find("Layout_Showcase/Layout_ShowcaseIcon/Img_Icon");
+            Assert.IsNotNull(icon, "展示区图标节点缺失");
+            RectTransform iconRect = icon.GetComponent<RectTransform>();
+            Assert.AreEqual(new Vector2(0.5f, 0.5f), iconRect.anchorMin, "展示区图标应水平垂直居中");
+            Assert.AreEqual(new Vector2(0.5f, 0.5f), iconRect.anchorMax, "展示区图标应水平垂直居中");
+            Assert.AreEqual(new Vector2(0.5f, 0.5f), iconRect.pivot, "展示区图标轴心应居中");
+
+            Transform footprint = card.Find("Layout_Showcase/Layout_Footprint");
+            Assert.IsNotNull(footprint, "右下角占格信息节点缺失");
+            Transform footprintGrid = footprint.Find("Layout_FootprintGrid");
+            Assert.IsNotNull(footprintGrid, "右下角 6x4 占格图节点缺失");
+            GridLayoutGroup grid = footprintGrid.GetComponent<GridLayoutGroup>();
+            TMP_Text weight = footprint.Find("Txt_Weight").GetComponent<TMP_Text>();
+
+            Assert.IsNotNull(grid, "占格图需要网格布局");
+            Assert.AreEqual(6, grid.constraintCount, "占格图固定 6 列");
+            Assert.AreEqual(FOOTPRINT_CELL_COUNT, footprintGrid.childCount, "占格图固定 6x4 共 24 格");
+            Assert.IsNotNull(weight, "占格图旁需要重量文字");
+
+            Assert.IsNull(card.Find("Txt_Spec"), "旧规格文字应移除");
+            Assert.IsNull(card.Find("Txt_DetailEntries"), "类型属性条目应从详情面板移除");
         }
 
         [TestCase(1000, "武器类型")]
@@ -524,6 +611,27 @@ namespace Tests.Inventory
             Assert.Fail("未找到正式物品配置：" + itemId);
             return null;
         }
+
+        // 读取详情视图模型新增的字符串响应属性, 让测试先以行为失败而不是编译错误暴露缺口
+        private static string ReadDetailString(ItemDetailViewModel detail, string propertyName)
+        {
+            object reactive = ReadProperty(detail, propertyName);
+            Assert.IsNotNull(reactive, "详情视图模型缺少属性：" + propertyName);
+            return ReadPropertyAsString(reactive, "Value");
+        }
+
+        // 按实例属性读取对象值
+        private static object ReadProperty(object target, string propertyName)
+        {
+            PropertyInfo property = target.GetType().GetProperty(propertyName,
+                BindingFlags.Instance | BindingFlags.Public);
+            Assert.IsNotNull(property, "属性缺失：" + target.GetType().Name + "." + propertyName);
+            return property.GetValue(target);
+        }
+
+        // 把反射读到的值按字符串返回
+        private static string ReadPropertyAsString(object target, string propertyName)
+            => ReadProperty(target, propertyName) as string;
 
         // 按 ViewBase 拆除顺序回收浮层视图模型
         private static void DisposeViewModel(ViewModelBase viewModel)
