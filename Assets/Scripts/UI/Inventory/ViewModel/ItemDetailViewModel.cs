@@ -1,6 +1,6 @@
 /*
 * ┌──────────────────────────────────┐
-* │  描    述: 物品详情视图模型, 左键点中物品后汇总它的名称、标签与规格文本
+* │  描    述: 物品详情视图模型, 按物品类型汇总价值、规格、专属属性与描述
 * │  类    名: ItemDetailViewModel.cs
 * │  创    建: By qiqizizzz
 * └──────────────────────────────────┘
@@ -24,15 +24,25 @@ namespace UI.Inventory
 
         public IReadOnlyReactiveProperty<string> Title => m_title;
         public IReadOnlyReactiveProperty<string> Tags => m_tags;
+        public IReadOnlyReactiveProperty<string> Value => m_value;
         public IReadOnlyReactiveProperty<string> Specs => m_specs;
+        public IReadOnlyReactiveProperty<string> DetailEntries => m_detailEntries;
+        public IReadOnlyReactiveProperty<string> Description => m_description;
+        public IReadOnlyReactiveProperty<bool> HasContent => m_hasContent;
         public IReadOnlyReactiveProperty<Sprite> Icon => m_icon;
+        public IReadOnlyReactiveProperty<Color> AccentColor => m_accentColor;
         public ISignal HideRequested => m_hideRequested;
 
         private readonly IInventoryModel m_model;
         private readonly ReactiveProperty<string> m_title;
         private readonly ReactiveProperty<string> m_tags;
+        private readonly ReactiveProperty<string> m_value;
         private readonly ReactiveProperty<string> m_specs;
+        private readonly ReactiveProperty<string> m_detailEntries;
+        private readonly ReactiveProperty<string> m_description;
+        private readonly ReactiveProperty<bool> m_hasContent;
         private readonly ReactiveProperty<Sprite> m_icon;
+        private readonly ReactiveProperty<Color> m_accentColor;
         private readonly Signal m_hideRequested;
 
         private int m_containerId;
@@ -48,8 +58,13 @@ namespace UI.Inventory
 
             m_title = CreateProperty(string.Empty);
             m_tags = CreateProperty(string.Empty);
+            m_value = CreateProperty(string.Empty);
             m_specs = CreateProperty(string.Empty);
+            m_detailEntries = CreateProperty(string.Empty);
+            m_description = CreateProperty(string.Empty);
+            m_hasContent = CreateProperty(false);
             m_icon = CreateProperty<Sprite>(null);
+            m_accentColor = CreateProperty(Color.white);
             m_hideRequested = CreateSignal();
         }
 
@@ -111,18 +126,27 @@ namespace UI.Inventory
 
             m_title.Set(item.DisplayName);
             m_tags.Set(BuildTags(item, config, vo.DisplayName));
+            m_value.Set(FormatNumber(item.UnitValue));
             m_specs.Set(BuildSpecs(item, config));
+            string detailEntries = BuildDetailEntries(config);
+            string description = config != null ? config.Description : string.Empty;
+            m_detailEntries.Set(detailEntries);
+            m_description.Set(description);
+            m_hasContent.Set(!string.IsNullOrWhiteSpace(detailEntries) || !string.IsNullOrWhiteSpace(description));
             m_icon.Set(item.Icon);
+            m_accentColor.Set(RarityColor(item.Rarity));
         }
 
         // 标签行：类型 · 品质 · 所在容器
         private static string BuildTags(InventoryItemVO item, InventoryItemConfigSO config, string containerName)
         {
-            string typeName = config != null ? TypeName(config.ItemType) : "未知类型";
+            string typeName = config == null
+                ? "未知类型"
+                : config.IsContainer ? "容器" : TypeName(config.ItemType);
             return $"{typeName} · {RarityName(item.Rarity)} · {containerName}";
         }
 
-        // 规格行：每项一行, 未配置的行不生成
+        // 规格区只保留占格、重量和旋转, 类型相关属性走独立详情条目
         private static string BuildSpecs(InventoryItemVO item, InventoryItemConfigSO config)
         {
             StringBuilder builder = new StringBuilder();
@@ -135,16 +159,48 @@ namespace UI.Inventory
                 AppendSpec(builder, "旋转", config.CanRotate ? "可" : "不可");
             }
 
-            AppendSpec(builder, "估价", item.UnitValue.ToString());
-            if (item.StackCount > 1) AppendSpec(builder, "小计", item.TotalValue.ToString());
-
             return builder.ToString(0, builder.Length - 1);
+        }
+
+        // 把配置里的结构化条目排成详情面板属性区
+        private static string BuildDetailEntries(InventoryItemConfigSO config)
+        {
+            // 贵重收藏品以长描述作为唯一正文, 不展示类型属性
+            if (config == null || config.ItemType == InventoryItemType.Valuable ||
+                config.DetailEntries.Count == 0)
+                return string.Empty;
+
+            StringBuilder builder = new StringBuilder();
+            foreach (InventoryItemDetailEntry entry in config.DetailEntries)
+            {
+                if (entry == null || string.IsNullOrWhiteSpace(entry.Label) || string.IsNullOrWhiteSpace(entry.Value))
+                    continue;
+
+                builder.Append("<color=#8C9AA7>")
+                    .Append(entry.Label)
+                    .Append("</color>  ")
+                    .Append(entry.Value)
+                    .Append('\n');
+            }
+
+            return builder.Length > 0 ? builder.ToString(0, builder.Length - 1) : string.Empty;
         }
 
         private static void AppendSpec(StringBuilder builder, string label, string value)
             => builder.Append(label).Append("  ").Append(value).Append('\n');
 
         private static string FormatWeight(float weight) => weight.ToString("0.##", CultureInfo.InvariantCulture);
+        private static string FormatNumber(int value) => value.ToString("N0", CultureInfo.InvariantCulture);
+
+        private static Color RarityColor(InventoryItemRarity rarity) => rarity switch
+        {
+            InventoryItemRarity.Common => new Color(0.68f, 0.72f, 0.76f, 1f),
+            InventoryItemRarity.Uncommon => new Color(0.34f, 0.78f, 0.48f, 1f),
+            InventoryItemRarity.Rare => new Color(0.28f, 0.62f, 1f, 1f),
+            InventoryItemRarity.Epic => new Color(0.72f, 0.46f, 1f, 1f),
+            InventoryItemRarity.Legendary => new Color(1f, 0.62f, 0.22f, 1f),
+            _ => new Color(0.58f, 0.64f, 0.7f, 1f),
+        };
 
         // 配置的中文名为 InspectorName, 运行期不可读, 此处另行映射
         private static string TypeName(InventoryItemType type) => type switch
@@ -153,7 +209,7 @@ namespace UI.Inventory
             InventoryItemType.Ammo => "弹药",
             InventoryItemType.Armor => "护甲",
             InventoryItemType.Medical => "医疗物品",
-            InventoryItemType.Valuable => "贵重物品",
+            InventoryItemType.Valuable => "贵重收藏品",
             InventoryItemType.Food => "食物饮水",
             InventoryItemType.Material => "物资工具",
             InventoryItemType.Attachment => "武器配件",

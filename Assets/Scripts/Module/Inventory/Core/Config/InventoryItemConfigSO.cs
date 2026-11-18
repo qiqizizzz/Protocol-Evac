@@ -6,6 +6,8 @@
 * └──────────────────────────────────┘
 */
 
+using System;
+using System.Collections.Generic;
 using Module.Inventory.Core.Config.Type;
 using UnityEngine;
 
@@ -47,6 +49,13 @@ namespace Module.Inventory.Core.Config
         [Header("UI表现")]
         [SerializeField] private Sprite IconValue;
 
+        [Header("详情信息")]
+        [Tooltip("物品描述, 留空时详情面板不显示描述区")]
+        [SerializeField, TextArea(3, 8)] private string DescriptionValue = string.Empty;
+
+        [Tooltip("按物品种类配置的详情属性, 留空时详情面板不显示属性区")]
+        [SerializeField] private InventoryItemDetailEntry[] DetailEntriesValue = Array.Empty<InventoryItemDetailEntry>();
+
         [Header("容器能力")]
         [Tooltip("装备后撑起的网格定义, 非容器物品留空; 野外物资箱只用容器定义, 不需要这份物品配置")]
         [SerializeField] private InventoryContainerConfigSO ContainerValue;
@@ -64,6 +73,9 @@ namespace Module.Inventory.Core.Config
         public InventoryItemRarity Rarity => RarityValue;
         public int UnitValue => UnitValueValue;
         public Sprite Icon => IconValue;
+        public string Description => DescriptionValue;
+        public IReadOnlyList<InventoryItemDetailEntry> DetailEntries =>
+            DetailEntriesValue ?? Array.Empty<InventoryItemDetailEntry>();
         public bool IsStackable => MaxStackCountValue > 1;
 
         public InventoryContainerConfigSO Container => ContainerValue;

@@ -9,10 +9,13 @@
 using System;
 using System.Collections.Generic;
 using Framework.QTower.MVVM.ViewModel;
+using Module.Inventory.Core.Config;
+using Module.Inventory.Core.Config.Type;
 using Module.Inventory.Core.Data;
 using Module.Inventory.Core.Rule.Type;
 using NUnit.Framework;
 using UI.Inventory;
+using UnityEditor;
 using UnityEngine;
 
 namespace Tests.Inventory
@@ -234,18 +237,76 @@ namespace Tests.Inventory
 
         #region 详情视图模型
         [Test]
-        public void Detail_Open_FillsTitleTagsAndSpecsFromTheModel()
+        public void Detail_Open_FillsStructuredContentFromTheModel()
         {
-            int itemId = m_kit.CreateItem(2, 1, true, unitValue: 250).ItemId;
+            InventoryItemDetailEntry[] entries =
+            {
+                new InventoryItemDetailEntry("恢复量", "45"),
+            };
+            int itemId = m_kit.CreateItem(2, 1, true, unitValue: 2025921,
+                rarity: InventoryItemRarity.Rare, itemType: InventoryItemType.Medical,
+                description: "用于快速处理失血伤势", detailEntries: entries).ItemId;
             int instanceId = AddItem(itemId, new Vector2Int(0, 0));
             ItemDetailViewModel detail = CreateDetail();
 
             detail.Open(m_containerId, instanceId);
 
             Assert.IsNotEmpty(detail.Title.Value);
-            Assert.AreEqual("其他 · 未分级 · " + CONTAINER_NAME, detail.Tags.Value);
+            Assert.AreEqual("医疗物品 · 稀有 · " + CONTAINER_NAME, detail.Tags.Value);
+            Assert.AreEqual("2,025,921", detail.Value.Value);
             Assert.That(detail.Specs.Value, Does.Contain("2x1"));
+            Assert.That(detail.DetailEntries.Value, Does.Contain("恢复量"));
+            Assert.That(detail.DetailEntries.Value, Does.Contain("45"));
+            Assert.AreEqual("用于快速处理失血伤势", detail.Description.Value);
+            Assert.IsTrue(detail.HasContent.Value);
+            Assert.AreNotEqual(Color.white, detail.AccentColor.Value);
             Assert.IsNull(detail.Icon.Value);
+        }
+
+        [Test]
+        public void Detail_ForValuableItem_HidesDetailEntriesAndKeepsDescription()
+        {
+            InventoryItemDetailEntry[] misplacedEntries =
+            {
+                new InventoryItemDetailEntry("收藏编号", "Q9-2025-0921"),
+            };
+            int itemId = m_kit.CreateItem(2, 1, true, itemType: InventoryItemType.Valuable,
+                description: "Q9 战队夺冠纪念", detailEntries: misplacedEntries).ItemId;
+            int instanceId = AddItem(itemId, new Vector2Int(0, 0));
+            ItemDetailViewModel detail = CreateDetail();
+
+            detail.Open(m_containerId, instanceId);
+
+            Assert.IsEmpty(detail.DetailEntries.Value, "贵重收藏品只展示长描述");
+            Assert.AreEqual("Q9 战队夺冠纪念", detail.Description.Value);
+            Assert.IsTrue(detail.HasContent.Value);
+        }
+
+        [Test]
+        public void Detail_WithoutOptionalContent_ReturnsEmptySections()
+        {
+            int itemId = m_kit.CreateItem(1, 1).ItemId;
+            int instanceId = AddItem(itemId, new Vector2Int(0, 0));
+            ItemDetailViewModel detail = CreateDetail();
+
+            detail.Open(m_containerId, instanceId);
+
+            Assert.IsEmpty(detail.DetailEntries.Value);
+            Assert.IsEmpty(detail.Description.Value);
+            Assert.IsFalse(detail.HasContent.Value);
+        }
+
+        [Test]
+        public void Detail_ForContainerItem_ShowsContainerAsItsType()
+        {
+            InventoryContainerConfigSO container = m_kit.CreateContainer(5, 3, "背包测试");
+            InventoryItemConfigSO config = m_kit.CreateContainerItem(container);
+            int instanceId = AddItem(config.ItemId, new Vector2Int(0, 0));
+            ItemDetailViewModel detail = CreateDetail();
+
+            detail.Open(m_containerId, instanceId);
+
+            Assert.That(detail.Tags.Value, Does.StartWith("容器 · "));
         }
 
         [Test]
@@ -288,6 +349,59 @@ namespace Tests.Inventory
             m_model.UnregisterContainer(m_containerId);
 
             Assert.AreEqual(1, hideCount, "物品没了要自动收起详情");
+        }
+
+        [Test]
+        public void FormalItemConfigs_AllExposeDetailContent()
+        {
+            string[] guids = AssetDatabase.FindAssets(
+                "t:InventoryItemConfigSO", new[] { "Assets/Config/Inventory/Item" });
+            Assert.AreEqual(32, guids.Length, "正式物品配置数量变化时同步检查详情覆盖");
+
+            foreach (string guid in guids)
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                InventoryItemConfigSO config = AssetDatabase.LoadAssetAtPath<InventoryItemConfigSO>(path);
+                Assert.IsNotNull(config, "物品配置加载失败：" + path);
+                Assert.IsFalse(string.IsNullOrWhiteSpace(config.Description),
+                    "物品缺少详情描述：" + path);
+
+                bool hasDetailEntries = config.DetailEntries.Count > 0;
+                if (config.ItemType == InventoryItemType.Valuable)
+                    Assert.IsFalse(hasDetailEntries, "贵重收藏品只展示长描述：" + path);
+                else
+                    Assert.IsTrue(hasDetailEntries, "物品缺少类型专属属性：" + path);
+
+                foreach (InventoryItemDetailEntry entry in config.DetailEntries)
+                {
+                    Assert.IsNotNull(entry, "详情条目为空：" + path);
+                    Assert.IsFalse(string.IsNullOrWhiteSpace(entry.Label), "详情条目标签为空：" + path);
+                    Assert.IsFalse(string.IsNullOrWhiteSpace(entry.Value), "详情条目内容为空：" + path);
+                }
+            }
+        }
+
+        [TestCase(1000, "武器类型")]
+        [TestCase(2000, "穿透等级")]
+        [TestCase(3000, "防护等级")]
+        [TestCase(4000, "恢复量")]
+        [TestCase(6000, "内部容量")]
+        [TestCase(7001, "恢复效果")]
+        [TestCase(8001, "工具类型")]
+        [TestCase(9001, "安装槽位")]
+        public void FormalItemConfigs_UseCategorySpecificEntries(int itemId, string expectedLabel)
+        {
+            InventoryItemConfigSO config = FindFormalItemConfig(itemId);
+
+            bool found = false;
+            foreach (InventoryItemDetailEntry entry in config.DetailEntries)
+            {
+                if (entry.Label != expectedLabel) continue;
+                found = true;
+                break;
+            }
+
+            Assert.IsTrue(found, $"物品 {itemId} 缺少 {expectedLabel} 条目");
         }
         #endregion
 
@@ -393,6 +507,22 @@ namespace Tests.Inventory
             m_popups.Add(menu);
             menu.OnBind();
             return menu;
+        }
+
+        // 按正式物品号查找配置, 供详情内容形状测试使用
+        private static InventoryItemConfigSO FindFormalItemConfig(int itemId)
+        {
+            string[] guids = AssetDatabase.FindAssets(
+                "t:InventoryItemConfigSO", new[] { "Assets/Config/Inventory/Item" });
+            foreach (string guid in guids)
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                InventoryItemConfigSO config = AssetDatabase.LoadAssetAtPath<InventoryItemConfigSO>(path);
+                if (config != null && config.ItemId == itemId) return config;
+            }
+
+            Assert.Fail("未找到正式物品配置：" + itemId);
+            return null;
         }
 
         // 按 ViewBase 拆除顺序回收浮层视图模型

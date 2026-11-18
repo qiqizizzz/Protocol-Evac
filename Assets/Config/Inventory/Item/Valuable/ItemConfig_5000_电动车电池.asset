@@ -23,5 +23,7 @@ MonoBehaviour:
   RarityValue: 5
   UnitValueValue: 25000
   IconValue: {fileID: 21300000, guid: e7472b0b49a92a14596635abcc50a5e6, type: 3}
+  DescriptionValue: "\u4ECE\u5E9F\u5F03\u8F7D\u5177\u4E0A\u62C6\u4E0B\u7684\u9AD8\u5BB9\u91CF\u52A8\u529B\u7535\u6C60\uFF0C\u5185\u90E8\u7535\u82AF\u4ECD\u6709\u6B8B\u4F59\u7535\u91CF\u3002\u6536\u85CF\u5E02\u573A\u5BF9\u8FD9\u7C7B\u65E7\u578B\u53F7\u7535\u6C60\u9700\u6C42\u5F88\u9AD8\uFF0C\u5C24\u5176\u662F\u5B8C\u6574\u5916\u58F3\u548C\u672A\u9F13\u5305\u7684\u5355\u5143\u3002"
+  DetailEntriesValue: []
   ContainerValue: {fileID: 0}
   EquipSlotValue: 0

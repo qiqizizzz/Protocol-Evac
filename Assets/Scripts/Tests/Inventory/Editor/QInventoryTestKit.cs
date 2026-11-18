@@ -48,10 +48,13 @@ namespace Tests.Inventory
         /// <param name="equipSlot">可穿戴到的部位, 装备槽只收对应部位的装备</param>
         /// <param name="register">是否顺手登记进 ItemRegistry, 验总配置整批登记时传 false</param>
         /// <param name="itemType">物品种类</param>
+        /// <param name="description">详情面板显示的长描述</param>
+        /// <param name="detailEntries">详情面板显示的类型专属属性</param>
         public InventoryItemConfigSO CreateItem(int width, int height, bool canRotate = true, int maxStackCount = 1,
             float unitWeight = 0f, int unitValue = 0, InventoryItemRarity rarity = InventoryItemRarity.None,
             InventoryContainerConfigSO container = null, InventoryEquipSlot equipSlot = InventoryEquipSlot.None,
-            bool register = true, InventoryItemType itemType = InventoryItemType.None)
+            bool register = true, InventoryItemType itemType = InventoryItemType.None,
+            string description = "", params InventoryItemDetailEntry[] detailEntries)
         {
             int itemId = m_nextItemId++;
             InventoryItemConfigSO config = CreateConfig<InventoryItemConfigSO>();
@@ -67,6 +70,8 @@ namespace Tests.Inventory
             SetField(config, "GridHeightValue", height);
             SetField(config, "RarityValue", rarity);
             SetField(config, "UnitValueValue", unitValue);
+            SetField(config, "DescriptionValue", description);
+            SetField(config, "DetailEntriesValue", detailEntries ?? new InventoryItemDetailEntry[0]);
             SetField(config, "ContainerValue", container);
             SetField(config, "EquipSlotValue", equipSlot);
 

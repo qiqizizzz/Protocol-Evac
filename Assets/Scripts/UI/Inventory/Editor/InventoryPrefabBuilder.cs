@@ -88,22 +88,24 @@ namespace UI.Inventory.Editor
         private static readonly Vector2 m_topRightAnchor = new Vector2(1f, 1f);
         private static readonly Vector2 m_topCenterAnchor = new Vector2(0.5f, 1f);
 
-        private const int DETAIL_CARD_WIDTH = 320;
-        private const int DETAIL_CARD_HEIGHT = 372;
-        private const int DETAIL_ICON_SIZE = 120;
-        private const int DETAIL_TEXT_WIDTH = 288;
-        private const int DETAIL_EDGE = 16;
-        private const int DETAIL_NAME_TOP = 148;
-        private const int DETAIL_TAGS_TOP = 182;
-        private const int DETAIL_SPEC_TOP = 214;
-        private const int DETAIL_SPEC_HEIGHT = 140;
+        private const int DETAIL_CARD_WIDTH = 420;
+        private const int DETAIL_CARD_HEIGHT = 460;
+        private const int DETAIL_ICON_SIZE = 136;
+        private const int DETAIL_PADDING = 16;
+        private const int DETAIL_SECTION_SPACING = 10;
+        private const int DETAIL_HEADER_HEIGHT = 36;
+        private const int DETAIL_META_HEIGHT = 30;
+        private const int DETAIL_SHOWCASE_HEIGHT = 158;
+        private const int DETAIL_SPEC_WIDTH = 168;
+        private const int DETAIL_ACTION_HEIGHT = 40;
+        private const string DETAIL_PANEL_SPRITE_PATH = "Assets/Art/UI/Prototype/SciFiHud/Panels/Panel_9Slice.png";
+        private const string DETAIL_VALUE_SPRITE_PATH = "Assets/Art/UI/Prototype/SciFiHud/Icons/Icon_Credits.png";
+        private const string DETAIL_ACCENT_SPRITE_PATH = "Assets/Art/UI/Prototype/SciFiHud/Icons/Icon_Crystal.png";
+        private const string DETAIL_CLOSE_SPRITE_PATH = "Assets/Art/UI/Prototype/Sungraphica/Icons/Icon_Close.png";
         private const int POPUP_EDGE = 8;
         private const int MENU_CARD_WIDTH = 168;
         private const int MENU_BUTTON_WIDTH = 152;
         private const int MENU_BUTTON_HEIGHT = 36;
-        private const int CLOSE_BUTTON_WIDTH = 56;
-        private const int CLOSE_BUTTON_HEIGHT = 28;
-
         // 拆分弹窗：卡片两行定宽布局, 滑条行与操作行均由 HorizontalLayoutGroup 排布
         private const int SPLIT_CARD_WIDTH = 288;
         private const int SPLIT_ROW_WIDTH = 272;
@@ -118,6 +120,9 @@ namespace UI.Inventory.Editor
         private static readonly Color m_sliderBgColor = new Color(1f, 1f, 1f, 0.18f);
         private static readonly Color m_sliderFillColor = new Color(0.62f, 0.68f, 0.75f, 0.9f);
         private static readonly Color m_sliderHandleColor = new Color(0.9f, 0.93f, 0.98f, 1f);
+        private static readonly Color m_detailPanelColor = new Color(0.055f, 0.064f, 0.076f, 0.98f);
+        private static readonly Color m_detailLineColor = new Color(0.65f, 0.7f, 0.76f, 0.24f);
+        private static readonly Color m_detailButtonColor = new Color(0.78f, 0.83f, 0.88f, 0.08f);
 
         // 载体节点后缀， 顺序与 InventoryContainerIds.ROLE_SLOT_IDS 一致
         private static readonly string[] m_carrierNames = { "Backpack", "Rig", "Pockets", "SafeBox" };
@@ -262,23 +267,173 @@ namespace UI.Inventory.Editor
             }
         }
 
-        // 详情弹窗：全屏根节点与左上角轴心卡片, 卡片位置由 View 依据鼠标设置
+        // 详情弹窗：全屏根节点与左上角轴心卡片, 高度由内容自动计算
         private static GameObject BuildDetailCard()
         {
             GameObject root = NewNode("UIItemDetailPanel", null);
             SetStretch(root.GetComponent<RectTransform>(), 0f);
 
+            Sprite panelSprite = LoadDetailSprite(DETAIL_PANEL_SPRITE_PATH);
+            Sprite valueSprite = LoadDetailSprite(DETAIL_VALUE_SPRITE_PATH);
+            Sprite accentSprite = LoadDetailSprite(DETAIL_ACCENT_SPRITE_PATH);
+            Sprite closeSprite = LoadDetailSprite(DETAIL_CLOSE_SPRITE_PATH);
+
             GameObject card = NewNode("Panel_Detail", root.transform);
             SetRect(card.GetComponent<RectTransform>(), m_centerAnchor, m_centerAnchor, m_topLeftAnchor,
                 new Vector2(DETAIL_CARD_WIDTH, DETAIL_CARD_HEIGHT), Vector2.zero);
             Image cardImage = card.AddComponent<Image>();
-            cardImage.color = m_popupBgColor;
+            cardImage.sprite = panelSprite;
+            cardImage.type = Image.Type.Sliced;
+            cardImage.color = m_detailPanelColor;
             // 卡片不接收射线, 卡片外的点击落到下层载体, 由交互逻辑决定隐藏或切换物品
             cardImage.raycastTarget = false;
 
-            GameObject icon = NewNode("Img_Icon", card.transform);
-            SetRect(icon.GetComponent<RectTransform>(), m_topCenterAnchor, m_topCenterAnchor, m_topCenterAnchor,
-                new Vector2(DETAIL_ICON_SIZE, DETAIL_ICON_SIZE), new Vector2(0f, -POPUP_EDGE * 2f));
+            VerticalLayoutGroup cardLayout = card.AddComponent<VerticalLayoutGroup>();
+            cardLayout.padding = new RectOffset(DETAIL_PADDING, DETAIL_PADDING, DETAIL_PADDING, DETAIL_PADDING);
+            cardLayout.spacing = DETAIL_SECTION_SPACING;
+            cardLayout.childAlignment = TextAnchor.UpperLeft;
+            cardLayout.childControlWidth = true;
+            cardLayout.childControlHeight = true;
+            cardLayout.childForceExpandWidth = true;
+            cardLayout.childForceExpandHeight = false;
+
+            ContentSizeFitter cardFitter = card.AddComponent<ContentSizeFitter>();
+            cardFitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            cardFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            BuildDetailHeader(card.transform, accentSprite, closeSprite);
+            BuildDetailMeta(card.transform, valueSprite, panelSprite);
+            BuildDetailShowcase(card.transform);
+            BuildDetailActions(card.transform, panelSprite);
+
+            GameObject divider = NewNode("Img_Divider", card.transform);
+            Image dividerImage = divider.AddComponent<Image>();
+            dividerImage.color = m_detailLineColor;
+            dividerImage.raycastTarget = false;
+            AddLayoutElement(divider, preferredHeight: 1f);
+
+            GameObject entries = NewNode("Txt_DetailEntries", card.transform);
+            TextMeshProUGUI entriesText = AddTmp(entries, "属性条目", 17,
+                TextAlignmentOptions.TopLeft, m_textSecondColor);
+            entriesText.enableWordWrapping = true;
+            entriesText.overflowMode = TextOverflowModes.Overflow;
+            entriesText.lineSpacing = 4f;
+
+            GameObject description = NewNode("Txt_Description", card.transform);
+            TextMeshProUGUI descriptionText = AddTmp(description, "物品描述", 18,
+                TextAlignmentOptions.TopLeft, m_textPrimaryColor);
+            descriptionText.enableWordWrapping = true;
+            descriptionText.overflowMode = TextOverflowModes.Overflow;
+            descriptionText.lineSpacing = 3f;
+
+            AttachScript(root, DETAIL_SCRIPT);
+            return root;
+        }
+
+        // 详情头部：品质强调图标、物品名与关闭按钮
+        private static void BuildDetailHeader(Transform parent, Sprite accentSprite, Sprite closeSprite)
+        {
+            GameObject header = NewNode("Layout_Header", parent);
+            AddLayoutElement(header, preferredHeight: DETAIL_HEADER_HEIGHT);
+
+            HorizontalLayoutGroup layout = header.AddComponent<HorizontalLayoutGroup>();
+            layout.spacing = 10f;
+            layout.childAlignment = TextAnchor.MiddleLeft;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandWidth = true;
+            layout.childForceExpandHeight = true;
+
+            GameObject accent = NewNode("Img_Accent", header.transform);
+            Image accentImage = accent.AddComponent<Image>();
+            accentImage.sprite = accentSprite;
+            accentImage.color = Color.white;
+            accentImage.preserveAspect = true;
+            accentImage.raycastTarget = false;
+            AddLayoutElement(accent, preferredWidth: 16f, preferredHeight: 26f);
+
+            GameObject nameNode = NewNode("Txt_Name", header.transform);
+            TextMeshProUGUI nameText = AddTmp(nameNode, "物品名称", 27,
+                TextAlignmentOptions.MidlineLeft, m_textPrimaryColor);
+            nameText.overflowMode = TextOverflowModes.Ellipsis;
+            AddLayoutElement(nameNode, preferredHeight: DETAIL_HEADER_HEIGHT, flexibleWidth: 1f);
+
+            GameObject close = NewNode("Btn_Close", header.transform);
+            AddButton(close, new Color(1f, 1f, 1f, 0.04f));
+            AddLayoutElement(close, preferredWidth: 34f, preferredHeight: 34f);
+
+            GameObject closeIcon = NewNode("Img_Close", close.transform);
+            SetStretch(closeIcon.GetComponent<RectTransform>(), 7f);
+            Image closeImage = closeIcon.AddComponent<Image>();
+            closeImage.sprite = closeSprite;
+            closeImage.color = m_textPrimaryColor;
+            closeImage.preserveAspect = true;
+            closeImage.raycastTarget = false;
+        }
+
+        // 价值行：价值图标、格式化金额、类型标签与收藏占位按钮
+        private static void BuildDetailMeta(Transform parent, Sprite valueSprite, Sprite panelSprite)
+        {
+            GameObject meta = NewNode("Layout_Meta", parent);
+            AddLayoutElement(meta, preferredHeight: DETAIL_META_HEIGHT);
+
+            HorizontalLayoutGroup layout = meta.AddComponent<HorizontalLayoutGroup>();
+            layout.spacing = 8f;
+            layout.childAlignment = TextAnchor.MiddleLeft;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandWidth = true;
+            layout.childForceExpandHeight = true;
+
+            GameObject valueIcon = NewNode("Img_ValueIcon", meta.transform);
+            Image valueImage = valueIcon.AddComponent<Image>();
+            valueImage.sprite = valueSprite;
+            valueImage.color = m_textPrimaryColor;
+            valueImage.preserveAspect = true;
+            valueImage.raycastTarget = false;
+            AddLayoutElement(valueIcon, preferredWidth: 20f, preferredHeight: 20f);
+
+            GameObject value = NewNode("Txt_Value", meta.transform);
+            AddTmp(value, "0", 20, TextAlignmentOptions.MidlineLeft, m_textPrimaryColor);
+            AddLayoutElement(value, preferredWidth: 142f, preferredHeight: DETAIL_META_HEIGHT);
+
+            GameObject divider = NewNode("Img_MetaDivider", meta.transform);
+            Image dividerImage = divider.AddComponent<Image>();
+            dividerImage.color = m_detailLineColor;
+            dividerImage.raycastTarget = false;
+            AddLayoutElement(divider, preferredWidth: 1f, preferredHeight: 18f);
+
+            GameObject tags = NewNode("Txt_Tags", meta.transform);
+            TextMeshProUGUI tagsText = AddTmp(tags, "类型 · 品质 · 容器", 16,
+                TextAlignmentOptions.MidlineLeft, m_textSecondColor);
+            tagsText.overflowMode = TextOverflowModes.Ellipsis;
+            AddLayoutElement(tags, preferredHeight: DETAIL_META_HEIGHT, flexibleWidth: 1f);
+
+            GameObject favorite = NewNode("Btn_Favorite", meta.transform);
+            AddDetailButton(favorite, panelSprite, "☆", 22);
+            AddLayoutElement(favorite, preferredWidth: 32f, preferredHeight: 30f);
+        }
+
+        // 展示区：大图标与占格、重量、旋转规格
+        private static void BuildDetailShowcase(Transform parent)
+        {
+            GameObject showcase = NewNode("Layout_Showcase", parent);
+            AddLayoutElement(showcase, preferredHeight: DETAIL_SHOWCASE_HEIGHT);
+
+            HorizontalLayoutGroup layout = showcase.AddComponent<HorizontalLayoutGroup>();
+            layout.spacing = 12f;
+            layout.childAlignment = TextAnchor.MiddleCenter;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandWidth = true;
+            layout.childForceExpandHeight = true;
+
+            GameObject iconArea = NewNode("Layout_ShowcaseIcon", showcase.transform);
+            AddLayoutElement(iconArea, preferredHeight: DETAIL_SHOWCASE_HEIGHT, flexibleWidth: 1f);
+
+            GameObject icon = NewNode("Img_Icon", iconArea.transform);
+            SetRect(icon.GetComponent<RectTransform>(), m_centerAnchor, m_centerAnchor, m_centerAnchor,
+                new Vector2(DETAIL_ICON_SIZE, DETAIL_ICON_SIZE), Vector2.zero);
             Image iconImage = icon.AddComponent<Image>();
             iconImage.color = Color.white;
             iconImage.preserveAspect = true;
@@ -286,31 +441,37 @@ namespace UI.Inventory.Editor
             // 无 Sprite 的 Image 渲染为纯白, 图标组件在 View 绑定 Sprite 后启用
             iconImage.enabled = false;
 
-            GameObject nameNode = NewNode("Txt_Name", card.transform);
-            SetRect(nameNode.GetComponent<RectTransform>(), m_topLeftAnchor, m_topLeftAnchor, m_topLeftAnchor,
-                new Vector2(DETAIL_TEXT_WIDTH, 30f), new Vector2(DETAIL_EDGE, -DETAIL_NAME_TOP));
-            AddTmp(nameNode, "物品名称", 24, TextAlignmentOptions.MidlineLeft, m_textPrimaryColor);
+            GameObject spec = NewNode("Txt_Spec", showcase.transform);
+            TextMeshProUGUI specText = AddTmp(spec, "占格  0x0", 17,
+                TextAlignmentOptions.TopRight, m_textSecondColor);
+            specText.enableWordWrapping = true;
+            specText.overflowMode = TextOverflowModes.Overflow;
+            specText.lineSpacing = 4f;
+            AddLayoutElement(spec, preferredWidth: DETAIL_SPEC_WIDTH,
+                preferredHeight: DETAIL_SHOWCASE_HEIGHT);
+        }
 
-            GameObject tags = NewNode("Txt_Tags", card.transform);
-            SetRect(tags.GetComponent<RectTransform>(), m_topLeftAnchor, m_topLeftAnchor, m_topLeftAnchor,
-                new Vector2(DETAIL_TEXT_WIDTH, 24f), new Vector2(DETAIL_EDGE, -DETAIL_TAGS_TOP));
-            AddTmp(tags, "类型 · 品质 · 容器", 18, TextAlignmentOptions.MidlineLeft, m_textSecondColor);
+        // 操作行：丢弃与检视只提供视觉占位, 后续接业务时直接取对应 Button
+        private static void BuildDetailActions(Transform parent, Sprite panelSprite)
+        {
+            GameObject actions = NewNode("Layout_Actions", parent);
+            AddLayoutElement(actions, preferredHeight: DETAIL_ACTION_HEIGHT);
 
-            GameObject spec = NewNode("Txt_Spec", card.transform);
-            SetRect(spec.GetComponent<RectTransform>(), m_topLeftAnchor, m_topLeftAnchor, m_topLeftAnchor,
-                new Vector2(DETAIL_TEXT_WIDTH, DETAIL_SPEC_HEIGHT), new Vector2(DETAIL_EDGE, -DETAIL_SPEC_TOP));
-            AddTmp(spec, "占格  0x0", 18, TextAlignmentOptions.TopLeft, m_textSecondColor);
+            HorizontalLayoutGroup layout = actions.AddComponent<HorizontalLayoutGroup>();
+            layout.spacing = 8f;
+            layout.childAlignment = TextAnchor.MiddleCenter;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandWidth = true;
+            layout.childForceExpandHeight = true;
 
-            GameObject close = NewNode("Btn_Close", card.transform);
-            SetRect(close.GetComponent<RectTransform>(), m_topRightAnchor, m_topRightAnchor, m_topRightAnchor,
-                new Vector2(CLOSE_BUTTON_WIDTH, CLOSE_BUTTON_HEIGHT), new Vector2(-POPUP_EDGE, -POPUP_EDGE));
-            AddButton(close, m_popupButtonColor);
-            GameObject closeText = NewNode("Txt_Close", close.transform);
-            SetStretch(closeText.GetComponent<RectTransform>(), 0f);
-            AddTmp(closeText, "关闭", 16, TextAlignmentOptions.Midline, m_textPrimaryColor);
+            GameObject drop = NewNode("Btn_Drop", actions.transform);
+            AddDetailButton(drop, panelSprite, "丢弃", 18);
+            AddLayoutElement(drop, preferredHeight: DETAIL_ACTION_HEIGHT, flexibleWidth: 1f);
 
-            AttachScript(root, DETAIL_SCRIPT);
-            return root;
+            GameObject inspect = NewNode("Btn_Inspect", actions.transform);
+            AddDetailButton(inspect, panelSprite, "检视", 18);
+            AddLayoutElement(inspect, preferredHeight: DETAIL_ACTION_HEIGHT, flexibleWidth: 1f);
         }
 
         // 右键菜单弹窗：全屏透明遮罩用于点击空白隐藏, 卡片竖排按钮执行操作
@@ -914,6 +1075,43 @@ namespace UI.Inventory.Editor
             image.color = backgroundColor;
             image.raycastTarget = true;
             return node.AddComponent<Button>();
+        }
+
+        // 详情布局项按内容声明首选尺寸, 由父级 VerticalLayoutGroup 与 ContentSizeFitter 计算实际大小
+        private static LayoutElement AddLayoutElement(GameObject node, float preferredWidth = -1f,
+            float preferredHeight = -1f, float flexibleWidth = -1f)
+        {
+            LayoutElement element = node.AddComponent<LayoutElement>();
+            element.preferredWidth = preferredWidth;
+            element.preferredHeight = preferredHeight;
+            element.flexibleWidth = flexibleWidth;
+            return element;
+        }
+
+        // 详情按钮使用 9-slice 底图, 文字作为子节点居中显示
+        private static Button AddDetailButton(GameObject node, Sprite sprite, string label, int fontSize)
+        {
+            Image image = node.AddComponent<Image>();
+            image.sprite = sprite;
+            image.type = Image.Type.Sliced;
+            image.color = m_detailButtonColor;
+            image.raycastTarget = true;
+
+            Button button = node.AddComponent<Button>();
+            button.targetGraphic = image;
+
+            GameObject labelNode = NewNode("Txt_" + node.name.Substring(4), node.transform);
+            SetStretch(labelNode.GetComponent<RectTransform>(), 0f);
+            AddTmp(labelNode, label, fontSize, TextAlignmentOptions.Midline, m_textPrimaryColor);
+            return button;
+        }
+
+        // 详情弹窗素材缺失时记录明确路径, 图元仍保留底色以便继续排版
+        private static Sprite LoadDetailSprite(string path)
+        {
+            Sprite sprite = AssetDatabase.LoadAssetAtPath<Sprite>(path);
+            if (sprite == null) QLog.Error(LOG + "详情弹窗素材加载失败: " + path);
+            return sprite;
         }
 
         // 横向排布行: 子节点尺寸由自身参数决定, 行内只负责等距摆放
