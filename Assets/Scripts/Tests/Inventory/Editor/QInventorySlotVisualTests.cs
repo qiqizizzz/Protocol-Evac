@@ -22,7 +22,9 @@ namespace Tests.Inventory
     {
         private GameObject m_slotObject;
         private UIInventorySlot m_slotView;
+        private Image m_borderTop;
         private Image m_borderRight;
+        private Image m_borderBottom;
         private Image m_borderLeft;
 
         [SetUp]
@@ -30,9 +32,9 @@ namespace Tests.Inventory
         {
             m_slotObject = new GameObject("UIInventorySlot", typeof(RectTransform), typeof(Image));
             CreateImage("Img_Background");
-            CreateImage("Img_BorderTop");
+            m_borderTop = CreateImage("Img_BorderTop");
             m_borderRight = CreateImage("Img_BorderRight");
-            CreateImage("Img_BorderBottom");
+            m_borderBottom = CreateImage("Img_BorderBottom");
             m_borderLeft = CreateImage("Img_BorderLeft");
 
             m_slotView = m_slotObject.AddComponent<UIInventorySlot>();
@@ -58,12 +60,30 @@ namespace Tests.Inventory
             AssertVerticalBorderInsideHorizontalBorders(m_borderLeft, "左侧");
         }
 
+        [Test]
+        public void BoundaryHorizontalBorders_StopBeforeVerticalBoundaryBorders()
+        {
+            SetPrivateField("m_bottomEdge", InventorySlotEdgeKind.Connected);
+            InvokePrivate(m_slotView, "ApplyVisual");
+
+            AssertHorizontalBorderInsideVerticalBorders(m_borderTop, "上方");
+            AssertHorizontalBorderInsideVerticalBorders(m_borderBottom, "下方");
+        }
+
         // 校验竖线上下端点均避开横线的完整厚度
         private static void AssertVerticalBorderInsideHorizontalBorders(Image border, string side)
         {
             RectTransform rect = border.rectTransform;
             Assert.AreEqual(3f, rect.offsetMin.y, $"{side}竖线下端必须收进下横线内侧");
             Assert.AreEqual(-3f, rect.offsetMax.y, $"{side}竖线上端必须收进上横线内侧");
+        }
+
+        // 校验横线左右端点均避开竖线的完整厚度
+        private static void AssertHorizontalBorderInsideVerticalBorders(Image border, string side)
+        {
+            RectTransform rect = border.rectTransform;
+            Assert.AreEqual(3f, rect.offsetMin.x, $"{side}横线左端必须收进左竖线内侧");
+            Assert.AreEqual(-3f, rect.offsetMax.x, $"{side}横线右端必须收进右竖线内侧");
         }
 
         // 建一个图像子节点

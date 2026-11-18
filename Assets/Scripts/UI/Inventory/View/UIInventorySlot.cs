@@ -269,6 +269,10 @@ namespace UI.Inventory.View
                 m_topEdge == InventorySlotEdgeKind.Boundary ? top + BorderThickness : top;
             float bottomLineInset =
                 m_bottomEdge == InventorySlotEdgeKind.Boundary ? bottom + BorderThickness : bottom;
+            float horizontalLeftInset =
+                left + (m_leftEdge == InventorySlotEdgeKind.Boundary ? BorderThickness : 0f);
+            float horizontalRightInset =
+                right + (m_rightEdge == InventorySlotEdgeKind.Boundary ? BorderThickness : 0f);
 
             rect.anchorMin = anchorMin;
             rect.anchorMax = anchorMax;
@@ -276,13 +280,13 @@ namespace UI.Inventory.View
 
             if (anchorMax.x > anchorMin.x && Mathf.Approximately(anchorMin.y, 1f))
             {
-                rect.offsetMin = new Vector2(left, -top - BorderThickness);
-                rect.offsetMax = new Vector2(-right, -top);
+                rect.offsetMin = new Vector2(horizontalLeftInset, -top - BorderThickness);
+                rect.offsetMax = new Vector2(-horizontalRightInset, -top);
             }
             else if (anchorMax.x > anchorMin.x)
             {
-                rect.offsetMin = new Vector2(left, bottom);
-                rect.offsetMax = new Vector2(-right, bottom + BorderThickness);
+                rect.offsetMin = new Vector2(horizontalLeftInset, bottom);
+                rect.offsetMax = new Vector2(-horizontalRightInset, bottom + BorderThickness);
             }
             else if (Mathf.Approximately(anchorMin.x, 1f))
             {
