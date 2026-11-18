@@ -445,15 +445,48 @@ namespace Tests.Inventory
             Assert.IsFalse(headerLayout.childForceExpandWidth,
                 "品质图标不能被强制拉伸到左侧整块区域");
 
-            Transform icon = card.Find("Layout_Showcase/Layout_ShowcaseIcon/Img_Icon");
+            Transform meta = card.Find("Layout_Meta");
+            Assert.IsNotNull(meta, "详情价值行节点缺失");
+            HorizontalLayoutGroup metaLayout = meta.GetComponent<HorizontalLayoutGroup>();
+            Transform metaDivider = meta.Find("Img_MetaDivider");
+            Assert.IsNotNull(metaLayout, "价值行需要横向布局");
+            Assert.IsNotNull(metaDivider, "价值行分隔线节点缺失");
+            LayoutElement dividerLayout = metaDivider.GetComponent<LayoutElement>();
+            Assert.IsNotNull(dividerLayout, "价值行分隔线需要可通过 LayoutElement 调整宽度");
+            Assert.IsFalse(metaLayout.childForceExpandWidth, "分隔线不能被横向布局强制拉宽");
+            Assert.AreEqual(1f, dividerLayout.preferredWidth, "价值行分隔线默认宽度应为 1px");
+
+            LayoutElement valueLayout = meta.Find("Txt_Value").GetComponent<LayoutElement>();
+            Assert.IsNotNull(valueLayout, "价值文字需要 LayoutElement");
+            Assert.AreEqual(-1f, valueLayout.preferredWidth,
+                "价值文字宽度应跟随实际数字内容, 不能固定预留大段空白");
+
+            Transform showcase = card.Find("Layout_Showcase");
+            Assert.IsNotNull(showcase, "详情展示区节点缺失");
+            Assert.IsNull(showcase.GetComponent<HorizontalLayoutGroup>(),
+                "图标与右下角信息应叠放, 不能再用等宽横向布局挤偏图标");
+
+            Transform iconArea = showcase.Find("Layout_ShowcaseIcon");
+            Assert.IsNotNull(iconArea, "展示图标容器缺失");
+            RectTransform iconAreaRect = iconArea.GetComponent<RectTransform>();
+            Assert.AreEqual(Vector2.zero, iconAreaRect.anchorMin, "展示图标容器需要铺满展示区");
+            Assert.AreEqual(Vector2.one, iconAreaRect.anchorMax, "展示图标容器需要铺满展示区");
+
+            Transform icon = iconArea.Find("Img_Icon");
             Assert.IsNotNull(icon, "展示区图标节点缺失");
             RectTransform iconRect = icon.GetComponent<RectTransform>();
             Assert.AreEqual(new Vector2(0.5f, 0.5f), iconRect.anchorMin, "展示区图标应水平垂直居中");
             Assert.AreEqual(new Vector2(0.5f, 0.5f), iconRect.anchorMax, "展示区图标应水平垂直居中");
             Assert.AreEqual(new Vector2(0.5f, 0.5f), iconRect.pivot, "展示区图标轴心应居中");
 
-            Transform footprint = card.Find("Layout_Showcase/Layout_Footprint");
+            Transform footprint = showcase.Find("Layout_Footprint");
             Assert.IsNotNull(footprint, "右下角占格信息节点缺失");
+            RectTransform footprintRect = footprint.GetComponent<RectTransform>();
+            Assert.AreEqual(new Vector2(1f, 0f), footprintRect.anchorMin, "重量与占格需要贴右下角");
+            Assert.AreEqual(new Vector2(1f, 0f), footprintRect.anchorMax, "重量与占格需要贴右下角");
+            HorizontalLayoutGroup footprintLayout = footprint.GetComponent<HorizontalLayoutGroup>();
+            Assert.IsNotNull(footprintLayout, "重量与占格需要在同一横向信息组内");
+
             Transform footprintGrid = footprint.Find("Layout_FootprintGrid");
             Assert.IsNotNull(footprintGrid, "右下角 6x4 占格图节点缺失");
             GridLayoutGroup grid = footprintGrid.GetComponent<GridLayoutGroup>();
@@ -461,6 +494,8 @@ namespace Tests.Inventory
 
             Assert.IsNotNull(grid, "占格图需要网格布局");
             Assert.AreEqual(6, grid.constraintCount, "占格图固定 6 列");
+            Assert.AreEqual(10f, grid.cellSize.x, "占格图需要保持小尺寸显示");
+            Assert.AreEqual(10f, grid.cellSize.y, "占格图需要保持小尺寸显示");
             Assert.AreEqual(FOOTPRINT_CELL_COUNT, footprintGrid.childCount, "占格图固定 6x4 共 24 格");
             Assert.IsNotNull(weight, "占格图旁需要重量文字");
 

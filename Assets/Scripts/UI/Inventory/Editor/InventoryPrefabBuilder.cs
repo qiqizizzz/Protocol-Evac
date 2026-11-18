@@ -96,9 +96,11 @@ namespace UI.Inventory.Editor
         private const int DETAIL_HEADER_HEIGHT = 36;
         private const int DETAIL_META_HEIGHT = 30;
         private const int DETAIL_SHOWCASE_HEIGHT = 158;
-        private const int DETAIL_FOOTPRINT_WIDTH = 138;
-        private const int DETAIL_FOOTPRINT_GRID_CELL_SIZE = 20;
-        private const int DETAIL_FOOTPRINT_GRID_SPACING = 2;
+        private const int DETAIL_FOOTPRINT_WIDTH = 116;
+        private const int DETAIL_FOOTPRINT_HEIGHT = 43;
+        private const int DETAIL_FOOTPRINT_WEIGHT_WIDTH = 45;
+        private const int DETAIL_FOOTPRINT_GRID_CELL_SIZE = 10;
+        private const int DETAIL_FOOTPRINT_GRID_SPACING = 1;
         private const int DETAIL_FOOTPRINT_COLUMNS = 6;
         private const int DETAIL_FOOTPRINT_ROWS = 4;
         private const int DETAIL_ACTION_HEIGHT = 40;
@@ -385,7 +387,7 @@ namespace UI.Inventory.Editor
             layout.childAlignment = TextAnchor.MiddleLeft;
             layout.childControlWidth = true;
             layout.childControlHeight = true;
-            layout.childForceExpandWidth = true;
+            layout.childForceExpandWidth = false;
             layout.childForceExpandHeight = true;
 
             GameObject valueIcon = NewNode("Img_ValueIcon", meta.transform);
@@ -398,13 +400,13 @@ namespace UI.Inventory.Editor
 
             GameObject value = NewNode("Txt_Value", meta.transform);
             AddTmp(value, "0", 20, TextAlignmentOptions.MidlineLeft, m_textPrimaryColor);
-            AddLayoutElement(value, preferredWidth: 142f, preferredHeight: DETAIL_META_HEIGHT);
+            AddLayoutElement(value, preferredHeight: DETAIL_META_HEIGHT);
 
             GameObject divider = NewNode("Img_MetaDivider", meta.transform);
             Image dividerImage = divider.AddComponent<Image>();
             dividerImage.color = m_detailLineColor;
             dividerImage.raycastTarget = false;
-            AddLayoutElement(divider, preferredWidth: 1f, preferredHeight: 18f);
+            AddLayoutElement(divider, preferredWidth: 1f, preferredHeight: 18f, flexibleWidth: 0f);
 
             GameObject tags = NewNode("Txt_Tags", meta.transform);
             TextMeshProUGUI tagsText = AddTmp(tags, "物品种类", 16,
@@ -417,22 +419,14 @@ namespace UI.Inventory.Editor
             AddLayoutElement(favorite, preferredWidth: 32f, preferredHeight: 30f);
         }
 
-        // 展示区：大图标与占格、重量、旋转规格
+        // 展示区：图标占满主体并居中, 重量与占格叠放在右下角
         private static void BuildDetailShowcase(Transform parent)
         {
             GameObject showcase = NewNode("Layout_Showcase", parent);
             AddLayoutElement(showcase, preferredHeight: DETAIL_SHOWCASE_HEIGHT);
 
-            HorizontalLayoutGroup layout = showcase.AddComponent<HorizontalLayoutGroup>();
-            layout.spacing = 12f;
-            layout.childAlignment = TextAnchor.MiddleCenter;
-            layout.childControlWidth = true;
-            layout.childControlHeight = true;
-            layout.childForceExpandWidth = true;
-            layout.childForceExpandHeight = true;
-
             GameObject iconArea = NewNode("Layout_ShowcaseIcon", showcase.transform);
-            AddLayoutElement(iconArea, preferredHeight: DETAIL_SHOWCASE_HEIGHT, flexibleWidth: 1f);
+            SetStretch(iconArea.GetComponent<RectTransform>(), 0f);
 
             GameObject icon = NewNode("Img_Icon", iconArea.transform);
             SetRect(icon.GetComponent<RectTransform>(), m_centerAnchor, m_centerAnchor, m_centerAnchor,
@@ -447,16 +441,17 @@ namespace UI.Inventory.Editor
             BuildDetailFootprint(showcase.transform);
         }
 
-        // 右下角固定 6x4 占格预览与重量, 容器展示内部容量, 普通物品展示当前占格
+        // 右下角横向排列重量与小尺寸 6x4 占格预览
         private static void BuildDetailFootprint(Transform parent)
         {
             GameObject footprint = NewNode("Layout_Footprint", parent);
-            AddLayoutElement(footprint, preferredWidth: DETAIL_FOOTPRINT_WIDTH,
-                preferredHeight: DETAIL_SHOWCASE_HEIGHT);
+            SetRect(footprint.GetComponent<RectTransform>(), new Vector2(1f, 0f), new Vector2(1f, 0f),
+                new Vector2(1f, 0f), new Vector2(DETAIL_FOOTPRINT_WIDTH, DETAIL_FOOTPRINT_HEIGHT),
+                new Vector2(-8f, 8f));
 
-            VerticalLayoutGroup layout = footprint.AddComponent<VerticalLayoutGroup>();
-            layout.spacing = 4f;
-            layout.childAlignment = TextAnchor.LowerRight;
+            HorizontalLayoutGroup layout = footprint.AddComponent<HorizontalLayoutGroup>();
+            layout.spacing = 6f;
+            layout.childAlignment = TextAnchor.MiddleRight;
             layout.childControlWidth = false;
             layout.childControlHeight = false;
             layout.childForceExpandWidth = false;
@@ -469,8 +464,8 @@ namespace UI.Inventory.Editor
 
             GameObject weight = NewNode("Txt_Weight", footprint.transform);
             RectTransform weightRect = weight.GetComponent<RectTransform>();
-            weightRect.sizeDelta = new Vector2(gridWidth, 20f);
-            AddTmp(weight, "0KG", 16, TextAlignmentOptions.MidlineRight, m_textSecondColor);
+            weightRect.sizeDelta = new Vector2(DETAIL_FOOTPRINT_WEIGHT_WIDTH, DETAIL_FOOTPRINT_HEIGHT);
+            AddTmp(weight, "0KG", 14, TextAlignmentOptions.MidlineRight, m_textSecondColor);
 
             GameObject gridNode = NewNode("Layout_FootprintGrid", footprint.transform);
             RectTransform gridRect = gridNode.GetComponent<RectTransform>();
