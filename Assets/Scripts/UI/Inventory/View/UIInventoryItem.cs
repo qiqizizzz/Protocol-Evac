@@ -100,6 +100,7 @@ namespace UI.Inventory.View
         private Vector2Int m_hoverTargetCell; // 最近一次悬停目标自身的格号
         private bool m_isDragging;
         private bool m_isSearching;
+        private bool m_isHovered;
         private bool m_isSearchIndicatorVisible;
         private float m_searchIndicatorElapsed;
         private Color m_baseColor;
@@ -155,6 +156,7 @@ namespace UI.Inventory.View
         // 面板关闭或载体隐藏时收不到 OnEndDrag, 这里兜底收尾, 避免拖影状态残留
         private void OnDisable()
         {
+            SetHovered(false);
             StopDetailReveal();
             FinishDrag();
         }
@@ -228,6 +230,9 @@ namespace UI.Inventory.View
             m_isSearchIndicatorVisible = searching && showSearchIndicator;
             if (!m_isSearchIndicatorVisible)
                 ResetSearchIndicator();
+
+            if (searching)
+                SetHovered(false);
 
             ApplyPresentation();
         }
@@ -370,6 +375,7 @@ namespace UI.Inventory.View
         {
             if (m_isSearching) return;
 
+            SetHovered(true);
             m_previewCell = m_origin + ResolveDropAnchor(eventData, m_rect, m_origin);
             m_viewModel.PreviewDropAt(m_previewCell);
         }
@@ -377,6 +383,8 @@ namespace UI.Inventory.View
         // 按上次上报的锚点格撤销预览, 居中后锚点可能不等于自身格号
         public void OnPointerExit(PointerEventData eventData)
         {
+            SetHovered(false);
+
             if (m_isSearching) return;
 
             m_viewModel.ClearDropPreview(m_previewCell);
@@ -385,6 +393,8 @@ namespace UI.Inventory.View
         public void OnBeginDrag(PointerEventData eventData)
         {
             if (m_isSearching) return;
+
+            SetHovered(false);
 
             // 同一次拖拽的重复回调只认第一次, 否则会叠加出第二个嵌套 Canvas 把裁切彻底弄丢
             if (m_isDragging || m_isPendingDrag) return;
@@ -882,7 +892,18 @@ namespace UI.Inventory.View
 
         private void RenderSelected(int selectedInstanceId)
         {
-            m_selectedFrame.SetActive(!m_isSearching && selectedInstanceId == InstanceId);
+            bool isSelected = selectedInstanceId == InstanceId;
+            m_selectedFrame.SetActive(!m_isSearching && (isSelected || m_isHovered));
+        }
+
+        // 切换物品悬停表现, 选中状态仍由视图模型决定
+        private void SetHovered(bool hovered)
+        {
+            if (m_isHovered == hovered) return;
+
+            m_isHovered = hovered;
+            int selectedInstanceId = m_viewModel != null ? m_viewModel.SelectedInstanceId.Value : NO_SELECTION;
+            RenderSelected(selectedInstanceId);
         }
 
         // 搜索图标固定在物品完整占格中心, 尺寸不随 2x2 等多格物品拉伸
