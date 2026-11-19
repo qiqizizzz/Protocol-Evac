@@ -38,7 +38,7 @@ namespace UI.Inventory.View
 
         private const float ITEM_GAP = 12f;
         private const float CONTAINER_LAYOUT_BUTTON_SIZE = 20f;
-        private const float CONTAINER_LAYOUT_BUTTON_SPACING = 6f;
+        private const float CONTAINER_LAYOUT_BUTTON_GAP = 6f;
         private const int FOOTPRINT_CELL_COUNT = 24;
         private static readonly Color m_footprintFilledColor = new Color(0.62f, 0.67f, 0.73f, 0.95f);
         private static readonly Color m_footprintEmptyColor = new Color(0.2f, 0.23f, 0.27f, 0.7f);
@@ -194,11 +194,9 @@ namespace UI.Inventory.View
             }
         }
 
-        // 兼容尚未重生成的详情预制体, 在占格旁补建问号按钮
+        // 兼容尚未重生成的详情预制体, 在占格右上角补建问号按钮
         private void EnsureContainerLayoutButton()
         {
-            if (m_containerLayoutButton != null) return;
-
             Transform footprint = transform.Find(FOOTPRINT_PATH);
             if (footprint == null)
             {
@@ -206,44 +204,53 @@ namespace UI.Inventory.View
                 return;
             }
 
-            if (footprint is RectTransform footprintRect)
-                footprintRect.sizeDelta +=
-                    new Vector2(CONTAINER_LAYOUT_BUTTON_SIZE + CONTAINER_LAYOUT_BUTTON_SPACING, 0f);
+            if (m_containerLayoutButton == null)
+            {
+                GameObject buttonNode = new GameObject("Btn_ContainerLayout", typeof(RectTransform));
+                buttonNode.transform.SetParent(footprint, false);
 
-            GameObject buttonNode = new GameObject("Btn_ContainerLayout", typeof(RectTransform));
-            buttonNode.transform.SetParent(footprint, false);
-            RectTransform buttonRect = buttonNode.GetComponent<RectTransform>();
+                Image image = buttonNode.AddComponent<Image>();
+                image.color = new Color(1f, 1f, 1f, 0.12f);
+                image.raycastTarget = true;
+
+                Button button = buttonNode.AddComponent<Button>();
+                button.targetGraphic = image;
+                m_containerLayoutButton = button;
+
+                GameObject labelNode = new GameObject("Txt_ContainerLayout", typeof(RectTransform));
+                labelNode.transform.SetParent(buttonNode.transform, false);
+                RectTransform labelRect = labelNode.GetComponent<RectTransform>();
+                labelRect.anchorMin = Vector2.zero;
+                labelRect.anchorMax = Vector2.one;
+                labelRect.offsetMin = Vector2.zero;
+                labelRect.offsetMax = Vector2.zero;
+
+                TextMeshProUGUI label = labelNode.AddComponent<TextMeshProUGUI>();
+                label.text = "?";
+                label.fontSize = 16f;
+                label.alignment = TextAlignmentOptions.Midline;
+                label.color = new Color(0.9f, 0.93f, 0.98f, 1f);
+                label.raycastTarget = false;
+
+                buttonNode.SetActive(false);
+                QLog.Warning($"详情预制体缺少 {CONTAINER_LAYOUT_BUTTON_PATH}, 已运行时补建");
+            }
+
+            RectTransform buttonRect = (RectTransform)m_containerLayoutButton.transform;
+            buttonRect.SetParent(footprint, false);
+            buttonRect.anchorMin = Vector2.one;
+            buttonRect.anchorMax = Vector2.one;
+            buttonRect.pivot = new Vector2(1f, 0f);
+            buttonRect.anchoredPosition = new Vector2(0f, CONTAINER_LAYOUT_BUTTON_GAP);
             buttonRect.sizeDelta = new Vector2(CONTAINER_LAYOUT_BUTTON_SIZE, CONTAINER_LAYOUT_BUTTON_SIZE);
 
-            Image image = buttonNode.AddComponent<Image>();
-            image.color = new Color(1f, 1f, 1f, 0.12f);
-            image.raycastTarget = true;
-
-            Button button = buttonNode.AddComponent<Button>();
-            button.targetGraphic = image;
-
-            LayoutElement layout = buttonNode.AddComponent<LayoutElement>();
+            LayoutElement layout = buttonRect.GetComponent<LayoutElement>();
+            if (layout == null)
+                layout = buttonRect.gameObject.AddComponent<LayoutElement>();
             layout.preferredWidth = CONTAINER_LAYOUT_BUTTON_SIZE;
             layout.preferredHeight = CONTAINER_LAYOUT_BUTTON_SIZE;
-
-            GameObject labelNode = new GameObject("Txt_ContainerLayout", typeof(RectTransform));
-            labelNode.transform.SetParent(buttonNode.transform, false);
-            RectTransform labelRect = labelNode.GetComponent<RectTransform>();
-            labelRect.anchorMin = Vector2.zero;
-            labelRect.anchorMax = Vector2.one;
-            labelRect.offsetMin = Vector2.zero;
-            labelRect.offsetMax = Vector2.zero;
-
-            TextMeshProUGUI label = labelNode.AddComponent<TextMeshProUGUI>();
-            label.text = "?";
-            label.fontSize = 16f;
-            label.alignment = TextAlignmentOptions.Midline;
-            label.color = new Color(0.9f, 0.93f, 0.98f, 1f);
-            label.raycastTarget = false;
-
-            buttonNode.SetActive(false);
-            m_containerLayoutButton = button;
-            QLog.Warning($"详情预制体缺少 {CONTAINER_LAYOUT_BUTTON_PATH}, 已运行时补建");
+            // 问号固定在占格右上角, 不参与重量与占格网格的水平排布
+            layout.ignoreLayout = true;
         }
 
         // 打开独立窗口展示容器完整内部布局
@@ -255,8 +262,15 @@ namespace UI.Inventory.View
             int generation = m_containerLayoutGeneration;
             int containerId = ViewModel.ContainerId;
             int instanceId = ViewModel.InstanceId;
+            if (!ItemPopupPlacement.TryGetScreenRect(m_cardRect, out Rect detailScreenRect))
+            {
+                m_containerLayoutOpening = false;
+                QLog.Error("无法读取详情卡片屏幕矩形, 容器布局窗口未打开");
+                return;
+            }
 
-            await MvvmRoot.Instance.Windows.ShowAsync<UIItemContainerLayoutPanel>(containerId, instanceId);
+            await MvvmRoot.Instance.Windows.ShowAsync<UIItemContainerLayoutPanel>(
+                containerId, instanceId, detailScreenRect);
 
             m_containerLayoutOpening = false;
 

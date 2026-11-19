@@ -506,9 +506,18 @@ namespace Tests.Inventory
 
             Transform layoutButton = footprint.Find("Btn_ContainerLayout");
             Assert.IsNotNull(layoutButton, "详情占格旁需要容器布局问号按钮");
+            RectTransform layoutButtonRect = layoutButton.GetComponent<RectTransform>();
+            LayoutElement layoutButtonElement = layoutButton.GetComponent<LayoutElement>();
             Assert.IsNotNull(layoutButton.GetComponent<Button>(), "容器布局问号按钮需要可点击");
             Assert.IsNotNull(layoutButton.GetComponent<Image>(), "容器布局问号按钮需要射线底板");
             Assert.IsTrue(layoutButton.GetComponent<Image>().raycastTarget, "问号按钮底板必须接收点击");
+            Assert.AreEqual(Vector2.one, layoutButtonRect.anchorMin, "问号按钮需要贴在占格右上角");
+            Assert.AreEqual(Vector2.one, layoutButtonRect.anchorMax, "问号按钮需要贴在占格右上角");
+            Assert.AreEqual(new Vector2(1f, 0f), layoutButtonRect.pivot, "问号按钮需要向上展开到占格上方");
+            Assert.AreEqual(new Vector2(0f, 6f), layoutButtonRect.anchoredPosition,
+                "问号按钮需要贴住占格右上方并保留 6 像素间距");
+            Assert.IsNotNull(layoutButtonElement, "问号按钮需要排除在占格信息横向布局之外");
+            Assert.IsTrue(layoutButtonElement.ignoreLayout, "问号按钮不能被重量与占格布局挤到右侧");
             TMP_Text layoutLabel = layoutButton.Find("Txt_ContainerLayout").GetComponent<TMP_Text>();
             Assert.IsNotNull(layoutLabel, "容器布局按钮文字缺失");
             Assert.AreEqual("?", layoutLabel.text, "容器布局按钮固定显示问号");
@@ -559,10 +568,19 @@ namespace Tests.Inventory
 
             Transform card = prefab.transform.Find("Panel_ContainerLayout");
             Assert.IsNotNull(card, "容器布局卡片节点缺失");
+            RectTransform cardRect = card.GetComponent<RectTransform>();
+            Assert.AreEqual(new Vector2(260f, 400f), cardRect.sizeDelta, "容器布局窗口需要收紧为独立小窗");
+            Assert.AreEqual(new Vector2(0f, 1f), cardRect.pivot, "容器布局窗口需要以左上角为定位基准");
             Assert.IsNotNull(card.Find("Layout_Header/Txt_Title"), "容器布局标题节点缺失");
             Assert.IsNotNull(card.Find("Layout_Header/Txt_Size"), "容器尺寸节点缺失");
             Assert.IsNotNull(card.Find("Layout_Header/Btn_Close"), "容器布局关闭按钮缺失");
-            Assert.IsNotNull(card.Find("Layout_Viewport/Layout_Grid"), "容器布局网格节点缺失");
+            Transform grid = card.Find("Layout_Viewport/Layout_Grid");
+            Assert.IsNotNull(grid, "容器布局网格节点缺失");
+            GridLayoutGroup gridLayout = grid.GetComponent<GridLayoutGroup>();
+            Assert.IsNotNull(gridLayout, "容器布局网格缺少网格布局组件");
+            Assert.AreEqual(TextAnchor.UpperLeft, gridLayout.childAlignment,
+                "容器布局必须从左上角按行列生成, 不能居中导致格子挤在一起");
+            Assert.AreEqual(Vector2.zero, gridLayout.spacing, "容器布局格子之间不能叠加额外间距");
         }
 
         [Test]
@@ -584,6 +602,8 @@ namespace Tests.Inventory
                 Assert.AreEqual(15, gridRoot.childCount, "完整容器布局必须保留所有网格占位");
                 Transform hole = gridRoot.GetChild(2);
                 Assert.IsFalse(hole.GetComponent<Image>().enabled, "空洞格不能绘制底色");
+                Assert.IsFalse(hole.Find("Img_Background").GetComponent<Image>().enabled,
+                    "空洞格不能绘制独立底板");
                 Assert.IsFalse(hole.Find("Img_BorderTop").GetComponent<Image>().enabled);
                 Assert.IsFalse(hole.Find("Img_BorderRight").GetComponent<Image>().enabled);
                 Assert.IsFalse(hole.Find("Img_BorderBottom").GetComponent<Image>().enabled);
@@ -591,7 +611,7 @@ namespace Tests.Inventory
 
                 Image connectedRight = gridRoot.GetChild(0).Find("Img_BorderRight").GetComponent<Image>();
                 Assert.IsTrue(connectedRight.enabled, "同区域相邻格必须绘制连接线");
-                Assert.AreEqual(new Color(0.5f, 0.56f, 0.64f, 0.65f), connectedRight.color);
+                Assert.AreEqual(new Color(0.36f, 0.38f, 0.41f, 1f), connectedRight.color);
             }
             finally
             {

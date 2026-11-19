@@ -113,5 +113,17 @@ namespace Tests.Inventory
             Assert.AreEqual(new Vector2(-188f, 0f), m_card.anchoredPosition,
                 "左侧放不下时, 卡片应回退到物品右侧");
         }
+
+        [Test]
+        public void AnchorToRightOfScreenRect_PlacesCardRightAndAlignsTop()
+        {
+            Rect detailScreenRect = new Rect(100f, 300f, 320f, 400f);
+
+            ItemPopupPlacement.AnchorToRightOfScreenRect(
+                m_root, m_card, detailScreenRect, 40f, 8f);
+
+            Assert.AreEqual(new Vector2(-40f, 192f), m_card.anchoredPosition,
+                "容器布局窗需要贴在详情右侧, 顶部相对详情下移 8 像素");
+        }
     }
 }

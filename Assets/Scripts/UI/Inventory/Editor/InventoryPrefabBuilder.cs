@@ -125,12 +125,12 @@ namespace UI.Inventory.Editor
         private const int SPLIT_ACTION_BUTTON_WIDTH = 132;
         private const int SLIDER_HANDLE_WIDTH = 20;
         private const int SLIDER_FILL_INSET = 13;
-        private const int CONTAINER_LAYOUT_CARD_WIDTH = 620;
-        private const int CONTAINER_LAYOUT_CARD_HEIGHT = 520;
-        private const int CONTAINER_LAYOUT_PADDING = 16;
-        private const int CONTAINER_LAYOUT_HEADER_HEIGHT = 44;
-        private const int CONTAINER_LAYOUT_VIEWPORT_HEIGHT = 432;
-        private const int CONTAINER_LAYOUT_GRID_PADDING = 12;
+        private const int CONTAINER_LAYOUT_CARD_WIDTH = 260;
+        private const int CONTAINER_LAYOUT_CARD_HEIGHT = 400;
+        private const int CONTAINER_LAYOUT_PADDING = 12;
+        private const int CONTAINER_LAYOUT_HEADER_HEIGHT = 34;
+        private const int CONTAINER_LAYOUT_VIEWPORT_HEIGHT = 334;
+        private const int CONTAINER_LAYOUT_GRID_PADDING = 10;
 
         private static readonly Color m_sliderBgColor = new Color(1f, 1f, 1f, 0.18f);
         private static readonly Color m_sliderFillColor = new Color(0.62f, 0.68f, 0.75f, 0.9f);
@@ -505,11 +505,14 @@ namespace UI.Inventory.Editor
 
             GameObject containerLayout = NewNode("Btn_ContainerLayout", footprint.transform);
             RectTransform containerLayoutRect = containerLayout.GetComponent<RectTransform>();
-            containerLayoutRect.sizeDelta = new Vector2(DETAIL_CONTAINER_LAYOUT_BUTTON_SIZE,
-                DETAIL_CONTAINER_LAYOUT_BUTTON_SIZE);
+            SetRect(containerLayoutRect, Vector2.one, Vector2.one, new Vector2(1f, 0f),
+                new Vector2(DETAIL_CONTAINER_LAYOUT_BUTTON_SIZE, DETAIL_CONTAINER_LAYOUT_BUTTON_SIZE),
+                new Vector2(0f, 6f));
             AddButton(containerLayout, m_popupButtonColor);
-            AddLayoutElement(containerLayout, preferredWidth: DETAIL_CONTAINER_LAYOUT_BUTTON_SIZE,
+            LayoutElement containerLayoutElement = AddLayoutElement(containerLayout,
+                preferredWidth: DETAIL_CONTAINER_LAYOUT_BUTTON_SIZE,
                 preferredHeight: DETAIL_CONTAINER_LAYOUT_BUTTON_SIZE);
+            containerLayoutElement.ignoreLayout = true;
 
             GameObject containerLayoutText = NewNode("Txt_ContainerLayout", containerLayout.transform);
             SetStretch(containerLayoutText.GetComponent<RectTransform>(), 0f);
@@ -529,7 +532,7 @@ namespace UI.Inventory.Editor
             AddButton(dismiss, m_popupDimColor);
 
             GameObject card = NewNode("Panel_ContainerLayout", root.transform);
-            SetRect(card.GetComponent<RectTransform>(), m_centerAnchor, m_centerAnchor, m_centerAnchor,
+            SetRect(card.GetComponent<RectTransform>(), m_centerAnchor, m_centerAnchor, new Vector2(0f, 1f),
                 new Vector2(CONTAINER_LAYOUT_CARD_WIDTH, CONTAINER_LAYOUT_CARD_HEIGHT), Vector2.zero);
             Image cardImage = card.AddComponent<Image>();
             cardImage.color = m_popupBgColor;
@@ -538,7 +541,7 @@ namespace UI.Inventory.Editor
             VerticalLayoutGroup cardLayout = card.AddComponent<VerticalLayoutGroup>();
             cardLayout.padding = new RectOffset(CONTAINER_LAYOUT_PADDING, CONTAINER_LAYOUT_PADDING,
                 CONTAINER_LAYOUT_PADDING, CONTAINER_LAYOUT_PADDING);
-            cardLayout.spacing = 12f;
+            cardLayout.spacing = 8f;
             cardLayout.childAlignment = TextAnchor.UpperCenter;
             cardLayout.childControlWidth = true;
             cardLayout.childControlHeight = true;
@@ -548,7 +551,7 @@ namespace UI.Inventory.Editor
             GameObject header = NewNode("Layout_Header", card.transform);
             AddLayoutElement(header, preferredHeight: CONTAINER_LAYOUT_HEADER_HEIGHT);
             HorizontalLayoutGroup headerLayout = header.AddComponent<HorizontalLayoutGroup>();
-            headerLayout.spacing = 10f;
+            headerLayout.spacing = 6f;
             headerLayout.childAlignment = TextAnchor.MiddleLeft;
             headerLayout.childControlWidth = true;
             headerLayout.childControlHeight = true;
@@ -556,19 +559,19 @@ namespace UI.Inventory.Editor
             headerLayout.childForceExpandHeight = true;
 
             GameObject title = NewNode("Txt_Title", header.transform);
-            AddTmp(title, "容器布局", 26, TextAlignmentOptions.MidlineLeft, m_textPrimaryColor);
+            AddTmp(title, "容器布局", 20, TextAlignmentOptions.MidlineLeft, m_textPrimaryColor);
             AddLayoutElement(title, preferredHeight: CONTAINER_LAYOUT_HEADER_HEIGHT, flexibleWidth: 1f);
 
             GameObject size = NewNode("Txt_Size", header.transform);
-            AddTmp(size, "0 x 0", 18, TextAlignmentOptions.MidlineRight, m_textSecondColor);
-            AddLayoutElement(size, preferredWidth: 110f, preferredHeight: CONTAINER_LAYOUT_HEADER_HEIGHT);
+            AddTmp(size, "0 x 0", 14, TextAlignmentOptions.MidlineRight, m_textSecondColor);
+            AddLayoutElement(size, preferredWidth: 64f, preferredHeight: CONTAINER_LAYOUT_HEADER_HEIGHT);
 
             GameObject close = NewNode("Btn_Close", header.transform);
             AddButton(close, m_popupButtonColor);
-            AddLayoutElement(close, preferredWidth: 34f, preferredHeight: 34f);
+            AddLayoutElement(close, preferredWidth: 28f, preferredHeight: 28f);
             GameObject closeText = NewNode("Txt_Close", close.transform);
             SetStretch(closeText.GetComponent<RectTransform>(), 0f);
-            AddTmp(closeText, "×", 24, TextAlignmentOptions.Midline, m_textPrimaryColor);
+            AddTmp(closeText, "×", 20, TextAlignmentOptions.Midline, m_textPrimaryColor);
 
             GameObject viewport = NewNode("Layout_Viewport", card.transform);
             AddLayoutElement(viewport, preferredHeight: CONTAINER_LAYOUT_VIEWPORT_HEIGHT);
@@ -582,7 +585,7 @@ namespace UI.Inventory.Editor
             gridLayout.constraintCount = 1;
             gridLayout.startCorner = GridLayoutGroup.Corner.UpperLeft;
             gridLayout.startAxis = GridLayoutGroup.Axis.Horizontal;
-            gridLayout.childAlignment = TextAnchor.MiddleCenter;
+            gridLayout.childAlignment = TextAnchor.UpperLeft;
 
             AttachScript(root, CONTAINER_LAYOUT_SCRIPT);
             return root;

@@ -25,12 +25,15 @@ namespace UI.Inventory.View
         private const string VIEWPORT_PATH = CARD_PATH + "/Layout_Viewport";
         private const string GRID_PATH = VIEWPORT_PATH + "/Layout_Grid";
 
-        private const float BOUNDARY_LINE_WIDTH = 2f;
-        private const float CONNECTED_LINE_WIDTH = 1f;
-        private static readonly Color m_cellColor = new Color(0.16f, 0.18f, 0.22f, 1f);
-        private static readonly Color m_boundaryColor = new Color(0.94f, 0.96f, 1f, 0.95f);
-        private static readonly Color m_connectedColor = new Color(0.5f, 0.56f, 0.64f, 0.65f);
+        private const float BOUNDARY_INSET = 2f;
+        private const float BORDER_THICKNESS = 1f;
+        private const float DETAIL_RIGHT_GAP = 40f;
+        private const float DETAIL_TOP_INSET = 8f;
+        private static readonly Color m_cellColor = new Color(0.24f, 0.25f, 0.27f, 0.82f);
+        private static readonly Color m_boundaryColor = new Color(0.72f, 0.74f, 0.76f, 1f);
+        private static readonly Color m_connectedColor = new Color(0.36f, 0.38f, 0.41f, 1f);
 
+        private RectTransform m_rootRect;
         private RectTransform m_cardRect;
         private RectTransform m_gridRect;
         private TMP_Text m_titleText;
@@ -44,6 +47,7 @@ namespace UI.Inventory.View
 
         protected override void OnAwake()
         {
+            m_rootRect = (RectTransform)transform;
             m_cardRect = FindComponent<RectTransform>(CARD_PATH);
             m_gridRect = FindComponent<RectTransform>(GRID_PATH);
             m_titleText = FindComponent<TMP_Text>(TITLE_PATH);
@@ -66,7 +70,8 @@ namespace UI.Inventory.View
 
         protected override void OnShow(params object[] args)
         {
-            if (!TryReadTarget(args, out int containerId, out int instanceId))
+            if (!ItemPopupPlacement.TryReadContainerLayoutArgs(args, out int containerId, out int instanceId,
+                    out Rect detailScreenRect))
             {
                 QLog.Error("容器布局窗口参数无效");
                 return;
@@ -79,6 +84,10 @@ namespace UI.Inventory.View
             Canvas.ForceUpdateCanvases();
             LayoutRebuilder.ForceRebuildLayoutImmediate(m_cardRect);
             RefreshGrid(ViewModel.Preview.Value);
+            Canvas.ForceUpdateCanvases();
+            LayoutRebuilder.ForceRebuildLayoutImmediate(m_cardRect);
+            ItemPopupPlacement.AnchorToRightOfScreenRect(
+                m_rootRect, m_cardRect, detailScreenRect, DETAIL_RIGHT_GAP, DETAIL_TOP_INSET);
         }
         #endregion
 
@@ -93,7 +102,8 @@ namespace UI.Inventory.View
             m_gridLayout.constraintCount = preview.ColumnCount;
             m_gridLayout.startCorner = GridLayoutGroup.Corner.UpperLeft;
             m_gridLayout.startAxis = GridLayoutGroup.Axis.Horizontal;
-            m_gridLayout.childAlignment = TextAnchor.MiddleCenter;
+            // 与胸挂槽位一致, 首格固定在左上角才能保持行列步长
+            m_gridLayout.childAlignment = TextAnchor.UpperLeft;
             m_gridLayout.spacing = Vector2.zero;
 
             float cellSize = Mathf.Floor(Mathf.Min(
@@ -106,79 +116,143 @@ namespace UI.Inventory.View
             for (int index = 0; index < cellCount; index++)
             {
                 bool solid = index < preview.SolidCells.Count && preview.SolidCells[index];
-                GameObject cell = CreateCell(index, solid);
+                InventorySlotEdgeKind top = ReadEdge(preview.TopEdges, index);
+                InventorySlotEdgeKind right = ReadEdge(preview.RightEdges, index);
+                InventorySlotEdgeKind bottom = ReadEdge(preview.BottomEdges, index);
+                InventorySlotEdgeKind left = ReadEdge(preview.LeftEdges, index);
+                GameObject cell = CreateCell(index, solid, top, right, bottom, left);
                 if (!solid) continue;
 
                 ApplyEdge(cell.transform.Find("Img_BorderTop").GetComponent<Image>(),
-                    ReadEdge(preview.TopEdges, index), false);
+                    top, right, bottom, left, 0);
                 ApplyEdge(cell.transform.Find("Img_BorderRight").GetComponent<Image>(),
-                    ReadEdge(preview.RightEdges, index), true);
+                    top, right, bottom, left, 1);
                 ApplyEdge(cell.transform.Find("Img_BorderBottom").GetComponent<Image>(),
-                    ReadEdge(preview.BottomEdges, index), true);
+                    top, right, bottom, left, 2);
                 ApplyEdge(cell.transform.Find("Img_BorderLeft").GetComponent<Image>(),
-                    ReadEdge(preview.LeftEdges, index), false);
+                    top, right, bottom, left, 3);
             }
         }
 
-        // 创建单格根图与四条边线, 空洞格仍保留节点占位
-        private GameObject CreateCell(int index, bool solid)
+        // 按胸挂格子的规则创建点击区、边界内缩底板与四条边线
+        private GameObject CreateCell(int index, bool solid, InventorySlotEdgeKind top,
+            InventorySlotEdgeKind right, InventorySlotEdgeKind bottom, InventorySlotEdgeKind left)
         {
             GameObject cell = NewNode($"Cell_{index:00}", m_gridRect);
-            Image background = cell.AddComponent<Image>();
+            Image clickArea = cell.AddComponent<Image>();
+            clickArea.color = Color.clear;
+            clickArea.raycastTarget = false;
+            clickArea.enabled = solid;
+
+            GameObject backgroundNode = NewNode("Img_Background", cell.transform);
+            RectTransform backgroundRect = backgroundNode.GetComponent<RectTransform>();
+            backgroundRect.anchorMin = Vector2.zero;
+            backgroundRect.anchorMax = Vector2.one;
+            backgroundRect.offsetMin = Vector2.zero;
+            backgroundRect.offsetMax = Vector2.zero;
+
+            Image background = backgroundNode.AddComponent<Image>();
             background.color = m_cellColor;
             background.raycastTarget = false;
             background.enabled = solid;
+            if (solid)
+                ApplyBackgroundInset(backgroundRect, top, right, bottom, left);
 
             CreateBorder(cell.transform, "Img_BorderTop", new Vector2(0f, 1f), new Vector2(1f, 1f),
-                new Vector2(0.5f, 1f), new Vector2(0f, BOUNDARY_LINE_WIDTH), Vector2.zero);
+                new Vector2(0.5f, 1f));
             CreateBorder(cell.transform, "Img_BorderRight", new Vector2(1f, 0f), new Vector2(1f, 1f),
-                new Vector2(1f, 0.5f), new Vector2(BOUNDARY_LINE_WIDTH, 0f), Vector2.zero);
+                new Vector2(1f, 0.5f));
             CreateBorder(cell.transform, "Img_BorderBottom", new Vector2(0f, 0f), new Vector2(1f, 0f),
-                new Vector2(0.5f, 0f), new Vector2(0f, BOUNDARY_LINE_WIDTH), Vector2.zero);
+                new Vector2(0.5f, 0f));
             CreateBorder(cell.transform, "Img_BorderLeft", new Vector2(0f, 0f), new Vector2(0f, 1f),
-                new Vector2(0f, 0.5f), new Vector2(BOUNDARY_LINE_WIDTH, 0f), Vector2.zero);
+                new Vector2(0f, 0.5f));
             return cell;
         }
 
-        // 边线铺在格子内沿, 外沿与跨区域线使用白色, 同区域接缝使用细灰线
-        private static void ApplyEdge(Image line, InventorySlotEdgeKind edgeKind, bool drawConnected)
+        // 只在区域边界内缩底板, 同区域相邻格保持连续
+        private static void ApplyBackgroundInset(RectTransform background, InventorySlotEdgeKind top,
+            InventorySlotEdgeKind right, InventorySlotEdgeKind bottom, InventorySlotEdgeKind left)
+        {
+            background.offsetMin = new Vector2(EdgeInset(left), EdgeInset(bottom));
+            background.offsetMax = new Vector2(-EdgeInset(right), -EdgeInset(top));
+        }
+
+        // 按方向绘制外沿或同区域内部分隔线, 线条范围与底板内缩保持一致
+        private static void ApplyEdge(Image line, InventorySlotEdgeKind top, InventorySlotEdgeKind right,
+            InventorySlotEdgeKind bottom, InventorySlotEdgeKind left, int side)
         {
             if (line == null) return;
 
+            InventorySlotEdgeKind edgeKind = side switch
+            {
+                0 => top,
+                1 => right,
+                2 => bottom,
+                _ => left
+            };
             bool visible = edgeKind == InventorySlotEdgeKind.Boundary ||
-                (edgeKind == InventorySlotEdgeKind.Connected && drawConnected);
+                ((side == 1 || side == 2) && edgeKind == InventorySlotEdgeKind.Connected);
             line.enabled = visible;
             if (!visible) return;
 
             bool boundary = edgeKind == InventorySlotEdgeKind.Boundary;
-            float width = boundary ? BOUNDARY_LINE_WIDTH : CONNECTED_LINE_WIDTH;
             line.color = boundary ? m_boundaryColor : m_connectedColor;
+
+            float leftInset = EdgeInset(left);
+            float rightInset = EdgeInset(right);
+            float topInset = EdgeInset(top);
+            float bottomInset = EdgeInset(bottom);
             RectTransform rect = line.rectTransform;
-            if (rect.anchorMin.x == rect.anchorMax.x)
+            switch (side)
             {
-                Vector2 size = rect.sizeDelta;
-                size.x = width;
-                rect.sizeDelta = size;
-            }
-            else
-            {
-                Vector2 size = rect.sizeDelta;
-                size.y = width;
-                rect.sizeDelta = size;
+                case 0:
+                    rect.offsetMin = new Vector2(
+                        leftInset + (left == InventorySlotEdgeKind.Boundary ? BORDER_THICKNESS : 0f),
+                        -topInset - BORDER_THICKNESS);
+                    rect.offsetMax = new Vector2(
+                        -rightInset - (right == InventorySlotEdgeKind.Boundary ? BORDER_THICKNESS : 0f),
+                        -topInset);
+                    break;
+                case 1:
+                    rect.offsetMin = new Vector2(
+                        -rightInset - BORDER_THICKNESS,
+                        bottomInset + (bottom == InventorySlotEdgeKind.Boundary ? BORDER_THICKNESS : 0f));
+                    rect.offsetMax = new Vector2(
+                        -rightInset,
+                        -topInset - (top == InventorySlotEdgeKind.Boundary ? BORDER_THICKNESS : 0f));
+                    break;
+                case 2:
+                    rect.offsetMin = new Vector2(
+                        leftInset + (left == InventorySlotEdgeKind.Boundary ? BORDER_THICKNESS : 0f),
+                        bottomInset);
+                    rect.offsetMax = new Vector2(
+                        -rightInset - (right == InventorySlotEdgeKind.Boundary ? BORDER_THICKNESS : 0f),
+                        bottomInset + BORDER_THICKNESS);
+                    break;
+                default:
+                    rect.offsetMin = new Vector2(
+                        leftInset,
+                        bottomInset + (bottom == InventorySlotEdgeKind.Boundary ? BORDER_THICKNESS : 0f));
+                    rect.offsetMax = new Vector2(
+                        leftInset + BORDER_THICKNESS,
+                        -topInset - (top == InventorySlotEdgeKind.Boundary ? BORDER_THICKNESS : 0f));
+                    break;
             }
         }
 
+        // 区域边界为视觉间距让出空间
+        private static float EdgeInset(InventorySlotEdgeKind kind) =>
+            kind == InventorySlotEdgeKind.Boundary ? BOUNDARY_INSET : 0f;
+
         // 创建一条沿父格内沿铺开的边线
         private static Image CreateBorder(Transform parent, string name, Vector2 anchorMin, Vector2 anchorMax,
-            Vector2 pivot, Vector2 sizeDelta, Vector2 anchoredPosition)
+            Vector2 pivot)
         {
             GameObject border = NewNode(name, parent);
             RectTransform rect = border.GetComponent<RectTransform>();
             rect.anchorMin = anchorMin;
             rect.anchorMax = anchorMax;
             rect.pivot = pivot;
-            rect.sizeDelta = sizeDelta;
-            rect.anchoredPosition = anchoredPosition;
 
             Image image = border.AddComponent<Image>();
             image.raycastTarget = false;
@@ -202,18 +276,6 @@ namespace UI.Inventory.View
                 else
                     DestroyImmediate(child);
             }
-        }
-
-        // 读取窗口打开参数
-        private static bool TryReadTarget(object[] args, out int containerId, out int instanceId)
-        {
-            containerId = 0;
-            instanceId = 0;
-            if (args == null || args.Length < 2 || !(args[0] is int) || !(args[1] is int)) return false;
-
-            containerId = (int)args[0];
-            instanceId = (int)args[1];
-            return true;
         }
 
         // 创建运行时 UI 节点

@@ -19,6 +19,7 @@ namespace UI.Inventory.View.Tools
     {
         private const int ARG_COUNT = 3;
         private const int ITEM_RECT_ARG_COUNT = 4;
+        private const int CONTAINER_LAYOUT_ARG_COUNT = 3;
 
         // 浮层相对面板排序的抬升量：窗口服务为每个面板分配相同的 sortingOrder,
         // 同排序时射线由网格的 GraphicRaycaster 接收, 浮层按钮无法点击
@@ -110,6 +111,61 @@ namespace UI.Inventory.View.Tools
         }
 
         /// <summary>
+        /// 读出容器布局窗口参数：容器号、实例号与来源详情卡片的屏幕矩形
+        /// </summary>
+        /// <param name="args">ShowAsync 透传的打开参数</param>
+        /// <param name="containerId">物品所在容器号</param>
+        /// <param name="instanceId">物品实例号</param>
+        /// <param name="detailScreenRect">来源详情卡片在屏幕空间中的矩形</param>
+        public static bool TryReadContainerLayoutArgs(object[] args, out int containerId, out int instanceId,
+            out Rect detailScreenRect)
+        {
+            containerId = 0;
+            instanceId = 0;
+            detailScreenRect = default;
+
+            if (args == null || args.Length < CONTAINER_LAYOUT_ARG_COUNT)
+            {
+                QLog.Error($"容器布局窗口参数不足: 依次需要 容器号 实例号 详情屏幕矩形, 实际 {(args == null ? 0 : args.Length)} 个");
+                return false;
+            }
+
+            if (args[0] is not int first || args[1] is not int second || args[2] is not Rect rect)
+            {
+                QLog.Error("容器布局窗口参数类型不符: 依次应为 int, int, Rect");
+                return false;
+            }
+
+            containerId = first;
+            instanceId = second;
+            detailScreenRect = rect;
+            return true;
+        }
+
+        /// <summary>
+        /// 读取矩形节点在屏幕空间中的完整范围
+        /// </summary>
+        /// <param name="rectTransform">需要换算的界面矩形</param>
+        /// <param name="screenRect">换算后的屏幕矩形</param>
+        public static bool TryGetScreenRect(RectTransform rectTransform, out Rect screenRect)
+        {
+            screenRect = default;
+            if (rectTransform == null) return false;
+
+            Camera camera = ResolveCamera(rectTransform);
+            Vector3[] corners = new Vector3[4];
+            rectTransform.GetWorldCorners(corners);
+            Vector2 first = RectTransformUtility.WorldToScreenPoint(camera, corners[0]);
+            Vector2 second = RectTransformUtility.WorldToScreenPoint(camera, corners[2]);
+            screenRect = Rect.MinMaxRect(
+                Mathf.Min(first.x, second.x),
+                Mathf.Min(first.y, second.y),
+                Mathf.Max(first.x, second.x),
+                Mathf.Max(first.y, second.y));
+            return true;
+        }
+
+        /// <summary>
         /// 将卡片定位到鼠标附近, 并按卡片尺寸限制在面板范围内
         /// </summary>
         /// <param name="root">铺满屏幕的弹窗根节点</param>
@@ -148,18 +204,7 @@ namespace UI.Inventory.View.Tools
         {
             if (root == null || card == null) return;
 
-            Camera camera = ResolveCamera(root);
-            if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(root, itemScreenRect.min, camera,
-                    out Vector2 localMin) ||
-                !RectTransformUtility.ScreenPointToLocalPointInRectangle(root, itemScreenRect.max, camera,
-                    out Vector2 localMax))
-                return;
-
-            Rect itemRect = Rect.MinMaxRect(
-                Mathf.Min(localMin.x, localMax.x),
-                Mathf.Min(localMin.y, localMax.y),
-                Mathf.Max(localMin.x, localMax.x),
-                Mathf.Max(localMin.y, localMax.y));
+            if (!TryGetLocalScreenRect(root, itemScreenRect, out Rect itemRect)) return;
 
             Vector2 half = root.rect.size * 0.5f;
             Vector2 size = card.rect.size;
@@ -181,6 +226,47 @@ namespace UI.Inventory.View.Tools
 
             float y = Mathf.Clamp(itemRect.yMax, Mathf.Max(-half.y, -half.y + size.y), half.y);
             card.anchoredPosition = new Vector2(x, y);
+        }
+
+        /// <summary>
+        /// 将左上轴心的卡片贴到来源详情右侧, 顶部与详情卡片轻微错开
+        /// </summary>
+        /// <param name="root">铺满屏幕的弹窗根节点</param>
+        /// <param name="card">卡片节点, 锚点居中、轴心左上</param>
+        /// <param name="detailScreenRect">来源详情卡片在屏幕空间中的矩形</param>
+        /// <param name="gap">卡片与详情之间的水平间距</param>
+        /// <param name="topInset">卡片顶边相对详情顶边的下移距离</param>
+        public static void AnchorToRightOfScreenRect(RectTransform root, RectTransform card, Rect detailScreenRect,
+            float gap, float topInset)
+        {
+            if (root == null || card == null) return;
+            if (!TryGetLocalScreenRect(root, detailScreenRect, out Rect detailRect)) return;
+
+            Vector2 half = root.rect.size * 0.5f;
+            Vector2 size = card.rect.size;
+            float x = Mathf.Clamp(detailRect.xMax + gap, -half.x, Mathf.Max(-half.x, half.x - size.x));
+            float y = Mathf.Clamp(detailRect.yMax - topInset,
+                Mathf.Max(-half.y, -half.y + size.y), half.y);
+            card.anchoredPosition = new Vector2(x, y);
+        }
+
+        // 把屏幕矩形转换到弹窗根节点的局部坐标
+        private static bool TryGetLocalScreenRect(RectTransform root, Rect screenRect, out Rect localRect)
+        {
+            localRect = default;
+            Camera camera = ResolveCamera(root);
+            if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(root, screenRect.min, camera,
+                    out Vector2 localMin) ||
+                !RectTransformUtility.ScreenPointToLocalPointInRectangle(root, screenRect.max, camera,
+                    out Vector2 localMax))
+                return false;
+
+            localRect = Rect.MinMaxRect(
+                Mathf.Min(localMin.x, localMax.x),
+                Mathf.Min(localMin.y, localMax.y),
+                Mathf.Max(localMin.x, localMax.x),
+                Mathf.Max(localMin.y, localMax.y));
+            return true;
         }
 
         // Overlay 画布需传 null, 仅 Camera 画布需要世界相机
