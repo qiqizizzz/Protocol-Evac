@@ -69,6 +69,9 @@ namespace UI.Inventory.View
         private RectTransform m_containerRect; //容量载体的网格外框, 独立装备槽没有该节点
         private RectTransform m_headerRect; //表头, 独立装备槽没有该节点
         private RectTransform m_equipSlotRect; //载体内嵌的装备槽, 有无由穿戴配置决定
+        private RectTransform m_clipRect; //最近一级裁切父节点, 用来限制表头不能画到裁切区外
+        private RectMask2D m_clipMask;
+        private float m_configuredWidth;
 
         private readonly List<UIInventorySlot> m_slotViews = new List<UIInventorySlot>();
         private readonly Dictionary<int, UIInventoryItem> m_itemViews = new Dictionary<int, UIInventoryItem>();
@@ -185,6 +188,9 @@ namespace UI.Inventory.View
         protected override void OnAwake()
         {
             m_rect = (RectTransform)transform;
+            m_configuredWidth = m_rect.rect.width;
+            ResolveClipRect();
+
             Transform containerRoot = transform.Find(CONTAINER_PATH);
             if (containerRoot != null)
             {
@@ -309,7 +315,8 @@ namespace UI.Inventory.View
                 //空容量载体仍要由表头和装备槽撑开, 否则后续载体表头会压到装备槽上
                 if (m_containerRect != null)
                 {
-                    m_rect.sizeDelta = new Vector2(m_rect.sizeDelta.x,
+                    float carrierWidth = ResolveCarrierWidth(m_configuredWidth);
+                    m_rect.sizeDelta = new Vector2(carrierWidth,
                         GridTopOffset() + EquipSlotHeight() + BOTTOM_GAP);
                     RebuildLayout();
                 }
@@ -331,11 +338,13 @@ namespace UI.Inventory.View
             }
             else
             {
-                m_containerRect.anchoredPosition = new Vector2(m_containerRect.anchoredPosition.x, -GridTopOffset());
+                m_containerRect.anchoredPosition =
+                    new Vector2(m_containerRect.anchoredPosition.x, -GridTopOffset());
                 m_containerRect.sizeDelta = new Vector2(gridWidth, gridHeight);
-                // 收合宽度只在开关打开时生效, 左侧背包列继续用预制体里写死的宽度
-                float carrierWidth = AutoSizeWidth ? gridWidth : m_rect.sizeDelta.x;
-                m_rect.sizeDelta = new Vector2(carrierWidth, GridTopOffset() + Mathf.Max(gridHeight, EquipSlotHeight()) + BOTTOM_GAP);
+                // 固定载体保留预制体宽度, 动态开箱模板跟随网格, 两者都不能越过裁切区
+                float carrierWidth = ResolveCarrierWidth(AutoSizeWidth ? gridWidth : m_configuredWidth);
+                m_rect.sizeDelta = new Vector2(carrierWidth,
+                    GridTopOffset() + Mathf.Max(gridHeight, EquipSlotHeight()) + BOTTOM_GAP);
             }
 
             RebuildLayout();
@@ -347,6 +356,41 @@ namespace UI.Inventory.View
             LayoutRebuilder.MarkLayoutForRebuild(m_gridRect);
             if (transform.parent is RectTransform parentRect)
                 LayoutRebuilder.MarkLayoutForRebuild(parentRect);
+        }
+
+        //缓存最近一级裁切父节点, 后续布局只读取它的实时可用宽度
+        private void ResolveClipRect()
+        {
+            Transform current = transform.parent;
+            while (current != null)
+            {
+                if (current.TryGetComponent(out RectMask2D rectMask))
+                {
+                    m_clipRect = (RectTransform)current;
+                    m_clipMask = rectMask;
+                    return;
+                }
+
+                if (current.TryGetComponent(out Mask _))
+                {
+                    m_clipRect = (RectTransform)current;
+                    return;
+                }
+
+                current = current.parent;
+            }
+        }
+
+        //载体宽度取内容宽度与裁切区可用宽度的较小值, 避免表头右边线被裁掉
+        private float ResolveCarrierWidth(float contentWidth)
+        {
+            if (m_clipRect == null) return contentWidth;
+
+            float availableWidth = m_clipRect.rect.width;
+            if (m_clipMask != null)
+                availableWidth -= m_clipMask.padding.x + m_clipMask.padding.z;
+
+            return Mathf.Min(contentWidth, Mathf.Max(0f, availableWidth));
         }
 
         //物品层收缩为网格的内缩区域, 原点钉在首格左上角, 保证物品永远压在格子上
