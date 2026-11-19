@@ -125,11 +125,8 @@ namespace UI.Inventory.Editor
         private const int SPLIT_ACTION_BUTTON_WIDTH = 132;
         private const int SLIDER_HANDLE_WIDTH = 20;
         private const int SLIDER_FILL_INSET = 13;
-        private const int CONTAINER_LAYOUT_CARD_WIDTH = 260;
-        private const int CONTAINER_LAYOUT_CARD_HEIGHT = 400;
         private const int CONTAINER_LAYOUT_PADDING = 12;
         private const int CONTAINER_LAYOUT_HEADER_HEIGHT = 34;
-        private const int CONTAINER_LAYOUT_VIEWPORT_HEIGHT = 334;
         private const int CONTAINER_LAYOUT_GRID_PADDING = 10;
 
         private static readonly Color m_sliderBgColor = new Color(1f, 1f, 1f, 0.18f);
@@ -521,7 +518,7 @@ namespace UI.Inventory.Editor
             containerLayout.SetActive(false);
         }
 
-        // 容器布局弹窗：全屏遮罩上居中放大容器网格, 由运行时视图按容器定义生成格子
+        // 容器布局弹窗：运行时按容器行列数生成网格并由布局组件自动计算卡片尺寸
         private static GameObject BuildContainerLayoutCard()
         {
             GameObject root = NewNode("UIItemContainerLayoutPanel", null);
@@ -533,7 +530,7 @@ namespace UI.Inventory.Editor
 
             GameObject card = NewNode("Panel_ContainerLayout", root.transform);
             SetRect(card.GetComponent<RectTransform>(), m_centerAnchor, m_centerAnchor, new Vector2(0f, 1f),
-                new Vector2(CONTAINER_LAYOUT_CARD_WIDTH, CONTAINER_LAYOUT_CARD_HEIGHT), Vector2.zero);
+                Vector2.zero, Vector2.zero);
             Image cardImage = card.AddComponent<Image>();
             cardImage.color = m_popupBgColor;
             cardImage.raycastTarget = true;
@@ -547,6 +544,10 @@ namespace UI.Inventory.Editor
             cardLayout.childControlHeight = true;
             cardLayout.childForceExpandWidth = true;
             cardLayout.childForceExpandHeight = false;
+
+            ContentSizeFitter cardFitter = card.AddComponent<ContentSizeFitter>();
+            cardFitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+            cardFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
             GameObject header = NewNode("Layout_Header", card.transform);
             AddLayoutElement(header, preferredHeight: CONTAINER_LAYOUT_HEADER_HEIGHT);
@@ -574,7 +575,7 @@ namespace UI.Inventory.Editor
             AddTmp(closeText, "×", 20, TextAlignmentOptions.Midline, m_textPrimaryColor);
 
             GameObject viewport = NewNode("Layout_Viewport", card.transform);
-            AddLayoutElement(viewport, preferredHeight: CONTAINER_LAYOUT_VIEWPORT_HEIGHT);
+            AddLayoutElement(viewport);
 
             GameObject grid = NewNode("Layout_Grid", viewport.transform);
             SetStretch(grid.GetComponent<RectTransform>(), CONTAINER_LAYOUT_GRID_PADDING);

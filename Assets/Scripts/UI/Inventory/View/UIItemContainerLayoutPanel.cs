@@ -29,6 +29,9 @@ namespace UI.Inventory.View
         private const float BORDER_THICKNESS = 1f;
         private const float DETAIL_RIGHT_GAP = 40f;
         private const float DETAIL_TOP_INSET = 8f;
+        private const float MAX_GRID_WIDTH = 316f;
+        private const float GRID_PADDING = 10f;
+        private const float BASE_CELL_SIZE = 54f;
         private static readonly Color m_cellColor = new Color(0.24f, 0.25f, 0.27f, 0.82f);
         private static readonly Color m_boundaryColor = new Color(0.72f, 0.74f, 0.76f, 1f);
         private static readonly Color m_connectedColor = new Color(0.36f, 0.38f, 0.41f, 1f);
@@ -36,6 +39,7 @@ namespace UI.Inventory.View
         private RectTransform m_rootRect;
         private RectTransform m_cardRect;
         private RectTransform m_gridRect;
+        private LayoutElement m_viewportLayoutElement;
         private TMP_Text m_titleText;
         private TMP_Text m_sizeText;
         private Button m_dismissButton;
@@ -50,6 +54,7 @@ namespace UI.Inventory.View
             m_rootRect = (RectTransform)transform;
             m_cardRect = FindComponent<RectTransform>(CARD_PATH);
             m_gridRect = FindComponent<RectTransform>(GRID_PATH);
+            m_viewportLayoutElement = FindComponent<LayoutElement>(VIEWPORT_PATH);
             m_titleText = FindComponent<TMP_Text>(TITLE_PATH);
             m_sizeText = FindComponent<TMP_Text>(SIZE_PATH);
             m_dismissButton = FindComponent<Button>(DISMISS_PATH);
@@ -80,12 +85,7 @@ namespace UI.Inventory.View
             ItemPopupPlacement.RaiseAbovePanels(gameObject);
             transform.SetAsLastSibling();
             ViewModel.Open(containerId, instanceId);
-
-            Canvas.ForceUpdateCanvases();
-            LayoutRebuilder.ForceRebuildLayoutImmediate(m_cardRect);
             RefreshGrid(ViewModel.Preview.Value);
-            Canvas.ForceUpdateCanvases();
-            LayoutRebuilder.ForceRebuildLayoutImmediate(m_cardRect);
             ItemPopupPlacement.AnchorToRightOfScreenRect(
                 m_rootRect, m_cardRect, detailScreenRect, DETAIL_RIGHT_GAP, DETAIL_TOP_INSET);
         }
@@ -98,6 +98,7 @@ namespace UI.Inventory.View
             ClearGrid();
             if (preview == null || preview.ColumnCount <= 0 || preview.RowCount <= 0) return;
 
+            float cellSize = UpdateViewportSize(preview);
             m_gridLayout.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
             m_gridLayout.constraintCount = preview.ColumnCount;
             m_gridLayout.startCorner = GridLayoutGroup.Corner.UpperLeft;
@@ -105,11 +106,6 @@ namespace UI.Inventory.View
             // 与胸挂槽位一致, 首格固定在左上角才能保持行列步长
             m_gridLayout.childAlignment = TextAnchor.UpperLeft;
             m_gridLayout.spacing = Vector2.zero;
-
-            float cellSize = Mathf.Floor(Mathf.Min(
-                m_gridRect.rect.width / preview.ColumnCount,
-                m_gridRect.rect.height / preview.RowCount));
-            cellSize = Mathf.Max(1f, cellSize);
             m_gridLayout.cellSize = new Vector2(cellSize, cellSize);
 
             int cellCount = preview.ColumnCount * preview.RowCount;
@@ -132,6 +128,30 @@ namespace UI.Inventory.View
                 ApplyEdge(cell.transform.Find("Img_BorderLeft").GetComponent<Image>(),
                     top, right, bottom, left, 3);
             }
+
+            RebuildCardLayout();
+        }
+
+        // 按容器行列数更新视口首选尺寸, 卡片由 ContentSizeFitter 自动计算最终宽高
+        private float UpdateViewportSize(ItemFootprintPreviewVO preview)
+        {
+            float cellSize = Mathf.Floor(Mathf.Min(BASE_CELL_SIZE, MAX_GRID_WIDTH / preview.ColumnCount));
+            cellSize = Mathf.Max(1f, cellSize);
+
+            float viewportWidth = preview.ColumnCount * cellSize + GRID_PADDING * 2f;
+            float viewportHeight = preview.RowCount * cellSize + GRID_PADDING * 2f;
+
+            m_viewportLayoutElement.preferredWidth = viewportWidth;
+            m_viewportLayoutElement.preferredHeight = viewportHeight;
+            return cellSize;
+        }
+
+        // 标记并立即重建卡片布局, 让定位逻辑读取自动计算后的实际尺寸
+        private void RebuildCardLayout()
+        {
+            LayoutRebuilder.MarkLayoutForRebuild(m_cardRect);
+            Canvas.ForceUpdateCanvases();
+            LayoutRebuilder.ForceRebuildLayoutImmediate(m_cardRect);
         }
 
         // 按胸挂格子的规则创建点击区、边界内缩底板与四条边线

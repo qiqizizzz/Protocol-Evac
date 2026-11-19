@@ -569,8 +569,13 @@ namespace Tests.Inventory
             Transform card = prefab.transform.Find("Panel_ContainerLayout");
             Assert.IsNotNull(card, "容器布局卡片节点缺失");
             RectTransform cardRect = card.GetComponent<RectTransform>();
-            Assert.AreEqual(new Vector2(260f, 400f), cardRect.sizeDelta, "容器布局窗口需要收紧为独立小窗");
             Assert.AreEqual(new Vector2(0f, 1f), cardRect.pivot, "容器布局窗口需要以左上角为定位基准");
+            ContentSizeFitter fitter = card.GetComponent<ContentSizeFitter>();
+            Assert.IsNotNull(fitter, "容器布局卡片缺少内容尺寸适配组件");
+            Assert.AreEqual(ContentSizeFitter.FitMode.PreferredSize, fitter.horizontalFit,
+                "容器布局宽度需要由内容自动计算");
+            Assert.AreEqual(ContentSizeFitter.FitMode.PreferredSize, fitter.verticalFit,
+                "容器布局高度需要由内容自动计算");
             Assert.IsNotNull(card.Find("Layout_Header/Txt_Title"), "容器布局标题节点缺失");
             Assert.IsNotNull(card.Find("Layout_Header/Txt_Size"), "容器尺寸节点缺失");
             Assert.IsNotNull(card.Find("Layout_Header/Btn_Close"), "容器布局关闭按钮缺失");
@@ -599,6 +604,18 @@ namespace Tests.Inventory
                 InvokePrivate(view, "OnAwake");
                 InvokePrivate(view, "RefreshGrid", preview);
 
+                RectTransform cardRect = instance.transform.Find("Panel_ContainerLayout")
+                    .GetComponent<RectTransform>();
+                LayoutElement viewportElement = instance.transform.Find(
+                    "Panel_ContainerLayout/Layout_Viewport").GetComponent<LayoutElement>();
+                Assert.AreEqual(290f, viewportElement.preferredWidth,
+                    "容器视口宽度需要与 5 列格子同步");
+                Assert.AreEqual(182f, viewportElement.preferredHeight,
+                    "容器视口高度需要与 3 行格子同步");
+                Assert.AreEqual(248f, cardRect.rect.height, 0.01f,
+                    "卡片高度需要由视口首选高度自动计算");
+                Assert.AreEqual(54f, gridRoot.GetComponent<GridLayoutGroup>().cellSize.x,
+                    "容器格子需要保持统一且可读的尺寸");
                 Assert.AreEqual(15, gridRoot.childCount, "完整容器布局必须保留所有网格占位");
                 Transform hole = gridRoot.GetChild(2);
                 Assert.IsFalse(hole.GetComponent<Image>().enabled, "空洞格不能绘制底色");
@@ -612,6 +629,12 @@ namespace Tests.Inventory
                 Image connectedRight = gridRoot.GetChild(0).Find("Img_BorderRight").GetComponent<Image>();
                 Assert.IsTrue(connectedRight.enabled, "同区域相邻格必须绘制连接线");
                 Assert.AreEqual(new Color(0.36f, 0.38f, 0.41f, 1f), connectedRight.color);
+
+                float wideWidth = cardRect.rect.width;
+                float wideHeight = cardRect.rect.height;
+                InvokePrivate(view, "RefreshGrid", BuildRectangularLayoutPreview(2, 2));
+                Assert.Less(cardRect.rect.width, wideWidth, "更少列的容器需要自动收窄卡片");
+                Assert.Less(cardRect.rect.height, wideHeight, "更少行的容器需要自动压低卡片");
             }
             finally
             {
@@ -829,6 +852,29 @@ namespace Tests.Inventory
 
             rightEdges[0] = InventorySlotEdgeKind.Connected;
             leftEdges[1] = InventorySlotEdgeKind.Connected;
+            return new ItemFootprintPreviewVO(true, width, height, solidCells, topEdges, rightEdges,
+                bottomEdges, leftEdges);
+        }
+
+        // 构造指定行列数的完整矩形容器预览
+        private static ItemFootprintPreviewVO BuildRectangularLayoutPreview(int width, int height)
+        {
+            int cellCount = width * height;
+            bool[] solidCells = new bool[cellCount];
+            InventorySlotEdgeKind[] topEdges = new InventorySlotEdgeKind[cellCount];
+            InventorySlotEdgeKind[] rightEdges = new InventorySlotEdgeKind[cellCount];
+            InventorySlotEdgeKind[] bottomEdges = new InventorySlotEdgeKind[cellCount];
+            InventorySlotEdgeKind[] leftEdges = new InventorySlotEdgeKind[cellCount];
+
+            for (int i = 0; i < cellCount; i++)
+            {
+                solidCells[i] = true;
+                topEdges[i] = InventorySlotEdgeKind.Boundary;
+                rightEdges[i] = InventorySlotEdgeKind.Boundary;
+                bottomEdges[i] = InventorySlotEdgeKind.Boundary;
+                leftEdges[i] = InventorySlotEdgeKind.Boundary;
+            }
+
             return new ItemFootprintPreviewVO(true, width, height, solidCells, topEdges, rightEdges,
                 bottomEdges, leftEdges);
         }
