@@ -563,10 +563,6 @@ namespace UI.Inventory.Editor
             AddTmp(title, "容器布局", 20, TextAlignmentOptions.MidlineLeft, m_textPrimaryColor);
             AddLayoutElement(title, preferredHeight: CONTAINER_LAYOUT_HEADER_HEIGHT, flexibleWidth: 1f);
 
-            GameObject size = NewNode("Txt_Size", header.transform);
-            AddTmp(size, "0 x 0", 14, TextAlignmentOptions.MidlineRight, m_textSecondColor);
-            AddLayoutElement(size, preferredWidth: 64f, preferredHeight: CONTAINER_LAYOUT_HEADER_HEIGHT);
-
             GameObject close = NewNode("Btn_Close", header.transform);
             AddButton(close, m_popupButtonColor);
             AddLayoutElement(close, preferredWidth: 28f, preferredHeight: 28f);

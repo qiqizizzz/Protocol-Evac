@@ -20,7 +20,6 @@ namespace UI.Inventory.View
         private const string DISMISS_PATH = "Btn_Dismiss";
         private const string CARD_PATH = "Panel_ContainerLayout";
         private const string TITLE_PATH = CARD_PATH + "/Layout_Header/Txt_Title";
-        private const string SIZE_PATH = CARD_PATH + "/Layout_Header/Txt_Size";
         private const string CLOSE_PATH = CARD_PATH + "/Layout_Header/Btn_Close";
         private const string VIEWPORT_PATH = CARD_PATH + "/Layout_Viewport";
         private const string GRID_PATH = VIEWPORT_PATH + "/Layout_Grid";
@@ -41,7 +40,6 @@ namespace UI.Inventory.View
         private RectTransform m_gridRect;
         private LayoutElement m_viewportLayoutElement;
         private TMP_Text m_titleText;
-        private TMP_Text m_sizeText;
         private Button m_dismissButton;
         private Button m_closeButton;
         private GridLayoutGroup m_gridLayout;
@@ -56,7 +54,6 @@ namespace UI.Inventory.View
             m_gridRect = FindComponent<RectTransform>(GRID_PATH);
             m_viewportLayoutElement = FindComponent<LayoutElement>(VIEWPORT_PATH);
             m_titleText = FindComponent<TMP_Text>(TITLE_PATH);
-            m_sizeText = FindComponent<TMP_Text>(SIZE_PATH);
             m_dismissButton = FindComponent<Button>(DISMISS_PATH);
             m_closeButton = FindComponent<Button>(CLOSE_PATH);
             m_gridLayout = FindComponent<GridLayoutGroup>(GRID_PATH);
@@ -68,7 +65,6 @@ namespace UI.Inventory.View
             m_closeButton.onClick.AddListener(viewModel.Dismiss);
 
             Scope.Bind(viewModel.Title, title => m_titleText.text = title);
-            Scope.Bind(viewModel.SizeLabel, size => m_sizeText.text = size);
             Scope.Bind(viewModel.Preview, RefreshGrid);
             Scope.Bind(viewModel.Dismissed, Hide);
         }

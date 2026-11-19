@@ -556,7 +556,6 @@ namespace Tests.Inventory
             Assert.AreEqual(InventorySlotEdgeKind.Boundary, preview.TopEdges[10],
                 "跨逻辑区域需要重新绘制外沿");
             Assert.AreEqual(InventorySlotEdgeKind.Connected, preview.RightEdges[10]);
-            Assert.AreEqual("5 x 3", layout.SizeLabel.Value);
         }
 
         [Test]
@@ -577,7 +576,6 @@ namespace Tests.Inventory
             Assert.AreEqual(ContentSizeFitter.FitMode.PreferredSize, fitter.verticalFit,
                 "容器布局高度需要由内容自动计算");
             Assert.IsNotNull(card.Find("Layout_Header/Txt_Title"), "容器布局标题节点缺失");
-            Assert.IsNotNull(card.Find("Layout_Header/Txt_Size"), "容器尺寸节点缺失");
             Assert.IsNotNull(card.Find("Layout_Header/Btn_Close"), "容器布局关闭按钮缺失");
             Transform grid = card.Find("Layout_Viewport/Layout_Grid");
             Assert.IsNotNull(grid, "容器布局网格节点缺失");
@@ -612,7 +610,7 @@ namespace Tests.Inventory
                     "容器视口宽度需要与 5 列格子同步");
                 Assert.AreEqual(182f, viewportElement.preferredHeight,
                     "容器视口高度需要与 3 行格子同步");
-                Assert.AreEqual(248f, cardRect.rect.height, 0.01f,
+                Assert.AreEqual(244f, cardRect.rect.height, 0.01f,
                     "卡片高度需要由视口首选高度自动计算");
                 Assert.AreEqual(54f, gridRoot.GetComponent<GridLayoutGroup>().cellSize.x,
                     "容器格子需要保持统一且可读的尺寸");

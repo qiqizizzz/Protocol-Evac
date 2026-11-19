@@ -21,13 +21,11 @@ namespace UI.Inventory
         private const int NO_ITEM = -1;
 
         public IReadOnlyReactiveProperty<string> Title => m_title;
-        public IReadOnlyReactiveProperty<string> SizeLabel => m_sizeLabel;
         public IReadOnlyReactiveProperty<ItemFootprintPreviewVO> Preview => m_preview;
         public ISignal Dismissed => m_dismissed;
 
         private readonly IInventoryModel m_model;
         private readonly ReactiveProperty<string> m_title;
-        private readonly ReactiveProperty<string> m_sizeLabel;
         private readonly ReactiveProperty<ItemFootprintPreviewVO> m_preview;
         private readonly Signal m_dismissed;
 
@@ -42,7 +40,6 @@ namespace UI.Inventory
         {
             m_model = model;
             m_title = CreateProperty(string.Empty);
-            m_sizeLabel = CreateProperty(string.Empty);
             m_preview = CreateProperty(ItemFootprintPreviewVO.Empty);
             m_dismissed = CreateSignal();
         }
@@ -115,7 +112,6 @@ namespace UI.Inventory
             IReadOnlyList<int> regionIds = container.RegionIds;
 
             m_title.Set(string.IsNullOrWhiteSpace(item.DisplayName) ? container.DisplayName : item.DisplayName);
-            m_sizeLabel.Set($"{width} x {height}");
             m_preview.Set(BuildPreview(width, height, mask, regionIds));
         }
 
