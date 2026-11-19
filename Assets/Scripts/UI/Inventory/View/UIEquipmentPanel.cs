@@ -111,9 +111,11 @@ namespace UI.Inventory.View
             m_capacityScroll.verticalNormalizedPosition = 1f;
         }
 
-        // 战备面板隐藏时同步隐藏弹窗, 避免面板关闭后弹窗残留
+        // 战备面板隐藏时同步收掉开箱载体与弹窗, 避免下次复用面板时残留旧容器
         protected override void OnHide()
         {
+            ViewModel.CloseLootContainer();
+            DestroyLootCarrier();
             m_popupOwner = null;
             ClosePopups();
         }
