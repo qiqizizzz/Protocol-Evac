@@ -35,6 +35,8 @@ namespace Tests.Inventory
         private const string DETAIL_PREFAB_PATH = "Assets/Prefabs/UI/Inventory/UIItemDetailPanel.prefab";
         private const string CONTAINER_LAYOUT_PREFAB_PATH =
             "Assets/Prefabs/UI/Inventory/UIItemContainerLayoutPanel.prefab";
+        private const string WHITE_ACCENT_SPRITE_PATH =
+            "Assets/Art/UI/Prototype/SciFiHud/Icons/Icon_Crystal_White.png";
         private const int FOOTPRINT_CELL_COUNT = 24;
 
         private QInventoryTestKit m_kit;
@@ -352,6 +354,38 @@ namespace Tests.Inventory
         }
 
         [Test]
+        public void Detail_Drop_FiresDropRequestForCurrentItem()
+        {
+            int instanceId = AddItem(2, 1, new Vector2Int(0, 0));
+            ItemDetailViewModel detail = CreateDetail();
+            int dropCount = 0;
+            using IDisposable subscription = detail.DropRequested.Subscribe(() => dropCount++);
+
+            detail.Open(m_containerId, instanceId);
+            Assert.IsTrue(detail.CanDrop.Value);
+
+            detail.Drop();
+
+            Assert.AreEqual(1, dropCount, "详情丢弃只广播一次请求");
+            Assert.AreEqual(m_containerId, detail.ContainerId);
+            Assert.AreEqual(instanceId, detail.InstanceId);
+        }
+
+        [Test]
+        public void Detail_DropWithoutValidItem_DoesNothing()
+        {
+            ItemDetailViewModel detail = CreateDetail();
+            int dropCount = 0;
+            using IDisposable subscription = detail.DropRequested.Subscribe(() => dropCount++);
+
+            detail.Open(m_containerId, int.MaxValue);
+            detail.Drop();
+
+            Assert.IsFalse(detail.CanDrop.Value);
+            Assert.AreEqual(0, dropCount, "没有有效物品时丢弃按钮不能广播请求");
+        }
+
+        [Test]
         public void Detail_WhenTheItemRotates_RefreshesPhysicalFootprint()
         {
             int instanceId = AddItem(2, 1, new Vector2Int(0, 0));
@@ -522,6 +556,21 @@ namespace Tests.Inventory
             Assert.IsNotNull(layoutLabel, "容器布局按钮文字缺失");
             Assert.AreEqual("?", layoutLabel.text, "容器布局按钮固定显示问号");
             Assert.IsFalse(layoutButton.gameObject.activeSelf, "普通物品默认隐藏容器布局入口");
+
+            Transform actions = card.Find("Layout_Actions");
+            Assert.IsNotNull(actions, "详情操作行缺失");
+            Transform dropButton = actions.Find("Btn_Drop");
+            Assert.IsNotNull(dropButton, "详情丢弃按钮缺失");
+            Assert.IsNotNull(dropButton.GetComponent<Button>(), "详情丢弃按钮需要可点击");
+            Image dropImage = dropButton.GetComponent<Image>();
+            Assert.IsNotNull(dropImage, "详情丢弃按钮需要射线底板");
+            Assert.IsTrue(dropImage.raycastTarget, "详情丢弃按钮底板必须接收点击");
+
+            Image accentImage = header.Find("Img_Accent").GetComponent<Image>();
+            Sprite whiteAccent = AssetDatabase.LoadAssetAtPath<Sprite>(WHITE_ACCENT_SPRITE_PATH);
+            Assert.IsNotNull(accentImage, "品质图标节点缺少 Image");
+            Assert.IsNotNull(whiteAccent, "白色品质图标加载失败：" + WHITE_ACCENT_SPRITE_PATH);
+            Assert.AreEqual(whiteAccent, accentImage.sprite, "品质图标必须使用可着色的白色底图");
 
             Assert.IsNull(card.Find("Txt_Spec"), "旧规格文字应移除");
             Assert.IsNull(card.Find("Txt_DetailEntries"), "类型属性条目应从详情面板移除");

@@ -32,6 +32,7 @@ namespace UI.Inventory.View
         private const string FOOTPRINT_GRID_PATH = FOOTPRINT_PATH + "/Layout_FootprintGrid";
         private const string CONTAINER_LAYOUT_BUTTON_PATH =
             FOOTPRINT_PATH + "/Btn_ContainerLayout";
+        private const string DROP_BUTTON_PATH = CARD_PATH + "/Layout_Actions/Btn_Drop";
         private const string DIVIDER_PATH = CARD_PATH + "/Img_Divider";
         private const string DESCRIPTION_PATH = CARD_PATH + "/Txt_Description";
         private const string CLOSE_PATH = HEADER_PATH + "/Btn_Close";
@@ -56,6 +57,7 @@ namespace UI.Inventory.View
         private Image[] m_footprintCells;
         private Button m_closeButton;
         private Button m_containerLayoutButton;
+        private Button m_dropButton;
         private Rect m_anchorItemScreenRect;
         private bool m_preferLeft;
         private bool m_hasAnchor;
@@ -80,6 +82,7 @@ namespace UI.Inventory.View
             m_descriptionText = FindComponent<TMP_Text>(DESCRIPTION_PATH);
             m_closeButton = FindComponent<Button>(CLOSE_PATH);
             m_containerLayoutButton = FindComponent<Button>(CONTAINER_LAYOUT_BUTTON_PATH);
+            m_dropButton = FindComponent<Button>(DROP_BUTTON_PATH);
             EnsureContainerLayoutButton();
             CacheFootprintCells();
         }
@@ -87,6 +90,7 @@ namespace UI.Inventory.View
         protected override void BindViewModel(ItemDetailViewModel viewModel)
         {
             m_closeButton.onClick.AddListener(viewModel.Close);
+            m_dropButton.onClick.AddListener(viewModel.Drop);
             if (m_containerLayoutButton != null)
                 m_containerLayoutButton.onClick.AddListener(viewModel.RequestContainerLayout);
 
@@ -101,6 +105,9 @@ namespace UI.Inventory.View
                     if (m_containerLayoutButton != null)
                         m_containerLayoutButton.gameObject.SetActive(canShow);
                 });
+            Scope.Bind(viewModel.CanDrop, interactable => m_dropButton.interactable = interactable);
+            Scope.Bind(viewModel.DropRequested,
+                () => UIInventoryHotkey.TryDropItemAtPlayer(viewModel.ContainerId, viewModel.InstanceId));
             Scope.Bind(viewModel.ContainerLayoutRequested, () => OpenContainerLayoutAsync().Forget());
             Scope.Bind(viewModel.Description,
                 text =>

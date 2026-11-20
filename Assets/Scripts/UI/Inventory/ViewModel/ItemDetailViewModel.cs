@@ -31,12 +31,14 @@ namespace UI.Inventory
         public IReadOnlyReactiveProperty<string> WeightLabel => m_weightLabel;
         public IReadOnlyReactiveProperty<ItemFootprintPreviewVO> FootprintPreview => m_footprintPreview;
         public IReadOnlyReactiveProperty<bool> CanShowContainerLayout => m_canShowContainerLayout;
+        public IReadOnlyReactiveProperty<bool> CanDrop => m_canDrop;
         public IReadOnlyReactiveProperty<string> Description => m_description;
         public IReadOnlyReactiveProperty<bool> HasContent => m_hasContent;
         public IReadOnlyReactiveProperty<Sprite> Icon => m_icon;
         public IReadOnlyReactiveProperty<Color> AccentColor => m_accentColor;
         public ISignal HideRequested => m_hideRequested;
         public ISignal ContainerLayoutRequested => m_containerLayoutRequested;
+        public ISignal DropRequested => m_dropRequested;
 
         public int ContainerId => m_containerId;
         public int InstanceId => m_instanceId;
@@ -48,12 +50,14 @@ namespace UI.Inventory
         private readonly ReactiveProperty<string> m_weightLabel;
         private readonly ReactiveProperty<ItemFootprintPreviewVO> m_footprintPreview;
         private readonly ReactiveProperty<bool> m_canShowContainerLayout;
+        private readonly ReactiveProperty<bool> m_canDrop;
         private readonly ReactiveProperty<string> m_description;
         private readonly ReactiveProperty<bool> m_hasContent;
         private readonly ReactiveProperty<Sprite> m_icon;
         private readonly ReactiveProperty<Color> m_accentColor;
         private readonly Signal m_hideRequested;
         private readonly Signal m_containerLayoutRequested;
+        private readonly Signal m_dropRequested;
 
         private int m_containerId;
         private int m_instanceId = NO_ITEM;
@@ -72,12 +76,14 @@ namespace UI.Inventory
             m_weightLabel = CreateProperty(string.Empty);
             m_footprintPreview = CreateProperty(ItemFootprintPreviewVO.Empty);
             m_canShowContainerLayout = CreateProperty(false);
+            m_canDrop = CreateProperty(false);
             m_description = CreateProperty(string.Empty);
             m_hasContent = CreateProperty(false);
             m_icon = CreateProperty<Sprite>(null);
             m_accentColor = CreateProperty(Color.white);
             m_hideRequested = CreateSignal();
             m_containerLayoutRequested = CreateSignal();
+            m_dropRequested = CreateSignal();
         }
 
         #region 生命周期
@@ -115,6 +121,14 @@ namespace UI.Inventory
 
             m_containerLayoutRequested.Fire();
         }
+
+        // 请求丢弃当前物品, 落点与地面堆登记由运行期宿主处理
+        public void Drop()
+        {
+            if (!m_canDrop.Value) return;
+
+            m_dropRequested.Fire();
+        }
         #endregion
 
         #region Private Function
@@ -134,10 +148,13 @@ namespace UI.Inventory
 
             if (!vo.TryGetItem(m_instanceId, out InventoryItemVO item))
             {
+                m_canDrop.Set(false);
                 m_canShowContainerLayout.Set(false);
                 m_hideRequested.Fire();
                 return;
             }
+
+            m_canDrop.Set(true);
 
             InventoryItemConfigSO config = ItemRegistry.TryGet(item.ItemId, out InventoryItemConfigSO found)
                 ? found

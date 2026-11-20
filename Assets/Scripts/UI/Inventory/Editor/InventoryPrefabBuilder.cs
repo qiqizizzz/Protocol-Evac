@@ -109,7 +109,8 @@ namespace UI.Inventory.Editor
         private const int DETAIL_ACTION_HEIGHT = 40;
         private const string DETAIL_PANEL_SPRITE_PATH = "Assets/Art/UI/Prototype/SciFiHud/Panels/Panel_9Slice.png";
         private const string DETAIL_VALUE_SPRITE_PATH = "Assets/Art/UI/Prototype/SciFiHud/Icons/Icon_Credits.png";
-        private const string DETAIL_ACCENT_SPRITE_PATH = "Assets/Art/UI/Prototype/SciFiHud/Icons/Icon_Crystal.png";
+        private const string DETAIL_ACCENT_SPRITE_PATH =
+            "Assets/Art/UI/Prototype/SciFiHud/Icons/Icon_Crystal_White.png";
         private const string DETAIL_CLOSE_SPRITE_PATH = "Assets/Art/UI/Prototype/Sungraphica/Icons/Icon_Close.png";
         private const int POPUP_EDGE = 8;
         private const int MENU_CARD_WIDTH = 168;
@@ -588,7 +589,7 @@ namespace UI.Inventory.Editor
             return root;
         }
 
-        // 操作行：丢弃与检视只提供视觉占位, 后续接业务时直接取对应 Button
+        // 操作行：丢弃接入运行期地面掉落链路, 检视仍为视觉占位
         private static void BuildDetailActions(Transform parent, Sprite panelSprite)
         {
             GameObject actions = NewNode("Layout_Actions", parent);

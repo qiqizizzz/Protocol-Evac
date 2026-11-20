@@ -158,3 +158,6 @@ InitTestScene*.unity*
 /.agents/skills/
 /.codex/
 /设计文档/
+
+# 本地场景自动备份
+/SceneBackups/
