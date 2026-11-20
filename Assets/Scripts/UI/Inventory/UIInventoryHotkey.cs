@@ -132,7 +132,19 @@ namespace UI.Inventory
         {
             m_lootHighlight.HideAll();
             SetLootFocus(null);
-            m_inputActions.Dispose();
+
+            ShootingPlayerInputActions inputActions = m_inputActions;
+            m_inputActions = null;
+            if (inputActions != null)
+            {
+#if UNITY_EDITOR
+                if (!Application.isPlaying)
+                    DestroyImmediate(inputActions.asset);
+                else
+#endif
+                    inputActions.Dispose();
+            }
+
             if (m_instance == this) m_instance = null;
         }
 
@@ -223,14 +235,15 @@ namespace UI.Inventory
                 m_panelOpenSource = PanelOpenSource.Interact;
         }
 
-        // 响应地面垃圾堆快捷键, 先亮标签再打开最近的一座堆
+        // 响应地面垃圾堆快捷键, 面板已显示时只允许关闭自身打开的垃圾堆
         private void OnInteractGroundPile(InputAction.CallbackContext context)
         {
             MvvmRoot root = MvvmRoot.Instance;
-            if (root != null && root.Windows.TryGet(out UIEquipmentPanel openPanel) && openPanel.IsVisible &&
-                m_panelOpenSource == PanelOpenSource.GroundPile)
+            if (root != null && root.Windows.TryGet(out UIEquipmentPanel openPanel) && openPanel.IsVisible)
             {
-                HideEquipmentPanel(root);
+                if (m_panelOpenSource == PanelOpenSource.GroundPile)
+                    HideEquipmentPanel(root);
+
                 return;
             }
 

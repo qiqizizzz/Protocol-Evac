@@ -1,6 +1,6 @@
 ﻿/*
 * ┌──────────────────────────────────┐
-* │  描    述: 物资箱交互测试, 覆盖目标选择、物理视线、可交互判定、实体号种子与交互层登记
+* │  描    述: 物资箱交互测试, 覆盖目标选择、物理视线、快捷键门禁、可交互判定、实体号种子与交互层登记
 * │  类    名: QInteractableTargetSelectorTests.cs
 * │  创    建: By qiqizizzz
 * └──────────────────────────────────┘
@@ -12,12 +12,17 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using Framework.QTower.Common.Defines;
 using Framework.QTower.Event;
+using Framework.QTower.MVVM.View;
+using Framework.QTower.MVVM.View.Interfaces;
 using Module.Inventory.Core.Config.Loot;
 using Module.Inventory.Interaction;
 using Module.Inventory.Presentation;
+using Module.Player.Core;
 using NUnit.Framework;
 using UI.Inventory;
+using UI.Inventory.View;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.TestTools;
 
 namespace Tests.Inventory
@@ -36,6 +41,7 @@ namespace Tests.Inventory
         private LootContainerConfigSO m_loot;
         private readonly List<LootBoxController> m_boxes = new List<LootBoxController>();
         private readonly List<GameObject> m_scanObjects = new List<GameObject>();
+        private readonly List<GameObject> m_gateObjects = new List<GameObject>();
 
         [SetUp]
         public void SetUp()
@@ -68,6 +74,18 @@ namespace Tests.Inventory
             }
 
             m_scanObjects.Clear();
+
+            for (int i = m_gateObjects.Count - 1; i >= 0; i--)
+            {
+                GameObject gateObject = m_gateObjects[i];
+                if (gateObject == null) continue;
+
+                UnityEngine.Object.DestroyImmediate(gateObject);
+            }
+
+            m_gateObjects.Clear();
+            SetStaticField(typeof(MvvmRoot), "m_instance", null);
+            SetStaticField(typeof(GroundPilePresenter), "m_instance", null);
             m_kit.Dispose();
         }
 
@@ -285,6 +303,53 @@ namespace Tests.Inventory
 
             Assert.IsFalse(opened, "面板已显示时 H 不能继续扫描并替换当前容器");
             LogAssert.NoUnexpectedReceived();
+        }
+
+        [Test]
+        public void OnInteractGroundPile_WhenAnotherEntryOpenedPanel_SkipsNearbyHint()
+        {
+            Assert.IsNull(MvvmRoot.Instance, "测试开始前必须没有残留运行根, 否则面板门禁会读到别的实例");
+
+            bool hintRequested = false;
+            Action<string> captureHint = _ => hintRequested = true;
+            EventManager.RegisterEvent(EventDefines.InteractionHintRequested, captureHint);
+
+            UIInventoryHotkey hotkey = null;
+
+            try
+            {
+                MvvmRoot root = CreateGateMvvmRoot();
+                UIEquipmentPanel panel = CreateVisibleEquipmentPanel(root);
+                PlayerController player = CreateGateObject("gate_player").AddComponent<PlayerController>();
+                GroundPilePresenter presenter = CreateGateObject("gate_ground_pile_presenter")
+                    .AddComponent<GroundPilePresenter>();
+                SetStaticField(typeof(GroundPilePresenter), "m_instance", presenter);
+
+                hotkey = CreateGateObject("gate_inventory_hotkey").AddComponent<UIInventoryHotkey>();
+                InvokePrivate(hotkey, "Awake");
+
+                SetField(hotkey, "m_playerController", player);
+                SetField(hotkey, "m_lootInteraction", new LootBoxInteraction(() => true));
+                SetPanelOpenSource(hotkey, "Interact");
+                SetField(presenter, "m_pileModel", new GroundPileModel());
+
+                // 面板已由 F 打开时, H 不应再走 ReportNearby 或尝试替换右侧容器
+                InvokePrivate(hotkey, "OnInteractGroundPile", default(InputAction.CallbackContext));
+
+                Assert.IsTrue(panel.IsVisible, "回归用例必须保持其他入口打开的面板仍可见");
+                Assert.IsFalse(hintRequested, "面板已显示时按 H 不能发布附近没有丢弃物的提示");
+                LogAssert.NoUnexpectedReceived();
+            }
+            finally
+            {
+                EventManager.UnregisterEvent(EventDefines.InteractionHintRequested, captureHint);
+
+                if (hotkey != null)
+                    InvokePrivate(hotkey, "OnDestroy");
+
+                SetStaticField(typeof(MvvmRoot), "m_instance", null);
+                SetStaticField(typeof(GroundPilePresenter), "m_instance", null);
+            }
         }
         #endregion
 
@@ -581,8 +646,87 @@ namespace Tests.Inventory
             field.SetValue(box, value);
         }
 
-        // 编辑模式不会自动触发 Awake, 测试显式调用构建触发体以覆盖真实范围与扩展范围的分工
-        private static void InvokePrivate(object target, string methodName)
+        // 创建快捷键门禁用例的运行根, EditMode 不会自动派发 Awake
+        private MvvmRoot CreateGateMvvmRoot()
+        {
+            GameObject rootObject = CreateGateObject("gate_mvvm_root", typeof(RectTransform));
+            MvvmRoot root = rootObject.AddComponent<MvvmRoot>();
+
+            InvokePrivate(root, "Awake");
+            Assert.AreSame(root, MvvmRoot.Instance, "运行根 Awake 后必须成为当前唯一实例");
+            return root;
+        }
+
+        // 直接把已显示面板注入窗口服务, 避免测试依赖预制体与 Addressables 加载
+        private UIEquipmentPanel CreateVisibleEquipmentPanel(MvvmRoot root)
+        {
+            UIEquipmentPanel panel = CreateGateObject("gate_equipment_panel", typeof(RectTransform))
+                .AddComponent<UIEquipmentPanel>();
+
+            SetField(panel, "m_isVisible", true);
+
+            FieldInfo instancesField = typeof(WindowService).GetField("m_instances",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.IsNotNull(instancesField, "窗口服务缺少 m_instances, 测试与实现结构已经脱节");
+
+            var instances = instancesField.GetValue(root.Windows) as Dictionary<Type, IView>;
+            Assert.IsNotNull(instances, "窗口服务实例表类型不匹配");
+
+            instances.Add(typeof(UIEquipmentPanel), panel);
+            return panel;
+        }
+
+        // 登记测试对象, 由 TearDown 统一销毁, 避免失败路径留下场景残骸
+        private GameObject CreateGateObject(string objectName, params Type[] components)
+        {
+            GameObject gateObject = components.Length == 0
+                ? new GameObject(objectName)
+                : new GameObject(objectName, components);
+
+            m_gateObjects.Add(gateObject);
+            return gateObject;
+        }
+
+        // 写入面板来源, 模拟当前面板由 F 通用交互入口打开
+        private static void SetPanelOpenSource(UIInventoryHotkey hotkey, string sourceName)
+        {
+            FieldInfo field = typeof(UIInventoryHotkey).GetField("m_panelOpenSource",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.IsNotNull(field, "快捷键宿主缺少 m_panelOpenSource, 无法模拟真实打开来源");
+
+            Type sourceType = field.FieldType;
+            object source = Enum.Parse(sourceType, sourceName);
+            field.SetValue(hotkey, source);
+        }
+
+        // 沿类型继承链写入私有字段, 覆盖子类直接读基类状态的情况
+        private static void SetField(object target, string fieldName, object value)
+        {
+            for (Type current = target.GetType(); current != null; current = current.BaseType)
+            {
+                FieldInfo field = current.GetField(fieldName,
+                    BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
+                if (field == null) continue;
+
+                field.SetValue(target, value);
+                return;
+            }
+
+            Assert.Fail($"{target.GetType().Name} 缺少字段 {fieldName}, 测试与实现结构已经脱节");
+        }
+
+        // 清理静态单例, 让后续用例从真实空场景开始
+        private static void SetStaticField(Type targetType, string fieldName, object value)
+        {
+            FieldInfo field = targetType.GetField(fieldName,
+                BindingFlags.Static | BindingFlags.NonPublic);
+            Assert.IsNotNull(field, $"{targetType.Name} 缺少静态字段 {fieldName}");
+
+            field.SetValue(null, value);
+        }
+
+        // 编辑模式不会自动触发生命周期, 测试显式调用目标入口以覆盖真实调用关系
+        private static void InvokePrivate(object target, string methodName, params object[] args)
         {
             MethodInfo method = target.GetType().GetMethod(methodName, BindingFlags.Instance | BindingFlags.NonPublic);
             if (method == null)
@@ -591,7 +735,7 @@ namespace Tests.Inventory
                 return;
             }
 
-            method.Invoke(target, null);
+            method.Invoke(target, args.Length == 0 ? null : args);
         }
 
         // 用纯测试目标验证按类型过滤, 不依赖场景预制体或物理查询
