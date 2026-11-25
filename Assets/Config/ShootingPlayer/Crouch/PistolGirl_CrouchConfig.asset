@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 878dc20b28d7db940adf9dc98d93f03a, type: 3}
+  m_Name: PistolGirl_CrouchConfig
+  m_EditorClassIdentifier: 
+  StateClipValues:
+  - StateClipValue: {fileID: -5737363546681363055, guid: 27c12a4114d74814285470e7541319f2,
+      type: 3}
+    StateDurationValue: 2.2333333
+    ShowWeaponValue: 0
+    UseComboWindowValue: 0
+    ComboWindowTrackValue:
+      WindowValues: []
+  - StateClipValue: {fileID: 2556189958885653831, guid: 2d963c891ce964a45942cdf8cb6daf1a,
+      type: 3}
+    StateDurationValue: 2.2333333
+    ShowWeaponValue: 0
+    UseComboWindowValue: 0
+    ComboWindowTrackValue:
+      WindowValues: []
+  - StateClipValue: {fileID: 6146070396138037007, guid: ca52d52e061db8e4484fb76beb88c089,
+      type: 3}
+    StateDurationValue: 1.1333334
+    ShowWeaponValue: 0
+    UseComboWindowValue: 0
+    ComboWindowTrackValue:
+      WindowValues: []
+  CrouchMoveSpeedValue: 1.6
+  CrouchAimMoveSpeedValue: 1.2

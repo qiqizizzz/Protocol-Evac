@@ -217,6 +217,209 @@ namespace Module.ShootingPlayer.Input
                     ""isPartOfComposite"": false
                 }
             ]
+        },
+        {
+            ""name"": ""Shooter"",
+            ""id"": ""4c1f2a37-8d5b-4e21-9c64-2f7ab0d51e83"",
+            ""actions"": [
+                {
+                    ""name"": ""Move"",
+                    ""type"": ""Value"",
+                    ""id"": ""6b2d40f1-3c98-4a57-b1e0-84f2d6c91705"",
+                    ""expectedControlType"": ""Vector2"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": true
+                },
+                {
+                    ""name"": ""Look"",
+                    ""type"": ""Value"",
+                    ""id"": ""1d8f6b24-05ae-4c73-9b17-3e6c40a8d219"",
+                    ""expectedControlType"": ""Vector2"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": true
+                },
+                {
+                    ""name"": ""Fire"",
+                    ""type"": ""Button"",
+                    ""id"": ""7e3a91c5-2b64-4d08-9f57-c1b38e0a6d42"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Aim"",
+                    ""type"": ""PassThrough"",
+                    ""id"": ""2a95c8e7-6d13-4b80-a4e2-0f7d5b39c614"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Evade"",
+                    ""type"": ""Button"",
+                    ""id"": ""5c7e0b93-4a26-4f18-8d59-1e6b2c47a930"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""ToggleWalk"",
+                    ""type"": ""Button"",
+                    ""id"": ""9f41d6a8-3c07-42e5-b8b9-6d2e0c5a7f31"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""ToggleCrouch"",
+                    ""type"": ""Button"",
+                    ""id"": ""3b68e2f0-9d54-4a71-bc26-8a1f4d90e573"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                }
+            ],
+            ""bindings"": [
+                {
+                    ""name"": ""2D Vector"",
+                    ""id"": ""0e5a7c31-92b4-4d68-8f01-3c7e5a29d4b6"",
+                    ""path"": ""2DVector"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Move"",
+                    ""isComposite"": true,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""up"",
+                    ""id"": ""4a8c1f62-05d3-4b97-9e24-7c1b6d05a8f3"",
+                    ""path"": ""<Keyboard>/w"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": "";KeyboardMouse"",
+                    ""action"": ""Move"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""down"",
+                    ""id"": ""8d2f6b41-3c90-4a57-b1e8-2f4c7d90a615"",
+                    ""path"": ""<Keyboard>/s"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": "";KeyboardMouse"",
+                    ""action"": ""Move"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""left"",
+                    ""id"": ""5c9a3e87-6b12-4d04-8f79-1e3b5c7d20a6"",
+                    ""path"": ""<Keyboard>/a"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": "";KeyboardMouse"",
+                    ""action"": ""Move"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""right"",
+                    ""id"": ""1f7b4d92-8e05-4a63-b2c9-6d08e3f5a742"",
+                    ""path"": ""<Keyboard>/d"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": "";KeyboardMouse"",
+                    ""action"": ""Move"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""6e3d80b5-2f47-49c1-8a06-5b2e9d4c17f8"",
+                    ""path"": ""<Mouse>/delta"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": "";KeyboardMouse"",
+                    ""action"": ""Look"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""2b8f4e61-7d03-4c59-9a18-e6c2b0d5f347"",
+                    ""path"": ""<Mouse>/leftButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": "";KeyboardMouse"",
+                    ""action"": ""Fire"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""7d1c5a94-0e68-4b27-8f35-9c4a6e1d28b0"",
+                    ""path"": ""<Mouse>/rightButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": "";KeyboardMouse"",
+                    ""action"": ""Aim"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""3e9b7d26-5c41-4a80-9f17-2d6b8e0c4a59"",
+                    ""path"": ""<Keyboard>/space"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": "";KeyboardMouse"",
+                    ""action"": ""Evade"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""9c2e6a18-4b73-4d05-8e92-1f7c3b6d50a4"",
+                    ""path"": ""<Keyboard>/leftCtrl"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": "";KeyboardMouse"",
+                    ""action"": ""ToggleWalk"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""4f8d1c93-6e27-4b50-9a38-0c5e7d2f9b61"",
+                    ""path"": ""<Keyboard>/rightCtrl"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": "";KeyboardMouse"",
+                    ""action"": ""ToggleWalk"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""8b4e2d70-9a15-4c63-8f27-5d0c9e6a3b82"",
+                    ""path"": ""<Keyboard>/c"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": "";KeyboardMouse"",
+                    ""action"": ""ToggleCrouch"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                }
+            ]
         }
     ],
     ""controlSchemes"": [
@@ -246,11 +449,21 @@ namespace Module.ShootingPlayer.Input
             m_UI_Cancel = m_UI.FindAction("Cancel", throwIfNotFound: true);
             m_UI_Rotate = m_UI.FindAction("Rotate", throwIfNotFound: true);
             m_UI_CancelDrag = m_UI.FindAction("CancelDrag", throwIfNotFound: true);
+            // Shooter
+            m_Shooter = asset.FindActionMap("Shooter", throwIfNotFound: true);
+            m_Shooter_Move = m_Shooter.FindAction("Move", throwIfNotFound: true);
+            m_Shooter_Look = m_Shooter.FindAction("Look", throwIfNotFound: true);
+            m_Shooter_Fire = m_Shooter.FindAction("Fire", throwIfNotFound: true);
+            m_Shooter_Aim = m_Shooter.FindAction("Aim", throwIfNotFound: true);
+            m_Shooter_Evade = m_Shooter.FindAction("Evade", throwIfNotFound: true);
+            m_Shooter_ToggleWalk = m_Shooter.FindAction("ToggleWalk", throwIfNotFound: true);
+            m_Shooter_ToggleCrouch = m_Shooter.FindAction("ToggleCrouch", throwIfNotFound: true);
         }
 
         ~@ShootingPlayerInputActions()
         {
             UnityEngine.Debug.Assert(!m_UI.enabled, "This will cause a leak and performance issues, ShootingPlayerInputActions.UI.Disable() has not been called.");
+            UnityEngine.Debug.Assert(!m_Shooter.enabled, "This will cause a leak and performance issues, ShootingPlayerInputActions.Shooter.Disable() has not been called.");
         }
 
         /// <summary>
@@ -473,6 +686,168 @@ namespace Module.ShootingPlayer.Input
         /// Provides a new <see cref="UIActions" /> instance referencing this action map.
         /// </summary>
         public UIActions @UI => new UIActions(this);
+
+        // Shooter
+        private readonly InputActionMap m_Shooter;
+        private List<IShooterActions> m_ShooterActionsCallbackInterfaces = new List<IShooterActions>();
+        private readonly InputAction m_Shooter_Move;
+        private readonly InputAction m_Shooter_Look;
+        private readonly InputAction m_Shooter_Fire;
+        private readonly InputAction m_Shooter_Aim;
+        private readonly InputAction m_Shooter_Evade;
+        private readonly InputAction m_Shooter_ToggleWalk;
+        private readonly InputAction m_Shooter_ToggleCrouch;
+        /// <summary>
+        /// Provides access to input actions defined in input action map "Shooter".
+        /// </summary>
+        public struct ShooterActions
+        {
+            private @ShootingPlayerInputActions m_Wrapper;
+
+            /// <summary>
+            /// Construct a new instance of the input action map wrapper class.
+            /// </summary>
+            public ShooterActions(@ShootingPlayerInputActions wrapper) { m_Wrapper = wrapper; }
+            /// <summary>
+            /// Provides access to the underlying input action "Shooter/Move".
+            /// </summary>
+            public InputAction @Move => m_Wrapper.m_Shooter_Move;
+            /// <summary>
+            /// Provides access to the underlying input action "Shooter/Look".
+            /// </summary>
+            public InputAction @Look => m_Wrapper.m_Shooter_Look;
+            /// <summary>
+            /// Provides access to the underlying input action "Shooter/Fire".
+            /// </summary>
+            public InputAction @Fire => m_Wrapper.m_Shooter_Fire;
+            /// <summary>
+            /// Provides access to the underlying input action "Shooter/Aim".
+            /// </summary>
+            public InputAction @Aim => m_Wrapper.m_Shooter_Aim;
+            /// <summary>
+            /// Provides access to the underlying input action "Shooter/Evade".
+            /// </summary>
+            public InputAction @Evade => m_Wrapper.m_Shooter_Evade;
+            /// <summary>
+            /// Provides access to the underlying input action "Shooter/ToggleWalk".
+            /// </summary>
+            public InputAction @ToggleWalk => m_Wrapper.m_Shooter_ToggleWalk;
+            /// <summary>
+            /// Provides access to the underlying input action "Shooter/ToggleCrouch".
+            /// </summary>
+            public InputAction @ToggleCrouch => m_Wrapper.m_Shooter_ToggleCrouch;
+            /// <summary>
+            /// Provides access to the underlying input action map instance.
+            /// </summary>
+            public InputActionMap Get() { return m_Wrapper.m_Shooter; }
+            /// <inheritdoc cref="UnityEngine.InputSystem.InputActionMap.Enable()" />
+            public void Enable() { Get().Enable(); }
+            /// <inheritdoc cref="UnityEngine.InputSystem.InputActionMap.Disable()" />
+            public void Disable() { Get().Disable(); }
+            /// <inheritdoc cref="UnityEngine.InputSystem.InputActionMap.enabled" />
+            public bool enabled => Get().enabled;
+            /// <summary>
+            /// Implicitly converts an <see ref="ShooterActions" /> to an <see ref="InputActionMap" /> instance.
+            /// </summary>
+            public static implicit operator InputActionMap(ShooterActions set) { return set.Get(); }
+            /// <summary>
+            /// Adds <see cref="InputAction.started"/>, <see cref="InputAction.performed"/> and <see cref="InputAction.canceled"/> callbacks provided via <param cref="instance" /> on all input actions contained in this map.
+            /// </summary>
+            /// <param name="instance">Callback instance.</param>
+            /// <remarks>
+            /// If <paramref name="instance" /> is <c>null</c> or <paramref name="instance"/> have already been added this method does nothing.
+            /// </remarks>
+            /// <seealso cref="ShooterActions" />
+            public void AddCallbacks(IShooterActions instance)
+            {
+                if (instance == null || m_Wrapper.m_ShooterActionsCallbackInterfaces.Contains(instance)) return;
+                m_Wrapper.m_ShooterActionsCallbackInterfaces.Add(instance);
+                @Move.started += instance.OnMove;
+                @Move.performed += instance.OnMove;
+                @Move.canceled += instance.OnMove;
+                @Look.started += instance.OnLook;
+                @Look.performed += instance.OnLook;
+                @Look.canceled += instance.OnLook;
+                @Fire.started += instance.OnFire;
+                @Fire.performed += instance.OnFire;
+                @Fire.canceled += instance.OnFire;
+                @Aim.started += instance.OnAim;
+                @Aim.performed += instance.OnAim;
+                @Aim.canceled += instance.OnAim;
+                @Evade.started += instance.OnEvade;
+                @Evade.performed += instance.OnEvade;
+                @Evade.canceled += instance.OnEvade;
+                @ToggleWalk.started += instance.OnToggleWalk;
+                @ToggleWalk.performed += instance.OnToggleWalk;
+                @ToggleWalk.canceled += instance.OnToggleWalk;
+                @ToggleCrouch.started += instance.OnToggleCrouch;
+                @ToggleCrouch.performed += instance.OnToggleCrouch;
+                @ToggleCrouch.canceled += instance.OnToggleCrouch;
+            }
+
+            /// <summary>
+            /// Removes <see cref="InputAction.started"/>, <see cref="InputAction.performed"/> and <see cref="InputAction.canceled"/> callbacks provided via <param cref="instance" /> on all input actions contained in this map.
+            /// </summary>
+            /// <remarks>
+            /// Calling this method when <paramref name="instance" /> have not previously been registered has no side-effects.
+            /// </remarks>
+            /// <seealso cref="ShooterActions" />
+            private void UnregisterCallbacks(IShooterActions instance)
+            {
+                @Move.started -= instance.OnMove;
+                @Move.performed -= instance.OnMove;
+                @Move.canceled -= instance.OnMove;
+                @Look.started -= instance.OnLook;
+                @Look.performed -= instance.OnLook;
+                @Look.canceled -= instance.OnLook;
+                @Fire.started -= instance.OnFire;
+                @Fire.performed -= instance.OnFire;
+                @Fire.canceled -= instance.OnFire;
+                @Aim.started -= instance.OnAim;
+                @Aim.performed -= instance.OnAim;
+                @Aim.canceled -= instance.OnAim;
+                @Evade.started -= instance.OnEvade;
+                @Evade.performed -= instance.OnEvade;
+                @Evade.canceled -= instance.OnEvade;
+                @ToggleWalk.started -= instance.OnToggleWalk;
+                @ToggleWalk.performed -= instance.OnToggleWalk;
+                @ToggleWalk.canceled -= instance.OnToggleWalk;
+                @ToggleCrouch.started -= instance.OnToggleCrouch;
+                @ToggleCrouch.performed -= instance.OnToggleCrouch;
+                @ToggleCrouch.canceled -= instance.OnToggleCrouch;
+            }
+
+            /// <summary>
+            /// Unregisters <param cref="instance" /> and unregisters all input action callbacks via <see cref="ShooterActions.UnregisterCallbacks(IShooterActions)" />.
+            /// </summary>
+            /// <seealso cref="ShooterActions.UnregisterCallbacks(IShooterActions)" />
+            public void RemoveCallbacks(IShooterActions instance)
+            {
+                if (m_Wrapper.m_ShooterActionsCallbackInterfaces.Remove(instance))
+                    UnregisterCallbacks(instance);
+            }
+
+            /// <summary>
+            /// Replaces all existing callback instances and previously registered input action callbacks associated with them with callbacks provided via <param cref="instance" />.
+            /// </summary>
+            /// <remarks>
+            /// If <paramref name="instance" /> is <c>null</c>, calling this method will only unregister all existing callbacks but not register any new callbacks.
+            /// </remarks>
+            /// <seealso cref="ShooterActions.AddCallbacks(IShooterActions)" />
+            /// <seealso cref="ShooterActions.RemoveCallbacks(IShooterActions)" />
+            /// <seealso cref="ShooterActions.UnregisterCallbacks(IShooterActions)" />
+            public void SetCallbacks(IShooterActions instance)
+            {
+                foreach (var item in m_Wrapper.m_ShooterActionsCallbackInterfaces)
+                    UnregisterCallbacks(item);
+                m_Wrapper.m_ShooterActionsCallbackInterfaces.Clear();
+                AddCallbacks(instance);
+            }
+        }
+        /// <summary>
+        /// Provides a new <see cref="ShooterActions" /> instance referencing this action map.
+        /// </summary>
+        public ShooterActions @Shooter => new ShooterActions(this);
         private int m_KeyboardMouseSchemeIndex = -1;
         /// <summary>
         /// Provides access to the input control scheme.
@@ -535,6 +910,63 @@ namespace Module.ShootingPlayer.Input
             /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
             /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
             void OnCancelDrag(InputAction.CallbackContext context);
+        }
+        /// <summary>
+        /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "Shooter" which allows adding and removing callbacks.
+        /// </summary>
+        /// <seealso cref="ShooterActions.AddCallbacks(IShooterActions)" />
+        /// <seealso cref="ShooterActions.RemoveCallbacks(IShooterActions)" />
+        public interface IShooterActions
+        {
+            /// <summary>
+            /// Method invoked when associated input action "Move" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+            /// </summary>
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+            void OnMove(InputAction.CallbackContext context);
+            /// <summary>
+            /// Method invoked when associated input action "Look" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+            /// </summary>
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+            void OnLook(InputAction.CallbackContext context);
+            /// <summary>
+            /// Method invoked when associated input action "Fire" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+            /// </summary>
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+            void OnFire(InputAction.CallbackContext context);
+            /// <summary>
+            /// Method invoked when associated input action "Aim" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+            /// </summary>
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+            void OnAim(InputAction.CallbackContext context);
+            /// <summary>
+            /// Method invoked when associated input action "Evade" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+            /// </summary>
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+            void OnEvade(InputAction.CallbackContext context);
+            /// <summary>
+            /// Method invoked when associated input action "ToggleWalk" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+            /// </summary>
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+            void OnToggleWalk(InputAction.CallbackContext context);
+            /// <summary>
+            /// Method invoked when associated input action "ToggleCrouch" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+            /// </summary>
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+            /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+            void OnToggleCrouch(InputAction.CallbackContext context);
         }
     }
 }

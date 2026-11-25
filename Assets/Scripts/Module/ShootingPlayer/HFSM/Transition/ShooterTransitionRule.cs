@@ -1,0 +1,79 @@
+/*
+* ┌──────────────────────────────────┐
+* │  描    述: 射击角色状态转换规则，描述来源、目标与触发条件
+* │  类    名: ShooterTransitionRule.cs
+* │  创    建: By qiqizizzz
+* └──────────────────────────────────┘
+*/
+
+using System;
+using System.Collections.Generic;
+using Utils.log;
+
+namespace Module.ShootingPlayer.HFSM.Transition
+{
+    public sealed class ShooterTransitionRule
+    {
+        public ShooterStateId SourceId { get; }
+        public ShooterStateId TargetId { get; }
+        public ShooterTransitionPriority Priority { get; }
+        public int Order { get; }
+        public bool AllowReentry { get; }
+
+        private readonly Func<bool> m_condition;
+
+        /// <summary>
+        /// 创建一条射击角色状态转换规则
+        /// </summary>
+        /// <param name="sourceId">规则适用的来源状态，None 表示任意状态</param>
+        /// <param name="targetId">规则满足时的目标状态</param>
+        /// <param name="priority">规则优先级</param>
+        /// <param name="condition">规则触发条件</param>
+        /// <param name="order">同层级规则的优先顺序，数值越大越优先</param>
+        /// <param name="allowReentry">目标已是当前叶子状态时是否强制重新进入</param>
+        public ShooterTransitionRule(ShooterStateId sourceId, ShooterStateId targetId,
+            ShooterTransitionPriority priority, Func<bool> condition, int order = 0, bool allowReentry = false)
+        {
+            if (targetId == ShooterStateId.None)
+                QLog.Error("创建状态转换规则失败：目标状态不能是 ShooterStateId.None");
+
+            if (condition == null)
+                QLog.Error("创建状态转换规则失败：condition 为空");
+
+            SourceId = sourceId;
+            TargetId = targetId;
+            Priority = priority;
+            Order = order;
+            AllowReentry = allowReentry;
+            m_condition = condition;
+        }
+
+        /// <summary>
+        /// 判断规则是否适用于当前活动路径且满足触发条件
+        /// </summary>
+        /// <param name="activeStatePath">当前活动状态路径</param>
+        /// <returns>规则当前是否可以触发</returns>
+        public bool CanApply(IReadOnlyList<ShooterStateId> activeStatePath)
+        {
+            if (TargetId == ShooterStateId.None || m_condition == null)
+                return false;
+
+            if (SourceId == ShooterStateId.None)
+                return m_condition();
+
+            if (activeStatePath == null)
+            {
+                QLog.Error("规则匹配失败：activeStatePath 为空");
+                return false;
+            }
+
+            for (int i = 0; i < activeStatePath.Count; i++)
+            {
+                if (activeStatePath[i] == SourceId)
+                    return m_condition();
+            }
+
+            return false;
+        }
+    }
+}

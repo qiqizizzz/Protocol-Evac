@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d456b75f07719124e9bc78f3615be42c, type: 3}
+  m_Name: PistolGirl_AimConfig
+  m_EditorClassIdentifier: 
+  StateClipValues:
+  - StateClipValue: {fileID: -5516736278650128037, guid: 3da24022894f7df408671f0311f6ffc2,
+      type: 3}
+    StateDurationValue: 2.5666668
+    ShowWeaponValue: 0
+    UseComboWindowValue: 0
+    ComboWindowTrackValue:
+      WindowValues: []
+  - StateClipValue: {fileID: -1869307518110113224, guid: 4a10d307ba4693f49b70b7c0fba5637c,
+      type: 3}
+    StateDurationValue: 1.1333334
+    ShowWeaponValue: 0
+    UseComboWindowValue: 0
+    ComboWindowTrackValue:
+      WindowValues: []
+  - StateClipValue: {fileID: 5901005103458171584, guid: 5a3352545a70c2940bbebb20d8c00f90,
+      type: 3}
+    StateDurationValue: 0.8000001
+    ShowWeaponValue: 0
+    UseComboWindowValue: 0
+    ComboWindowTrackValue:
+      WindowValues: []
+  CanMoveWhileAimingValue: 1
+  AimMoveSpeedValue: 2.2
+  EnterAimBlendDurationValue: 0.15
+  ExitAimBlendDurationValue: 0.15
