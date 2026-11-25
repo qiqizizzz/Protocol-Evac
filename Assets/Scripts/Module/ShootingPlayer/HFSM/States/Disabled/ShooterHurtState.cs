@@ -7,7 +7,7 @@
 */
 
 using Module.Combat.Damage;
-using Module.ChaisakiPlayer.Context;
+using Module.ShootingPlayer.Context;
 using Module.ShootingPlayer.Config;
 using Module.ShootingPlayer.HFSM.Animation;
 using Module.ShootingPlayer.HFSM.Runtime;
@@ -22,7 +22,7 @@ namespace Module.ShootingPlayer.HFSM.States.Disabled
         private const float DEFAULT_HURT_DURATION = 0.3f;
         private const float MIN_FORCED_MOVE_SQR_MAGNITUDE = 0.0001f;
 
-        private readonly PlayerContext m_context;
+        private readonly ShooterContext m_context;
         private readonly ShooterRuntimeState m_runtimeState;
         private readonly ShooterDamageConfigSO m_damageConfig;
 
@@ -35,7 +35,7 @@ namespace Module.ShootingPlayer.HFSM.States.Disabled
         public override ShooterStateId Id => ShooterStateId.DisabledHurt;
         public override ShooterStateId ParentId => ShooterStateId.Disabled;
 
-        public ShooterHurtState(PlayerContext context, ShooterRuntimeState runtimeState,
+        public ShooterHurtState(ShooterContext context, ShooterRuntimeState runtimeState,
             ShooterDamageConfigSO damageConfig)
         {
             m_context = context;

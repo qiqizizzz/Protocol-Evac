@@ -6,13 +6,13 @@
  * └────────────────────────────────────────────┘
  */
 
-using Module.ChaisakiPlayer.HFSM.Config.Common;
+using Framework.Character.Runtime.HFSM.Config.Common;
 using UnityEngine;
 
 namespace Module.ChaisakiPlayer.HFSM.Config.Action
 {
     [CreateAssetMenu(fileName = "PlayerDodgeConfig", menuName = "配置/玩家/动作/玩家闪避配置")]
-    public sealed class PlayerDodgeConfigSO : PlayerStateCommonConfigSO
+    public sealed class PlayerDodgeConfigSO : CharacterStateCommonConfigSO
     {
         [Header("闪避位移")]
         [Tooltip("闪避期间的水平速度")]
@@ -36,6 +36,6 @@ namespace Module.ChaisakiPlayer.HFSM.Config.Action
 
         public float DodgeBufferTime => DodgeBufferTimeValue;
 
-        public PlayerStateClipData DodgeClipData => GetStateClip(0);
+        public CharacterStateClipData DodgeClipData => GetStateClip(0);
     }
 }

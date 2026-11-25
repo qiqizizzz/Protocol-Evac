@@ -6,9 +6,9 @@
 * └──────────────────────────────────┘
 */
 
-using Module.ChaisakiPlayer.Context;
-using Module.ChaisakiPlayer.Core;
-using Module.ChaisakiPlayer.Input.Buffer;
+using Module.ShootingPlayer.Context;
+using Framework.Character.Runtime.Core;
+using Framework.Character.Runtime.Input;
 using Module.ShootingPlayer.Config;
 using Module.ShootingPlayer.HFSM.Runtime;
 using UnityEngine;
@@ -19,7 +19,7 @@ namespace Module.ShootingPlayer.HFSM.States.Action
     // 闪避状态，位移由强制速度驱动，不使用动画根运动
     public sealed class ShooterEvadeState : BaseShooterState
     {
-        private readonly PlayerContext m_context;
+        private readonly ShooterContext m_context;
         private readonly ShooterRuntimeState m_runtimeState;
         private readonly ShooterEvadeConfigSO m_evadeConfig;
 
@@ -29,7 +29,7 @@ namespace Module.ShootingPlayer.HFSM.States.Action
         public override ShooterStateId Id => ShooterStateId.ActionEvade;
         public override ShooterStateId ParentId => ShooterStateId.Action;
 
-        public ShooterEvadeState(PlayerContext context, ShooterRuntimeState runtimeState,
+        public ShooterEvadeState(ShooterContext context, ShooterRuntimeState runtimeState,
             ShooterEvadeConfigSO evadeConfig)
         {
             m_context = context;
@@ -44,7 +44,7 @@ namespace Module.ShootingPlayer.HFSM.States.Action
         {
             m_stateTimer.Reset();
             m_moveTimer.Reset();
-            m_context.Input.Buffer.Consume(PlayerBufferedInputType.Dodge);
+            m_context.Input.Buffer.Consume(CharacterBufferedInputType.Dodge);
             m_context.Action.IsStateFinished = false;
             m_context.Movement.IsMovementLocked = true;
 
@@ -85,11 +85,11 @@ namespace Module.ShootingPlayer.HFSM.States.Action
         private Vector3 ResolveEvadeDirection()
         {
             Vector3 inputDirection =
-                PlayerMoveDirectionResolver.Resolve(m_context, m_context.Input.MoveInput);
+                CharacterMoveDirectionResolver.Resolve(m_context, m_context.Input.MoveInput);
 
             return inputDirection.sqrMagnitude > m_evadeConfig.EvadeInputThresholdSqr
                 ? inputDirection.normalized
-                : PlayerMoveDirectionResolver.ResolveForward(m_context);
+                : CharacterMoveDirectionResolver.ResolveForward(m_context);
         }
 
         // 截断闪避期间产生的全部水平位移来源

@@ -7,8 +7,8 @@
 */
 
 using Module.Combat.Damage;
-using Module.ChaisakiPlayer.Config;
-using Module.ChaisakiPlayer.Context;
+using Framework.Character.Runtime.Config;
+using Module.ShootingPlayer.Context;
 using Module.ShootingPlayer.Config;
 using UnityEngine;
 using Utils.log;
@@ -18,8 +18,8 @@ namespace Module.ShootingPlayer.Damage
     // 射击角色伤害控制器，与千咲伤害控制器平行独立
     public sealed class ShooterDamageController
     {
-        private readonly PlayerContext m_context;
-        private readonly PlayerStatsConfigSO m_statsConfig;
+        private readonly ShooterContext m_context;
+        private readonly CharacterStatsConfigSO m_statsConfig;
         private readonly ShooterDamageConfigSO m_damageConfig;
 
         private float m_nextDamageAvailableTime;
@@ -28,7 +28,7 @@ namespace Module.ShootingPlayer.Damage
 
         public bool IsGmInvincible { get; private set; }
 
-        public ShooterDamageController(PlayerContext context, PlayerStatsConfigSO statsConfig,
+        public ShooterDamageController(ShooterContext context, CharacterStatsConfigSO statsConfig,
             ShooterDamageConfigSO damageConfig)
         {
             m_context = context;

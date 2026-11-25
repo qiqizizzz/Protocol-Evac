@@ -7,7 +7,7 @@
 */
 
 using System.Collections.Generic;
-using Module.ChaisakiPlayer.Context;
+using Module.ShootingPlayer.Context;
 using Module.ShootingPlayer.Config;
 using Module.ShootingPlayer.HFSM.Runtime;
 using UnityEngine;
@@ -22,7 +22,7 @@ namespace Module.ShootingPlayer.HFSM.Transition.Rules
         private const float MOVE_INPUT_THRESHOLD_SQR = 0.01f;
 
         // 创建位移相关状态转换规则集合
-        public static IReadOnlyList<ShooterTransitionRule> Create(PlayerContext context,
+        public static IReadOnlyList<ShooterTransitionRule> Create(ShooterContext context,
             ShooterRuntimeState runtimeState, ShooterAimConfigSO aimConfig)
         {
             List<ShooterTransitionRule> rules = new List<ShooterTransitionRule>();
@@ -35,7 +35,7 @@ namespace Module.ShootingPlayer.HFSM.Transition.Rules
         }
 
         // 站立与蹲伏的整体切换
-        private static void AddCrouchRules(List<ShooterTransitionRule> rules, PlayerContext context,
+        private static void AddCrouchRules(List<ShooterTransitionRule> rules, ShooterContext context,
             ShooterRuntimeState runtimeState)
         {
             rules.Add(new ShooterTransitionRule(ShooterStateId.Grounded, ShooterStateId.CrouchedAim,
@@ -52,7 +52,7 @@ namespace Module.ShootingPlayer.HFSM.Transition.Rules
         }
 
         // 站立分支的空闲、移动与瞄准切换
-        private static void AddGroundedRules(List<ShooterTransitionRule> rules, PlayerContext context,
+        private static void AddGroundedRules(List<ShooterTransitionRule> rules, ShooterContext context,
             ShooterRuntimeState runtimeState, ShooterAimConfigSO aimConfig)
         {
             rules.Add(new ShooterTransitionRule(ShooterStateId.GroundedIdle, ShooterStateId.GroundedAimMove,
@@ -95,7 +95,7 @@ namespace Module.ShootingPlayer.HFSM.Transition.Rules
         }
 
         // 蹲伏分支的空闲与瞄准切换，蹲伏位移由 2D 混合树内部表达
-        private static void AddCrouchedRules(List<ShooterTransitionRule> rules, PlayerContext context,
+        private static void AddCrouchedRules(List<ShooterTransitionRule> rules, ShooterContext context,
             ShooterRuntimeState runtimeState)
         {
             rules.Add(new ShooterTransitionRule(ShooterStateId.CrouchedIdle, ShooterStateId.CrouchedAim,
@@ -115,7 +115,7 @@ namespace Module.ShootingPlayer.HFSM.Transition.Rules
         }
 
         // 判断当前是否存在有效移动输入
-        private static bool IsMoving(PlayerContext context)
+        private static bool IsMoving(ShooterContext context)
         {
             return context.Input.MoveInput.sqrMagnitude > MOVE_INPUT_THRESHOLD_SQR;
         }

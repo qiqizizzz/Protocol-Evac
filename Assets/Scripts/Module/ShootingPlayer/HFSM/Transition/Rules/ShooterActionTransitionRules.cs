@@ -7,8 +7,8 @@
 */
 
 using System.Collections.Generic;
-using Module.ChaisakiPlayer.Context;
-using Module.ChaisakiPlayer.Input.Buffer;
+using Module.ShootingPlayer.Context;
+using Framework.Character.Runtime.Input;
 using Module.ShootingPlayer.Config;
 using Module.ShootingPlayer.HFSM.Runtime;
 using UnityEngine;
@@ -23,7 +23,7 @@ namespace Module.ShootingPlayer.HFSM.Transition.Rules
         private const float MOVE_INPUT_THRESHOLD_SQR = 0.01f;
 
         // 创建闪避状态转换规则集合
-        public static IReadOnlyList<ShooterTransitionRule> Create(PlayerContext context,
+        public static IReadOnlyList<ShooterTransitionRule> Create(ShooterContext context,
             ShooterRuntimeState runtimeState, ShooterEvadeConfigSO evadeConfig)
         {
             List<ShooterTransitionRule> rules = new List<ShooterTransitionRule>();
@@ -50,22 +50,22 @@ namespace Module.ShootingPlayer.HFSM.Transition.Rules
         }
 
         // 判断当前是否可以进入闪避
-        private static bool CanStartEvade(PlayerContext context, ShooterEvadeConfigSO evadeConfig)
+        private static bool CanStartEvade(ShooterContext context, ShooterEvadeConfigSO evadeConfig)
         {
             if (context.Input.IsInputLocked || context.Movement.IsMovementLocked)
                 return false;
 
-            return context.Input.Buffer.Has(PlayerBufferedInputType.Dodge, Time.time, evadeConfig.EvadeBufferTime);
+            return context.Input.Buffer.Has(CharacterBufferedInputType.Dodge, Time.time, evadeConfig.EvadeBufferTime);
         }
 
         // 判断闪避段落是否已经结束
-        private static bool IsEvadeFinished(PlayerContext context)
+        private static bool IsEvadeFinished(ShooterContext context)
         {
             return context.Action.IsStateFinished;
         }
 
         // 判断当前是否存在移动输入
-        private static bool IsMoving(PlayerContext context)
+        private static bool IsMoving(ShooterContext context)
         {
             return context.Input.MoveInput.sqrMagnitude > MOVE_INPUT_THRESHOLD_SQR;
         }

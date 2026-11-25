@@ -10,7 +10,7 @@ using Module.ShootingPlayer.HFSM.Animation;
 
 namespace Module.ShootingPlayer.HFSM.Runtime
 {
-    // 射击角色运行时状态，独立于 PlayerContext，避免污染千咲数据
+    // 射击角色运行时状态，独立于 ShooterContext，避免污染千咲数据
     public sealed class ShooterRuntimeState
     {
         // 是否处于瞄准姿态

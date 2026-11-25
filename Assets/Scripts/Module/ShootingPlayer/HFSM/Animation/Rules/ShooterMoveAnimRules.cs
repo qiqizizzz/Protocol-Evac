@@ -7,8 +7,7 @@
 */
 
 using System.Collections.Generic;
-using Module.ChaisakiPlayer.Context;
-using Module.ChaisakiPlayer.Context.Runtime;
+using Module.ShootingPlayer.Context;
 using UnityEngine;
 
 using ShooterAnimRule = Framework.Character.Animation.CharacterAnimRule<Module.ShootingPlayer.HFSM.ShooterStateId, Module.ShootingPlayer.HFSM.Animation.ShooterAnimParams>;
@@ -19,7 +18,7 @@ namespace Module.ShootingPlayer.HFSM.Animation.Rules
     public static class ShooterMoveAnimRules
     {
         // 创建地面移动动画规则集合
-        public static IReadOnlyList<ShooterAnimRule> Create(PlayerContext context)
+        public static IReadOnlyList<ShooterAnimRule> Create(ShooterContext context)
         {
             ShooterAnimRule.ResolveHandler handler =
                 (ref ShooterAnimParams animParams) => ResolveLocomotion(context, ref animParams);
@@ -33,9 +32,9 @@ namespace Module.ShootingPlayer.HFSM.Animation.Rules
         }
 
         // 解析位移相关的通用动画参数
-        private static void ResolveLocomotion(PlayerContext context, ref ShooterAnimParams animParams)
+        private static void ResolveLocomotion(ShooterContext context, ref ShooterAnimParams animParams)
         {
-            PlayerMovementContext movement = context.Movement;
+            ShooterMovementContext movement = context.Movement;
 
             // 已有移动意图时使用目标档位，避免状态切换首帧落入待机动画
             animParams.MoveSpeed = !movement.IsMovementLocked &&
@@ -59,7 +58,7 @@ namespace Module.ShootingPlayer.HFSM.Animation.Rules
         }
 
         // 获取水平速度大小
-        private static float GetHorizontalSpeed(PlayerMovementContext movement)
+        private static float GetHorizontalSpeed(ShooterMovementContext movement)
         {
             Vector3 velocity = movement.Velocity;
             velocity.y = 0f;

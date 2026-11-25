@@ -11,7 +11,7 @@ using Module.ChaisakiPlayer.Context;
 using Module.ChaisakiPlayer.HFSM;
 using Module.ChaisakiPlayer.HFSM.Config.Action;
 using Module.ChaisakiPlayer.HFSM.Transition;
-using Module.ChaisakiPlayer.Input.Buffer;
+using Framework.Character.Runtime.Input;
 using UnityEngine;
 
 using PlayerTransitionRule = Framework.Character.Transition.CharacterTransitionRule<Module.ChaisakiPlayer.HFSM.PlayerStateId, Module.ChaisakiPlayer.HFSM.Transition.PlayerTransitionPriority>;
@@ -53,7 +53,7 @@ namespace Module.ChaisakiPlayer.HFSM.Transition.Rules
                 !context.Input.IsInputLocked &&
                 !context.Movement.IsMovementLocked &&
                 context.Movement.IsGrounded &&
-                context.Input.Buffer.Has(PlayerBufferedInputType.Dodge, Time.time, dodgeConfig.DodgeBufferTime);
+                context.Input.Buffer.Has(CharacterBufferedInputType.Dodge, Time.time, dodgeConfig.DodgeBufferTime);
         }
 
         // 判断动作结束后是否应回到地面移动

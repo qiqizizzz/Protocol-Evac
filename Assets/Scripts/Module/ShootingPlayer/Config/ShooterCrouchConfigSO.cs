@@ -6,14 +6,14 @@
 * └──────────────────────────────────┘
 */
 
-using Module.ChaisakiPlayer.HFSM.Config.Common;
+using Framework.Character.Runtime.HFSM.Config.Common;
 using TriInspector;
 using UnityEngine;
 
 namespace Module.ShootingPlayer.Config
 {
     [CreateAssetMenu(fileName = "ShooterCrouchConfig", menuName = "配置/射击玩家/蹲伏配置")]
-    public sealed class ShooterCrouchConfigSO : PlayerStateCommonConfigSO
+    public sealed class ShooterCrouchConfigSO : CharacterStateCommonConfigSO
     {
         private const int CROUCH_IDLE_CLIP_INDEX = 0;
         private const int CROUCH_AIM_IDLE_CLIP_INDEX = 1;
@@ -31,10 +31,10 @@ namespace Module.ShootingPlayer.Config
 
         public float CrouchAimMoveSpeed => CrouchAimMoveSpeedValue;
 
-        public PlayerStateClipData CrouchIdleClipData => GetStateClip(CROUCH_IDLE_CLIP_INDEX);
+        public CharacterStateClipData CrouchIdleClipData => GetStateClip(CROUCH_IDLE_CLIP_INDEX);
 
-        public PlayerStateClipData CrouchAimIdleClipData => GetStateClip(CROUCH_AIM_IDLE_CLIP_INDEX);
+        public CharacterStateClipData CrouchAimIdleClipData => GetStateClip(CROUCH_AIM_IDLE_CLIP_INDEX);
 
-        public PlayerStateClipData CrouchAimMoveClipData => GetStateClip(CROUCH_AIM_MOVE_CLIP_INDEX);
+        public CharacterStateClipData CrouchAimMoveClipData => GetStateClip(CROUCH_AIM_MOVE_CLIP_INDEX);
     }
 }

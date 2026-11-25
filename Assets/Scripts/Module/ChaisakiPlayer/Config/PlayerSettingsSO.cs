@@ -6,8 +6,8 @@
  * └────────────────────────────────────────────┘
  */
 
-using Module.ChaisakiPlayer.Core.View.Config;
-using Module.ChaisakiPlayer.Audio;
+using Framework.Character.Runtime.Core.View.Config;
+using Framework.Character.Runtime.Audio;
 using Module.ChaisakiPlayer.HFSM.Config.Action;
 using Module.ChaisakiPlayer.HFSM.Config.Air;
 using Module.ChaisakiPlayer.HFSM.Config.Disabled;
@@ -17,7 +17,7 @@ using Module.ChaisakiPlayer.Skill.Data;
 using TriInspector;
 using UnityEngine;
 
-namespace Module.ChaisakiPlayer.Config
+namespace Framework.Character.Runtime.Config
 {
     [CreateAssetMenu(fileName = "PlayerSettings", menuName = "配置/玩家/玩家配置聚合")]
     [DeclareFoldoutGroup("Stats", Title = "数值配置", Expanded = true)]
@@ -33,7 +33,7 @@ namespace Module.ChaisakiPlayer.Config
     {
         [Group("Stats")]
         [LabelText("数值配置")]
-        [SerializeField] private PlayerStatsConfigSO StatsConfigValue;
+        [SerializeField] private CharacterStatsConfigSO StatsConfigValue;
 
         [Group("Movement")]
         [LabelText("移动配置")]
@@ -61,20 +61,20 @@ namespace Module.ChaisakiPlayer.Config
 
         [Group("Audio")]
         [LabelText("玩家音效配置")]
-        [SerializeField] private PlayerAudioConfigSO AudioConfigValue;
+        [SerializeField] private CharacterAudioConfigSO AudioConfigValue;
 
         [Group("View")]
         [LabelText("视角配置")]
-        [SerializeField] private PlayerViewConfigSO ViewConfigValue;
+        [SerializeField] private CharacterViewConfigSO ViewConfigValue;
 
-        public PlayerStatsConfigSO StatsConfig => StatsConfigValue;
+        public CharacterStatsConfigSO StatsConfig => StatsConfigValue;
         public PlayerMoveConfigSO MoveConfig => MoveConfigValue;
         public PlayerInputConfigSO InputConfig => InputConfigValue;
         public PlayerAirConfigSO AirConfig => AirConfigValue;
         public PlayerDodgeConfigSO DodgeConfig => DodgeConfigValue;
         public PlayerDamageConfigSO DamageConfig => DamageConfigValue;
         public PlayerNormalAttackConfigSO NormalAttackConfig => NormalAttackConfigValue;
-        public PlayerAudioConfigSO AudioConfig => AudioConfigValue;
-        public PlayerViewConfigSO ViewConfig => ViewConfigValue;
+        public CharacterAudioConfigSO AudioConfig => AudioConfigValue;
+        public CharacterViewConfigSO ViewConfig => ViewConfigValue;
     }
 }

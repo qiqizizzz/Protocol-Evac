@@ -7,7 +7,7 @@
 */
 
 using System.Collections.Generic;
-using Module.ChaisakiPlayer.Context;
+using Module.ShootingPlayer.Context;
 
 using ShooterAnimRule = Framework.Character.Animation.CharacterAnimRule<Module.ShootingPlayer.HFSM.ShooterStateId, Module.ShootingPlayer.HFSM.Animation.ShooterAnimParams>;
 
@@ -17,7 +17,7 @@ namespace Module.ShootingPlayer.HFSM.Animation.Rules
     public static class ShooterSkillAnimRules
     {
         // 创建技能动画规则集合
-        public static IReadOnlyList<ShooterAnimRule> Create(PlayerContext context)
+        public static IReadOnlyList<ShooterAnimRule> Create(ShooterContext context)
         {
             return new List<ShooterAnimRule>
             {
@@ -27,7 +27,7 @@ namespace Module.ShootingPlayer.HFSM.Animation.Rules
         }
 
         // 解析射击动画参数，射击期间锁定位移，混合树回到待机
-        private static void ResolveShoot(PlayerContext context, ref ShooterAnimParams animParams)
+        private static void ResolveShoot(ShooterContext context, ref ShooterAnimParams animParams)
         {
             animParams.IsGrounded = context.Movement.IsGrounded;
             animParams.MoveSpeed = 0f;

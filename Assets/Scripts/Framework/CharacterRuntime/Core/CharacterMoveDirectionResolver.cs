@@ -1,0 +1,61 @@
+/*
+ * ┌────────────────────────────────────────────┐
+ * │  描    述: 角色移动方向解析器，负责按视角生成水平移动方向
+ * │  类    名: CharacterMoveDirectionResolver.cs
+ * │  创    建: By qiqizizzz
+ * └────────────────────────────────────────────┘
+ */
+
+using Framework.Character.Runtime.Contexts;
+using Framework.Character.Runtime.Core.View;
+using UnityEngine;
+
+namespace Framework.Character.Runtime.Core
+{
+    public static class CharacterMoveDirectionResolver
+    {
+        // 根据当前视角模式计算角色移动方向
+        public static Vector3 Resolve(ICharacterViewRuntimeContext context, Vector2 moveInput)
+        {
+            if (context.View.ViewMode == CharacterViewMode.FirstPerson)
+                return BuildMoveDirection(context.Transform.forward, context.Transform.right, moveInput);
+
+            Quaternion cameraYawRotation = Quaternion.Euler(0f, context.View.CameraYaw, 0f);
+            Vector3 cameraForward = cameraYawRotation * Vector3.forward;
+            Vector3 cameraRight = cameraYawRotation * Vector3.right;
+
+            return BuildMoveDirection(cameraForward, cameraRight, moveInput);
+        }
+
+        // 获取当前视角下的水平前方向
+        public static Vector3 ResolveForward(ICharacterViewRuntimeContext context)
+        {
+            if (context.View.ViewMode == CharacterViewMode.FirstPerson)
+                return FlattenDirection(context.Transform.forward);
+
+            Quaternion cameraYawRotation = Quaternion.Euler(0f, context.View.CameraYaw, 0f);
+            return FlattenDirection(cameraYawRotation * Vector3.forward);
+        }
+
+        // 使用水平前方向与右方向生成移动方向
+        private static Vector3 BuildMoveDirection(Vector3 forward, Vector3 right, Vector2 moveInput)
+        {
+            forward = FlattenDirection(forward);
+            right = FlattenDirection(right);
+
+            Vector3 moveDirection = right * moveInput.x + forward * moveInput.y;
+            return moveDirection.sqrMagnitude > 1f ? moveDirection.normalized : moveDirection;
+        }
+
+        // 将方向压平到水平面
+        private static Vector3 FlattenDirection(Vector3 direction)
+        {
+            direction.y = 0f;
+
+            if (direction.sqrMagnitude <= 0.0001f)
+                return Vector3.forward;
+
+            return direction.normalized;
+        }
+    }
+}

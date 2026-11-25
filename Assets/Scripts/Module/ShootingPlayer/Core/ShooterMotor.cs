@@ -6,7 +6,7 @@
 * └──────────────────────────────────┘
 */
 
-using Module.ChaisakiPlayer.Context;
+using Module.ShootingPlayer.Context;
 using Module.ShootingPlayer.Config;
 using UnityEngine;
 
@@ -18,11 +18,11 @@ namespace Module.ShootingPlayer.Core
         private const float GROUNDED_STICK_VELOCITY = -2f;
 
         private CharacterController m_characterController;
-        private PlayerContext m_context;
+        private ShooterContext m_context;
         private ShooterMoveConfigSO m_moveConfig;
 
         // 初始化移动执行器依赖
-        public void Init(CharacterController characterController, PlayerContext context,
+        public void Init(CharacterController characterController, ShooterContext context,
             ShooterMoveConfigSO moveConfig)
         {
             m_characterController = characterController;

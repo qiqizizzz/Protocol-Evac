@@ -7,8 +7,7 @@
 */
 
 using System.Collections.Generic;
-using Module.ChaisakiPlayer.Context;
-using Module.ChaisakiPlayer.Context.Runtime;
+using Module.ShootingPlayer.Context;
 using UnityEngine;
 
 using ShooterAnimRule = Framework.Character.Animation.CharacterAnimRule<Module.ShootingPlayer.HFSM.ShooterStateId, Module.ShootingPlayer.HFSM.Animation.ShooterAnimParams>;
@@ -19,7 +18,7 @@ namespace Module.ShootingPlayer.HFSM.Animation.Rules
     public static class ShooterAimAnimRules
     {
         // 创建瞄准动画规则集合
-        public static IReadOnlyList<ShooterAnimRule> Create(PlayerContext context)
+        public static IReadOnlyList<ShooterAnimRule> Create(ShooterContext context)
         {
             ShooterAnimRule.ResolveHandler idleHandler =
                 (ref ShooterAnimParams animParams) => ResolveAimIdle(context, ref animParams);
@@ -37,22 +36,22 @@ namespace Module.ShootingPlayer.HFSM.Animation.Rules
         }
 
         // 解析瞄准待机动画参数，待机时混合树回到中心点
-        private static void ResolveAimIdle(PlayerContext context, ref ShooterAnimParams animParams)
+        private static void ResolveAimIdle(ShooterContext context, ref ShooterAnimParams animParams)
         {
             ResolveAimLocomotion(context, ref animParams);
             animParams.MoveSpeed = 0f;
         }
 
         // 解析瞄准移动动画参数
-        private static void ResolveAimMove(PlayerContext context, ref ShooterAnimParams animParams)
+        private static void ResolveAimMove(ShooterContext context, ref ShooterAnimParams animParams)
         {
             ResolveAimLocomotion(context, ref animParams);
         }
 
         // 解析瞄准位移通用参数
-        private static void ResolveAimLocomotion(PlayerContext context, ref ShooterAnimParams animParams)
+        private static void ResolveAimLocomotion(ShooterContext context, ref ShooterAnimParams animParams)
         {
-            PlayerMovementContext movement = context.Movement;
+            ShooterMovementContext movement = context.Movement;
 
             animParams.VerticalSpeed = movement.Velocity.y;
             animParams.IsGrounded = movement.IsGrounded;

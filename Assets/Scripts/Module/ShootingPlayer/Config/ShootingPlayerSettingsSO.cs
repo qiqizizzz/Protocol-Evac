@@ -6,9 +6,9 @@
 * └──────────────────────────────────┘
 */
 
-using Module.ChaisakiPlayer.Audio;
-using Module.ChaisakiPlayer.Config;
-using Module.ChaisakiPlayer.Core.View.Config;
+using Framework.Character.Runtime.Audio;
+using Framework.Character.Runtime.Config;
+using Framework.Character.Runtime.Core.View.Config;
 using TriInspector;
 using UnityEngine;
 
@@ -28,7 +28,7 @@ namespace Module.ShootingPlayer.Config
     {
         [Group("Stats")]
         [LabelText("数值配置")]
-        [SerializeField] private PlayerStatsConfigSO StatsConfigValue;
+        [SerializeField] private CharacterStatsConfigSO StatsConfigValue;
 
         [Group("Move")]
         [LabelText("移动配置")]
@@ -56,13 +56,13 @@ namespace Module.ShootingPlayer.Config
 
         [Group("View")]
         [LabelText("视角配置")]
-        [SerializeField] private PlayerViewConfigSO ViewConfigValue;
+        [SerializeField] private CharacterViewConfigSO ViewConfigValue;
 
         [Group("Audio")]
         [LabelText("玩家音效配置")]
-        [SerializeField] private PlayerAudioConfigSO AudioConfigValue;
+        [SerializeField] private CharacterAudioConfigSO AudioConfigValue;
 
-        public PlayerStatsConfigSO StatsConfig => StatsConfigValue;
+        public CharacterStatsConfigSO StatsConfig => StatsConfigValue;
 
         public ShooterMoveConfigSO MoveConfig => MoveConfigValue;
 
@@ -76,8 +76,8 @@ namespace Module.ShootingPlayer.Config
 
         public ShooterShootConfigSO ShootConfig => ShootConfigValue;
 
-        public PlayerViewConfigSO ViewConfig => ViewConfigValue;
+        public CharacterViewConfigSO ViewConfig => ViewConfigValue;
 
-        public PlayerAudioConfigSO AudioConfig => AudioConfigValue;
+        public CharacterAudioConfigSO AudioConfig => AudioConfigValue;
     }
 }

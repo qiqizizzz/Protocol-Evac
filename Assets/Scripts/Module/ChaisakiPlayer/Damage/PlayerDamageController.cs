@@ -7,18 +7,18 @@
  */
 
 using Module.Combat.Damage;
-using Module.ChaisakiPlayer.Config;
+using Framework.Character.Runtime.Config;
 using Module.ChaisakiPlayer.Context;
 using Module.ChaisakiPlayer.HFSM.Config.Disabled;
 using UnityEngine;
 using Utils.log;
 
-namespace Module.ChaisakiPlayer.Damage
+namespace Framework.Character.Runtime.Damage
 {
     public sealed class PlayerDamageController
     {
         private readonly PlayerContext m_context;
-        private readonly PlayerStatsConfigSO m_statsConfig;
+        private readonly CharacterStatsConfigSO m_statsConfig;
         private readonly PlayerDamageConfigSO m_damageConfig;
 
         private float m_nextDamageAvailableTime;
@@ -27,7 +27,7 @@ namespace Module.ChaisakiPlayer.Damage
         public bool IsGmInvincible { get; private set; }
 
         // 创建玩家伤害控制器并初始化生命值
-        public PlayerDamageController(PlayerContext context, PlayerStatsConfigSO statsConfig, PlayerDamageConfigSO damageConfig)
+        public PlayerDamageController(PlayerContext context, CharacterStatsConfigSO statsConfig, PlayerDamageConfigSO damageConfig)
         {
             m_context = context;
             m_statsConfig = statsConfig;

@@ -12,7 +12,7 @@ using Module.ChaisakiPlayer.HFSM;
 using Module.ChaisakiPlayer.HFSM.Config.Action;
 using Module.ChaisakiPlayer.HFSM.Config.Air;
 using Module.ChaisakiPlayer.HFSM.Transition;
-using Module.ChaisakiPlayer.Input.Buffer;
+using Framework.Character.Runtime.Input;
 using Module.ChaisakiPlayer.Skill.Data;
 using UnityEngine;
 
@@ -91,21 +91,21 @@ namespace Module.ChaisakiPlayer.HFSM.Transition.Rules
         private static bool CanJump(PlayerContext context, PlayerAirConfigSO airConfig)
         {
             return context.Movement.IsGrounded
-                && context.Input.Buffer.Has(PlayerBufferedInputType.Jump, Time.time, airConfig.JumpBufferTime);
+                && context.Input.Buffer.Has(CharacterBufferedInputType.Jump, Time.time, airConfig.JumpBufferTime);
         }
 
         // 判断受击结束后是否应直接闪避
         private static bool CanDodge(PlayerContext context, PlayerDodgeConfigSO dodgeConfig)
         {
             return context.Movement.IsGrounded
-                && context.Input.Buffer.Has(PlayerBufferedInputType.Dodge, Time.time, dodgeConfig.DodgeBufferTime);
+                && context.Input.Buffer.Has(CharacterBufferedInputType.Dodge, Time.time, dodgeConfig.DodgeBufferTime);
         }
 
         // 判断受击结束后是否应直接进入普通攻击
         private static bool CanNormalAttack(PlayerContext context, PlayerNormalAttackConfigSO normalAttackConfig)
         {
             return context.Movement.IsGrounded
-                && context.Input.Buffer.Has(PlayerBufferedInputType.NormalAttack, Time.time,
+                && context.Input.Buffer.Has(CharacterBufferedInputType.NormalAttack, Time.time,
                     normalAttackConfig.NormalAttackBufferTime);
         }
 

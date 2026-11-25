@@ -6,14 +6,14 @@
 * └──────────────────────────────────┘
 */
 
-using Module.ChaisakiPlayer.HFSM.Config.Common;
+using Framework.Character.Runtime.HFSM.Config.Common;
 using TriInspector;
 using UnityEngine;
 
 namespace Module.ShootingPlayer.Config
 {
     [CreateAssetMenu(fileName = "ShooterEvadeConfig", menuName = "配置/射击玩家/闪避配置")]
-    public sealed class ShooterEvadeConfigSO : PlayerStateCommonConfigSO
+    public sealed class ShooterEvadeConfigSO : CharacterStateCommonConfigSO
     {
         private const int EVADE_CLIP_INDEX = 0;
 
@@ -37,7 +37,7 @@ namespace Module.ShootingPlayer.Config
 
         public float EvadeBufferTime => EvadeBufferTimeValue;
 
-        public PlayerStateClipData EvadeClipData => GetStateClip(EVADE_CLIP_INDEX);
+        public CharacterStateClipData EvadeClipData => GetStateClip(EVADE_CLIP_INDEX);
 
         // 闪避位移的持续时间
         public float EvadeDuration => EvadeClipData?.StateDuration ?? 0f;

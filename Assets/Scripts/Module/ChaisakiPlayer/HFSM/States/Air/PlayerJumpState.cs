@@ -8,7 +8,7 @@
 
 using Module.ChaisakiPlayer.Context;
 using Module.ChaisakiPlayer.HFSM.Config.Air;
-using Module.ChaisakiPlayer.Input.Buffer;
+using Framework.Character.Runtime.Input;
 using UnityEngine;
 
 namespace Module.ChaisakiPlayer.HFSM.States.Air
@@ -30,7 +30,7 @@ namespace Module.ChaisakiPlayer.HFSM.States.Air
         // 进入跳跃状态并应用空中配置的武器表现
         public override void Enter()
         {
-            m_context.Input.Buffer.Consume(PlayerBufferedInputType.Jump);
+            m_context.Input.Buffer.Consume(CharacterBufferedInputType.Jump);
             m_context.Action.RequestAnimReplay(PlayerStateId.AirborneJump);
             m_context.Action.IsWeaponVisible = m_airConfig.JumpBeginClipData.ShowWeapon;
             Vector3 velocity = m_context.Movement.Velocity;

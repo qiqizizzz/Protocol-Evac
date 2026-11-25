@@ -7,7 +7,7 @@
 */
 
 using System.Collections.Generic;
-using Module.ChaisakiPlayer.Context;
+using Module.ShootingPlayer.Context;
 
 using ShooterAnimRule = Framework.Character.Animation.CharacterAnimRule<Module.ShootingPlayer.HFSM.ShooterStateId, Module.ShootingPlayer.HFSM.Animation.ShooterAnimParams>;
 
@@ -17,7 +17,7 @@ namespace Module.ShootingPlayer.HFSM.Animation.Rules
     public static class ShooterDisabledAnimRules
     {
         // 创建不可操作状态动画规则集合
-        public static IReadOnlyList<ShooterAnimRule> Create(PlayerContext context)
+        public static IReadOnlyList<ShooterAnimRule> Create(ShooterContext context)
         {
             ShooterAnimRule.ResolveHandler handler =
                 (ref ShooterAnimParams animParams) => ResolveDisabled(context, ref animParams);
@@ -30,7 +30,7 @@ namespace Module.ShootingPlayer.HFSM.Animation.Rules
         }
 
         // 解析不可操作状态的动画参数
-        private static void ResolveDisabled(PlayerContext context, ref ShooterAnimParams animParams)
+        private static void ResolveDisabled(ShooterContext context, ref ShooterAnimParams animParams)
         {
             animParams.MoveSpeed = 0f;
             animParams.VerticalSpeed = context.Movement.Velocity.y;

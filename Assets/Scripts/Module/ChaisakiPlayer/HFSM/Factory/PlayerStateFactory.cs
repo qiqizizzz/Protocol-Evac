@@ -6,7 +6,7 @@
  * └────────────────────────────────────────────┘
  */
 
-using Module.ChaisakiPlayer.Config;
+using Framework.Character.Runtime.Config;
 using Module.ChaisakiPlayer.Context;
 using Module.ChaisakiPlayer.HFSM;
 using Module.ChaisakiPlayer.HFSM.States.Action;
@@ -14,7 +14,7 @@ using Module.ChaisakiPlayer.HFSM.States.Air;
 using Module.ChaisakiPlayer.HFSM.States.Disabled;
 using Module.ChaisakiPlayer.HFSM.States.Ground;
 using Module.ChaisakiPlayer.HFSM.States.Skill;
-using Module.ChaisakiPlayer.Skill.Core;
+using Framework.Character.Runtime.Skill.Core;
 
 // 状态机外壳来自 Character.Core
 using PlayerStateMachine = Framework.Character.HFSM.CharacterStateMachine<Module.ChaisakiPlayer.HFSM.PlayerStateId>;
@@ -24,7 +24,7 @@ namespace Module.ChaisakiPlayer.HFSM.Factory
     public static class PlayerStateFactory
     {
         // 创建并初始化玩家状态树
-        public static PlayerStateMachine Create(PlayerContext context, PlayerSettingsSO settings, PlayerSkillController skillController)
+        public static PlayerStateMachine Create(PlayerContext context, PlayerSettingsSO settings, CharacterSkillController<PlayerStateId> skillController)
         {
             PlayerStateMachine stateMachine = new PlayerStateMachine();
 

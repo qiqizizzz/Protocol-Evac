@@ -7,8 +7,7 @@
 */
 
 using System.Collections.Generic;
-using Module.ChaisakiPlayer.Context;
-using Module.ChaisakiPlayer.Context.Runtime;
+using Module.ShootingPlayer.Context;
 using UnityEngine;
 
 using ShooterAnimRule = Framework.Character.Animation.CharacterAnimRule<Module.ShootingPlayer.HFSM.ShooterStateId, Module.ShootingPlayer.HFSM.Animation.ShooterAnimParams>;
@@ -19,7 +18,7 @@ namespace Module.ShootingPlayer.HFSM.Animation.Rules
     public static class ShooterActionAnimRules
     {
         // 创建动作动画规则集合
-        public static IReadOnlyList<ShooterAnimRule> Create(PlayerContext context)
+        public static IReadOnlyList<ShooterAnimRule> Create(ShooterContext context)
         {
             return new List<ShooterAnimRule>
             {
@@ -29,9 +28,9 @@ namespace Module.ShootingPlayer.HFSM.Animation.Rules
         }
 
         // 解析闪避动画参数，位移由强制速度驱动，混合树回到中心
-        private static void ResolveEvade(PlayerContext context, ref ShooterAnimParams animParams)
+        private static void ResolveEvade(ShooterContext context, ref ShooterAnimParams animParams)
         {
-            PlayerMovementContext movement = context.Movement;
+            ShooterMovementContext movement = context.Movement;
             Vector3 velocity = movement.Velocity;
             velocity.y = 0f;
 

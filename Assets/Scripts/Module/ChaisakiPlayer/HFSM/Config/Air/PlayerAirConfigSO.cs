@@ -6,13 +6,13 @@
  * └────────────────────────────────────────────┘
  */
 
-using Module.ChaisakiPlayer.HFSM.Config.Common;
+using Framework.Character.Runtime.HFSM.Config.Common;
 using UnityEngine;
 
 namespace Module.ChaisakiPlayer.HFSM.Config.Air
 {
     [CreateAssetMenu(fileName = "PlayerAirConfig", menuName = "配置/玩家/空中/玩家空中配置")]
-    public sealed class PlayerAirConfigSO : PlayerStateCommonConfigSO
+    public sealed class PlayerAirConfigSO : CharacterStateCommonConfigSO
     {
         private const int JUMP_BEGIN_CLIP_INDEX = 0;
         private const int FALL_LOOP_CLIP_INDEX = 1;
@@ -47,10 +47,10 @@ namespace Module.ChaisakiPlayer.HFSM.Config.Air
 
         public float CoyoteTime => CoyoteTimeValue;
 
-        public PlayerStateClipData JumpBeginClipData => GetStateClip(JUMP_BEGIN_CLIP_INDEX);
+        public CharacterStateClipData JumpBeginClipData => GetStateClip(JUMP_BEGIN_CLIP_INDEX);
 
-        public PlayerStateClipData FallLoopClipData => GetStateClip(FALL_LOOP_CLIP_INDEX);
+        public CharacterStateClipData FallLoopClipData => GetStateClip(FALL_LOOP_CLIP_INDEX);
 
-        public PlayerStateClipData FallEndClipData => GetStateClip(FALL_END_CLIP_INDEX);
+        public CharacterStateClipData FallEndClipData => GetStateClip(FALL_END_CLIP_INDEX);
     }
 }

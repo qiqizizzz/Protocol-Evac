@@ -10,10 +10,10 @@ using Framework.QTower.Controller;
 using Framework.QTower.Common.Defines;
 using Framework.QTower.Event;
 using Module.Combat.Hitbox;
-using Module.ChaisakiPlayer.Config;
+using Framework.Character.Runtime.Config;
 using Module.ChaisakiPlayer.Context;
-using Module.ChaisakiPlayer.Damage;
-using Module.ChaisakiPlayer.Core.View;
+using Framework.Character.Runtime.Damage;
+using Framework.Character.Runtime.Core.View;
 using Module.ChaisakiPlayer.HFSM.Config.Air;
 using Module.ChaisakiPlayer.HFSM.Config.Move;
 using Module.ChaisakiPlayer.HFSM;
@@ -23,8 +23,8 @@ using Module.ChaisakiPlayer.HFSM.Factory;
 using Module.ChaisakiPlayer.HFSM.Transition;
 using Module.ChaisakiPlayer.HFSM.Transition.Controllers;
 using Module.ChaisakiPlayer.Input;
-using Module.ChaisakiPlayer.Skill;
-using Module.ChaisakiPlayer.Skill.Core;
+using Framework.Character.Runtime.Skill;
+using Framework.Character.Runtime.Skill.Core;
 using TriInspector;
 using UnityEngine;
 using Utils.Find;
@@ -37,7 +37,7 @@ using PlayerAnimResolver = Framework.Character.Animation.CharacterAnimResolver<M
 
 namespace Module.ChaisakiPlayer.Core
 {
-    [RequireComponent(typeof(PlayerDamageReceiver))]
+    [RequireComponent(typeof(CharacterDamageReceiver))]
     public class PlayerController : MonoBehaviour
     {
         #region 路径
@@ -58,7 +58,7 @@ namespace Module.ChaisakiPlayer.Core
         private Animator m_animator;
         private PlayerMotor m_motor;
         private PlayerWeaponController m_weaponController;
-        private PlayerViewController m_viewController;
+        private CharacterViewController m_viewController;
         private PlayerStateMachine m_stateMachine;
         private CharacterController m_characterController;
         private Transform m_viewRoot;
@@ -78,10 +78,10 @@ namespace Module.ChaisakiPlayer.Core
         private PlayerInputReader m_inputReader;
         //Combat
         private CombatHitbox m_combatHitbox;
-        private PlayerDamageReceiver m_damageReceiver;
+        private CharacterDamageReceiver m_damageReceiver;
         private PlayerDamageController m_damageController;
         //Skill
-        private PlayerSkillController m_skillController;
+        private CharacterSkillController<PlayerStateId> m_skillController;
 
         // 对外提供玩家状态机的只读诊断入口
         public PlayerStateId CurrentStateId => m_stateMachine == null
@@ -193,14 +193,15 @@ namespace Module.ChaisakiPlayer.Core
             m_weaponController.Init(m_context);
 
             m_viewController = m_controllerManager.Register(
-                new PlayerViewController(m_context, Settings.ViewConfig, m_viewRoot, m_playerCamera));
+                new CharacterViewController(m_context, Settings.ViewConfig, m_viewRoot, m_playerCamera));
         }
 
         // 初始化玩家技能总控
         private void InitSkill()
         {
-            PlayerSkillController skillController = new PlayerSkillController(m_context, m_combatHitbox, gameObject);
-            skillController.RegisterConfig(PlayerSkillType.NormalAttack, Settings.NormalAttackConfig);
+            CharacterSkillController<PlayerStateId> skillController = new CharacterSkillController<PlayerStateId>(
+                m_context, m_combatHitbox, gameObject, PlayerStateId.SkillNormalAttack);
+            skillController.RegisterConfig(CharacterSkillType.NormalAttack, Settings.NormalAttackConfig);
             m_skillController = m_controllerManager.Register(skillController);
         }
 
@@ -221,7 +222,7 @@ namespace Module.ChaisakiPlayer.Core
 
             if (m_damageReceiver == null)
             {
-                QLog.Error("PlayerDamageReceiver 未找到，玩家无法接收 Combat 伤害");
+                QLog.Error("CharacterDamageReceiver 未找到，玩家无法接收 Combat 伤害");
                 return;
             }
 
@@ -271,7 +272,7 @@ namespace Module.ChaisakiPlayer.Core
             m_characterController = this.GetOwnerComponent<CharacterController>();
             m_animator = this.GetChildComponent<Animator>();
             m_combatHitbox = this.GetChildComponent<CombatHitbox>();
-            m_damageReceiver = this.GetOwnerComponent<PlayerDamageReceiver>();
+            m_damageReceiver = this.GetOwnerComponent<CharacterDamageReceiver>();
             m_weaponController = this.GetChildComponent<PlayerWeaponController>();
             m_viewRoot = this.FindChild(VIEW_ROOT_PATH);
             m_playerCamera = this.FindChildComponent<Camera>(PLAYER_CAMERA_PATH);
@@ -324,7 +325,7 @@ namespace Module.ChaisakiPlayer.Core
                 QLog.Warning("ViewConfig 未配置，视角模块可能无法正常运行");
         }
 
-        // 接收 PlayerDamageReceiver 转发的伤害并中断当前技能
+        // 接收 CharacterDamageReceiver 转发的伤害并中断当前技能
         private void HandleDamageReceived(Module.Combat.Damage.DamageData damageData)
         {
             if (m_damageController == null || !m_damageController.TryTakeDamage(damageData))

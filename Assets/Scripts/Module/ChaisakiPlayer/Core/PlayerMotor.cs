@@ -7,8 +7,8 @@
  */
 
 using Module.ChaisakiPlayer.Context;
-using Module.ChaisakiPlayer.Core.View;
-using Module.ChaisakiPlayer.Core.View.Config;
+using Framework.Character.Runtime.Core.View;
+using Framework.Character.Runtime.Core.View.Config;
 using Module.ChaisakiPlayer.HFSM.Config.Air;
 using Module.ChaisakiPlayer.HFSM.Config.Move;
 using UnityEngine;
@@ -20,11 +20,11 @@ namespace Module.ChaisakiPlayer.Core
         private CharacterController m_characterController;
         private PlayerContext m_context;
         private PlayerMoveConfigSO m_moveConfig;
-        private PlayerViewConfigSO m_viewConfig;
+        private CharacterViewConfigSO m_viewConfig;
         private PlayerAirConfigSO m_airConfig;
         
         // 初始化玩家移动执行器
-        public void Init(CharacterController characterController, PlayerContext context, PlayerMoveConfigSO moveConfig, PlayerViewConfigSO viewConfig, PlayerAirConfigSO airConfig)
+        public void Init(CharacterController characterController, PlayerContext context, PlayerMoveConfigSO moveConfig, CharacterViewConfigSO viewConfig, PlayerAirConfigSO airConfig)
         {
             m_characterController = characterController;
             m_context = context;
@@ -37,7 +37,7 @@ namespace Module.ChaisakiPlayer.Core
         public void FixedTick(float fixedDeltaTime)
         {
             Vector3 velocity = m_context.Movement.Velocity;
-            if (m_context.View.ViewMode == PlayerViewMode.ThirdPerson
+            if (m_context.View.ViewMode == CharacterViewMode.ThirdPerson
                 && m_context.Movement.StopDirection.sqrMagnitude > 0.0001f)
             {
                 RotateByDirection(m_context.Movement.StopDirection, fixedDeltaTime);
@@ -80,7 +80,7 @@ namespace Module.ChaisakiPlayer.Core
             velocity.x = hVelocity.x;
             velocity.z = hVelocity.z;
 
-            if (m_context.View.ViewMode == PlayerViewMode.ThirdPerson)
+            if (m_context.View.ViewMode == CharacterViewMode.ThirdPerson)
             {
                 if (m_context.Movement.HasForcedMoveVelocity)
                     RotateByDirection(m_context.Movement.ForcedMoveVelocity, fixedDeltaTime);
@@ -111,7 +111,7 @@ namespace Module.ChaisakiPlayer.Core
         // 在根运动位移前处理攻击等状态提交的身体转向请求
         private void RotateByTurnRequest(float fixedDeltaTime)
         {
-            if (m_context.View.ViewMode != PlayerViewMode.ThirdPerson || m_context.View.IsLockOn)
+            if (m_context.View.ViewMode != CharacterViewMode.ThirdPerson || m_context.View.IsLockOn)
                 return;
 
             if (!m_context.Movement.HasTurnRequest)

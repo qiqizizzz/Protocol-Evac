@@ -6,9 +6,9 @@
  * └────────────────────────────────────────────┘
  */
 
-using Module.ChaisakiPlayer.Context.Runtime;
+using Framework.Character.Runtime.Contexts;
 using Module.Ability.Data.Animation;
-using Module.ChaisakiPlayer.HFSM.Config.Common;
+using Framework.Character.Runtime.HFSM.Config.Common;
 using Module.ChaisakiPlayer.HFSM.Animation.Type;
 using TriInspector;
 using UnityEngine;
@@ -17,7 +17,7 @@ namespace Module.ChaisakiPlayer.HFSM.Config.Move
 {
     [CreateAssetMenu(fileName = "PlayerMoveConfig",menuName = "配置/玩家/移动/玩家移动配置")]
     [DeclareFoldoutGroup("StopAnimation", Title = "急停动画段落")]
-    public sealed class PlayerMoveConfigSO : PlayerStateCommonConfigSO
+    public sealed class PlayerMoveConfigSO : CharacterStateCommonConfigSO
     {
         private const int IDLE_CLIP_INDEX = 0;
         private const int WALK_CLIP_INDEX = 1;
@@ -72,13 +72,13 @@ namespace Module.ChaisakiPlayer.HFSM.Config.Move
 
         public LayerMask GroundLayer => GroundLayerValue;
 
-        public PlayerStateClipData IdleClipData => GetStateClip(IDLE_CLIP_INDEX);
+        public CharacterStateClipData IdleClipData => GetStateClip(IDLE_CLIP_INDEX);
 
-        public PlayerStateClipData WalkClipData => GetStateClip(WALK_CLIP_INDEX);
+        public CharacterStateClipData WalkClipData => GetStateClip(WALK_CLIP_INDEX);
 
-        public PlayerStateClipData RunClipData => GetStateClip(RUN_CLIP_INDEX);
+        public CharacterStateClipData RunClipData => GetStateClip(RUN_CLIP_INDEX);
 
-        public PlayerStateClipData SprintRunClipData => GetStateClip(SPRINT_RUN_CLIP_INDEX);
+        public CharacterStateClipData SprintRunClipData => GetStateClip(SPRINT_RUN_CLIP_INDEX);
 
         // 返回移动配置中额外维护的急停动画数据项
         protected override System.Collections.Generic.IEnumerable<IAnimationDurationSyncable> GetAdditionalAnimationDurationItems()

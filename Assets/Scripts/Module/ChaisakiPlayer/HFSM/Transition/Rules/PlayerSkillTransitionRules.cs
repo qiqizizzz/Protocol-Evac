@@ -10,7 +10,7 @@ using System.Collections.Generic;
 using Module.ChaisakiPlayer.Context;
 using Module.ChaisakiPlayer.HFSM;
 using Module.ChaisakiPlayer.HFSM.Transition;
-using Module.ChaisakiPlayer.Input.Buffer;
+using Framework.Character.Runtime.Input;
 using Module.ChaisakiPlayer.Skill.Data;
 using UnityEngine;
 
@@ -53,7 +53,7 @@ namespace Module.ChaisakiPlayer.HFSM.Transition.Rules
                 !context.Input.IsInputLocked &&
                 !context.Movement.IsMovementLocked &&
                 context.Movement.IsGrounded &&
-                context.Input.Buffer.Has(PlayerBufferedInputType.NormalAttack, Time.time, normalAttackConfig.NormalAttackBufferTime);
+                context.Input.Buffer.Has(CharacterBufferedInputType.NormalAttack, Time.time, normalAttackConfig.NormalAttackBufferTime);
         }
 
         // 判断技能结束后是否应回到地面移动

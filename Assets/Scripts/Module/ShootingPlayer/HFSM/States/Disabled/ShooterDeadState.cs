@@ -6,7 +6,7 @@
 * └──────────────────────────────────┘
 */
 
-using Module.ChaisakiPlayer.Context;
+using Module.ShootingPlayer.Context;
 using Module.ShootingPlayer.HFSM.Animation;
 using Module.ShootingPlayer.HFSM.Runtime;
 
@@ -15,13 +15,13 @@ namespace Module.ShootingPlayer.HFSM.States.Disabled
     // 死亡状态，播放固定死亡动画后持续锁定
     public sealed class ShooterDeadState : BaseShooterState
     {
-        private readonly PlayerContext m_context;
+        private readonly ShooterContext m_context;
         private readonly ShooterRuntimeState m_runtimeState;
 
         public override ShooterStateId Id => ShooterStateId.DisabledDead;
         public override ShooterStateId ParentId => ShooterStateId.Disabled;
 
-        public ShooterDeadState(PlayerContext context, ShooterRuntimeState runtimeState)
+        public ShooterDeadState(ShooterContext context, ShooterRuntimeState runtimeState)
         {
             m_context = context;
             m_runtimeState = runtimeState;

@@ -6,8 +6,8 @@
 * └──────────────────────────────────┘
 */
 
-using Module.ChaisakiPlayer.Context;
-using Module.ChaisakiPlayer.Core;
+using Module.ShootingPlayer.Context;
+using Framework.Character.Runtime.Core;
 using Module.ShootingPlayer.Config;
 
 namespace Module.ShootingPlayer.HFSM.States.Crouch
@@ -15,13 +15,13 @@ namespace Module.ShootingPlayer.HFSM.States.Crouch
     // 蹲伏瞄准移动状态
     public sealed class ShooterCrouchAimMoveState : BaseShooterState
     {
-        private readonly PlayerContext m_context;
+        private readonly ShooterContext m_context;
         private readonly ShooterCrouchConfigSO m_crouchConfig;
 
         public override ShooterStateId Id => ShooterStateId.CrouchedAimMove;
         public override ShooterStateId ParentId => ShooterStateId.Crouched;
 
-        public ShooterCrouchAimMoveState(PlayerContext context, ShooterCrouchConfigSO crouchConfig)
+        public ShooterCrouchAimMoveState(ShooterContext context, ShooterCrouchConfigSO crouchConfig)
         {
             m_context = context;
             m_crouchConfig = crouchConfig;
@@ -41,7 +41,7 @@ namespace Module.ShootingPlayer.HFSM.States.Crouch
         private void UpdateMovementIntent()
         {
             m_context.Movement.MoveDir =
-                PlayerMoveDirectionResolver.Resolve(m_context, m_context.Input.MoveInput);
+                CharacterMoveDirectionResolver.Resolve(m_context, m_context.Input.MoveInput);
             m_context.Movement.TargetMoveSpeed = m_crouchConfig.CrouchAimMoveSpeed;
         }
     }

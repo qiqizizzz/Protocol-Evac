@@ -8,6 +8,7 @@
 
 using Module.ChaisakiPlayer.Context;
 using Module.ChaisakiPlayer.Core;
+using Framework.Character.Runtime.Core;
 using Module.ChaisakiPlayer.HFSM.Config.Air;
 using UnityEngine;
 
@@ -43,7 +44,7 @@ namespace Module.ChaisakiPlayer.HFSM.States.Air
                 return;
             }
 
-            m_context.Movement.MoveDir = PlayerMoveDirectionResolver.Resolve(m_context, m_context.Input.MoveInput);
+            m_context.Movement.MoveDir = CharacterMoveDirectionResolver.Resolve(m_context, m_context.Input.MoveInput);
             m_context.Movement.TargetMoveSpeed = m_airConfig.AirMoveSpeed;
         }
 

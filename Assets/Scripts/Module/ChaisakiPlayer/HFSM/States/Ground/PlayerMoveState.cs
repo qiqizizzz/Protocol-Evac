@@ -8,7 +8,8 @@
 
 using Module.ChaisakiPlayer.Context;
 using Module.ChaisakiPlayer.Core;
-using Module.ChaisakiPlayer.HFSM.Config.Common;
+using Framework.Character.Runtime.Core;
+using Framework.Character.Runtime.HFSM.Config.Common;
 using Module.ChaisakiPlayer.HFSM.Config.Move;
 using UnityEngine;
 
@@ -50,7 +51,7 @@ namespace Module.ChaisakiPlayer.HFSM.States.Ground
         private void UpdateMovementIntent()
         {
             Vector2 moveInput = m_context.Input.MoveInput;
-            Vector3 moveDir = PlayerMoveDirectionResolver.Resolve(m_context, moveInput);
+            Vector3 moveDir = CharacterMoveDirectionResolver.Resolve(m_context, moveInput);
 
             m_context.Movement.MoveDir = moveDir;
             m_context.Movement.TargetMoveSpeed = GetTargetMoveSpeed();
@@ -59,7 +60,7 @@ namespace Module.ChaisakiPlayer.HFSM.States.Ground
         // 根据当前移动档位刷新武器表现
         private void RefreshWeaponVisibility()
         {
-            PlayerStateClipData clipData = GetMoveClipData();
+            CharacterStateClipData clipData = GetMoveClipData();
 
             m_context.Action.IsWeaponVisible = clipData.ShowWeapon;
         }
@@ -74,7 +75,7 @@ namespace Module.ChaisakiPlayer.HFSM.States.Ground
         }
 
         // 获取当前移动档位对应的表现配置
-        private PlayerStateClipData GetMoveClipData()
+        private CharacterStateClipData GetMoveClipData()
         {
             if (m_context.Input.IsSprintActive)
                 return m_moveConfig.SprintRunClipData;

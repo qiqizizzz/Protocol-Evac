@@ -6,10 +6,10 @@
 * └──────────────────────────────────┘
 */
 
-using Module.ChaisakiPlayer.Context;
-using Module.ChaisakiPlayer.Input.Buffer;
-using Module.ChaisakiPlayer.Skill;
-using Module.ChaisakiPlayer.Skill.Core;
+using Module.ShootingPlayer.Context;
+using Framework.Character.Runtime.Input;
+using Framework.Character.Runtime.Skill;
+using Framework.Character.Runtime.Skill.Core;
 using Module.ShootingPlayer.Config;
 using Module.ShootingPlayer.HFSM.Runtime;
 using UnityEngine;
@@ -19,16 +19,16 @@ namespace Module.ShootingPlayer.HFSM.States.Skill
     // 开火状态，单段技能，不做连段与身体转向
     public sealed class ShooterShootState : BaseShooterState
     {
-        private readonly PlayerContext m_context;
+        private readonly ShooterContext m_context;
         private readonly ShooterRuntimeState m_runtimeState;
         private readonly ShooterShootConfigSO m_shootConfig;
-        private readonly PlayerSkillController m_skillController;
+        private readonly CharacterSkillController<ShooterStateId> m_skillController;
 
         public override ShooterStateId Id => ShooterStateId.SkillShoot;
         public override ShooterStateId ParentId => ShooterStateId.Skill;
 
-        public ShooterShootState(PlayerContext context, ShooterRuntimeState runtimeState,
-            ShooterShootConfigSO shootConfig, PlayerSkillController skillController)
+        public ShooterShootState(ShooterContext context, ShooterRuntimeState runtimeState,
+            ShooterShootConfigSO shootConfig, CharacterSkillController<ShooterStateId> skillController)
         {
             m_context = context;
             m_runtimeState = runtimeState;
@@ -39,12 +39,12 @@ namespace Module.ShootingPlayer.HFSM.States.Skill
         // 进入开火段落并打开射击技能时间轴
         public override void Enter()
         {
-            m_context.Input.Buffer.Consume(PlayerBufferedInputType.SpecialSkill);
+            m_context.Input.Buffer.Consume(CharacterBufferedInputType.SpecialSkill);
             m_context.Action.IsStateFinished = false;
             m_context.Movement.IsMovementLocked = m_shootConfig.LockMovement;
             m_runtimeState.ForceAnimatorRestart = true;
 
-            m_skillController.Open(PlayerSkillType.SpecialSkill);
+            m_skillController.Open(CharacterSkillType.SpecialSkill);
 
             if (!m_skillController.IsRunning)
                 m_context.Action.IsStateFinished = true;

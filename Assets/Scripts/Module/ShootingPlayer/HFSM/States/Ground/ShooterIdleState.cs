@@ -6,7 +6,7 @@
 * └──────────────────────────────────┘
 */
 
-using Module.ChaisakiPlayer.Context;
+using Module.ShootingPlayer.Context;
 using UnityEngine;
 
 namespace Module.ShootingPlayer.HFSM.States.Ground
@@ -14,12 +14,12 @@ namespace Module.ShootingPlayer.HFSM.States.Ground
     // 站立待机状态
     public sealed class ShooterIdleState : BaseShooterState
     {
-        private readonly PlayerContext m_context;
+        private readonly ShooterContext m_context;
 
         public override ShooterStateId Id => ShooterStateId.GroundedIdle;
         public override ShooterStateId ParentId => ShooterStateId.Grounded;
 
-        public ShooterIdleState(PlayerContext context)
+        public ShooterIdleState(ShooterContext context)
         {
             m_context = context;
         }

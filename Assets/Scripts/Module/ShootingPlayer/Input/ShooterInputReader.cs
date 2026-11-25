@@ -6,8 +6,8 @@
 * └──────────────────────────────────┘
 */
 
-using Module.ChaisakiPlayer.Context;
-using Module.ChaisakiPlayer.Input.Buffer;
+using Module.ShootingPlayer.Context;
+using Framework.Character.Runtime.Input;
 using Module.ShootingPlayer.HFSM.Runtime;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -18,12 +18,12 @@ namespace Module.ShootingPlayer.Input
     public sealed class ShooterInputReader
     {
         private ShootingPlayerInputActions m_inputActions;
-        private PlayerContext m_context;
+        private ShooterContext m_context;
         private ShooterRuntimeState m_runtimeState;
         private bool m_isInited;
 
         // 初始化输入读取器，只启用 Shooter Action Map
-        public void Init(PlayerContext context, ShooterRuntimeState runtimeState)
+        public void Init(ShooterContext context, ShooterRuntimeState runtimeState)
         {
             m_context = context;
             m_runtimeState = runtimeState;
@@ -97,13 +97,13 @@ namespace Module.ShootingPlayer.Input
         // 写入闪避输入缓存
         private void OnEvade(InputAction.CallbackContext callbackContext)
         {
-            m_context.Input.Buffer.Record(PlayerBufferedInputType.Dodge, Time.time);
+            m_context.Input.Buffer.Record(CharacterBufferedInputType.Dodge, Time.time);
         }
 
         // 写入开火输入缓存
         private void OnFire(InputAction.CallbackContext callbackContext)
         {
-            m_context.Input.Buffer.Record(PlayerBufferedInputType.SpecialSkill, Time.time);
+            m_context.Input.Buffer.Record(CharacterBufferedInputType.SpecialSkill, Time.time);
         }
         #endregion
     }

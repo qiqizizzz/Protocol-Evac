@@ -6,8 +6,8 @@
 * └──────────────────────────────────┘
 */
 
-using Module.ChaisakiPlayer.Context;
-using Module.ChaisakiPlayer.Core;
+using Module.ShootingPlayer.Context;
+using Framework.Character.Runtime.Core;
 using Module.ShootingPlayer.Config;
 using UnityEngine;
 
@@ -16,13 +16,13 @@ namespace Module.ShootingPlayer.HFSM.States.Ground
     // 站立移动状态，只区分步行与奔跑两档
     public sealed class ShooterMoveState : BaseShooterState
     {
-        private readonly PlayerContext m_context;
+        private readonly ShooterContext m_context;
         private readonly ShooterMoveConfigSO m_moveConfig;
 
         public override ShooterStateId Id => ShooterStateId.GroundedMove;
         public override ShooterStateId ParentId => ShooterStateId.Grounded;
 
-        public ShooterMoveState(PlayerContext context, ShooterMoveConfigSO moveConfig)
+        public ShooterMoveState(ShooterContext context, ShooterMoveConfigSO moveConfig)
         {
             m_context = context;
             m_moveConfig = moveConfig;
@@ -42,7 +42,7 @@ namespace Module.ShootingPlayer.HFSM.States.Ground
         private void UpdateMovementIntent()
         {
             m_context.Movement.MoveDir =
-                PlayerMoveDirectionResolver.Resolve(m_context, m_context.Input.MoveInput);
+                CharacterMoveDirectionResolver.Resolve(m_context, m_context.Input.MoveInput);
             m_context.Movement.TargetMoveSpeed = m_context.Input.IsWalkMode
                 ? m_moveConfig.WalkSpeed
                 : m_moveConfig.RunSpeed;

@@ -8,7 +8,7 @@
 
 using System.Collections.Generic;
 using Framework.QTower.Controller;
-using Module.ChaisakiPlayer.Context;
+using Module.ShootingPlayer.Context;
 using Module.ShootingPlayer.Config;
 using Module.ShootingPlayer.HFSM.Runtime;
 using Module.ShootingPlayer.HFSM.Transition.Rules;
@@ -22,7 +22,7 @@ namespace Module.ShootingPlayer.HFSM.Transition.Controllers
     public sealed class ShooterTransitionController : BaseController
     {
         private readonly List<ShooterTransitionRule> m_rules = new List<ShooterTransitionRule>();
-        private readonly PlayerContext m_context;
+        private readonly ShooterContext m_context;
         private readonly ShooterRuntimeState m_runtimeState;
         private readonly ShooterAimConfigSO m_aimConfig;
         private readonly ShooterEvadeConfigSO m_evadeConfig;
@@ -31,7 +31,7 @@ namespace Module.ShootingPlayer.HFSM.Transition.Controllers
         public IReadOnlyList<ShooterTransitionRule> Rules => m_rules;
 
         // 创建射击角色状态转换控制器
-        public ShooterTransitionController(PlayerContext context, ShooterRuntimeState runtimeState,
+        public ShooterTransitionController(ShooterContext context, ShooterRuntimeState runtimeState,
             ShooterAimConfigSO aimConfig, ShooterEvadeConfigSO evadeConfig, ShooterShootConfigSO shootConfig)
         {
             m_context = context;

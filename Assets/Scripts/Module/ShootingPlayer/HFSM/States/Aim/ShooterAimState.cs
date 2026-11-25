@@ -6,7 +6,7 @@
 * └──────────────────────────────────┘
 */
 
-using Module.ChaisakiPlayer.Context;
+using Module.ShootingPlayer.Context;
 using Module.ShootingPlayer.Config;
 using UnityEngine;
 
@@ -15,13 +15,13 @@ namespace Module.ShootingPlayer.HFSM.States.Aim
     // 站立瞄准待机状态
     public sealed class ShooterAimState : BaseShooterState
     {
-        private readonly PlayerContext m_context;
+        private readonly ShooterContext m_context;
         private readonly ShooterAimConfigSO m_aimConfig;
 
         public override ShooterStateId Id => ShooterStateId.GroundedAim;
         public override ShooterStateId ParentId => ShooterStateId.Grounded;
 
-        public ShooterAimState(PlayerContext context, ShooterAimConfigSO aimConfig)
+        public ShooterAimState(ShooterContext context, ShooterAimConfigSO aimConfig)
         {
             m_context = context;
             m_aimConfig = aimConfig;

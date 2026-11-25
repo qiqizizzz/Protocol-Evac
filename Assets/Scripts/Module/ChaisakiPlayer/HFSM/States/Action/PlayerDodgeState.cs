@@ -9,7 +9,8 @@
 using Module.ChaisakiPlayer.Context;
 using Module.ChaisakiPlayer.Core;
 using Module.ChaisakiPlayer.HFSM.Config.Action;
-using Module.ChaisakiPlayer.Input.Buffer;
+using Framework.Character.Runtime.Core;
+using Framework.Character.Runtime.Input;
 using UnityEngine;
 using Utils.Timer;
 
@@ -38,7 +39,7 @@ namespace Module.ChaisakiPlayer.HFSM.States.Action
         public override void Enter()
         {
             m_dodgeTimer.Reset();
-            m_context.Input.Buffer.Consume(PlayerBufferedInputType.Dodge);
+            m_context.Input.Buffer.Consume(CharacterBufferedInputType.Dodge);
             m_context.Action.IsStateFinished = false;
             m_context.Movement.IsMovementLocked = true;
             m_context.Action.IsWeaponVisible = m_dodgeConfig.DodgeClipData.ShowWeapon;
@@ -79,11 +80,11 @@ namespace Module.ChaisakiPlayer.HFSM.States.Action
         // 解析本次闪避方向
         private Vector3 ResolveDodgeDirection()
         {
-            Vector3 inputDirection = PlayerMoveDirectionResolver.Resolve(m_context, m_context.Input.MoveInput);
+            Vector3 inputDirection = CharacterMoveDirectionResolver.Resolve(m_context, m_context.Input.MoveInput);
 
             return inputDirection.sqrMagnitude > m_dodgeConfig.DodgeInputThresholdSqr
                 ? inputDirection.normalized
-                : PlayerMoveDirectionResolver.ResolveForward(m_context);
+                : CharacterMoveDirectionResolver.ResolveForward(m_context);
         }
 
         // 截断闪避期间产生的全部水平位移来源

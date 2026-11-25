@@ -7,7 +7,7 @@
  */
 
 using Module.ChaisakiPlayer.Context;
-using Module.ChaisakiPlayer.Input.Buffer;
+using Framework.Character.Runtime.Input;
 using Module.ChaisakiPlayer.Input.Config;
 using UnityEngine;
 
@@ -61,7 +61,7 @@ namespace Module.ChaisakiPlayer.Input.Interpreter
             if (Time.time - m_sprintPressedTime >= GetSprintHoldTime())
                 return;
 
-            m_context.Input.Buffer.Record(PlayerBufferedInputType.Dodge, Time.time);
+            m_context.Input.Buffer.Record(CharacterBufferedInputType.Dodge, Time.time);
         }
 
         // 获取 Shift 长按判定时间

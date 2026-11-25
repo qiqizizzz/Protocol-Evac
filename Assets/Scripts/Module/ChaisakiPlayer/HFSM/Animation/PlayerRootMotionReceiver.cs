@@ -8,7 +8,7 @@
 
 using Module.Ability.Data;
 using Framework.QTower.Common.Sound;
-using Module.ChaisakiPlayer.Audio;
+using Framework.Character.Runtime.Audio;
 using Module.ChaisakiPlayer.Context;
 using UnityEngine;
 using Utils.log;
@@ -25,7 +25,7 @@ namespace Module.ChaisakiPlayer.HFSM.Animation
         private Transform m_animatorTransform;
         private Transform m_rootMotionNode;
         private PlayerContext m_context;
-        private PlayerAudioConfigSO m_audioConfig;
+        private CharacterAudioConfigSO m_audioConfig;
         private Vector3 m_animatorAnchorLocalPosition;
         private Quaternion m_animatorAnchorLocalRotation;
         private Vector3 m_rootMotionNodeAnchorLocalPosition;
@@ -37,7 +37,7 @@ namespace Module.ChaisakiPlayer.HFSM.Animation
         private int m_nextFootstepClipIndex;
 
         // 初始化玩家根运动接收器依赖
-        public void Init(Animator animator, Transform rootMotionNode, PlayerContext context, PlayerAudioConfigSO audioConfig)
+        public void Init(Animator animator, Transform rootMotionNode, PlayerContext context, CharacterAudioConfigSO audioConfig)
         {
             if (animator == null || rootMotionNode == null || context == null)
             {

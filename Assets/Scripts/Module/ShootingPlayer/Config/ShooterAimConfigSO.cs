@@ -6,14 +6,14 @@
 * └──────────────────────────────────┘
 */
 
-using Module.ChaisakiPlayer.HFSM.Config.Common;
+using Framework.Character.Runtime.HFSM.Config.Common;
 using TriInspector;
 using UnityEngine;
 
 namespace Module.ShootingPlayer.Config
 {
     [CreateAssetMenu(fileName = "ShooterAimConfig", menuName = "配置/射击玩家/瞄准配置")]
-    public sealed class ShooterAimConfigSO : PlayerStateCommonConfigSO
+    public sealed class ShooterAimConfigSO : CharacterStateCommonConfigSO
     {
         private const int AIM_IDLE_CLIP_INDEX = 0;
         private const int AIM_WALK_CLIP_INDEX = 1;
@@ -39,10 +39,10 @@ namespace Module.ShootingPlayer.Config
 
         public float ExitAimBlendDuration => ExitAimBlendDurationValue;
 
-        public PlayerStateClipData AimIdleClipData => GetStateClip(AIM_IDLE_CLIP_INDEX);
+        public CharacterStateClipData AimIdleClipData => GetStateClip(AIM_IDLE_CLIP_INDEX);
 
-        public PlayerStateClipData AimWalkClipData => GetStateClip(AIM_WALK_CLIP_INDEX);
+        public CharacterStateClipData AimWalkClipData => GetStateClip(AIM_WALK_CLIP_INDEX);
 
-        public PlayerStateClipData AimJogClipData => GetStateClip(AIM_JOG_CLIP_INDEX);
+        public CharacterStateClipData AimJogClipData => GetStateClip(AIM_JOG_CLIP_INDEX);
     }
 }

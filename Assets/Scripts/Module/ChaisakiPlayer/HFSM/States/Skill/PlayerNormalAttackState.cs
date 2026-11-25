@@ -9,9 +9,10 @@
 using Module.Ability.Data;
 using Module.ChaisakiPlayer.Context;
 using Module.ChaisakiPlayer.Core;
-using Module.ChaisakiPlayer.Input.Buffer;
-using Module.ChaisakiPlayer.Skill;
-using Module.ChaisakiPlayer.Skill.Core;
+using Framework.Character.Runtime.Core;
+using Framework.Character.Runtime.Input;
+using Framework.Character.Runtime.Skill;
+using Framework.Character.Runtime.Skill.Core;
 using Module.ChaisakiPlayer.Skill.Data;
 using UnityEngine;
 
@@ -22,7 +23,7 @@ namespace Module.ChaisakiPlayer.HFSM.States.Skill
         private const float MOVE_INPUT_THRESHOLD_SQR = 0.01f;
 
         private readonly PlayerContext m_context;
-        private readonly PlayerSkillController m_skillController;
+        private readonly CharacterSkillController<PlayerStateId> m_skillController;
         private readonly PlayerNormalAttackConfigSO m_normalAttackConfig;
         
         public override PlayerStateId Id => PlayerStateId.SkillNormalAttack;
@@ -30,7 +31,7 @@ namespace Module.ChaisakiPlayer.HFSM.States.Skill
 
         public PlayerNormalAttackState(
             PlayerContext context,
-            PlayerSkillController skillController,
+            CharacterSkillController<PlayerStateId> skillController,
             PlayerNormalAttackConfigSO normalAttackConfig)
         {
             m_context = context;
@@ -40,10 +41,10 @@ namespace Module.ChaisakiPlayer.HFSM.States.Skill
 
         public override void Enter()
         {
-            m_context.Input.Buffer.Consume(PlayerBufferedInputType.NormalAttack);
+            m_context.Input.Buffer.Consume(CharacterBufferedInputType.NormalAttack);
             m_context.Action.IsStateFinished = false;
             m_context.Movement.IsMovementLocked = m_normalAttackConfig.LockMovement;
-            m_skillController.Open(PlayerSkillType.NormalAttack);
+            m_skillController.Open(CharacterSkillType.NormalAttack);
 
             if (!m_skillController.IsRunning)
                 m_context.Action.IsStateFinished = true;
@@ -99,14 +100,14 @@ namespace Module.ChaisakiPlayer.HFSM.States.Skill
                 return;
             }
 
-            Vector3 turnDirection = PlayerMoveDirectionResolver.Resolve(m_context, m_context.Input.MoveInput);
+            Vector3 turnDirection = CharacterMoveDirectionResolver.Resolve(m_context, m_context.Input.MoveInput);
             m_context.Movement.SetTurnDirection(turnDirection);
         }
 
         // 判断当前普攻是否允许推进下一段
         private bool CanAdvanceCombo()
         {
-            return m_context.Input.Buffer.Has(PlayerBufferedInputType.NormalAttack, Time.time, m_normalAttackConfig.NormalAttackBufferTime);
+            return m_context.Input.Buffer.Has(CharacterBufferedInputType.NormalAttack, Time.time, m_normalAttackConfig.NormalAttackBufferTime);
         }
     }
 }

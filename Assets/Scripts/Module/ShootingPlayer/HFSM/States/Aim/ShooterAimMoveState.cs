@@ -6,8 +6,8 @@
 * └──────────────────────────────────┘
 */
 
-using Module.ChaisakiPlayer.Context;
-using Module.ChaisakiPlayer.Core;
+using Module.ShootingPlayer.Context;
+using Framework.Character.Runtime.Core;
 using Module.ShootingPlayer.Config;
 
 namespace Module.ShootingPlayer.HFSM.States.Aim
@@ -15,13 +15,13 @@ namespace Module.ShootingPlayer.HFSM.States.Aim
     // 站立瞄准移动状态
     public sealed class ShooterAimMoveState : BaseShooterState
     {
-        private readonly PlayerContext m_context;
+        private readonly ShooterContext m_context;
         private readonly ShooterAimConfigSO m_aimConfig;
 
         public override ShooterStateId Id => ShooterStateId.GroundedAimMove;
         public override ShooterStateId ParentId => ShooterStateId.Grounded;
 
-        public ShooterAimMoveState(PlayerContext context, ShooterAimConfigSO aimConfig)
+        public ShooterAimMoveState(ShooterContext context, ShooterAimConfigSO aimConfig)
         {
             m_context = context;
             m_aimConfig = aimConfig;
@@ -41,7 +41,7 @@ namespace Module.ShootingPlayer.HFSM.States.Aim
         private void UpdateMovementIntent()
         {
             m_context.Movement.MoveDir =
-                PlayerMoveDirectionResolver.Resolve(m_context, m_context.Input.MoveInput);
+                CharacterMoveDirectionResolver.Resolve(m_context, m_context.Input.MoveInput);
             m_context.Movement.TargetMoveSpeed = m_aimConfig.AimMoveSpeed;
         }
     }

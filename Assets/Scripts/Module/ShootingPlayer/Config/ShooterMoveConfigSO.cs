@@ -6,14 +6,14 @@
 * └──────────────────────────────────┘
 */
 
-using Module.ChaisakiPlayer.HFSM.Config.Common;
+using Framework.Character.Runtime.HFSM.Config.Common;
 using TriInspector;
 using UnityEngine;
 
 namespace Module.ShootingPlayer.Config
 {
     [CreateAssetMenu(fileName = "ShooterMoveConfig", menuName = "配置/射击玩家/移动配置")]
-    public sealed class ShooterMoveConfigSO : PlayerStateCommonConfigSO
+    public sealed class ShooterMoveConfigSO : CharacterStateCommonConfigSO
     {
         private const int IDLE_CLIP_INDEX = 0;
         private const int WALK_CLIP_INDEX = 1;
@@ -49,10 +49,10 @@ namespace Module.ShootingPlayer.Config
 
         public LayerMask GroundLayer => GroundLayerValue;
 
-        public PlayerStateClipData IdleClipData => GetStateClip(IDLE_CLIP_INDEX);
+        public CharacterStateClipData IdleClipData => GetStateClip(IDLE_CLIP_INDEX);
 
-        public PlayerStateClipData WalkClipData => GetStateClip(WALK_CLIP_INDEX);
+        public CharacterStateClipData WalkClipData => GetStateClip(WALK_CLIP_INDEX);
 
-        public PlayerStateClipData RunClipData => GetStateClip(RUN_CLIP_INDEX);
+        public CharacterStateClipData RunClipData => GetStateClip(RUN_CLIP_INDEX);
     }
 }

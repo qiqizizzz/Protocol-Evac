@@ -14,11 +14,11 @@ using Framework.QTower.Controller;
 using Framework.QTower.Event;
 using Module.Combat.Damage;
 using Module.Combat.Hitbox;
-using Module.ChaisakiPlayer.Context;
-using Module.ChaisakiPlayer.Core.View;
-using Module.ChaisakiPlayer.Damage;
-using Module.ChaisakiPlayer.Skill;
-using Module.ChaisakiPlayer.Skill.Core;
+using Module.ShootingPlayer.Context;
+using Framework.Character.Runtime.Core.View;
+using Framework.Character.Runtime.Damage;
+using Framework.Character.Runtime.Skill;
+using Framework.Character.Runtime.Skill.Core;
 using Module.ShootingPlayer.Config;
 using Module.ShootingPlayer.Damage;
 using Module.ShootingPlayer.HFSM;
@@ -42,7 +42,7 @@ using ShooterAnimResolver = Framework.Character.Animation.CharacterAnimResolver<
 namespace Module.ShootingPlayer.Core
 {
     // 射击玩家控制器，持枪角色的 3C 总入口，与千咲 PlayerController 平行独立
-    [RequireComponent(typeof(PlayerDamageReceiver))]
+    [RequireComponent(typeof(CharacterDamageReceiver))]
     public sealed class ShootingPlayerController : MonoBehaviour
     {
         #region 路径
@@ -62,7 +62,7 @@ namespace Module.ShootingPlayer.Core
         private Transform m_viewRoot;
         private Camera m_playerCamera;
 
-        private PlayerContext m_context;
+        private ShooterContext m_context;
         private readonly ControllerManager m_controllerManager = new();
 
         // HFSM
@@ -81,15 +81,15 @@ namespace Module.ShootingPlayer.Core
         private ShooterMotor m_motor;
 
         // View
-        private PlayerViewController m_viewController;
+        private CharacterViewController m_viewController;
 
         // Combat
         private CombatHitbox m_combatHitbox;
-        private PlayerDamageReceiver m_damageReceiver;
+        private CharacterDamageReceiver m_damageReceiver;
         private ShooterDamageController m_damageController;
 
         // Skill
-        private PlayerSkillController m_skillController;
+        private CharacterSkillController<ShooterStateId> m_skillController;
 
         // ==================== 属性 ====================
         // 对外提供状态机当前叶子状态的只读诊断入口
@@ -189,7 +189,7 @@ namespace Module.ShootingPlayer.Core
             m_transform = transform;
             m_characterController = this.GetOwnerComponent<CharacterController>();
             m_animator = this.GetChildComponent<Animator>();
-            m_damageReceiver = this.GetOwnerComponent<PlayerDamageReceiver>();
+            m_damageReceiver = this.GetOwnerComponent<CharacterDamageReceiver>();
             m_combatHitbox = this.GetChildComponent<CombatHitbox>();
             m_viewRoot = this.FindChild(VIEW_ROOT_PATH);
             m_playerCamera = this.FindChildComponent<Camera>(PLAYER_CAMERA_PATH);
@@ -213,7 +213,7 @@ namespace Module.ShootingPlayer.Core
             if (m_animator == null)
                 QLog.Error("Animator 未找到，射击角色无法播放动画");
             if (m_damageReceiver == null)
-                QLog.Error("PlayerDamageReceiver 未找到，射击角色无法接收伤害");
+                QLog.Error("CharacterDamageReceiver 未找到，射击角色无法接收伤害");
             if (m_viewRoot == null)
                 QLog.Error($"未找到 {VIEW_ROOT_PATH} 节点，射击角色视角模块无法运行");
             if (m_playerCamera == null)
@@ -260,7 +260,7 @@ namespace Module.ShootingPlayer.Core
         // 初始化射击角色核心运行依赖
         private void InitCore()
         {
-            m_context = new PlayerContext(m_transform);
+            m_context = new ShooterContext(m_transform);
             m_context.Movement.IsGrounded = m_characterController.isGrounded;
             if (m_context.Movement.IsGrounded)
                 m_context.Movement.LastGroundedTime = Time.time;
@@ -274,14 +274,14 @@ namespace Module.ShootingPlayer.Core
             m_motor.Init(m_characterController, m_context, Settings.MoveConfig);
 
             m_viewController = m_controllerManager.Register(
-                new PlayerViewController(m_context, Settings.ViewConfig, m_viewRoot, m_playerCamera));
+                new CharacterViewController(m_context, Settings.ViewConfig, m_viewRoot, m_playerCamera));
         }
 
         // 初始化射击技能总控，开火动作以 SpecialSkill 通道承载
         private void InitSkill()
         {
-            PlayerSkillController skillController = new PlayerSkillController(m_context, m_combatHitbox, gameObject);
-            skillController.RegisterConfig(PlayerSkillType.SpecialSkill, Settings.ShootConfig);
+            CharacterSkillController<ShooterStateId> skillController = new CharacterSkillController<ShooterStateId>(m_context, m_combatHitbox, gameObject);
+            skillController.RegisterConfig(CharacterSkillType.SpecialSkill, Settings.ShootConfig);
             m_skillController = m_controllerManager.Register(skillController);
         }
 

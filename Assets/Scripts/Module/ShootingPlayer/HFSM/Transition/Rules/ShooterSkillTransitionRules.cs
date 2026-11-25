@@ -7,8 +7,8 @@
 */
 
 using System.Collections.Generic;
-using Module.ChaisakiPlayer.Context;
-using Module.ChaisakiPlayer.Input.Buffer;
+using Module.ShootingPlayer.Context;
+using Framework.Character.Runtime.Input;
 using Module.ShootingPlayer.Config;
 using Module.ShootingPlayer.HFSM.Runtime;
 using UnityEngine;
@@ -23,7 +23,7 @@ namespace Module.ShootingPlayer.HFSM.Transition.Rules
         private const float MOVE_INPUT_THRESHOLD_SQR = 0.01f;
 
         // 创建射击技能状态转换规则集合
-        public static IReadOnlyList<ShooterTransitionRule> Create(PlayerContext context,
+        public static IReadOnlyList<ShooterTransitionRule> Create(ShooterContext context,
             ShooterRuntimeState runtimeState, ShooterShootConfigSO shootConfig)
         {
             List<ShooterTransitionRule> rules = new List<ShooterTransitionRule>();
@@ -59,7 +59,7 @@ namespace Module.ShootingPlayer.HFSM.Transition.Rules
         }
 
         // 判断当前是否可以进入开火段落
-        private static bool CanShoot(PlayerContext context, ShooterRuntimeState runtimeState,
+        private static bool CanShoot(ShooterContext context, ShooterRuntimeState runtimeState,
             ShooterShootConfigSO shootConfig)
         {
             if (context.Input.IsInputLocked || context.Movement.IsMovementLocked)
@@ -71,18 +71,18 @@ namespace Module.ShootingPlayer.HFSM.Transition.Rules
             if (Time.time < runtimeState.NextShootAvailableTime)
                 return false;
 
-            return context.Input.Buffer.Has(PlayerBufferedInputType.SpecialSkill, Time.time,
+            return context.Input.Buffer.Has(CharacterBufferedInputType.SpecialSkill, Time.time,
                 shootConfig.ShootBufferTime);
         }
 
         // 判断开火段落是否已经结束
-        private static bool IsShootFinished(PlayerContext context)
+        private static bool IsShootFinished(ShooterContext context)
         {
             return context.Action.IsStateFinished;
         }
 
         // 判断当前是否存在移动输入
-        private static bool IsMoving(PlayerContext context)
+        private static bool IsMoving(ShooterContext context)
         {
             return context.Input.MoveInput.sqrMagnitude > MOVE_INPUT_THRESHOLD_SQR;
         }

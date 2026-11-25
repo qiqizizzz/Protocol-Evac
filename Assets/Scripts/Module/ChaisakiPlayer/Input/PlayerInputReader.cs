@@ -7,8 +7,8 @@
  */
 
 using Module.ChaisakiPlayer.Context;
-using Module.ChaisakiPlayer.Core.View;
-using Module.ChaisakiPlayer.Input.Buffer;
+using Framework.Character.Runtime.Core.View;
+using Framework.Character.Runtime.Input;
 using Module.ChaisakiPlayer.Input.Config;
 using Module.ChaisakiPlayer.Input.Interpreter;
 using UnityEngine;
@@ -89,13 +89,13 @@ namespace Module.ChaisakiPlayer.Input
         // 写入跳跃输入缓存
         private void OnJump(InputAction.CallbackContext context)
         {
-            RecordBufferedInput(PlayerBufferedInputType.Jump);
+            RecordBufferedInput(CharacterBufferedInputType.Jump);
         }
 
         // 写入普通攻击输入缓存
         private void OnAttack(InputAction.CallbackContext context)
         {
-            RecordBufferedInput(PlayerBufferedInputType.NormalAttack);
+            RecordBufferedInput(CharacterBufferedInputType.NormalAttack);
         }
 
         // 请求切换锁定目标状态
@@ -113,17 +113,17 @@ namespace Module.ChaisakiPlayer.Input
         // 请求切换至第一人称视角
         private void OnSwitchToFirstPerson(InputAction.CallbackContext context)
         {
-            m_context.View.TargetViewMode = PlayerViewMode.FirstPerson;
+            m_context.View.TargetViewMode = CharacterViewMode.FirstPerson;
         }
 
         // 请求切换至第三人称视角
         private void OnSwitchToThirdPerson(InputAction.CallbackContext context)
         {
-            m_context.View.TargetViewMode = PlayerViewMode.ThirdPerson;
+            m_context.View.TargetViewMode = CharacterViewMode.ThirdPerson;
         }
 
         // 写入一次性操作的输入缓存
-        private void RecordBufferedInput(PlayerBufferedInputType inputType)
+        private void RecordBufferedInput(CharacterBufferedInputType inputType)
         {
             m_context.Input.Buffer.Record(inputType, Time.time);
         }

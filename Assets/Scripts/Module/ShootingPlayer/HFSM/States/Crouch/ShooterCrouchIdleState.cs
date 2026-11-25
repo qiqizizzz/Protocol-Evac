@@ -6,7 +6,7 @@
 * └──────────────────────────────────┘
 */
 
-using Module.ChaisakiPlayer.Context;
+using Module.ShootingPlayer.Context;
 using UnityEngine;
 
 namespace Module.ShootingPlayer.HFSM.States.Crouch
@@ -14,12 +14,12 @@ namespace Module.ShootingPlayer.HFSM.States.Crouch
     // 蹲伏待机状态
     public sealed class ShooterCrouchIdleState : BaseShooterState
     {
-        private readonly PlayerContext m_context;
+        private readonly ShooterContext m_context;
 
         public override ShooterStateId Id => ShooterStateId.CrouchedIdle;
         public override ShooterStateId ParentId => ShooterStateId.Crouched;
 
-        public ShooterCrouchIdleState(PlayerContext context)
+        public ShooterCrouchIdleState(ShooterContext context)
         {
             m_context = context;
         }

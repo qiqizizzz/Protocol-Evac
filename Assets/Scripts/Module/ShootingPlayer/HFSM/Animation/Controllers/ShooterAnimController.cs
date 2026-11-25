@@ -8,7 +8,7 @@
 
 using System.Collections.Generic;
 using Framework.QTower.Controller;
-using Module.ChaisakiPlayer.Context;
+using Module.ShootingPlayer.Context;
 using Module.ShootingPlayer.HFSM.Animation.Rules;
 using Utils.log;
 
@@ -21,12 +21,12 @@ namespace Module.ShootingPlayer.HFSM.Animation.Controllers
     {
         private readonly Dictionary<ShooterStateId, ShooterAnimRule.ResolveHandler> m_handlers =
             new Dictionary<ShooterStateId, ShooterAnimRule.ResolveHandler>();
-        private readonly PlayerContext m_context;
+        private readonly ShooterContext m_context;
 
         public IReadOnlyDictionary<ShooterStateId, ShooterAnimRule.ResolveHandler> Handlers => m_handlers;
 
         // 创建射击角色动画控制器
-        public ShooterAnimController(PlayerContext context)
+        public ShooterAnimController(ShooterContext context)
         {
             m_context = context;
         }

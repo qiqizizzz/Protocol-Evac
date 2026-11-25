@@ -6,7 +6,7 @@
 * └──────────────────────────────────┘
 */
 
-using Module.ChaisakiPlayer.Context;
+using Module.ShootingPlayer.Context;
 using Module.ShootingPlayer.Config;
 using UnityEngine;
 
@@ -15,13 +15,13 @@ namespace Module.ShootingPlayer.HFSM.States.Crouch
     // 蹲伏瞄准待机状态，位移档位交给混合树中心点
     public sealed class ShooterCrouchAimState : BaseShooterState
     {
-        private readonly PlayerContext m_context;
+        private readonly ShooterContext m_context;
         private readonly ShooterCrouchConfigSO m_crouchConfig;
 
         public override ShooterStateId Id => ShooterStateId.CrouchedAim;
         public override ShooterStateId ParentId => ShooterStateId.Crouched;
 
-        public ShooterCrouchAimState(PlayerContext context, ShooterCrouchConfigSO crouchConfig)
+        public ShooterCrouchAimState(ShooterContext context, ShooterCrouchConfigSO crouchConfig)
         {
             m_context = context;
             m_crouchConfig = crouchConfig;

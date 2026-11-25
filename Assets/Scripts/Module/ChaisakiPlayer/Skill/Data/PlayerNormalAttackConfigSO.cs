@@ -7,12 +7,13 @@
  */
 
 using Module.Ability.Data;
+using Framework.Character.Runtime.Skill;
 using UnityEngine;
 
 namespace Module.ChaisakiPlayer.Skill.Data
 {
     [CreateAssetMenu(fileName = "PlayerNormalAttackConfig", menuName = "配置/玩家/技能/玩家普攻配置")]
-    public sealed class PlayerNormalAttackConfigSO : AbilityConfigSO
+    public sealed class PlayerNormalAttackConfigSO : AbilityConfigSO, ICharacterComboAdvanceConfig
     {
         [Header("输入容错")]
         [Tooltip("普攻输入缓存时间")]

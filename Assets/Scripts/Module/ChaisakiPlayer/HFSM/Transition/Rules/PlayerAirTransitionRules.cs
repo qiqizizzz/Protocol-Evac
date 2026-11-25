@@ -11,7 +11,7 @@ using Module.ChaisakiPlayer.Context;
 using Module.ChaisakiPlayer.HFSM;
 using Module.ChaisakiPlayer.HFSM.Config.Air;
 using Module.ChaisakiPlayer.HFSM.Transition;
-using Module.ChaisakiPlayer.Input.Buffer;
+using Framework.Character.Runtime.Input;
 using UnityEngine;
 
 using PlayerTransitionRule = Framework.Character.Transition.CharacterTransitionRule<Module.ChaisakiPlayer.HFSM.PlayerStateId, Module.ChaisakiPlayer.HFSM.Transition.PlayerTransitionPriority>;
@@ -76,7 +76,7 @@ namespace Module.ChaisakiPlayer.HFSM.Transition.Rules
             float nowTime = Time.time;
             return
                 !context.Input.IsInputLocked &&
-                context.Input.Buffer.Has(PlayerBufferedInputType.Jump, nowTime, airConfig.JumpBufferTime);
+                context.Input.Buffer.Has(CharacterBufferedInputType.Jump, nowTime, airConfig.JumpBufferTime);
         }
 
         // 判断玩家落地后是否应直接进入移动状态
