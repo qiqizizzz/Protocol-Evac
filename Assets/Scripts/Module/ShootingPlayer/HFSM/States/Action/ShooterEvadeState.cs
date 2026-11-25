@@ -6,9 +6,9 @@
 * └──────────────────────────────────┘
 */
 
-using Module.Player.Context;
-using Module.Player.Core;
-using Module.Player.Input.Buffer;
+using Module.ChaisakiPlayer.Context;
+using Module.ChaisakiPlayer.Core;
+using Module.ChaisakiPlayer.Input.Buffer;
 using Module.ShootingPlayer.Config;
 using Module.ShootingPlayer.HFSM.Runtime;
 using UnityEngine;

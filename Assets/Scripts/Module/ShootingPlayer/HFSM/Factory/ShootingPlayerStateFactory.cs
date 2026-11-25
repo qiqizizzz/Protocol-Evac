@@ -7,8 +7,8 @@
 */
 
 using System.Collections.Generic;
-using Module.Player.Context;
-using Module.Player.Skill.Core;
+using Module.ChaisakiPlayer.Context;
+using Module.ChaisakiPlayer.Skill.Core;
 using Module.ShootingPlayer.Config;
 using Module.ShootingPlayer.HFSM.Runtime;
 using Module.ShootingPlayer.HFSM.States.Action;

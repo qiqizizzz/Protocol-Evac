@@ -7,8 +7,8 @@
 */
 
 using System.Collections.Generic;
-using Module.Player.Context;
-using Module.Player.Context.Runtime;
+using Module.ChaisakiPlayer.Context;
+using Module.ChaisakiPlayer.Context.Runtime;
 using UnityEngine;
 
 namespace Module.ShootingPlayer.HFSM.Animation.Rules

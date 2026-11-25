@@ -6,7 +6,7 @@
 * └──────────────────────────────────┘
 */
 
-using Module.Player.Context;
+using Module.ChaisakiPlayer.Context;
 using Module.ShootingPlayer.HFSM.Animation;
 using Module.ShootingPlayer.HFSM.Runtime;
 

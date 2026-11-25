@@ -7,8 +7,8 @@
 */
 
 using Module.Combat.Damage;
-using Module.Player.Config;
-using Module.Player.Context;
+using Module.ChaisakiPlayer.Config;
+using Module.ChaisakiPlayer.Context;
 using Module.ShootingPlayer.Config;
 using UnityEngine;
 using Utils.log;

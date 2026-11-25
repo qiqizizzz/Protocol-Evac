@@ -6,9 +6,9 @@
 * └──────────────────────────────────┘
 */
 
-using Module.Player.Audio;
-using Module.Player.Config;
-using Module.Player.Core.View.Config;
+using Module.ChaisakiPlayer.Audio;
+using Module.ChaisakiPlayer.Config;
+using Module.ChaisakiPlayer.Core.View.Config;
 using TriInspector;
 using UnityEngine;
 

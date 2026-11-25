@@ -1,0 +1,37 @@
+/*
+ * ┌──────────────────────────────────┐
+ * │  描    述: 玩家状态ID类
+ * │  类    名: PlayerStateId.cs
+ * │  创    建: By qiqizizzz
+ * └──────────────────────────────────┘
+ */
+
+namespace Module.ChaisakiPlayer.HFSM
+{
+    public enum PlayerStateId
+    {
+        None,
+
+        Grounded,
+        GroundedIdle,
+        GroundedMove,
+        GroundedStop,
+        GroundedSprint,
+
+        Airborne,
+        AirborneJump,
+        AirborneFall,
+
+        Action,
+        ActionDodge,
+
+        Skill,
+        SkillNormalAttack,
+        SkillSpecial,
+        SkillUltimate,
+
+        Disabled,
+        DisabledHurt,
+        DisabledDead
+    }
+}

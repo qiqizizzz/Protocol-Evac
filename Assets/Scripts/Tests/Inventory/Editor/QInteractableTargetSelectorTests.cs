@@ -1,4 +1,4 @@
-﻿/*
+/*
 * ┌──────────────────────────────────┐
 * │  描    述: 物资箱交互测试, 覆盖目标选择、物理视线、快捷键门禁、可交互判定、实体号种子与交互层登记
 * │  类    名: QInteractableTargetSelectorTests.cs
@@ -17,7 +17,7 @@ using Framework.QTower.MVVM.View.Interfaces;
 using Module.Inventory.Core.Config.Loot;
 using Module.Inventory.Interaction;
 using Module.Inventory.Presentation;
-using Module.Player.Core;
+using Module.ChaisakiPlayer.Core;
 using NUnit.Framework;
 using UI.Inventory;
 using UI.Inventory.View;

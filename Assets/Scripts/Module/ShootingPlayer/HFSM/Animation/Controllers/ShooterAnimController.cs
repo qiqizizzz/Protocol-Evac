@@ -8,7 +8,7 @@
 
 using System.Collections.Generic;
 using Framework.QTower.Controller;
-using Module.Player.Context;
+using Module.ChaisakiPlayer.Context;
 using Module.ShootingPlayer.HFSM.Animation.Rules;
 using Utils.log;
 

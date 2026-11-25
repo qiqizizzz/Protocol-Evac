@@ -6,7 +6,7 @@
 * └──────────────────────────────────┘
 */
 
-using Module.Player.HFSM.Config.Common;
+using Module.ChaisakiPlayer.HFSM.Config.Common;
 using TriInspector;
 using UnityEngine;
 

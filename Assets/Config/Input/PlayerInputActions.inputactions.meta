@@ -9,6 +9,6 @@ ScriptedImporter:
   assetBundleVariant: 
   script: {fileID: 11500000, guid: 8404be70184654265930450def6a9037, type: 3}
   generateWrapperCode: 1
-  wrapperCodePath: Assets/Scripts/Module/Player/Input/PlayerInputActions.cs
+  wrapperCodePath: Assets/Scripts/Module/ChaisakiPlayer/Input/PlayerInputActions.cs
   wrapperClassName: PlayerInputActions
-  wrapperCodeNamespace: Module.Player.Input
+  wrapperCodeNamespace: Module.ChaisakiPlayer.Input

@@ -7,8 +7,8 @@
 */
 
 using System.Collections.Generic;
-using Module.Player.Context;
-using Module.Player.Input.Buffer;
+using Module.ChaisakiPlayer.Context;
+using Module.ChaisakiPlayer.Input.Buffer;
 using Module.ShootingPlayer.Config;
 using Module.ShootingPlayer.HFSM.Runtime;
 using UnityEngine;

@@ -6,7 +6,7 @@
 * └──────────────────────────────────┘
 */
 
-using Module.Player.Context;
+using Module.ChaisakiPlayer.Context;
 using UnityEngine;
 
 namespace Module.ShootingPlayer.HFSM.States.Ground

@@ -1,4 +1,4 @@
-﻿/*
+/*
  * ┌──────────────────────────────────┐
  * │  描    述: 背包快捷键宿主, 运行期自建常驻, 统一转发开关面板, 搜刮交互与拖拽控制输入
  * │  类    名: UIInventoryHotkey.cs
@@ -12,7 +12,7 @@ using Framework.QTower.Event;
 using Framework.QTower.MVVM.View;
 using Module.Inventory.Interaction;
 using Module.Inventory.Presentation;
-using Module.Player.Core;
+using Module.ChaisakiPlayer.Core;
 using Module.ShootingPlayer.Input;
 using UI.Inventory.View;
 using UnityEngine;

@@ -6,8 +6,8 @@
 * └──────────────────────────────────┘
 */
 
-using Module.Player.Context;
-using Module.Player.Core;
+using Module.ChaisakiPlayer.Context;
+using Module.ChaisakiPlayer.Core;
 using Module.ShootingPlayer.Config;
 
 namespace Module.ShootingPlayer.HFSM.States.Crouch

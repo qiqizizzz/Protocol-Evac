@@ -6,8 +6,8 @@
  * └────────────────────────────────────────────┘
  */
 
-using Module.Player.Core;
-using Module.Player.HFSM;
+using Module.ChaisakiPlayer.Core;
+using Module.ChaisakiPlayer.HFSM;
 using UnityEngine;
 
 namespace Tools.GM

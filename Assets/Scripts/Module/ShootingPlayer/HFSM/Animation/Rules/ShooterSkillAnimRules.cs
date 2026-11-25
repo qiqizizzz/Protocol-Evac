@@ -7,7 +7,7 @@
 */
 
 using System.Collections.Generic;
-using Module.Player.Context;
+using Module.ChaisakiPlayer.Context;
 
 namespace Module.ShootingPlayer.HFSM.Animation.Rules
 {
