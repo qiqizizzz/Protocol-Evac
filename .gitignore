@@ -141,6 +141,10 @@ InitTestScene*.unity*
 /Assets/Tokyo_Street/
 /Assets/Tokyo_Street.meta
 
+# ExternalAssets 第三方资源，本地使用但不纳入仓库
+/Assets/ExternalAssets/
+/Assets/ExternalAssets.meta
+
 # Matthew Guz VFX 为第三方特效资源，当前项目本地使用但不纳入仓库
 /Assets/Matthew Guz/
 /Assets/Matthew Guz.meta
