@@ -1,0 +1,113 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2955d192f35746e49b1abec8b67d72f6, type: 3}
+  m_Name: Chaisaki_attack01_begin_WindowConfig
+  m_EditorClassIdentifier: 
+  AnimationClipValue: {fileID: 7400000, guid: 1a6e3009131c65047b78d5bad21045be, type: 2}
+  UseHitWindowValue: 1
+  HitWindowTrackValue:
+    WindowValues:
+    - IdValue: hit_chisaki_attack01_begin_01
+      StartNormalizedTimeValue: 0.15789473
+      EndNormalizedTimeValue: 0.2631579
+      DamageValue: 5
+      ReactionTypeValue: 0
+      HorizontalKnockbackSpeedValue: 0
+      HorizontalKnockbackDurationValue: 0
+      VerticalLaunchSpeedValue: 0
+  UseStepAdvanceWindowValue: 1
+  StepAdvanceWindowTrackValue:
+    WindowValues:
+    - IdValue: step_chisaki_attack01_begin_01
+      StartNormalizedTimeValue: 0.10526316
+      EndNormalizedTimeValue: 1
+  UseMovementLockWindowValue: 1
+  MovementLockWindowTrackValue:
+    WindowValues: []
+  UseVfxWindowValue: 1
+  VfxWindowTrackValue:
+    WindowValues:
+    - IdValue: vfx_chisaki_attack01_begin_red_slash_arc
+      StartNormalizedTimeValue: 0.10526316
+      EndNormalizedTimeValue: 0.21052632
+      TriggerTypeValue: 0
+      TargetTypeValue: 0
+      VfxPrefabValue: {fileID: 6845443203906786569, guid: b1bcc5221352a694bbc6465bd927167f,
+        type: 3}
+      SocketIdValue: WeaponTrail
+      LifeModeValue: 0
+      LocalPositionOffsetValue: {x: 0, y: 0, z: 0}
+      LocalEulerOffsetValue: {x: 0, y: 0, z: 0}
+      FollowTargetValue: 1
+    - IdValue: vfx_chisaki_attack01_begin_weapon_trail
+      StartNormalizedTimeValue: 0.10526316
+      EndNormalizedTimeValue: 0.42105263
+      TriggerTypeValue: 1
+      TargetTypeValue: 0
+      VfxPrefabValue: {fileID: 3043923254930394474, guid: 876e19651b5e9394687e12dc3b0024e1,
+        type: 3}
+      SocketIdValue: WeaponTrail
+      LifeModeValue: 2
+      LocalPositionOffsetValue: {x: 0, y: 0, z: 0}
+      LocalEulerOffsetValue: {x: 0, y: 0, z: 0}
+      FollowTargetValue: 1
+    - IdValue: vfx_chisaki_attack01_begin_hit_01
+      StartNormalizedTimeValue: 0.15789473
+      EndNormalizedTimeValue: 0.2631579
+      TriggerTypeValue: 2
+      TargetTypeValue: 2
+      VfxPrefabValue: {fileID: 194106680688263497, guid: 1e1179d358f583b4ba8b45e18f497218,
+        type: 3}
+      SocketIdValue: 
+      LifeModeValue: 0
+      LocalPositionOffsetValue: {x: 0, y: 0, z: 0}
+      LocalEulerOffsetValue: {x: 0, y: 0, z: 0}
+      FollowTargetValue: 0
+  UseAudioWindowValue: 1
+  AudioWindowTrackValue:
+    WindowValues:
+    - IdValue: audio_chisaki_attack01_slash
+      StartNormalizedTimeValue: 0
+      EndNormalizedTimeValue: 0.2631579
+      TriggerTypeValue: 0
+      PlaybackTypeValue: 0
+      AudioClipValues:
+      - {fileID: 8300000, guid: 318f90992d696104e89e970ac6a3f1ec, type: 3}
+      AudioClipAValue: {fileID: 0}
+      AudioClipBValue: {fileID: 0}
+      AudioClipCValue: {fileID: 0}
+      VolumeValue: 0.9
+      PitchValue: 1
+      RandomPitchRangeValue: 0.06
+      SpatialValue: 1
+      StopOnWindowEndValue: 0
+      TargetTypeValue: 1
+      SocketIdValue: WeaponTrail
+      LocalPositionOffsetValue: {x: 0, y: 0, z: 0}
+    - IdValue: audio_chisaki_attack01_hit_01
+      StartNormalizedTimeValue: 0.15789473
+      EndNormalizedTimeValue: 0.2631579
+      TriggerTypeValue: 2
+      PlaybackTypeValue: 0
+      AudioClipValues:
+      - {fileID: 8300000, guid: e3cad8100d5e0a544a949df5ce7e9446, type: 3}
+      AudioClipAValue: {fileID: 0}
+      AudioClipBValue: {fileID: 0}
+      AudioClipCValue: {fileID: 0}
+      VolumeValue: 0.9
+      PitchValue: 1
+      RandomPitchRangeValue: 0.04
+      SpatialValue: 1
+      StopOnWindowEndValue: 0
+      TargetTypeValue: 2
+      SocketIdValue: 
+      LocalPositionOffsetValue: {x: 0, y: 0, z: 0}

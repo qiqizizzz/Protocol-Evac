@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a90aab8fcb4c6c4ab765d71bae5d866, type: 3}
+  m_Name: Chaisaki_ViewConfig
+  m_EditorClassIdentifier: 
+  DefaultViewModeValue: 0
+  FirstPersonYawSpeedValue: 6
+  FirstPersonPitchSpeedValue: 6
+  FirstPersonCameraLocalPositionValue: {x: 0, y: 1.55, z: 0}
+  FirstPersonCameraNearClipPlaneValue: 0.03
+  FirstPersonCameraCollisionRadiusValue: 0.15
+  ThirdPersonYawSpeedValue: 6
+  ThirdPersonPitchSpeedValue: 6
+  ThirdPersonBodyTurnSpeedValue: 720
+  ThirdPersonPitchMaxValue: 55
+  ThirdPersonCameraLocalPositionValue: {x: 0, y: 1.45, z: -4}
+  ThirdPersonCameraCollisionRadiusValue: 0.32
+  EnvironmentLayerMaskValue:
+    serializedVersion: 2
+    m_Bits: 768
+  CameraCollisionPaddingValue: 0.08
+  LockRangeValue: 8
+  LockReleaseRangeValue: 12
+  LockCameraYawSpeedValue: 360
+  PitchMinValue: -60
+  PitchMaxValue: 75

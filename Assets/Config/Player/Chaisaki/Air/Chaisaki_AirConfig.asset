@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 20cb3136533146f797d4e64040951190, type: 3}
+  m_Name: Chaisaki_AirConfig
+  m_EditorClassIdentifier: 
+  StateClipValues:
+  - StateClipValue: {fileID: 7400000, guid: a73438e2725448541b1b0905040f0b3f, type: 2}
+    StateDurationValue: 0.70000005
+    ShowWeaponValue: 0
+    UseComboWindowValue: 0
+    ComboWindowTrackValue:
+      WindowValues: []
+  - StateClipValue: {fileID: 7400000, guid: 79f121d7fd96d2c4da783323e7329cbc, type: 2}
+    StateDurationValue: 1.3333334
+    ShowWeaponValue: 0
+    UseComboWindowValue: 0
+    ComboWindowTrackValue:
+      WindowValues: []
+  - StateClipValue: {fileID: 7400000, guid: ed5ffe6bf4b8e984ab92d038cc0361f3, type: 2}
+    StateDurationValue: 1.6666667
+    ShowWeaponValue: 0
+    UseComboWindowValue: 0
+    ComboWindowTrackValue:
+      WindowValues: []
+  JumpForceValue: 6
+  FallGravityMultiplierValue: 2
+  AirMoveSpeedValue: 4
+  JumpBufferTimeValue: 0.12
+  CoyoteTimeValue: 0.1

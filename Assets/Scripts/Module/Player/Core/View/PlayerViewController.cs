@@ -43,7 +43,9 @@ namespace Module.Player.Core.View
         // 初始化玩家视角控制器
         protected override void OnInit()
         {
-            m_context.View.ViewMode = m_viewConfig.DefaultViewMode;
+            m_context.View.ViewMode = m_viewConfig.AllowThirdPerson
+                ? m_viewConfig.DefaultViewMode
+                : PlayerViewMode.FirstPerson;
             m_context.View.CameraYaw = m_context.Transform.eulerAngles.y;
             m_context.View.CameraPitch = 0f;
             RefreshCameraTransform();
@@ -72,6 +74,13 @@ namespace Module.Player.Core.View
         {
             if (!m_context.View.TargetViewMode.HasValue)
                 return;
+
+            if (m_context.View.TargetViewMode.Value == PlayerViewMode.ThirdPerson
+                && !m_viewConfig.AllowThirdPerson)
+            {
+                m_context.View.TargetViewMode = null;
+                return;
+            }
 
             //切换视角
             m_context.View.ViewMode = m_context.View.TargetViewMode.Value;

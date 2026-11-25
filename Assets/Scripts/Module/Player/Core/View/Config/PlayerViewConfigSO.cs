@@ -14,6 +14,8 @@ namespace Module.Player.Core.View.Config
     public sealed class PlayerViewConfigSO : ScriptableObject
     {
         [Header("视角模式")]
+        [Tooltip("是否允许切换到第三人称视角")]
+        [SerializeField] private bool AllowThirdPersonValue = true;
         [Tooltip("默认玩家视角模式")]
         [SerializeField] private PlayerViewMode DefaultViewModeValue = PlayerViewMode.FirstPerson;
 
@@ -62,6 +64,8 @@ namespace Module.Player.Core.View.Config
         [SerializeField] private float PitchMinValue = -60f;
         [Tooltip("最高俯仰角")]
         [SerializeField] private float PitchMaxValue = 75f;
+
+        public bool AllowThirdPerson => AllowThirdPersonValue;
 
         public PlayerViewMode DefaultViewMode => DefaultViewModeValue;
 
