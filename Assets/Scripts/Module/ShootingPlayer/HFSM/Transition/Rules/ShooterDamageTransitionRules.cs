@@ -11,6 +11,8 @@ using Module.ChaisakiPlayer.Context;
 using Module.ShootingPlayer.HFSM.Runtime;
 using UnityEngine;
 
+using ShooterTransitionRule = Framework.Character.Transition.CharacterTransitionRule<Module.ShootingPlayer.HFSM.ShooterStateId, Module.ShootingPlayer.HFSM.Transition.ShooterTransitionPriority>;
+
 namespace Module.ShootingPlayer.HFSM.Transition.Rules
 {
     // 受击与死亡状态拥有最高优先级，可从任意状态切入

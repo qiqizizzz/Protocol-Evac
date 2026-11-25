@@ -1,37 +1,17 @@
 /*
  * ┌──────────────────────────────────┐
- * │  描    述: 玩家状态基类
+ * │  描    述: 千咲状态基类，继承角色框架状态契约并绑定千咲状态枚举
  * │  类    名: BasePlayerState.cs
  * │  创    建: By qiqizizzz
  * └──────────────────────────────────┘
  */
 
+using Framework.Character.HFSM;
+
 namespace Module.ChaisakiPlayer.HFSM
 {
-    public abstract class BasePlayerState
+    // 千咲所有状态的抽象基类，生命周期实现全部来自 Character.Core
+    public abstract class BasePlayerState : CharacterStateBase<PlayerStateId>
     {
-        public abstract PlayerStateId Id { get; }
-        
-        public abstract PlayerStateId ParentId { get; }
-        
-        public virtual void Enter()
-        {
-            
-        }
-        
-        public virtual void Exit()
-        {
-            
-        }
-        
-        public virtual void Tick(float deltaTime)
-        {
-            
-        }
-        
-        public virtual void FixedTick(float fixedDeltaTime)
-        {
-            
-        }
     }
 }

@@ -14,6 +14,9 @@ using Module.ChaisakiPlayer.HFSM.Animation.Rules;
 using Module.ChaisakiPlayer.HFSM;
 using Utils.log;
 
+// 动画规则数据结构来自 Character.Core
+using PlayerAnimRule = Framework.Character.Animation.CharacterAnimRule<Module.ChaisakiPlayer.HFSM.PlayerStateId, Module.ChaisakiPlayer.HFSM.Animation.PlayerAnimParams>;
+
 namespace Module.ChaisakiPlayer.HFSM.Animation.Controllers
 {
     public sealed class PlayerAnimController : BaseController

@@ -16,6 +16,9 @@ using Module.ChaisakiPlayer.HFSM.States.Ground;
 using Module.ChaisakiPlayer.HFSM.States.Skill;
 using Module.ChaisakiPlayer.Skill.Core;
 
+// 状态机外壳来自 Character.Core
+using PlayerStateMachine = Framework.Character.HFSM.CharacterStateMachine<Module.ChaisakiPlayer.HFSM.PlayerStateId>;
+
 namespace Module.ChaisakiPlayer.HFSM.Factory
 {
     public static class PlayerStateFactory

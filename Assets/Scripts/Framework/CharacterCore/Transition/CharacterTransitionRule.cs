@@ -1,42 +1,49 @@
 /*
 * ┌──────────────────────────────────────────────────┐
-* │  描    述: 玩家状态转换规则，描述来源、目标与触发条件
-* │  类    名: PlayerTransitionRule.cs
+* │  描    述: 角色状态转换规则，描述来源、目标与触发条件
+* │  类    名: CharacterTransitionRule.cs
 * │  创    建: By qiqizizzz
 * └──────────────────────────────────────────────────┘
 */
 
 using System;
 using System.Collections.Generic;
-using Module.ChaisakiPlayer.HFSM;
+using Framework.Character.HFSM;
 using Utils.log;
 
-namespace Module.ChaisakiPlayer.HFSM.Transition
+namespace Framework.Character.Transition
 {
-    public sealed class PlayerTransitionRule
+    /// <summary>
+    /// 角色状态转换规则，各角色只贡献条件，匹配流程由框架统一实现
+    /// </summary>
+    /// <typeparam name="TStateId">角色状态标识枚举，默认值表示空状态</typeparam>
+    /// <typeparam name="TPriority">角色状态转换优先级枚举</typeparam>
+    public sealed class CharacterTransitionRule<TStateId, TPriority>
+        where TStateId : struct, Enum
+        where TPriority : struct, Enum
     {
-        public PlayerStateId SourceId { get; }
-        public PlayerStateId TargetId { get; }
-        public PlayerTransitionPriority Priority { get; }
+        public TStateId SourceId { get; }
+        public TStateId TargetId { get; }
+        public TPriority Priority { get; }
         public int Order { get; }
         public bool AllowReentry { get; }
 
         private readonly Func<bool> m_condition;
 
         /// <summary>
-        /// 创建一条玩家状态转换规则
+        /// 创建一条状态转换规则
         /// </summary>
-        /// <param name="sourceId">规则适用的来源状态，None 表示任意状态</param>
+        /// <param name="sourceId">规则适用的来源状态，默认值表示任意状态</param>
         /// <param name="targetId">规则满足时的目标状态</param>
         /// <param name="priority">规则优先级</param>
         /// <param name="condition">规则触发条件</param>
-        /// <param name="order">同层级规则的优先顺序，数值越大越优先</param>
+        /// <param name="order">同优先级规则的优先顺序，数值越大越优先</param>
         /// <param name="allowReentry">目标已是当前叶子状态时是否强制重新进入</param>
-        public PlayerTransitionRule(PlayerStateId sourceId, PlayerStateId targetId, PlayerTransitionPriority priority,
-            Func<bool> condition, int order = 0, bool allowReentry = false)
+        public CharacterTransitionRule(TStateId sourceId, TStateId targetId, TPriority priority, Func<bool> condition,
+            int order = 0, bool allowReentry = false)
         {
-            if (targetId == PlayerStateId.None)
-                QLog.Error("创建状态转换规则失败：目标状态不能是 PlayerStateId.None");
+            if (EqualityComparer<TStateId>.Default.Equals(targetId, default))
+                QLog.Error($"创建状态转换规则失败：目标状态不能是默认状态标识，来源状态 {sourceId}");
 
             if (condition == null)
                 QLog.Error("创建状态转换规则失败：condition 为空");
@@ -54,12 +61,14 @@ namespace Module.ChaisakiPlayer.HFSM.Transition
         /// </summary>
         /// <param name="activeStatePath">当前活动状态路径</param>
         /// <returns>规则当前是否可以触发</returns>
-        public bool CanApply(IReadOnlyList<PlayerStateId> activeStatePath)
+        public bool CanApply(IReadOnlyList<TStateId> activeStatePath)
         {
-            if (TargetId == PlayerStateId.None || m_condition == null)
+            EqualityComparer<TStateId> idComparer = EqualityComparer<TStateId>.Default;
+
+            if (idComparer.Equals(TargetId, default) || m_condition == null)
                 return false;
 
-            if (SourceId == PlayerStateId.None)
+            if (idComparer.Equals(SourceId, default))
                 return m_condition();
 
             if (activeStatePath == null)
@@ -70,7 +79,7 @@ namespace Module.ChaisakiPlayer.HFSM.Transition
 
             for (int i = 0; i < activeStatePath.Count; i++)
             {
-                if (activeStatePath[i] == SourceId)
+                if (idComparer.Equals(activeStatePath[i], SourceId))
                     return m_condition();
             }
 

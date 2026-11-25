@@ -6,6 +6,8 @@
  * └──────────────────────────────────┘
  */
 
+using Framework.Character.Animation;
+using Framework.Character.HFSM;
 using Module.Ability.Data;
 using Module.ChaisakiPlayer.Context;
 using Module.ChaisakiPlayer.Context.Runtime;
@@ -16,21 +18,14 @@ using Utils.log;
 
 namespace Module.ChaisakiPlayer.HFSM.Animation
 {
-    public sealed class PlayerAnimWriter
+    // 千咲动画写入器，通用位移参数与写入流程由 Character.Core 提供
+    public sealed class PlayerAnimWriter : CharacterAnimWriterBase<PlayerStateId, PlayerAnimParams>
     {
         #region Animator 参数Hash
-        private static readonly int S_MoveSpeedHash = Animator.StringToHash("moveSpeed");
+        // 位移与技能类通用参数已在框架基类中定义
         private static readonly int S_LockOnWeightHash = Animator.StringToHash("lockOnWeight");
-        private static readonly int S_MoveXHash = Animator.StringToHash("moveX");
-        private static readonly int S_MoveYHash = Animator.StringToHash("moveY");
-        private static readonly int S_VerticalSpeedHash = Animator.StringToHash("verticalSpeed");
-        private static readonly int S_IsGroundedHash = Animator.StringToHash("isGrounded");
         private static readonly int S_IsActionHash = Animator.StringToHash("isAction");
-        private static readonly int S_IsSkillHash = Animator.StringToHash("isSkill");
-        private static readonly int S_IsDisabledHash = Animator.StringToHash("isDisabled");
         private static readonly int S_EnterDisabledHash = Animator.StringToHash("enterDisabled");
-        private static readonly int S_IsDeadHash = Animator.StringToHash("isDead");
-        private static readonly int S_HurtAnimationIdHash = Animator.StringToHash("hurtAnimationId");
         private static readonly int S_JumpStateHash = Animator.StringToHash("Base Layer.Air.jump_begin");
         private static readonly int S_GroundedLocomotionStateHash = Animator.StringToHash("Base Layer.Grounded_Common.Grounded_Locomotion");
         private static readonly int S_StopWalkLeftStateHash = Animator.StringToHash("Base Layer.Grounded_Common.Grounded_Stop.stop_walk_l");
@@ -56,73 +51,58 @@ namespace Module.ChaisakiPlayer.HFSM.Animation
         private static readonly int S_DisabledDeadStateHash = Animator.StringToHash("Base Layer.Disabled.dead");
         #endregion
 
-        private Animator m_animator;
-        private PlayerStateMachine m_stateMachine;
-        private PlayerAnimResolver m_resolver;
         private PlayerContext m_context;
-        private bool m_isInited;
         private bool m_wasSkillActive;
         private bool m_wasDisabledActive;
         private bool m_isDisabledEnterRequested;
 
-        // 初始化玩家动画写入器依赖
-        public void Init(Animator animator, PlayerStateMachine stateMachine, PlayerAnimResolver resolver, PlayerContext context)
+        // 千咲的位移由 Animator 根运动驱动
+        protected override bool ApplyRootMotion => true;
+
+        // 初始化千咲动画写入器依赖
+        public void Init(Animator animator, CharacterStateMachine<PlayerStateId> stateMachine,
+            CharacterAnimResolver<PlayerStateId, PlayerAnimParams> resolver, PlayerContext context)
         {
-            m_animator = animator;
-            m_stateMachine = stateMachine;
-            m_resolver = resolver;
             m_context = context;
-            m_animator.applyRootMotion = true;
-            m_isInited = true;
+            InitBase(animator, stateMachine, resolver);
         }
 
-        // 同步玩家 Animator 参数
-        public void Tick(float deltaTime)
+        // 将本帧动画参数与状态机结果写入 Animator
+        protected override void ApplyAnimParams(PlayerAnimParams animParams)
         {
-            if (!m_isInited)
-                return;
+            bool isSkillActive = stateMachine.IsStateActive(PlayerStateId.Skill);
+            bool isDisabledActive = stateMachine.IsStateActive(PlayerStateId.Disabled);
 
-            bool isSkillActive = IsStateActive(PlayerStateId.Skill);
-            bool isDisabledActive = IsStateActive(PlayerStateId.Disabled);
-            PlayerAnimParams animParams = m_resolver.Resolve();
-            ApplyParams(animParams);
+            ApplyLocomotionParams(animParams);
+            animator.SetFloat(S_LockOnWeightHash, animParams.LockOnWeight);
+
             ApplyStateMachineParams(isSkillActive, isDisabledActive, !m_wasDisabledActive && isDisabledActive);
             ApplyReplayRequest(isSkillActive, isDisabledActive);
+
             m_wasSkillActive = isSkillActive;
             m_wasDisabledActive = isDisabledActive;
-        }
-
-        // 将动画参数写入 Animator
-        private void ApplyParams(PlayerAnimParams animParams)
-        {
-            m_animator.SetFloat(S_MoveSpeedHash, animParams.MoveSpeed);
-            m_animator.SetFloat(S_LockOnWeightHash, animParams.LockOnWeight);
-            m_animator.SetFloat(S_MoveXHash, animParams.MoveX);
-            m_animator.SetFloat(S_MoveYHash, animParams.MoveY);
-            m_animator.SetFloat(S_VerticalSpeedHash, animParams.VerticalSpeed);
-            m_animator.SetBool(S_IsGroundedHash, animParams.IsGrounded);
         }
 
         // 将 HFSM 当前父状态镜像到 Animator 参数
         private void ApplyStateMachineParams(bool isSkillActive, bool isDisabledActive, bool isEnteringDisabled)
         {
-            m_animator.SetBool(S_IsGroundedHash, m_context.Movement.IsGrounded);
-            m_animator.SetBool(S_IsActionHash, IsStateActive(PlayerStateId.Action));
-            m_animator.SetBool(S_IsSkillHash, isSkillActive);
-            m_animator.SetBool(S_IsDisabledHash, isDisabledActive);
-            m_animator.SetBool(S_IsDeadHash, m_context.Damage.IsDead);
-            m_animator.SetInteger(S_HurtAnimationIdHash, (int)m_context.Damage.HurtAnimationId);
+            animator.SetBool(isGroundedHash, m_context.Movement.IsGrounded);
+            animator.SetBool(S_IsActionHash, stateMachine.IsStateActive(PlayerStateId.Action));
+            animator.SetBool(isSkillHash, isSkillActive);
+            animator.SetBool(isDisabledHash, isDisabledActive);
+            animator.SetBool(isDeadHash, m_context.Damage.IsDead);
+            animator.SetInteger(hurtAnimationIdHash, (int)m_context.Damage.HurtAnimationId);
 
             if (m_isDisabledEnterRequested && IsDisabledAnimatorState())
             {
-                m_animator.SetBool(S_EnterDisabledHash, false);
+                animator.SetBool(S_EnterDisabledHash, false);
                 m_isDisabledEnterRequested = false;
             }
 
             if (!isEnteringDisabled)
                 return;
 
-            m_animator.SetBool(S_EnterDisabledHash, true);
+            animator.SetBool(S_EnterDisabledHash, true);
             m_isDisabledEnterRequested = true;
         }
 
@@ -132,20 +112,20 @@ namespace Module.ChaisakiPlayer.HFSM.Animation
             PlayerStateId? stateId = m_context.Action.ConsumeAnimReplayRequest();
             if (stateId == PlayerStateId.AirborneJump)
             {
-                m_animator.CrossFadeInFixedTime(S_JumpStateHash, 0.03f, 0, 0f);
+                animator.CrossFadeInFixedTime(S_JumpStateHash, 0.03f, 0, 0f);
                 return;
             }
 
             if (stateId == PlayerStateId.ActionDodge)
             {
-                m_animator.Play(S_ActionDodgeStateHash, 0, 0f);
+                animator.Play(S_ActionDodgeStateHash, 0, 0f);
                 return;
             }
 
             if (stateId == PlayerStateId.GroundedIdle || stateId == PlayerStateId.GroundedMove)
             {
                 float blendDuration = m_context.Action.AnimReplayBlendDuration;
-                m_animator.CrossFadeInFixedTime(S_GroundedLocomotionStateHash, blendDuration, 0, 0f);
+                animator.CrossFadeInFixedTime(S_GroundedLocomotionStateHash, blendDuration, 0, 0f);
                 return;
             }
 
@@ -154,7 +134,7 @@ namespace Module.ChaisakiPlayer.HFSM.Animation
                 if (!TryGetStopStateHash(out int fullStateHash))
                     return;
 
-                m_animator.CrossFadeInFixedTime(fullStateHash, m_context.Action.AnimReplayBlendDuration, 0, 0f);
+                animator.CrossFadeInFixedTime(fullStateHash, m_context.Action.AnimReplayBlendDuration, 0, 0f);
                 return;
             }
 
@@ -163,7 +143,7 @@ namespace Module.ChaisakiPlayer.HFSM.Animation
                 if (!TryGetNormalAttackStateHash(out int fullStateHash))
                     return;
 
-                m_animator.Play(fullStateHash, 0, 0f);
+                animator.Play(fullStateHash, 0, 0f);
                 return;
             }
 
@@ -175,31 +155,17 @@ namespace Module.ChaisakiPlayer.HFSM.Animation
                 if (!TryGetHurtStateHash(out int fullStateHash))
                     return;
 
-                m_animator.CrossFadeInFixedTime(fullStateHash, 0.03f, 0, 0f);
+                animator.CrossFadeInFixedTime(fullStateHash, 0.03f, 0, 0f);
                 return;
             }
 
             if (stateId == PlayerStateId.DisabledDead)
-                m_animator.CrossFadeInFixedTime(S_DisabledDeadStateHash, 0.05f, 0, 0f);
+                animator.CrossFadeInFixedTime(S_DisabledDeadStateHash, 0.05f, 0, 0f);
         }
-
-        // 判断指定状态是否位于当前 HFSM 活动路径中
-        private bool IsStateActive(PlayerStateId stateId)
-        {
-            System.Collections.Generic.IReadOnlyList<PlayerStateId> activeStatePath = m_stateMachine.ActiveStatePath;
-            for (int i = 0; i < activeStatePath.Count; i++)
-            {
-                if (activeStatePath[i] == stateId)
-                    return true;
-            }
-
-            return false;
-        }
-
         // 判断 Animator 是否已实际进入受控状态机的任一叶子状态
         private bool IsDisabledAnimatorState()
         {
-            AnimatorStateInfo stateInfo = m_animator.GetCurrentAnimatorStateInfo(0);
+            AnimatorStateInfo stateInfo = animator.GetCurrentAnimatorStateInfo(0);
             int fullPathHash = stateInfo.fullPathHash;
             return fullPathHash == S_DisabledHurtLightLeftStateHash ||
                    fullPathHash == S_DisabledHurtLightRightStateHash ||

@@ -11,6 +11,8 @@ using Module.ChaisakiPlayer.Context;
 using Module.ChaisakiPlayer.Context.Runtime;
 using UnityEngine;
 
+using ShooterAnimRule = Framework.Character.Animation.CharacterAnimRule<Module.ShootingPlayer.HFSM.ShooterStateId, Module.ShootingPlayer.HFSM.Animation.ShooterAnimParams>;
+
 namespace Module.ShootingPlayer.HFSM.Animation.Rules
 {
     // 瞄准相关状态的动画规则，moveX/moveY 驱动 2D 自由混合树

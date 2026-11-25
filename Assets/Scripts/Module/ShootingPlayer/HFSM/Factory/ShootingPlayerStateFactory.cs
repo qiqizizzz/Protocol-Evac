@@ -7,6 +7,7 @@
 */
 
 using System.Collections.Generic;
+using Framework.Character.HFSM;
 using Module.ChaisakiPlayer.Context;
 using Module.ChaisakiPlayer.Skill.Core;
 using Module.ShootingPlayer.Config;
@@ -23,12 +24,13 @@ namespace Module.ShootingPlayer.HFSM.Factory
     // 射击角色状态工厂，集中创建并返回状态实例集合
     public static class ShootingPlayerStateFactory
     {
-        // 创建射击角色状态树的全部状态
-        public static List<BaseShooterState> CreateStates(PlayerContext context,
+        // 创建射击角色状态树的全部状态，叶子状态与复合状态统一用框架状态基类收集
+        public static List<CharacterStateBase<ShooterStateId>> CreateStates(PlayerContext context,
             ShooterRuntimeState runtimeState, ShootingPlayerSettingsSO settings,
             PlayerSkillController skillController)
         {
-            List<BaseShooterState> states = new List<BaseShooterState>();
+            List<CharacterStateBase<ShooterStateId>> states =
+                new List<CharacterStateBase<ShooterStateId>>();
 
             // 站立
             states.Add(new ShooterGroundedState());

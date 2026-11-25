@@ -12,6 +12,8 @@ using Module.ChaisakiPlayer.HFSM;
 using Module.ChaisakiPlayer.HFSM.Animation;
 using UnityEngine;
 
+using PlayerAnimRule = Framework.Character.Animation.CharacterAnimRule<Module.ChaisakiPlayer.HFSM.PlayerStateId, Module.ChaisakiPlayer.HFSM.Animation.PlayerAnimParams>;
+
 namespace Module.ChaisakiPlayer.HFSM.Animation.Rules
 {
     public static class PlayerActionAnimRules

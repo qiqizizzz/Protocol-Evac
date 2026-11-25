@@ -9,6 +9,8 @@
 using System.Collections.Generic;
 using Module.ChaisakiPlayer.Context;
 
+using ShooterAnimRule = Framework.Character.Animation.CharacterAnimRule<Module.ShootingPlayer.HFSM.ShooterStateId, Module.ShootingPlayer.HFSM.Animation.ShooterAnimParams>;
+
 namespace Module.ShootingPlayer.HFSM.Animation.Rules
 {
     // 射击技能状态的动画规则

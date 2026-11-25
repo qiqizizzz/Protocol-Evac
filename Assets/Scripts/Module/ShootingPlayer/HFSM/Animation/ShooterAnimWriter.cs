@@ -1,31 +1,25 @@
 /*
 * ┌──────────────────────────────────┐
-* │  描    述: 射击角色动画写入器，负责同步 Animator 参数与驱动状态切换
+* │  描    述: 射击角色动画写入器，负责同步专属参数与驱动状态切换
 * │  类    名: ShooterAnimWriter.cs
 * │  创    建: By qiqizizzz
 * └──────────────────────────────────┘
 */
 
+using Framework.Character.Animation;
+using Framework.Character.HFSM;
 using Module.ShootingPlayer.HFSM.Runtime;
 using UnityEngine;
 
 namespace Module.ShootingPlayer.HFSM.Animation
 {
-    // 射击角色动画写入器，不依赖千咲的 AnimReplay 机制
-    public sealed class ShooterAnimWriter
+    // 射击角色动画写入器，通用位移参数与写入流程来自 Character.Core，不依赖千咲的 AnimReplay 机制
+    public sealed class ShooterAnimWriter : CharacterAnimWriterBase<ShooterStateId, ShooterAnimParams>
     {
-        #region Animator 参数Hash
-        private static readonly int S_MoveSpeedHash = Animator.StringToHash("moveSpeed");
-        private static readonly int S_MoveXHash = Animator.StringToHash("moveX");
-        private static readonly int S_MoveYHash = Animator.StringToHash("moveY");
-        private static readonly int S_VerticalSpeedHash = Animator.StringToHash("verticalSpeed");
-        private static readonly int S_IsGroundedHash = Animator.StringToHash("isGrounded");
+        #region Animator 专属参数Hash
+        // 位移与技能类通用参数已在框架基类中定义
         private static readonly int S_IsAimingHash = Animator.StringToHash("isAiming");
         private static readonly int S_IsCrouchingHash = Animator.StringToHash("isCrouching");
-        private static readonly int S_IsSkillHash = Animator.StringToHash("isSkill");
-        private static readonly int S_IsDisabledHash = Animator.StringToHash("isDisabled");
-        private static readonly int S_IsDeadHash = Animator.StringToHash("isDead");
-        private static readonly int S_HurtAnimationIdHash = Animator.StringToHash("hurtAnimationId");
         #endregion
 
         #region Animator 状态路径Hash
@@ -42,50 +36,33 @@ namespace Module.ShootingPlayer.HFSM.Animation
         // 循环类状态淡入时长
         private const float LOCOMOTION_BLEND_DURATION = 0.2f;
 
-        private Animator m_animator;
-        private ShooterStateMachine m_stateMachine;
-        private ShooterAnimResolver m_resolver;
         private ShooterRuntimeState m_runtimeState;
-        private bool m_isInited;
         private int m_currentTargetStateHash;
 
+        // 持枪少女的位移由 ShooterMotor 驱动，不应用根运动
+        protected override bool ApplyRootMotion => false;
+
         // 初始化动画写入器依赖
-        public void Init(Animator animator, ShooterStateMachine stateMachine, ShooterAnimResolver resolver,
-            ShooterRuntimeState runtimeState)
+        public void Init(Animator animator, CharacterStateMachine<ShooterStateId> stateMachine,
+            CharacterAnimResolver<ShooterStateId, ShooterAnimParams> resolver, ShooterRuntimeState runtimeState)
         {
-            m_animator = animator;
-            m_stateMachine = stateMachine;
-            m_resolver = resolver;
             m_runtimeState = runtimeState;
-            m_animator.applyRootMotion = false;
-            m_isInited = true;
+            InitBase(animator, stateMachine, resolver);
         }
 
-        // 同步 Animator 参数与状态
-        public void Tick(float deltaTime)
+        // 将本帧动画参数与状态机结果写入 Animator
+        protected override void ApplyAnimParams(ShooterAnimParams animParams)
         {
-            if (!m_isInited)
-                return;
+            ApplyLocomotionParams(animParams);
 
-            ShooterAnimParams animParams = m_resolver.Resolve();
-            ApplyParams(animParams);
-            ApplyState();
-        }
-
-        // 将动画参数写入 Animator
-        private void ApplyParams(ShooterAnimParams animParams)
-        {
-            m_animator.SetFloat(S_MoveSpeedHash, animParams.MoveSpeed);
-            m_animator.SetFloat(S_MoveXHash, animParams.MoveX);
-            m_animator.SetFloat(S_MoveYHash, animParams.MoveY);
-            m_animator.SetFloat(S_VerticalSpeedHash, animParams.VerticalSpeed);
-            m_animator.SetBool(S_IsGroundedHash, animParams.IsGrounded);
-            m_animator.SetBool(S_IsAimingHash, m_runtimeState.IsAiming);
-            m_animator.SetBool(S_IsCrouchingHash, m_runtimeState.IsCrouching);
-            m_animator.SetBool(S_IsSkillHash, IsStateActive(ShooterStateId.Skill));
-            m_animator.SetBool(S_IsDisabledHash, IsStateActive(ShooterStateId.Disabled));
+            animator.SetBool(S_IsAimingHash, m_runtimeState.IsAiming);
+            animator.SetBool(S_IsCrouchingHash, m_runtimeState.IsCrouching);
+            animator.SetBool(isSkillHash, stateMachine.IsStateActive(ShooterStateId.Skill));
+            animator.SetBool(isDisabledHash, stateMachine.IsStateActive(ShooterStateId.Disabled));
             // 混合树的一维参数只能是 float，这里把受击动画枚举当阈值索引用
-            m_animator.SetFloat(S_HurtAnimationIdHash, (float)m_runtimeState.CurrentHurtAnimationId);
+            animator.SetFloat(hurtAnimationIdHash, (float)m_runtimeState.CurrentHurtAnimationId);
+
+            ApplyState();
         }
 
         // 按当前叶子状态驱动 Animator 状态切换
@@ -105,9 +82,9 @@ namespace Module.ShootingPlayer.HFSM.Animation
 
             // 一次性动作从头播放，循环位移状态使用淡入
             if (playFromStart)
-                m_animator.Play(targetHash, 0, 0f);
+                animator.Play(targetHash, 0, 0f);
             else
-                m_animator.CrossFadeInFixedTime(targetHash, LOCOMOTION_BLEND_DURATION, 0, 0f);
+                animator.CrossFadeInFixedTime(targetHash, LOCOMOTION_BLEND_DURATION, 0, 0f);
         }
 
         // 将叶子状态映射到 Animator 目标状态
@@ -116,7 +93,7 @@ namespace Module.ShootingPlayer.HFSM.Animation
             targetHash = 0;
             playFromStart = false;
 
-            switch (m_stateMachine.CurrentLeafStateId)
+            switch (stateMachine.CurrentLeafStateId)
             {
                 case ShooterStateId.GroundedIdle:
                 case ShooterStateId.GroundedMove:
@@ -152,20 +129,6 @@ namespace Module.ShootingPlayer.HFSM.Animation
                 default:
                     return false;
             }
-        }
-
-        // 判断指定状态是否位于当前活动路径中
-        private bool IsStateActive(ShooterStateId stateId)
-        {
-            System.Collections.Generic.IReadOnlyList<ShooterStateId> activeStatePath = m_stateMachine.ActiveStatePath;
-
-            for (int i = 0; i < activeStatePath.Count; i++)
-            {
-                if (activeStatePath[i] == stateId)
-                    return true;
-            }
-
-            return false;
         }
     }
 }

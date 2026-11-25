@@ -14,6 +14,8 @@ using Module.ChaisakiPlayer.HFSM.Transition;
 using Module.ChaisakiPlayer.Input.Buffer;
 using UnityEngine;
 
+using PlayerTransitionRule = Framework.Character.Transition.CharacterTransitionRule<Module.ChaisakiPlayer.HFSM.PlayerStateId, Module.ChaisakiPlayer.HFSM.Transition.PlayerTransitionPriority>;
+
 namespace Module.ChaisakiPlayer.HFSM.Transition.Rules
 {
     public static class PlayerActionTransitionRules

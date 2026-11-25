@@ -13,6 +13,8 @@ using Module.ShootingPlayer.Config;
 using Module.ShootingPlayer.HFSM.Runtime;
 using UnityEngine;
 
+using ShooterTransitionRule = Framework.Character.Transition.CharacterTransitionRule<Module.ShootingPlayer.HFSM.ShooterStateId, Module.ShootingPlayer.HFSM.Transition.ShooterTransitionPriority>;
+
 namespace Module.ShootingPlayer.HFSM.Transition.Rules
 {
     // 闪避动作的进入与退出规则

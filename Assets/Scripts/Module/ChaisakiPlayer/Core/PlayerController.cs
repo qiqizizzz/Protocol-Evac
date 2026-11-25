@@ -30,6 +30,11 @@ using UnityEngine;
 using Utils.Find;
 using Utils.log;
 
+// 千咲复用 Character.Core 框架实现，保留原有类型名避免全量改名
+using PlayerStateMachine = Framework.Character.HFSM.CharacterStateMachine<Module.ChaisakiPlayer.HFSM.PlayerStateId>;
+using PlayerTransitionSelector = Framework.Character.Transition.CharacterTransitionSelector<Module.ChaisakiPlayer.HFSM.PlayerStateId, Module.ChaisakiPlayer.HFSM.Transition.PlayerTransitionPriority>;
+using PlayerAnimResolver = Framework.Character.Animation.CharacterAnimResolver<Module.ChaisakiPlayer.HFSM.PlayerStateId, Module.ChaisakiPlayer.HFSM.Animation.PlayerAnimParams>;
+
 namespace Module.ChaisakiPlayer.Core
 {
     [RequireComponent(typeof(PlayerDamageReceiver))]

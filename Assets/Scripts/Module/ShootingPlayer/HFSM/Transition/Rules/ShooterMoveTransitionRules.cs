@@ -12,6 +12,8 @@ using Module.ShootingPlayer.Config;
 using Module.ShootingPlayer.HFSM.Runtime;
 using UnityEngine;
 
+using ShooterTransitionRule = Framework.Character.Transition.CharacterTransitionRule<Module.ShootingPlayer.HFSM.ShooterStateId, Module.ShootingPlayer.HFSM.Transition.ShooterTransitionPriority>;
+
 namespace Module.ShootingPlayer.HFSM.Transition.Rules
 {
     // 站立、瞄准、蹲伏之间的姿态与移动切换规则

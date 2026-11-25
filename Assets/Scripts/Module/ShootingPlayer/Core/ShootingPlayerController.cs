@@ -8,6 +8,7 @@
 
 using System;
 using System.Collections.Generic;
+using Framework.Character.HFSM;
 using Framework.QTower.Common.Defines;
 using Framework.QTower.Controller;
 using Framework.QTower.Event;
@@ -32,6 +33,11 @@ using TriInspector;
 using UnityEngine;
 using Utils.Find;
 using Utils.log;
+
+// 持枪少女复用 Character.Core 框架实现，保留原有类型名避免全量改名
+using ShooterStateMachine = Framework.Character.HFSM.CharacterStateMachine<Module.ShootingPlayer.HFSM.ShooterStateId>;
+using ShooterTransitionSelector = Framework.Character.Transition.CharacterTransitionSelector<Module.ShootingPlayer.HFSM.ShooterStateId, Module.ShootingPlayer.HFSM.Transition.ShooterTransitionPriority>;
+using ShooterAnimResolver = Framework.Character.Animation.CharacterAnimResolver<Module.ShootingPlayer.HFSM.ShooterStateId, Module.ShootingPlayer.HFSM.Animation.ShooterAnimParams>;
 
 namespace Module.ShootingPlayer.Core
 {
@@ -291,7 +297,7 @@ namespace Module.ShootingPlayer.Core
         {
             m_stateMachine = new ShooterStateMachine();
 
-            List<BaseShooterState> states =
+            List<CharacterStateBase<ShooterStateId>> states =
                 ShootingPlayerStateFactory.CreateStates(m_context, m_runtimeState, Settings, m_skillController);
             for (int i = 0; i < states.Count; i++)
                 m_stateMachine.RegisterState(states[i]);

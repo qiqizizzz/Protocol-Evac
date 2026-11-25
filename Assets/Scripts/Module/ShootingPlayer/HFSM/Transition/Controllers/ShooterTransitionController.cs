@@ -14,6 +14,8 @@ using Module.ShootingPlayer.HFSM.Runtime;
 using Module.ShootingPlayer.HFSM.Transition.Rules;
 using Utils.log;
 
+using ShooterTransitionRule = Framework.Character.Transition.CharacterTransitionRule<Module.ShootingPlayer.HFSM.ShooterStateId, Module.ShootingPlayer.HFSM.Transition.ShooterTransitionPriority>;
+
 namespace Module.ShootingPlayer.HFSM.Transition.Controllers
 {
     // 射击角色状态转换控制器，只负责收集规则

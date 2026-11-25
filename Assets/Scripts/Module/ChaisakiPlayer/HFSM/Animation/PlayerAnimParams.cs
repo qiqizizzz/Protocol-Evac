@@ -1,23 +1,28 @@
 /*
  * ┌──────────────────────────────────┐
- * │  描    述: 玩家动画参数数据，保存本帧需要写入 Animator 的表现参数
+ * │  描    述: 千咲动画参数数据，保存本帧需要写入 Animator 的表现参数
  * │  类    名: PlayerAnimParams.cs
  * │  创    建: By qiqizizzz
  * └──────────────────────────────────┘
  */
 
+using Framework.Character.Animation;
+
 namespace Module.ChaisakiPlayer.HFSM.Animation
 {
-    public struct PlayerAnimParams
+    // 千咲动画参数，通用位移字段由角色框架约定，锁定权重为千咲专属
+    public struct PlayerAnimParams : ICharacterAnimParams
     {
-        public float MoveSpeed;
-        public float LockOnWeight;
-        public float MoveX;
-        public float MoveY;
-        public float VerticalSpeed;
-        public bool IsGrounded;
+        public float MoveSpeed { get; set; }
+        public float MoveX { get; set; }
+        public float MoveY { get; set; }
+        public float VerticalSpeed { get; set; }
+        public bool IsGrounded { get; set; }
 
-        // 重置玩家动画参数
+        // 锁定视角混合权重
+        public float LockOnWeight { get; set; }
+
+        // 重置千咲动画参数
         public void Reset()
         {
             MoveSpeed = 0f;

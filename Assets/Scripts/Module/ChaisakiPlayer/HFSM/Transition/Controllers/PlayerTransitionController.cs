@@ -16,6 +16,9 @@ using Module.ChaisakiPlayer.HFSM.Transition.Rules;
 using Module.ChaisakiPlayer.Skill.Data;
 using Utils.log;
 
+// 转换规则数据结构来自 Character.Core
+using PlayerTransitionRule = Framework.Character.Transition.CharacterTransitionRule<Module.ChaisakiPlayer.HFSM.PlayerStateId, Module.ChaisakiPlayer.HFSM.Transition.PlayerTransitionPriority>;
+
 namespace Module.ChaisakiPlayer.HFSM.Transition.Controllers
 {
     public sealed class PlayerTransitionController : BaseController

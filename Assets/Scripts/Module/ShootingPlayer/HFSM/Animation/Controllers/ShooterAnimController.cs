@@ -12,6 +12,8 @@ using Module.ChaisakiPlayer.Context;
 using Module.ShootingPlayer.HFSM.Animation.Rules;
 using Utils.log;
 
+using ShooterAnimRule = Framework.Character.Animation.CharacterAnimRule<Module.ShootingPlayer.HFSM.ShooterStateId, Module.ShootingPlayer.HFSM.Animation.ShooterAnimParams>;
+
 namespace Module.ShootingPlayer.HFSM.Animation.Controllers
 {
     // 射击角色动画控制器，只负责收集动画规则

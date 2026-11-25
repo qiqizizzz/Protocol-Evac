@@ -6,13 +6,12 @@
  * └──────────────────────────────────┘
  */
 
+using Framework.Character.HFSM;
+
 namespace Module.ChaisakiPlayer.HFSM
 {
-    public abstract class PlayerCompositeState : BasePlayerState
+    // 千咲复合状态基类，子状态入口约定来自 Character.Core
+    public abstract class PlayerCompositeState : CharacterCompositeState<PlayerStateId>
     {
-        /// <summary>
-        /// 返回进入该复合状态时默认激活的直接子状态。
-        /// </summary>
-        public abstract PlayerStateId GetInitialChildId();
     }
 }
