@@ -378,18 +378,7 @@ namespace Module.ShootingPlayer.Input
                 {
                     ""name"": """",
                     ""id"": ""9c2e6a18-4b73-4d05-8e92-1f7c3b6d50a4"",
-                    ""path"": ""<Keyboard>/leftCtrl"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": "";KeyboardMouse"",
-                    ""action"": ""ToggleWalk"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""4f8d1c93-6e27-4b50-9a38-0c5e7d2f9b61"",
-                    ""path"": ""<Keyboard>/rightCtrl"",
+                    ""path"": ""<Keyboard>/capsLock"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": "";KeyboardMouse"",
