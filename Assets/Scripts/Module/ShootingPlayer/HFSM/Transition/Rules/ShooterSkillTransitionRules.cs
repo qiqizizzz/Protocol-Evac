@@ -45,7 +45,11 @@ namespace Module.ShootingPlayer.HFSM.Transition.Rules
 
             rules.Add(new ShooterTransitionRule(ShooterStateId.Skill, ShooterStateId.CrouchedAim,
                 ShooterTransitionPriority.Skill,
-                () => IsShootFinished(context) && runtimeState.IsCrouching, 2));
+                () => IsShootFinished(context) && runtimeState.IsCrouching && runtimeState.IsAiming, 2));
+
+            rules.Add(new ShooterTransitionRule(ShooterStateId.Skill, ShooterStateId.CrouchedIdle,
+                ShooterTransitionPriority.Skill,
+                () => IsShootFinished(context) && runtimeState.IsCrouching && !runtimeState.IsAiming, 1));
 
             rules.Add(new ShooterTransitionRule(ShooterStateId.Skill, ShooterStateId.GroundedMove,
                 ShooterTransitionPriority.Skill,

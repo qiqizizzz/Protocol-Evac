@@ -181,6 +181,8 @@ namespace Module.Combat.Hitbox
         private void OnDrawGizmosSelected()
         {
             BoxCollider boxCollider = GetComponent<BoxCollider>();
+            if (!boxCollider.enabled) return;
+
             Matrix4x4 previousMatrix = Gizmos.matrix;
 
             Gizmos.color = Color.red;
