@@ -289,17 +289,6 @@
                 },
                 {
                     "name": "",
-                    "id": "3e9b7d26-5c41-4a80-9f17-2d6b8e0c4a59",
-                    "path": "<Keyboard>/space",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": ";KeyboardMouse",
-                    "action": "Evade",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
                     "id": "9c2e6a18-4b73-4d05-8e92-1f7c3b6d50a4",
                     "path": "<Keyboard>/leftCtrl",
                     "interactions": "",
